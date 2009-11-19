@@ -1,0 +1,26 @@
+<ivy-module version="1.0">
+    <info organisation="org" module="standalone" revision="working"/>
+    <dependencies defaultconfmapping="*->*,!javadoc,!sources">
+
+      <!-- compile only -->
+      <dependency org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
+
+      <!--  We need to manually grab the jsdoctoolkit jar, since the packaging
+            on the jar is broken.
+        -->
+
+      <dependency org="org.jsdoctoolkit" name="jsdoc-dist" rev="2.1.0">
+          <artifact type="zip" name="jsdoc-dist" url="http://jsdoc-toolkit.googlecode.com/files/jsdoc_toolkit-2.1.0.zip"/>                
+      </dependency>
+
+      <dependency org="org.jsdoctoolkit" name="jsdoc" rev="2.1.0">
+          <artifact type="jar" name="jsdoc" url="http://mirrors.ibiblio.org/pub/mirrors/maven2/org/jsdoctoolkit/jsdoc/2.1.0/jsdoc-2.1.0.jar"/>
+      </dependency>
+    
+      <dependency org="org.jsdoctoolkit" name="jsdoctoolkit-ant-task" rev="1.0">
+          <exclude module="ant-contrib"/>
+          <exclude module="jsdoc"/>
+      </dependency>
+
+    </dependencies>
+</ivy-module>

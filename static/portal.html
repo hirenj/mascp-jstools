@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<title>GATOR</title>
+	<link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
+	<script type="text/javascript">SVGWEB_PATH='../js/lib/svgweb/';</script>
+	<script type="text/javascript" src="../js/lib/gomap.js"></script>
+	<script type="text/javascript" src="../js/jquery-1.3.2.min.js"></script>
+	<script type="text/javascript" src="../js/jquery-ui-1.7.2.custom.min.js"></script>
+	<script type="text/javascript" src="../js/lib/MascpService.js"></script>
+	<script type="text/javascript" src="../js/lib/SubaReader.js"></script>
+	<script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
+	<script type="text/javascript" src="../js/lib/PromexReader.js"></script>
+	<script type="text/javascript" src="../js/lib/TairReader.js"></script>
+	<script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
+	<script type="text/javascript" src="http://json.org/json2.js"></script>
+	<script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>	
+	<script type="text/javascript" src="../js/raphael-min.js"></script>
+	<style type="text/css">
+		body {
+			font-family: Verdana, Helvetica, Arial, sans-serif;
+			font-size: 11pt;
+		}
+		.track {
+			border: solid black 1px;
+			height: 100%;
+			position: relative;
+		}
+		.mask {
+			display: none;
+		}
+
+		.active_layer .mask {
+			display: block;
+		}
+
+		.mask:hover {
+			opacity: 0.1;
+		}
+
+		#sequence_controllers > div {
+			display: none;
+		}
+
+		#suba_results {
+			width: 300px;
+			height: 300px;
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			border: solid #8888ff 5px;
+			-moz-border-radius:10px 10px;
+			-webkit-border-radius:10px 10px;
+			border-radius:10px 10px;
+		}
+	</style>
+</head>
+
+<body>
+<div style="width: 50%;">
+<h1 style="position: relative;">MASCP AggreGATOR <img style="height: 60px; top: 50%;" src="gator.png" /></h1>
+</div>
+<div style="margin-bottom: 10px;">
+	<label for="agi">Select AGI </label><input id="agi" type="text" name="agi" value="AT1G58360.1"/>
+</div>
+<h2 id="selected_agi"></h2>
+<div style="margin-bottom: 10px;" id="sequence_controllers">
+	<div id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</div>
+	<div id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</div>
+	<div id="promex"><input type="checkbox"/> ProMeX</div>
+	<div id="atproteome"><input type="checkbox"/> ATProteome</div>
+</div>
+<div style="overflow: auto; width: auto; margin-right: 320px; height: 300px;">
+<div id="condensed_container" ></div>
+<div id="hydropathy_container" style="margin-bottom: 10px;">
+</div>
+</div>
+<div id="sequence_container" style="font-family: monospace;">
+</div>
+<div id="suba_results">
+</div>
+<script type="text/javascript">
+//<[CDATA[ 
+
+	jQuery(document).ready(function() {
+		MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
+		MASCP.condensed = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
+		MASCP.condensed.zoom = 0.81;
+		jQuery('#condensed_container').append(GOMap.Diagram.addZoomControls(MASCP.condensed));
+		var dragger = new GOMap.Diagram.Dragger();
+		dragger.applyToElement(document.getElementById('condensed_container').parentNode);
+		dragger.targetElement = document.getElementById('condensed_container').parentNode;
+		jQuery(MASCP.condensed).bind('sequenceready', function() {
+			dragger.applyToElement(MASCP.condensed._canvas);
+		})
+		jQuery(MASCP).bind('layerRegistered', function(e,layer) {
+			MASCP.condensed.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
+			MASCP.condensed.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);		
+			MASCP.condensed.createGroupCheckbox('promex_experimental',jQuery('#promex input')[0]);		
+			MASCP.condensed.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
+
+			MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
+			MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);		
+			MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex input')[0]);		
+			MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
+
+	    });	    
+
+		jQuery(MASCP.condensed).bind('sequencechange',function() {
+			jQuery('#hydropathy_container img').css({'width' : (this.sequence.length * 2)+'px'});
+		});
+		jQuery(MASCP.condensed).bind('sequenceready',function() {
+			var agi = jQuery('#agi')[0].value;
+			
+			MASCP.SequenceRenderer.reset();
+			
+			MASCP.condensed.clearTracks();
+			
+			var suba = new MASCP.SubaReader(agi,'../proxy.pl');
+			suba.retrieve();
+			jQuery(suba).bind('resultreceived',function() {
+				jQuery('#suba_results').text('');
+				jQuery('#suba_results').append(this.result.render());				
+				if (true || this.result._map) {
+					jQuery('#suba_results').append(this.result.mapController());
+				}
+			});
+			var phosphat = new MASCP.PhosphatReader(agi,'../proxy.pl').bind('resultreceived',function() {
+				if (this.result.getAllExperimentalPositions().length > 0) {
+					MASCP.renderer.hideLayer('phosphat_theoretical');
+					MASCP.condensed.hideLayer('phosphat_theoretical');
+					jQuery('#phosphat_experimental').show();
+				} else if (this.result.getAllPredictedPositions().length > 0) {
+					log("Only predicted");
+					MASCP.renderer.hideLayer('phosphat_experimental');
+					MASCP.condensed.hideLayer('phosphat_experimental');
+					log("Hiding the other layers");
+					jQuery('#phosphat_theoretical').show();					
+				}
+			});
+			jQuery('#phoshpat_experimental input').attr('checked',false);
+			jQuery('#phosphat_theoretical input').attr('checked',false);			
+			jQuery('#phosphat_experimental').hide();
+			jQuery('#phosphat_theoretical').hide();
+
+			phosphat.registerSequenceRenderer(MASCP.renderer);
+			phosphat.registerSequenceRenderer(MASCP.condensed);
+			phosphat.retrieve();
+			
+			var promex = new MASCP.PromexReader(agi,'../proxy.pl').bind('resultreceived',function() {
+				MASCP.renderer.hideGroup('promex_experimental');
+				MASCP.renderer.showGroup('promex_experimental');
+				MASCP.condensed.hideGroup('promex_experimental');
+				MASCP.condensed.showGroup('promex_experimental');
+				if (this.result.getSpectraURLs().length > 0) {
+					jQuery('#promex').attr('checked',false).show();
+					jQuery('#promex input').trigger('change');	
+				}			
+			});
+			jQuery('#promex').hide();
+			promex.registerSequenceRenderer(MASCP.renderer);
+			promex.registerSequenceRenderer(MASCP.condensed);
+			promex.retrieve();
+			
+			var atproteome = new MASCP.AtProteomeReader(agi,'../proxy.pl').bind('resultreceived',function() {
+				if (this.result == null) {
+					return;
+				}
+				jQuery('#atproteome input').attr('checked',false).trigger('change');
+				jQuery('#atproteome').show();
+			});
+			jQuery('#atproteome').hide();
+			atproteome.registerSequenceRenderer(MASCP.renderer);
+			atproteome.registerSequenceRenderer(MASCP.condensed);
+			atproteome.retrieve();
+		});
+		jQuery('#agi').trigger('change');
+	});
+
+	jQuery('#agi').bind('change',function() {
+		var agi = this.value;
+		if (agi.length < 1) {
+			return;
+		}
+		jQuery('#selected_agi').text("Data for "+agi);
+		var reader = new MASCP.TairReader(this.value,'../proxy.pl');
+
+		jQuery(reader).bind('resultreceived',function() {
+
+			MASCP.renderer.setSequence(this.result.getSequence());
+			jQuery('#hydropathy_container').text('');
+			jQuery('#hydropathy_container').append(MASCP.renderer.getHydropathyPlot());
+
+			MASCP.condensed.setSequence(this.result.getSequence());
+						
+		});		
+		reader.retrieve();				
+	});
+//]]>
+</script>
+</body>
+</html>
