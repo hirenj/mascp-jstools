@@ -19,15 +19,13 @@
 	<script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
 	<script type="text/javascript" src="http://json.org/json2.js"></script>
 	<script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>	
-	<script type="text/javascript" src="../js/raphael-min.js"></script>
+	<script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>	
 	<style type="text/css">
 		body {
 			font-family: Verdana, Helvetica, Arial, sans-serif;
 			font-size: 11pt;
 		}
 		.track {
-			border: solid black 1px;
-			height: 100%;
 			position: relative;
 		}
 		.mask {
@@ -94,7 +92,7 @@
 		var dragger = new GOMap.Diagram.Dragger();
 		dragger.applyToElement(document.getElementById('condensed_container').parentNode);
 		dragger.targetElement = document.getElementById('condensed_container').parentNode;
-		jQuery(MASCP.condensed).bind('sequenceready', function() {
+		jQuery(MASCP.condensed).bind('sequencechange', function() {
 			dragger.applyToElement(MASCP.condensed._canvas);
 		})
 		jQuery(MASCP).bind('layerRegistered', function(e,layer) {
@@ -113,12 +111,18 @@
 		jQuery(MASCP.condensed).bind('sequencechange',function() {
 			jQuery('#hydropathy_container img').css({'width' : (this.sequence.length * 2)+'px'});
 		});
-		jQuery(MASCP.condensed).bind('sequenceready',function() {
+		jQuery(MASCP.condensed).bind('sequencechange',function() {
+			
+			if (MASCP.condensed.sequence == '') {
+				return;
+			}
+			
+			if ( ! MASCP.condensed._canvas ) {
+				throw "Nooo!!!";
+			}
 			var agi = jQuery('#agi')[0].value;
 			
-			MASCP.SequenceRenderer.reset();
-			
-			MASCP.condensed.clearTracks();
+			MASCP.condensed.reset();
 			
 			var suba = new MASCP.SubaReader(agi,'../proxy.pl');
 			suba.retrieve();
@@ -135,10 +139,8 @@
 					MASCP.condensed.hideLayer('phosphat_theoretical');
 					jQuery('#phosphat_experimental').show();
 				} else if (this.result.getAllPredictedPositions().length > 0) {
-					log("Only predicted");
 					MASCP.renderer.hideLayer('phosphat_experimental');
 					MASCP.condensed.hideLayer('phosphat_experimental');
-					log("Hiding the other layers");
 					jQuery('#phosphat_theoretical').show();					
 				}
 			});
@@ -149,6 +151,9 @@
 
 			phosphat.registerSequenceRenderer(MASCP.renderer);
 			phosphat.registerSequenceRenderer(MASCP.condensed);
+			if ( ! MASCP.condensed._canvas ) {
+				throw "Cannot do this";
+			}
 			phosphat.retrieve();
 			
 			var promex = new MASCP.PromexReader(agi,'../proxy.pl').bind('resultreceived',function() {

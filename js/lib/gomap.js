@@ -550,13 +550,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         targetElement.addEventListener('mouseout',mouseOut, false);
     }
     
-    
-//    container.addEventListener('mousemove', mouseMove, false);
-
-//    container.addEventListener('mouseup',mouseUp,false);
-//    container.addEventListener('mouseout', mouseOut, false);
-
-    
 };
 
 GOMap.Diagram.addZoomControls = function(zoomElement) {

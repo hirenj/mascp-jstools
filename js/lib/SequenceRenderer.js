@@ -155,7 +155,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
     }
     jQuery(this._container).toggleClass(layerName+'_active');
     jQuery(this._container).toggleClass(layerName+'_inactive');
-    jQuery(layer).trigger('change',this);
+    jQuery(layer).trigger('visibilityChange',[this,this.isLayerActive(layer)]);
     return this;
 };
 
@@ -163,18 +163,22 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
  * Show the given layer
  * @param {String|Object} layer Layer name, or layer object
  */
-MASCP.SequenceRenderer.prototype.showLayer = function(layer,consumeChange) {
-    var layerName = layer;
-    if (typeof layer != 'string') {
-        layerName = layer.name;
+MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
+    var layerName = lay;
+    var layer;
+    if (typeof lay != 'string') {
+        layerName = lay.name;
+        layer = lay;
     } else {
-        layer = MASCP.SequenceRenderer._layers[layer];
+        layer = MASCP.SequenceRenderer._layers[lay];
+        layerName = lay;
     }
+    
     jQuery(this._container).addClass(layerName+'_active');
     jQuery(this._container).addClass('active_layer');    
     jQuery(this._container).removeClass(layerName+'_inactive');
     if (! consumeChange ) {
-        jQuery(layer).trigger('change',this);
+        jQuery(layer).trigger('visibilityChange',[this,true]);
     }
     return this;
 };
@@ -183,31 +187,41 @@ MASCP.SequenceRenderer.prototype.showLayer = function(layer,consumeChange) {
  * Hide the given layer
  * @param {String|Object} layer Layer name, or layer object
  */
-MASCP.SequenceRenderer.prototype.hideLayer = function(layer,consumeChange) {
-    var layerName = layer;
-    if (typeof layer != 'string') {
-        layerName = layer.name;
+MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
+    var layerName = lay;
+    var layer;
+    if (typeof lay != 'string') {
+        layerName = lay.name;
+        layer = lay;
     } else {
-        layer = MASCP.SequenceRenderer._layers[layer];
+        layer = MASCP.SequenceRenderer._layers[lay];
+        layerName = lay;
     }
+    
     jQuery(this._container).removeClass(layerName+'_active');
     jQuery(this._container).removeClass('active_layer');
     jQuery(this._container).addClass(layerName+'_inactive');
     if (! consumeChange ) {
-        jQuery(layer).trigger('change',this);
+        jQuery(layer).trigger('visibilityChange',[this,true]);
     }
     return this;
 };
 
-MASCP.SequenceRenderer.prototype.setGroupVisibility = function(group,visibility) {
-    var groupName = group;
-    if (typeof group != 'string') {
+MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
+    var groupName = grp;
+    var group;
+    if (typeof grp != 'string') {
         groupName = group.name;
+        group = grp;
     } else {
-        group = MASCP.SequenceRenderer._groups[group];
+        group = MASCP.SequenceRenderer._groups[grp];
+        groupName = group.name;
     }
     var renderer = this;
     jQuery(group._layers).each(function(i) {
+        if (this.disabled) {
+            return;
+        }
         if (visibility == true) {
             renderer.showLayer(this.name);
         } else if (visibility == false) {
@@ -216,6 +230,9 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(group,visibility)
             renderer.toggleLayer(this.name);
         }
     });
+    if (visibility != null) {
+        jQuery(group).trigger('change',[renderer,visibility]);
+    }
 };
 
 MASCP.SequenceRenderer.prototype.hideGroup = function(group) {
@@ -355,7 +372,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
         return;
     }
     var the_input = inputElement || jQuery('<input type="checkbox" value="true"/>')[0];
-    if (the_input._current_layer == layer) {
+    if (layer == the_input._current_layer) {
         return;
     }
     
@@ -363,7 +380,6 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     the_input.checked = this.isLayerActive(layer);
     
     the_input._current_layer = layer;
-    
     jQuery(the_input).bind('change',function(e) {
         if (this.checked) {
             renderer.showLayer(layer,false);
@@ -383,8 +399,11 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     }
     
     if (layerObj) {
-        jQuery(layerObj).bind("change",function(e) {
-            the_input.checked = renderer.isLayerActive(layerObj);
+        jQuery(layerObj).bind("visibilityChange",function(e,rend,visibility) {
+            if (rend != renderer) {
+                return;
+            }
+            the_input.checked = visibility;
         });
     }
     return the_input;    
@@ -411,14 +430,18 @@ MASCP.SequenceRenderer.prototype.getGroup = function(group) {
 MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputElement) {
     var renderer = this;
     var the_input = inputElement ? jQuery(inputElement) : jQuery('<input type="checkbox" value="true"/>');
-
-    if (group == the_input[0]._current_group) {
+    var groupObject = this.getGroup(group);
+    
+    if (! groupObject ) {
+        return;
+    }
+    
+    if (groupObject == the_input[0]._current_group) {
         return;
     }
 
     the_input[0].removeAttribute('checked');
-//    the_input[0].checked = this.isLayerActive(layer);    
-    the_input[0]._current_group = group;
+    the_input[0]._current_group = groupObject;
     the_input.bind('change',function(e) {        
         group_obj = renderer.getGroup(group);
         if (! group_obj ) {
@@ -434,6 +457,17 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
             });                
         }
     });
+
+    if (groupObject) {
+        jQuery(renderer.getGroup(group)).bind('visibilityChange', function(e,rend,visibility) {
+            if (rend != renderer) {
+                return;
+            }
+            the_input[0].checked = visibility;
+        });
+    } else {
+        log("Too early for group bind");
+    }
 
     the_input.bind('click',function(e) {
         e.stopPropagation();
@@ -518,16 +552,25 @@ MASCP.SequenceRenderer.registerGroup = function(groupName, options)
     }
     
     group._layers = [];
+
+    group.group_id = new Date().getMilliseconds();
     
     this._groups[groupName] = group;
     
-    jQuery(MASCP).trigger('groupRegistered',group);    
+    jQuery(MASCP).trigger('groupRegistered',[group]);
 }
 
-MASCP.SequenceRenderer.reset = function()
+MASCP.SequenceRenderer.prototype.reset = function()
 {
-    MASCP.SequenceRenderer._groups = {};
-    MASCP.SequenceRenderer._layers = {};
+    jQuery(this._container).attr('class',null);
+    for ( var group in MASCP.SequenceRenderer._groups) {
+        log("Hiding the group "+this.getGroup(group).group_id);
+        this.hideGroup(group);
+    }    
+    for ( var layer in MASCP.SequenceRenderer._layers) {
+        this.hideLayer(layer);
+        MASCP.SequenceRenderer._layers[layer].disabled = true;
+    }
 };
 
 /**
@@ -542,6 +585,7 @@ MASCP.SequenceRenderer.registerLayer = function(layerName, options)
         this._layers = {};
     }
     if (this._layers[layerName]) {
+        this._layers[layerName].disabled = false;
         return;
     }
     
@@ -578,356 +622,7 @@ MASCP.SequenceRenderer.registerLayer = function(layerName, options)
         layerCss = layerCss.replace(/\.overlay/g, '.'+layerName+'_overlay');
         jQuery('<style type="text/css">'+layerCss+'</style>').appendTo('head');
     }
-    jQuery(MASCP).trigger('layerRegistered',layer);
-};
-
-MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
-    MASCP.SequenceRenderer.apply(this,arguments);
-    var self = this;
-    jQuery(MASCP).bind('layerRegistered', function(e,layer) {
-        self.addTrack(layer);
-        self.hideLayer(layer);
-    });
-    jQuery(this).unbind('sequencechange');    
-    jQuery(this).bind('sequencechange',function() {
-        for (var layername in MASCP.SequenceRenderer._layers) {
-            self.addTrack(MASCP.SequenceRenderer._layers[layername]);
-        }
-        self.resizeTracks();
-        self.resizeContainer();
-    });
-    return this;
-};
-
-MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
-
-
-MASCP.CondensedSequenceRenderer.prototype.resizeTracks = function() {
-    if (this._track_container) {
-        this._track_container.style.width = 2*this.sequence.length+'px';
-    }    
-};
-
-MASCP.CondensedSequenceRenderer.prototype.resizeContainer = function() {
-    if (this._container && this._canvas) {
-        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
-        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canv_height)+'px';
-//        this._container.style.height = (this._zoomLevel || 1)*2*this._canvas.getAttribute('height')+'px';
-    }    
-};
-
-
-MASCP.CondensedSequenceRenderer.prototype.showRowNumbers = function() {
-    return this;
-};
-
-MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
-    this.sequence = this._cleanSequence(sequence);
-    var seq_chars = this.sequence.split('');
-    var line_length = seq_chars.length;
-    var canvas = null;
-    var container = null;
-    var mouse_events = null;
-
-    if (this._object) {
-        var track_el = this._object.parentNode;        
-        svgweb.removeChild(this._object, this._object.parentNode);
-        track_el.parentNode.removeChild(track_el);
-        this._canvas = null;
-        this._object = null;
-    } 
-
-    container = jQuery('<div class="track"></div>')[0];
-    canvas = document.createElement('object',true);
-    canvas.setAttribute('data','blank.svg');
-    canvas.setAttribute('type','image/svg+xml');
-    canvas.setAttribute('width','100%');
-    canvas.setAttribute('height','100%');
-    canvas.addEventListener('load',function() {
-        renderer._canvas = this.contentDocument.rootElement;
-        renderer._object = this;
-        jQuery(renderer).trigger('svgready');
-        jQuery(renderer).trigger('sequenceready');
-    },false);        
-    jQuery(this._container).append(container);        
-
-    var renderer = this;
-    var seq_els = [];
+    layer.layer_id = new Date().getMilliseconds();
     
-    jQuery(seq_chars).each( function(i) {
-        var el = {};
-        el._index = i;
-        el._renderer = renderer;
-        el.addToLayer = MASCP.CondensedSequenceRenderer.addElementToLayer;
-        el.addBoxOverlay = MASCP.CondensedSequenceRenderer.addBoxOverlayToElement;
-        el.addToLayerWithLink = MASCP.CondensedSequenceRenderer.addElementToLayerWithLink;
-        seq_els.push(el);
-    });
-
-    this._sequence_els = seq_els;
-
-    jQuery(this).unbind('svgready');
-        
-    jQuery(this).bind('svgready',function() {
-    var canv = this._canvas;
-
-    canv.setAttribute('viewBox', '0 0 '+(line_length+20)+' 100');
-    canv.setAttribute('background', '#000000');
-
-    
-    canv.path = function(pathdesc) {
-      var a_path = document.createElementNS(svgns,'path');
-      a_path.setAttribute('d', pathdesc);
-      a_path.setAttribute('stroke','#000000');
-      this.appendChild(a_path);
-      return a_path;
-    };
-
-    canv.rect = function(x,y,width,height) {
-      var a_rect = document.createElementNS(svgns,'rect');
-      a_rect.setAttribute('x', x);
-      a_rect.setAttribute('y', y);
-      a_rect.setAttribute('width', width);
-      a_rect.setAttribute('height', height);
-      a_rect.setAttribute('stroke','#000000');
-      this.appendChild(a_rect);
-      return a_rect;
-    };
-
-    canv.set = function() {
-        var an_array = new Array();
-        an_array.attr = function(hash) {
-            for (var key in hash) {
-                for (var i = 0; i < an_array.length; i++) {
-                    an_array[i].setAttribute(key, hash[key]);
-                }
-            }
-        };
-        an_array.hide = function() {
-            this.attr({ 'display' : 'none'});
-        }
-        an_array.show = function() {
-            this.attr({ 'display' : 'block'});
-        }
-        return an_array;
-    };
-    
-    canv.text = function(x,y,text) {
-        var a_text = document.createElementNS(svgns,'text');
-        a_text.textContent = text;
-//        a_text.style.fontSize = '8pt';
-        a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
-        a_text.setAttribute('x',x);
-        a_text.setAttribute('y',y);        
-        this.appendChild(a_text);
-        return a_text;
-    };
-    
-    canv.setAttribute('preserveAspectRatio','xMinYMin meet');
-    canv.path('M10 20l'+line_length+' 0');
-    canv.path('M10 10 l0 20');
-    canv.path('M'+(10+line_length)+' 10 l0 20');
-    var x = 10;
-    var graph_els = {};
-    
-    var big_ticks = canv.set();
-    var little_ticks = canv.set();
-    var big_labels = canv.set();
-    var little_labels = canv.set();
-    
-    for (var i = 0; i < (line_length/5); i++ ) {
-
-        if ( (x % 10) == 0) {
-            big_ticks.push(canv.path('M'+x+' 14 l 0 12'));
-        } else {
-            little_ticks.push(canv.path('M'+x+' 16 l 0 8'));
-        }
-
-        if ( (x % 20) == 0 ) {
-            big_labels.push(canv.text(x,5,""+(x-10)));
-        } else if (( x % 10 ) == 0 && x != 10) {
-            little_labels.push(canv.text(x,7,""+(x-10)));
-        }
-
-        x += 5;
-    }
-    
-    for ( var i = 0; i < big_labels.length; i++ ) {
-        big_labels[i].style.textAnchor = 'middle';
-        big_labels[i].setAttribute('dominant-baseline','hanging');
-        big_labels[i].setAttribute('font-size','7pt');
-//        big_labels[i].childNodes[0].setAttribute('dominant-baseline','hanging');
-    }
-
-    for ( var i = 0; i < little_labels.length; i++ ) {
-        little_labels[i].style.textAnchor = 'middle';
-        little_labels[i].setAttribute('dominant-baseline','hanging');
-        little_labels[i].setAttribute('font-size','2pt');        
-        little_labels[i].style.fill = '#000000';
-    }
-    
-    little_ticks.attr({ 'stroke':'#555555', 'stroke-width':'0.5pt'});
-    little_ticks.hide();
-    little_labels.hide();
-    jQuery(renderer).bind('zoomchange', function() {
-       if (renderer.zoom > 1.8) {
-           big_labels.attr({'font-size':'4pt','y':'7'});
-           little_labels.attr({'font-size':'4pt'});
-           little_ticks.show();
-           little_labels.show();
-       } else {
-           big_labels.attr({'font-size':'7pt','y':'5'});
-           little_ticks.hide();
-           little_labels.hide();
-       }
-    });
-    graph_els['big_tickmarks'] = big_ticks;
-    graph_els['little_tickmarks'] = little_ticks;
-    });
-    
-    if (this._canvas) {
-       jQuery(this).trigger('svgready');
-    } else {
-        svgweb.appendChild(canvas,container);        
-    }
-    jQuery(this).trigger('sequencechange');    
+    jQuery(MASCP).trigger('layerRegistered',[layer]);
 };
-
-
-MASCP.CondensedSequenceRenderer.addElementToLayer = function(layerName) {
-    var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(10+this._index,60,2,4);
-    this._renderer._layer_containers[layerName].push(rect);
-    rect.style.strokeWidth = '0px';
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
-    rect.setAttribute('display', 'none');
-    rect.setAttribute('class',layerName);
-};
-
-MASCP.CondensedSequenceRenderer.addBoxOverlayToElement = function(layerName,fraction,width) {
-    var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(10+this._index,60,width,4);
-    this._renderer._layer_containers[layerName].push(rect);
-    rect.setAttribute('class',layerName);
-    rect.style.strokeWidth = '0px';
-    rect.setAttribute('display', 'none');
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
-};
-
-MASCP.CondensedSequenceRenderer.addElementToLayerWithLink = function(layerName,url,width) {
-    var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(10+this._index,60,width,4);
-    this._renderer._layer_containers[layerName].push(rect);
-    rect.style.strokeWidth = '0px';    
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
-    rect.setAttribute('display', 'none');
-    rect.setAttribute('class',layerName);
-};
-
-MASCP.CondensedSequenceRenderer.prototype.clearTracks = function() {
-    if ( this._layer_containers ) {
-        this._layer_containers = null;
-    }
-};
-
-MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
-    if ( ! this._canvas ) {
-        log("No canvas to draw upon");
-        return;
-    }
-    if ( ! this._layer_containers ) {
-        this._layer_containers = {};
-        this._track_order = [];
-    }
-    if ( ! this._layer_containers[layer.name]) {                
-        this._layer_containers[layer.name] = this._canvas.set();
-        this._track_order.push(layer.name);
-        var self = this;
-        jQuery(layer).bind('change',function(e,renderer) {
-            if (renderer != self) {
-                return;
-            }
-            self.reflowTracks();
-            self.resizeContainer();
-        });
-    }
-    this.hideLayer(layer);
-};
-
-MASCP.CondensedSequenceRenderer.prototype.reflowTracks = function() {
-    var track_heights = 20;
-    for (var i = 0; i < this._track_order.length; i++ ) {
-        if (this.isLayerActive(this._track_order[i])) {
-            track_heights += 10;
-        }
-        this._layer_containers[this._track_order[i]].attr({ 'y' : track_heights });
-    }    
-    var currViewBox = this._canvas.getAttribute('viewBox') ? this._canvas.getAttribute('viewBox').split(/\s/) : [0,0,(this.sequence.split('').length+20),0];
-    this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(track_heights+10));
-//    this._canvas.setAttribute('width',currViewBox[2]);
-//    this._canvas.setAttribute('height', (track_heights+10));
-    this._canvas._canv_height = (track_heights+10);
-};
-
-MASCP.CondensedSequenceRenderer.prototype.trackOrder = function() {
-    return this._track_order;
-};
-
-/**
- * Show the given layer
- * @param {String|Object} layer Layer name, or layer object
- */
-MASCP.CondensedSequenceRenderer.prototype.showLayer = function(layer,consumeChange) {
-    var layerName = layer;
-    if (typeof layer != 'string') {
-        layerName = layer.name;
-    } else {
-        layer = MASCP.SequenceRenderer._layers[layer];
-    }
-    this._layer_containers[layerName].attr({ 'display' : 'block' });    
-
-    jQuery(this._container).addClass(layerName+'_active');
-    jQuery(this._container).addClass('active_layer');    
-    jQuery(this._container).removeClass(layerName+'_inactive');
-    if (! consumeChange ) {
-        jQuery(layer).trigger('change',this);
-    }
-    return this;
-};
-
-/**
- * Hide the given layer
- * @param {String|Object} layer Layer name, or layer object
- */
-MASCP.CondensedSequenceRenderer.prototype.hideLayer = function(layer,consumeChange) {
-    var layerName = layer;
-    if (typeof layer != 'string') {
-        layerName = layer.name;
-    } else {
-        layer = MASCP.SequenceRenderer._layers[layer];
-    }
-    
-    jQuery(this._container).removeClass(layerName+'_active');
-    jQuery(this._container).removeClass('active_layer');
-    jQuery(this._container).addClass(layerName+'_inactive');
-    this._layer_containers[layerName].attr({ 'display' : 'none' });    
-    if (! consumeChange ) {
-        jQuery(layer).trigger('change',this);
-    }
-    return this;
-};
-
-MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("zoom", function(zoomLevel) {
-   this._zoomLevel = zoomLevel;
-   this.resizeContainer();
-   jQuery(this).trigger('zoomchange');
-//   this._container.style.width = 2*zoomLevel*this.sequence.split('').length+'px'; 
-//   this._container.style.height = 'auto';
-});
-
-MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("zoom", function() {
-   return this._zoomLevel;
-});
-
-
-//MASCP.CondensedSequenceRenderer.prototype.makeDraggable = GOMap.Diagram.prototype.makeDraggable;
