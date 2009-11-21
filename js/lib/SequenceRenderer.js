@@ -21,7 +21,7 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
         this._container.style.position = 'relative';
         this._container.style.width = '100%';
 
-        jQuery(this).bind('sequencechange', function(e){
+        jQuery(this).bind('sequenceChange', function(e){
             jQuery(sequenceContainer).text("");
             jQuery(sequenceContainer).append(this._sequence_els);
             jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
@@ -32,6 +32,22 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
     }
     return this;
 };
+
+/**
+ * @name    MASCP.SequenceRenderer#sequenceChange
+ * @event
+ * @param   {Object}    e
+ */
+
+/**
+ * @name    MASCP.SequenceRenderer#visibilityChange
+ * @event
+ * @param   {Object}    e
+ * @param   {Object}    renderer
+ * @param   {Boolean}   visibility
+ */
+
+
 
 /**
  *  @lends MASCP.SequenceRenderer.prototype
@@ -80,7 +96,7 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
         this.addToLayerWithLink = MASCP.SequenceRenderer.addElementToLayerWithLink;
     });
     this._sequence_els = sequence_els;   
-    jQuery(this).trigger('sequencechange');
+    jQuery(this).trigger('sequenceChange');
 };
 
 
@@ -231,7 +247,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
         }
     });
     if (visibility != null) {
-        jQuery(group).trigger('change',[renderer,visibility]);
+        jQuery(group).trigger('visibilityChange',[renderer,visibility]);
     }
 };
 

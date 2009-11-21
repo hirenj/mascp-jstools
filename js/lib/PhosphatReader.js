@@ -41,7 +41,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
             data.request_method = method;
             self._dataReceived(data,status);
             if (self.result && self.result._raw_data && self.result._raw_experimental_data) {
-               jQuery(self).trigger('resultreceived'); 
+               jQuery(self).trigger('resultReceived'); 
             }
         }
     };
@@ -136,7 +136,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
 	MASCP.SequenceRenderer.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
 	MASCP.SequenceRenderer.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
 
-    this.bind('resultreceived', function() {
+    this.bind('resultReceived', function() {
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllPredictedPositions())).each(function(i) {
             MASCP.SequenceRenderer.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
         	MASCP.SequenceRenderer.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });

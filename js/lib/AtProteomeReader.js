@@ -193,7 +193,7 @@ MASCP.AtProteomeReader = MASCP.buildService(function(data) {
 MASCP.AtProteomeReader.lookupAgi = function(agi,reader)
 {
     if (! this.agi_cache || ! this.agi_cache[agi]) {
-        new MASCP.AtProteomeIdReader(agi,reader._endpointURL).bind("resultreceived", function (e) {
+        new MASCP.AtProteomeIdReader(agi,reader._endpointURL).bind("resultReceived", function (e) {
             if ( ! MASCP.AtProteomeReader.agi_cache ) {
                 MASCP.AtProteomeReader.agi_cache = [];
             }
@@ -218,7 +218,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
         return null;
     }
     if ( protein_id < 0 ) {
-        jQuery(this).trigger('resultreceived');        
+        jQuery(this).trigger('resultReceived');        
     }
     
     var self = this;
@@ -236,7 +236,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
             self._dataReceived(data,status);
             if (self.result) {
                 jQuery(self.result).bind('spectrareceived',function() {
-                   jQuery(self).trigger('resultreceived'); 
+                   jQuery(self).trigger('resultReceived'); 
                 });
                 self.result.retrieveSpectraByTissue();
             }
@@ -329,7 +329,7 @@ MASCP.AtProteomeReader.Result.prototype.retrieveSpectraByTissue = function()
 
         new function() { 
             var some_tissue = tissue_name;
-        tissue_reader.bind("resultreceived",function() {
+        tissue_reader.bind("resultReceived",function() {
             total_tissues--;
             this_result.spectra[some_tissue] = this.result.getTotalSpectra();
             this_result.peptide_counts_by_tissue[some_tissue] = this.result.getPeptideCounts();
@@ -363,7 +363,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
 {
 	MASCP.SequenceRenderer.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true });
 
-    this.bind('resultreceived', function() {
+    this.bind('resultReceived', function() {
         var tissues = this.result? this.result.tissues() : [];
         for (var tiss in tissues) {
             var tissue = tissues[tiss];

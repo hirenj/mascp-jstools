@@ -122,7 +122,7 @@ MASCP.lazyDataFetch = function(element,proxy)
     
     jQuery(readers).each(function(i) {
         var a_reader = this;
-       jQuery(this).bind('resultreceived',function() {
+       jQuery(this).bind('resultReceived',function() {
            result_count++;
            jQuery('.results',result_container).each(function(i) {
                if (a_reader.result) {
@@ -240,7 +240,7 @@ MASCP.Service.prototype.bind = function(type,func)
 };
 
 /**
- * @name    MASCP.Service#resultreceived
+ * @name    MASCP.Service#resultReceived
  * @event
  * @param   {Object}    e
  */
@@ -254,7 +254,7 @@ MASCP.Service.prototype.bind = function(type,func)
 
 /**
  *  Asynchronously retrieves data from the remote source. When data is received, a 
- *  resultreceived.mascp event is triggered upon this service, while an error.mascp
+ *  resultReceived.mascp event is triggered upon this service, while an error.mascp
  *  event is triggered when an error occurs. This method returns a reference to self
  *  so it can be chained.
  */
@@ -274,8 +274,8 @@ MASCP.Service.prototype.retrieve = function()
                     },
         success:    function(data,status) {
                         self._dataReceived(data,status);
-                        jQuery(self).trigger("resultreceived");
-                        jQuery(MASCP.Service).trigger("resultreceived");
+                        jQuery(self).trigger("resultReceived");
+                        jQuery(MASCP.Service).trigger("resultReceived");
                     }
         },request_data)
     );

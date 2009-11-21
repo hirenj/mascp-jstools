@@ -93,7 +93,7 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
     MASCP.SequenceRenderer.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true });
 
-    this.bind('resultreceived', function() {
+    this.bind('resultReceived', function() {
         var spectra = this.result.getSpectraURLs();
         // var css_block = '.active { background: #ff9900; color: #ffffff;} :indeterminate { background: #ff0000; } .active a:hover { background: transparent !important; } .inactive { }';
         var css_block = '.active { text-decoration: underline; color: #000000; } .active a { color: #000000; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
