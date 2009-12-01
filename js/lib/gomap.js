@@ -539,6 +539,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     targetElement.setAttribute('cursor','pointer');    
     
+    if ( ! targetElement.addEventListener) {
+        targetElement.addEventListener = function(name,func,bool) {
+            this.attachEvent(name,func);
+        }
+    }
+    
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
@@ -563,6 +569,15 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
     var reset = document.createElement('input');
     reset.setAttribute('type','button');
     reset.setAttribute('value','Reset');
+    
+    if (! zoomIn.addEventListener) {
+        var addevlis = function(name,func) {
+            this.attachEvent(name,func);
+        };
+        zoomIn.addEventListener = addevlis;
+        reset.addEventListener = addevlis;
+        zoomOut.addEventListener = addevlis;        
+    }
     zoomIn.addEventListener('click',function() {
         zoomElement.zoom += 0.1;
     },false);
@@ -572,6 +587,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
     zoomOut.addEventListener('click',function() {
         zoomElement.zoom -= 0.1;
     },false);
+
     controls_container.appendChild(zoomIn);
     controls_container.appendChild(reset);    
     controls_container.appendChild(zoomOut);

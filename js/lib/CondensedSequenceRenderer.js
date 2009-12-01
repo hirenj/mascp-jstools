@@ -21,6 +21,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
             MASCP.SequenceRenderer._layers[layername].disabled = true;
         }
         self.resizeContainer();
+        self.zoom = self.zoom;
     });
     return this;
 };
@@ -120,25 +121,42 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
 
 MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var seq_chars = this.sequence.split('');
-    
+    var renderer = this;
     var amino_acids = canvas.set();
-    var x = 10;
+    var x = 0;
     
-    log("Drawing on the amino acids");
-    log(seq_chars.length);
     for (var i = 0; i < seq_chars.length; i++) {
-        amino_acids.push(canvas.text(x,30,seq_chars[i]));
+        amino_acids.push(canvas.text(x,12,seq_chars[i]));
         x += 1;
     }
-    amino_acids.attr( { 'width': '1','text-anchor':'start','dominant-baseline':'hanging','height': '1','font-size':'1','fill':'#000000', 'font-family':'monospace'});
+    amino_acids.attr( { 'display':'none','width': '1','text-anchor':'start','dominant-baseline':'hanging','height': '1','font-size':'1','fill':'#000000', 'font-family':'monospace'});
+    jQuery(canvas).bind('zoomchange', function() {
+       if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
+           renderer.zoom = 4;
+           return;
+       }
+       if (renderer.zoom > 3.8 && renderer.zoom < 4 ) {
+           renderer.zoom = 3.5;
+           return;
+       }
+       if (canvas.zoom > 3.5) {
+           renderer._axis_height = 6;
+           amino_acids.attr({'display':'block'});
+       } else {
+           renderer._axis_height = 20;
+           amino_acids.attr({'display':'none'});           
+       }
+       renderer.reflowTracks();
+       renderer.resizeContainer();
+   });
 };
 
 MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
-    var x = 10;
-
-    canvas.path('M10 20l'+lineLength+' 0');
-    canvas.path('M10 10 l0 20');
-    canvas.path('M'+(10+lineLength)+' 10 l0 20');
+    var x = 0;
+    var axis = canvas.set();
+//    axis.push(canvas.path('M0 10l'+lineLength+' 0'));
+    axis.push(canvas.path('M0 10 l0 20'));
+    axis.push(canvas.path('M'+(lineLength)+' 10 l0 20'));
     
     var big_ticks = canvas.set();
     var little_ticks = canvas.set();
@@ -153,10 +171,10 @@ MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
             little_ticks.push(canvas.path('M'+x+' 16 l 0 8'));
         }
 
-        if ( (x % 20) == 0 ) {
-            big_labels.push(canvas.text(x,5,""+(x-10)));
-        } else if (( x % 10 ) == 0 && x != 10) {
-            little_labels.push(canvas.text(x,7,""+(x-10)));
+        if ( (x % 20) == 0 && x != 0) {
+            big_labels.push(canvas.text(x,5,""+(x)));
+        } else if (( x % 10 ) == 0 && x != 0) {
+            little_labels.push(canvas.text(x,7,""+(x)));
         }
 
         x += 5;
@@ -180,12 +198,38 @@ MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
     little_labels.hide();
     
     jQuery(canvas).bind('zoomchange', function() {
-       if (canvas.zoom > 1.8) {
+       if (this.zoom > 3.6) {
+           little_ticks.hide();
+           big_ticks.hide();
+           little_labels.attr({'font-size':'2pt'});
+           big_labels.attr({'font-size': '2pt'});
+           axis.hide();
+           if (this.tracers) {
+               this.tracers.show();
+           }
+       } else if (this.zoom > 1.8) {
+           axis.show();
+           big_ticks.show();
+           axis.attr({'stroke-width':'0.5pt'});
+           big_ticks.attr({'stroke-width':'0.5pt'});
+           big_labels.show();
            big_labels.attr({'font-size':'4pt','y':'7'});
            little_labels.attr({'font-size':'4pt'});
+           little_ticks.attr({'stroke-width':'0.3pt'});
            little_ticks.show();
            little_labels.show();
+           if (this.tracers) {
+            this.tracers.hide();
+            }
        } else {
+            if (this.tracers) {
+            this.tracers.hide();
+            }
+           axis.show();
+           axis.attr({'stroke-width':'1pt'});
+           big_ticks.show();
+           big_ticks.attr({'stroke-width':'1pt'});
+           big_labels.show();
            big_labels.attr({'font-size':'7pt','y':'5'});
            little_ticks.hide();
            little_labels.hide();
@@ -229,7 +273,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         canv.setAttribute('viewBox', '0 0 '+(line_length+20)+' 100');
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
-
+        renderer._axis_height = 20;
         MASCP.CondensedSequenceRenderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
         jQuery(renderer).trigger('sequenceChange');
@@ -245,17 +289,32 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
 MASCP.CondensedSequenceRenderer.addElementToLayer = function(layerName) {
     var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(9.75+this._index,60,1,4);
+    var rect =  canvas.rect(-0.25+this._index,60,1,4);    
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';
     rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
+
+    var tracer = canvas.rect(this._index+0.25,10,0.1,0);
+    tracer.style.strokeWidth = '0px';
+    tracer.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+    tracer.setAttribute('display','none');
+    
+    if ( ! this._renderer._layer_containers[layerName].tracers) {
+        this._renderer._layer_containers[layerName].tracers = canvas.set();
+    }
+    if ( ! canvas.tracers ) {
+        canvas.tracers = canvas.set();
+    }
+    
+    this._renderer._layer_containers[layerName].tracers.push(tracer);
+    canvas.tracers.push(tracer);
 };
 
 MASCP.CondensedSequenceRenderer.addBoxOverlayToElement = function(layerName,fraction,width) {
     var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(9.75+this._index,60,width || 1,4);
+    var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
@@ -265,7 +324,7 @@ MASCP.CondensedSequenceRenderer.addBoxOverlayToElement = function(layerName,frac
 
 MASCP.CondensedSequenceRenderer.addElementToLayerWithLink = function(layerName,url,width) {
     var canvas = this._renderer._canvas;
-    var rect =  canvas.rect(9.75+this._index,60,width || 1,4);
+    var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';    
     rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
@@ -299,12 +358,19 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.reflowTracks = function() {
-    var track_heights = 20;
+    var track_heights = this._axis_height;
+    if ( ! this._track_order ) {
+        return;
+    }
     for (var i = 0; i < this._track_order.length; i++ ) {
         if (this.isLayerActive(this._track_order[i])) {
             track_heights += 10;
         }
         this._layer_containers[this._track_order[i]].attr({ 'y' : track_heights });
+        if (this._layer_containers[this._track_order[i]].tracers) {
+            var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
+            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style ,'height' : track_heights - 10 });
+        }
     }
     var currViewBox = this._canvas.getAttribute('viewBox') ? this._canvas.getAttribute('viewBox').split(/\s/) : [0,0,(this.sequence.split('').length+20),0];
     this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(track_heights+10));
@@ -374,7 +440,7 @@ MASCP.CondensedSequenceRenderer.prototype.hideLayer = function(lay,consumeChange
     return this;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("zoom", function(zoomLevel) {
+MASCP.CondensedSequenceRenderer.setZoom = function(zoomLevel) {
    this._zoomLevel = zoomLevel;
    this.resizeContainer();
    if (this._canvas) {
@@ -382,8 +448,18 @@ MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("zoom", function(zoom
        jQuery(this._canvas).trigger('zoomchange');
    }
    jQuery(this).trigger('zoomchange');
-});
+};
 
-MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("zoom", function() {
-   return this._zoomLevel;
-});
+MASCP.CondensedSequenceRenderer.getZoom = function() {
+    return this._zoomLevel;
+};
+
+if (MASCP.CondensedSequenceRenderer.prototype.__defineSetter__) {    
+MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("zoom", MASCP.CondensedSequenceRenderer.setZoom);
+MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("zoom", MASCP.CondensedSequenceRenderer.getZoom);
+} else {
+    // Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"zoom",{
+    //     get : MASCP.CondensedSequenceRenderer.getZoom,
+    //     set : MASCP.CondensedSequenceRenderer.setZoom
+    // });
+}
