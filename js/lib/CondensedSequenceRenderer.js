@@ -31,7 +31,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 MASCP.CondensedSequenceRenderer.prototype.resizeContainer = function() {
     if (this._container && this._canvas) {
         this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
-        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canv_height)+'px';
+        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height)+'px';
     }    
 };
 
@@ -60,7 +60,8 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     canvas.setAttribute('height','100%');
     
     canvas.addEventListener('load',function() {
-        renderer._canvas = this.contentDocument.rootElement;
+        renderer._canvas = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
+        renderer._canvas._canvas_height = 0;
         renderer._object = this;
         jQuery(renderer).trigger('svgready');
     },false);
@@ -130,6 +131,13 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         x += 1;
     }
     amino_acids.attr( { 'display':'none','width': '1','text-anchor':'start','dominant-baseline':'hanging','height': '1','font-size':'1','fill':'#000000', 'font-family':'monospace'});
+
+    try {
+        var foo = canvas.addEventListener;
+    } catch(err) {
+        log("Browser does not support addEventListener");
+        return;
+    }
     jQuery(canvas).bind('zoomchange', function() {
        if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
            renderer.zoom = 4;
@@ -162,7 +170,6 @@ MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
     var little_ticks = canvas.set();
     var big_labels = canvas.set();
     var little_labels = canvas.set();
-    
     for (var i = 0; i < (lineLength/5); i++ ) {
 
         if ( (x % 10) == 0) {
@@ -196,44 +203,50 @@ MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
     little_ticks.attr({ 'stroke':'#555555', 'stroke-width':'0.5pt'});
     little_ticks.hide();
     little_labels.hide();
-    
+
+    try {
+        var foo = canvas.addEventListener;
+    } catch(err) {
+        log("Browser does not support addEventListener");
+        return;
+    }
     jQuery(canvas).bind('zoomchange', function() {
-       if (this.zoom > 3.6) {
-           little_ticks.hide();
-           big_ticks.hide();
-           little_labels.attr({'font-size':'2pt'});
-           big_labels.attr({'font-size': '2pt'});
-           axis.hide();
-           if (this.tracers) {
-               this.tracers.show();
+           if (this.zoom > 3.6) {
+               little_ticks.hide();
+               big_ticks.hide();
+               little_labels.attr({'font-size':'2pt'});
+               big_labels.attr({'font-size': '2pt'});
+               axis.hide();
+               if (this.tracers) {
+                   this.tracers.show();
+               }
+           } else if (this.zoom > 1.8) {
+               axis.show();
+               big_ticks.show();
+               axis.attr({'stroke-width':'0.5pt'});
+               big_ticks.attr({'stroke-width':'0.5pt'});
+               big_labels.show();
+               big_labels.attr({'font-size':'4pt','y':'7'});
+               little_labels.attr({'font-size':'4pt'});
+               little_ticks.attr({'stroke-width':'0.3pt'});
+               little_ticks.show();
+               little_labels.show();
+               if (this.tracers) {
+                this.tracers.hide();
+                }
+           } else {
+                if (this.tracers) {
+                this.tracers.hide();
+                }
+               axis.show();
+               axis.attr({'stroke-width':'1pt'});
+               big_ticks.show();
+               big_ticks.attr({'stroke-width':'1pt'});
+               big_labels.show();
+               big_labels.attr({'font-size':'7pt','y':'5'});
+               little_ticks.hide();
+               little_labels.hide();
            }
-       } else if (this.zoom > 1.8) {
-           axis.show();
-           big_ticks.show();
-           axis.attr({'stroke-width':'0.5pt'});
-           big_ticks.attr({'stroke-width':'0.5pt'});
-           big_labels.show();
-           big_labels.attr({'font-size':'4pt','y':'7'});
-           little_labels.attr({'font-size':'4pt'});
-           little_ticks.attr({'stroke-width':'0.3pt'});
-           little_ticks.show();
-           little_labels.show();
-           if (this.tracers) {
-            this.tracers.hide();
-            }
-       } else {
-            if (this.tracers) {
-            this.tracers.hide();
-            }
-           axis.show();
-           axis.attr({'stroke-width':'1pt'});
-           big_ticks.show();
-           big_ticks.attr({'stroke-width':'1pt'});
-           big_labels.show();
-           big_labels.attr({'font-size':'7pt','y':'5'});
-           little_ticks.hide();
-           little_labels.hide();
-       }
     });
 };
 
@@ -241,6 +254,10 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     this.sequence = this._cleanSequence(sequence);
     var seq_chars = this.sequence.split('');
     var line_length = seq_chars.length;
+
+    if (line_length == 0) {
+        return;
+    }
 
     var renderer = this;
 
@@ -269,7 +286,6 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     jQuery(this).unbind('svgready').bind('svgready',function(canv) {
         var canv = renderer._canvas;
         MASCP.CondensedSequenceRenderer._extendWithSVGApi(canv);
-
         canv.setAttribute('viewBox', '0 0 '+(line_length+20)+' 100');
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
@@ -374,7 +390,7 @@ MASCP.CondensedSequenceRenderer.prototype.reflowTracks = function() {
     }
     var currViewBox = this._canvas.getAttribute('viewBox') ? this._canvas.getAttribute('viewBox').split(/\s/) : [0,0,(this.sequence.split('').length+20),0];
     this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(track_heights+10));
-    this._canvas._canv_height = (track_heights+10);
+    this._canvas._canvas_height = (track_heights+10);
 };
 
 MASCP.CondensedSequenceRenderer.prototype.trackOrder = function() {

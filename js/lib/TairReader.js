@@ -35,9 +35,9 @@ MASCP.TairReader.prototype.requestData = function()
 MASCP.TairReader.Result.prototype.getSequence = function() {
 	var inputs = this._data.getElementsByTagName('input');
 	for (var i = 0; i < inputs.length; i++ ) {
-		if (inputs[i].name == 'sequence') {
-			return inputs[i].value;
+		if (inputs[i].getAttribute('name') == 'sequence') {
+			return inputs[i].getAttribute('value');
 		}
 	}
-	return '';
+	return null;
 };

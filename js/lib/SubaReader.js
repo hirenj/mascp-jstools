@@ -195,6 +195,7 @@ MASCP.SubaReader.Result.prototype.render = function()
     var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
     
     if (typeof GOMap != 'undefined' && do_diagrams) {
+        
         container.text('');
         var map = new GOMap.Diagram('cell.svg');
         var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');

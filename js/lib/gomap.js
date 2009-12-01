@@ -9,9 +9,9 @@
  */
 if (document.write) {
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
+        document.write('<script src="'+SVGWEB_PATH+'svg-uncompressed.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
-        document.write('<script src="svgweb/src/svg.js" data-path="svgweb/src/"></script>');
+        document.write('<script src="svgweb/src/svg-uncompressed.js" data-path="svgweb/src/"></script>');
     }
 }
 
@@ -83,7 +83,8 @@ GOMap.Diagram = function(image) {
 
     var self = this;
     this._element.addEventListener('load',function() {
-        self._element = this.contentDocument.rootElement;
+        self._element = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
+        self._object = this;
         self._svgLoaded();
         if (typeof jQuery != 'undefined') {
             jQuery(self).trigger('onload');
@@ -96,6 +97,10 @@ GOMap.Diagram = function(image) {
     }
     
 };
+
+GOMap.Diagram.prototype.destroy = function() {
+    svgweb.removeChild(this._object, this._object.parentNode);
+}
 
 /**
  * Retrieve the SVG element for this diagram
@@ -599,6 +604,13 @@ GOMap.Diagram.prototype.makeDraggable = function() {
     var root = this._element;
     var container = this._container;
 
+    try {
+        var foo = root.addEventListener;
+    } catch(err) {
+        log("Browser does not support addEventListener");
+        return;
+    }
+    
     new GOMap.Diagram.Dragger().applyToElement(root);
 //    GOMap.Diagram.createDragEvents(root);
 

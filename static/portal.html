@@ -7,6 +7,7 @@
 
 	<title>GATOR</title>
 	<link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
+<!--	<script language="javascript" type="text/javascript" src="http://getfirebug.com/releases/lite/1.2/firebug-lite.js"></script>-->
 	<script type="text/javascript">SVGWEB_PATH='../js/lib/svgweb/';</script>
 	<script type="text/javascript" src="../js/lib/gomap.js"></script>
 	<script type="text/javascript" src="../js/jquery-1.3.2.min.js"></script>
@@ -93,7 +94,9 @@
 		dragger.applyToElement(document.getElementById('condensed_container').parentNode);
 		dragger.targetElement = document.getElementById('condensed_container').parentNode;
 		jQuery(MASCP.condensed).bind('sequenceChange', function() {
-			dragger.applyToElement(MASCP.condensed._canvas);
+			if ( ! MASCP.IE ) {
+				dragger.applyToElement(MASCP.condensed._canvas);
+			}
 		})
 		jQuery(MASCP).bind('layerRegistered', function(e,layer) {
 			MASCP.condensed.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
@@ -112,7 +115,6 @@
 			jQuery('#hydropathy_container img').css({'width' : (this.sequence.length * 2)+'px'});
 		});
 		jQuery(MASCP.condensed).bind('sequenceChange',function() {
-			
 			if (MASCP.condensed.sequence == '') {
 				return;
 			}
@@ -121,8 +123,13 @@
 				throw "Nooo!!!";
 			}
 			var agi = jQuery('#agi')[0].value;
-			
 			MASCP.condensed.reset();
+			
+			if (MASCP.SubaReader.existing_map) {
+	            log("Removing existing map");
+				MASCP.SubaReader.existing_map.destroy();
+	        }
+	        
 			
 			var suba = new MASCP.SubaReader(agi,'../proxy.pl');
 			suba.retrieve();
@@ -130,6 +137,7 @@
 				jQuery('#suba_results').text('');
 				jQuery('#suba_results').append(this.result.render());				
 				if (true || this.result._map) {
+					MASCP.SubaReader.existing_map = this.result._map;
 					jQuery('#suba_results').append(this.result.mapController());
 				}
 			});
@@ -183,6 +191,7 @@
 			atproteome.registerSequenceRenderer(MASCP.condensed);
 			atproteome.retrieve();
 		});
+		
 		jQuery('#agi').trigger('change');
 	});
 
@@ -192,18 +201,17 @@
 			return;
 		}
 		jQuery('#selected_agi').text("Data for "+agi);
-		var reader = new MASCP.TairReader(this.value,'../proxy.pl');
-
+		var reader = new MASCP.TairReader(agi,'../proxy.pl');
 		jQuery(reader).bind('resultReceived',function() {
-
+			if (this.result.getSequence() == '') {
+				return;
+			}
 			MASCP.renderer.setSequence(this.result.getSequence());
 			jQuery('#hydropathy_container').text('');
-			jQuery('#hydropathy_container').append(MASCP.renderer.getHydropathyPlot());
-
+			jQuery('#hydropathy_container').append(MASCP.renderer.getHydropathyPlot());			
 			MASCP.condensed.setSequence(this.result.getSequence());
-						
-		});		
-		reader.retrieve();				
+		});
+		reader.retrieve();
 	});
 //]]>
 </script>
