@@ -374,23 +374,23 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.reflowTracks = function() {
-    var track_heights = this._axis_height;
+    var track_heights = 10.0;
     if ( ! this._track_order ) {
         return;
     }
     for (var i = 0; i < this._track_order.length; i++ ) {
         if (this.isLayerActive(this._track_order[i])) {
-            track_heights += 10;
+            track_heights += (10.0 / this.zoom);
         }
-        this._layer_containers[this._track_order[i]].attr({ 'y' : track_heights });
+        this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights), 'height' : 4 / this.zoom });
         if (this._layer_containers[this._track_order[i]].tracers) {
             var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
-            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style ,'height' : track_heights - 10 });
+            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style ,'height' : this._axis_height + track_heights - 10 });
         }
     }
     var currViewBox = this._canvas.getAttribute('viewBox') ? this._canvas.getAttribute('viewBox').split(/\s/) : [0,0,(this.sequence.split('').length+20),0];
-    this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(track_heights+10));
-    this._canvas._canvas_height = (track_heights+10);
+    this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(this._axis_height + track_heights+10));
+    this._canvas._canvas_height = (this._axis_height + track_heights+10);
 };
 
 MASCP.CondensedSequenceRenderer.prototype.trackOrder = function() {
