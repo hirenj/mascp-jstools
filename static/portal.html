@@ -41,8 +41,12 @@
 			opacity: 0.1;
 		}
 
-		#sequence_controllers > div {
+		#sequence_controllers > li {
 			display: none;
+		}
+
+		#sequence_controllers {
+			list-style: none;
 		}
 
 		#suba_results {
@@ -67,12 +71,12 @@
 	<label for="agi">Select AGI </label><input id="agi" type="text" name="agi" value="AT1G58360.1"/>
 </div>
 <h2 id="selected_agi"></h2>
-<div style="margin-bottom: 10px;" id="sequence_controllers">
-	<div id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</div>
-	<div id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</div>
-	<div id="promex"><input type="checkbox"/> ProMeX</div>
-	<div id="atproteome"><input type="checkbox"/> ATProteome</div>
-</div>
+<ul style="margin-bottom: 10px;" id="sequence_controllers">
+	<li id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</li>
+	<li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>
+	<li id="promex_experimental"><input type="checkbox"/> ProMeX</li>
+	<li id="atproteome"><input type="checkbox"/> ATProteome</li>
+</ul>
 <div style="overflow: auto; width: auto; margin-right: 320px; height: 300px;">
 <div id="condensed_container" ></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
@@ -101,15 +105,20 @@
 		jQuery(MASCP).bind('layerRegistered', function(e,layer) {
 			MASCP.condensed.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
 			MASCP.condensed.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);		
-			MASCP.condensed.createGroupCheckbox('promex_experimental',jQuery('#promex input')[0]);		
+			MASCP.condensed.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);		
 			MASCP.condensed.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
 
 			MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
 			MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);		
-			MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex input')[0]);		
+			MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);		
 			MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
-
-	    });	    
+			jQuery('#sequence_controllers').sortable({
+				update: function(event, ui) {
+					MASCP.condensed.setTrackOrder(jQuery('#sequence_controllers').sortable('toArray'));
+					MASCP.condensed.reflowTracks();
+				},
+			});
+	    });
 
 		jQuery(MASCP.condensed).bind('sequenceChange',function() {
 			jQuery('#hydropathy_container img').css({'width' : (this.sequence.length * 2)+'px'});
@@ -170,11 +179,11 @@
 				MASCP.condensed.hideGroup('promex_experimental');
 				MASCP.condensed.showGroup('promex_experimental');
 				if (this.result.getSpectraURLs().length > 0) {
-					jQuery('#promex').attr('checked',false).show();
-					jQuery('#promex input').trigger('change');	
+					jQuery('#promex_experimental').attr('checked',false).show();
+					jQuery('#promex_experimental input').trigger('change');	
 				}			
 			});
-			jQuery('#promex').hide();
+			jQuery('#promex_experimental').hide();
 			promex.registerSequenceRenderer(MASCP.renderer);
 			promex.registerSequenceRenderer(MASCP.condensed);
 			promex.retrieve();

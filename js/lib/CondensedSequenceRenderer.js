@@ -397,6 +397,21 @@ MASCP.CondensedSequenceRenderer.prototype.trackOrder = function() {
     return this._track_order;
 };
 
+MASCP.CondensedSequenceRenderer.prototype.setTrackOrder = function(order) {
+    var track_order = [];
+    for (var i = 0; i < order.length; i++) {
+        if (this.getLayer(order[i])) {
+            track_order.push(order[i]);
+        } else if (this.getGroup(order[i])) {
+            var group_layers = this.getGroup(order[i])._layers;
+            for (var j = 0; j < group_layers.length; j++ ) {
+                track_order.push(group_layers[j].name);
+            }
+        }
+    }
+    this._track_order = track_order;
+}
+
 /**
  * Show the given layer
  * @param {String|Object} layer Layer name, or layer object

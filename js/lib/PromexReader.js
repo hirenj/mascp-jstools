@@ -91,7 +91,7 @@ MASCP.PromexReader.Result.prototype._cleanSequence = function(sequence)
 MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
 
-    MASCP.SequenceRenderer.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true });
+    MASCP.SequenceRenderer.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff9900' });
 
     this.bind('resultReceived', function() {
         var spectra = this.result.getSpectraURLs();

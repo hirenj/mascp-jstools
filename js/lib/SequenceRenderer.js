@@ -421,6 +421,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
             }
             the_input.checked = visibility;
         });
+        the_input.style.backgroundColor = layer.color;
     }
     return the_input;    
 };
@@ -481,6 +482,9 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
             }
             the_input[0].checked = visibility;
         });
+        if (the_input[0].parentNode) {
+            the_input[0].parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+groupObject.color+'; width: 1em; height: 1em;"></div>')[0],the_input[0]);
+        }
     } else {
         log("Too early for group bind");
     }
@@ -567,6 +571,10 @@ MASCP.SequenceRenderer.registerGroup = function(groupName, options)
         group['fullname'] = options['fullname'];
     }
     
+    if (options['color']) {
+        group['color'] = options['color'];
+    }
+
     group._layers = [];
 
     group.group_id = new Date().getMilliseconds();

@@ -361,7 +361,7 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
 
 MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-	MASCP.SequenceRenderer.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true });
+	MASCP.SequenceRenderer.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
     this.bind('resultReceived', function() {
         var tissues = this.result? this.result.tissues() : [];
