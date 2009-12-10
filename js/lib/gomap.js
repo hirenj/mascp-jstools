@@ -21,10 +21,10 @@ if (document.write) {
  *  @param  {Object}    message Message to log
  */
 log = (typeof log == 'undefined') ? function(msg) {
-    if (typeof msg == 'String') {
-        console.log("%s: %o", msg, this);
+    if (typeof msg == 'String' && arguments.length == 1) {
+        console.log("%s", msg);
     } else {
-        console.log("%o: %o", msg, this);
+        console.log.apply(console,arguments);
     }
     return this;
 } : log ;
