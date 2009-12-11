@@ -184,8 +184,6 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
  * @param {String|Object} layer Layer name, or layer object
  */
 MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
-    log("In regular renderer show layer showing %o",lay);
-    log(this._container);
     var layerName = lay;
     var layer;
     if (typeof lay != 'string') {
@@ -224,7 +222,7 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     jQuery(this._container).removeClass('active_layer');
     jQuery(this._container).addClass(layerName+'_inactive');
     if (! consumeChange ) {
-        jQuery(layer).trigger('visibilityChange',[this,true]);
+        jQuery(layer).trigger('visibilityChange',[this,false]);
     }
     return this;
 };
@@ -241,7 +239,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
     }
     var renderer = this;
     jQuery(group._layers).each(function(i) {
-        if (this.disabled) {
+        if (this.disabled && visibility) {
             return;
         }
         if (visibility == true) {
@@ -426,7 +424,12 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
             if (rend != renderer) {
                 return;
             }
-            the_input.checked = visibility;
+            if (visibility) {
+                the_input.checked = visibility;
+            } else {
+                the_input.checked = false;
+                the_input.removeAttribute('checked');
+            }
         });
         if (the_input.parentNode) {
             the_input.parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+layerObj.color+'; width: 1em; height: 1em;"></div>')[0],the_input);
@@ -436,9 +439,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     
     the_input._current_bindings.push({ 'layer' : layer , 'renderer' : renderer });
 
-    log("Binding %o to %o",the_input,this);
     jQuery(the_input).bind('change',function(e) {
-        log("In the change on %o",renderer);
         if (this.checked) {
             renderer.showLayer(layer,false);
         } else {
@@ -512,6 +513,9 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
                 return;
             }
             the_input[0].checked = visibility;
+            if ( ! visibility ) {
+                the_input[0].removeAttribute('checked');
+            }
         });
         if (the_input[0].parentNode) {
             the_input[0].parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+groupObject.color+'; width: 1em; height: 1em;"></div>')[0],the_input[0]);

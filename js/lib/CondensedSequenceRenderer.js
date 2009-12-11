@@ -312,6 +312,12 @@ MASCP.CondensedSequenceRenderer.addElementToLayer = function(layerName) {
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
 
+    var shine = canvas.rect(-0.25+this._index,60,1,4);
+    this._renderer._layer_containers[layerName].push(shine);    
+    shine.style.strokeWidth = '0px';
+    shine.style.fill = 'url(#track_shine)';
+    shine.setAttribute('display','none');
+
     var tracer = canvas.rect(this._index+0.25,10,0.1,0);
     tracer.style.strokeWidth = '0px';
     tracer.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
@@ -336,6 +342,13 @@ MASCP.CondensedSequenceRenderer.addBoxOverlayToElement = function(layerName,frac
     rect.style.strokeWidth = '0px';
     rect.setAttribute('display', 'none');
     rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+
+    var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
+    this._renderer._layer_containers[layerName].push(shine);    
+    shine.style.strokeWidth = '0px';
+    shine.style.fill = 'url(#track_shine)';
+    shine.setAttribute('display','none');
+
 };
 
 MASCP.CondensedSequenceRenderer.addElementToLayerWithLink = function(layerName,url,width) {
