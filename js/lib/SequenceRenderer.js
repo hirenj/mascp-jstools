@@ -643,6 +643,12 @@ MASCP.SequenceRenderer.prototype.reset = function()
     }
 };
 
+
+MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
+{
+    jQuery(this).bind(ev,func);
+};
+
 /**
  * Register a layer with metadata for all sequence renderers.
  * @static

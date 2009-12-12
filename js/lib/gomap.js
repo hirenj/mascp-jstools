@@ -574,28 +574,49 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
     var reset = document.createElement('input');
     reset.setAttribute('type','button');
     reset.setAttribute('value','Reset');
-    
-    if (! zoomIn.addEventListener) {
-        var addevlis = function(name,func) {
-            this.attachEvent(name,func);
-        };
-        zoomIn.addEventListener = addevlis;
-        reset.addEventListener = addevlis;
-        zoomOut.addEventListener = addevlis;        
-    }
-    zoomIn.addEventListener('click',function() {
-        zoomElement.zoom += 0.1;
-    },false);
+
+    controls_container.appendChild(reset);    
+
     reset.addEventListener('click',function() {
         zoomElement.zoom = 1;
     },false);
-    zoomOut.addEventListener('click',function() {
-        zoomElement.zoom -= 0.1;
-    },false);
+    
+    var range = document.createElement('input');
+    range.setAttribute('min','0.5');
+    range.setAttribute('max','10');
+    range.setAttribute('precision','0.5');
+    range.setAttribute('value','1'); 
+    range.setAttribute('type','range');
 
-    controls_container.appendChild(zoomIn);
-    controls_container.appendChild(reset);    
-    controls_container.appendChild(zoomOut);
+    if (range.type == 'range') {
+        range.addEventListener('change',function() {
+            zoomElement.zoom = this.value;
+        },false);
+        zoomElement.registerEvent('zoomchange',function() {
+            log("Setting value");
+            range.value = zoomElement.zoom;
+        },false);
+        controls_container.appendChild(range);
+    } else {
+        if (! zoomIn.addEventListener) {
+            var addevlis = function(name,func) {
+                this.attachEvent(name,func);
+            };
+            zoomIn.addEventListener = addevlis;
+            reset.addEventListener = addevlis;
+            zoomOut.addEventListener = addevlis;        
+        }
+        zoomIn.addEventListener('click',function() {
+            zoomElement.zoom += 0.1;
+        },false);
+        zoomOut.addEventListener('click',function() {
+            zoomElement.zoom -= 0.1;
+        },false);
+
+        controls_container.appendChild(zoomOut);
+        controls_container.appendChild(zoomIn);
+    }
+
     return controls_container;
 };
 
