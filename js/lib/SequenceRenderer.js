@@ -459,6 +459,9 @@ MASCP.SequenceRenderer.prototype.getLayer = function(layer) {
 };
 
 MASCP.SequenceRenderer.prototype.getGroup = function(group) {
+    if ( ! MASCP.SequenceRenderer._groups ) {
+        return;
+    }
     return (typeof group == 'string') ? MASCP.SequenceRenderer._groups[group] : group;
 };
 

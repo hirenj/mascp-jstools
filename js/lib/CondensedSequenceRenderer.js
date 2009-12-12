@@ -97,6 +97,12 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
             for (var key in hash) {
                 for (var i = 0; i < an_array.length; i++) {
                     an_array[i].setAttribute(key, hash[key]);
+                    if (key == 'y' && an_array[i].hasAttribute('d')) {
+                        var curr_path = an_array[i].getAttribute('d');
+                        var re = /M(\d+) (\d+)/;
+                        curr_path = curr_path.replace(re,'');
+                        an_array[i].setAttribute('d', 'M0 '+parseInt(hash[key])+' '+curr_path);
+                    }
                 }
             }
         };
@@ -270,6 +276,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         el.addToLayer = MASCP.CondensedSequenceRenderer.addElementToLayer;
         el.addBoxOverlay = MASCP.CondensedSequenceRenderer.addBoxOverlayToElement;
         el.addToLayerWithLink = MASCP.CondensedSequenceRenderer.addElementToLayerWithLink;
+        el.amino_acid = this;
         seq_els.push(el);
     });
 
@@ -289,6 +296,39 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         canv.setAttribute('viewBox', '0 0 '+(line_length+20)+' 100');
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
+        
+        var defs = document.createElementNS(svgns,'defs');
+        canv.appendChild(defs);
+        var gradient = document.createElementNS(svgns,'linearGradient');
+        gradient.setAttribute('id','track_shine');
+        gradient.setAttribute('x1','0%');
+        gradient.setAttribute('x2','0%');
+        gradient.setAttribute('y1','0%');
+        gradient.setAttribute('y2','100%');
+        defs.appendChild(gradient);
+        var stop1 = document.createElementNS(svgns,'stop');
+        var stop2 = document.createElementNS(svgns,'stop');
+        var stop3 = document.createElementNS(svgns,'stop');
+        stop1.setAttribute('offset','0%');
+        stop2.setAttribute('offset','50%');
+        stop3.setAttribute('offset','100%');
+        stop1.setAttribute('style','stop-color:#111111;stop-opacity:0.5');
+        stop3.setAttribute('style','stop-color:#111111;stop-opacity:0.5');
+        stop2.setAttribute('style','stop-color:#aaaaaa;stop-opacity:0.5');
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        gradient.appendChild(stop3);
+        
+        // <defs>
+        // <linearGradient id="track_shine" x1="0%" y1="0%" x2="0%" y2="100%">
+        // <stop offset="0%" style=""/>
+        // <stop offset="50%" style="stop-color:#aaaaaa;stop-opacity:1"/>
+        // <stop offset="100%" style="stop-color:#111111;stop-opacity:1"/>
+        // </linearGradient>
+        // </defs>
+        
+        
+        
         renderer._axis_height = 20;
         MASCP.CondensedSequenceRenderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
@@ -300,6 +340,54 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     } else {
         svgweb.appendChild(canvas,container);        
     }
+};
+
+MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(window_size) {
+    MASCP.SequenceRenderer.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
+    var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
+           'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
+           'L': 3.8,'K':-3.9,'M': 1.9,'F': 2.8,'P':-1.6,
+           'S':-0.8,'T':-0.7,'W':-0.9,'Y':-1.3,'V': 4.2 };
+//    var window_size = 5;
+    var plot_path = 'm'+(window_size-1)+' 0 ';
+    var last_value = null;
+    var max_value = -100;
+    var min_value = null;
+    var scale_factor = 2.5;
+    
+    for (var i = window_size; i < (this._sequence_els.length - window_size); i++ ) {
+        var value = 0;
+        for (var j = -1*window_size; j <= window_size; j++) {
+            value += kd[this._sequence_els[i+j].amino_acid[0]] / (window_size * 2 + 1);
+        }        
+        
+        if (scale_factor*value > max_value) {
+            max_value = scale_factor*value;
+        }
+        if (! min_value || scale_factor*value < min_value) {
+            min_value = scale_factor*value;
+        }
+//        this._sequence_els[i].hydropathy = value;
+        if ( ! last_value ) {
+            plot_path += ' m1 '+(-1*scale_factor*value);
+        } else {
+            plot_path += ' l1 '+(-1 * scale_factor * (last_value + value));
+        }
+        last_value = value * -1;
+    }
+    
+    var plot = this._canvas.path('M0 0 m0 '+max_value+' '+plot_path);
+    plot.setAttribute('stroke','#ff0000');
+    plot.setAttribute('stroke-width', '0.35');
+    plot.setAttribute('fill', 'none');
+    plot.setAttribute('display','none');
+    var axis = this._canvas.path('M0 0 m0 '+-1*min_value+' l'+this._sequence_els.length+' 0');
+    axis.setAttribute('stroke-width','0.2');    
+    log(plot.getAttribute('d'));
+    log(axis.getAttribute('d'));
+    this._layer_containers['hydropathy'].push(plot);    
+    this._layer_containers['hydropathy'].push(axis);
+    this._layer_containers['hydropathy'].track_height = -1 * min_value + max_value;
 };
 
 
@@ -359,6 +447,13 @@ MASCP.CondensedSequenceRenderer.addElementToLayerWithLink = function(layerName,u
     rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
+
+    var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
+    this._renderer._layer_containers[layerName].push(shine);    
+    shine.style.strokeWidth = '0px';
+    shine.style.fill = 'url(#track_shine)';
+    shine.setAttribute('display','none');
+
 };
 
 MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
@@ -400,6 +495,9 @@ MASCP.CondensedSequenceRenderer.prototype.reflowTracks = function() {
             var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
             this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style ,'height' : this._axis_height + track_heights - 10 });
         }
+        if (this._layer_containers[this._track_order[i]].track_height) {
+            track_heights += this._layer_containers[this._track_order[i]].track_height;
+        }
     }
     var currViewBox = this._canvas.getAttribute('viewBox') ? this._canvas.getAttribute('viewBox').split(/\s/) : [0,0,(this.sequence.split('').length+20),0];
     this._canvas.setAttribute('viewBox', '0 0 '+currViewBox[2]+' '+(this._axis_height + track_heights+10));
@@ -430,6 +528,7 @@ MASCP.CondensedSequenceRenderer.prototype.setTrackOrder = function(order) {
  * @param {String|Object} layer Layer name, or layer object
  */
 MASCP.CondensedSequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
+    log("In here for show layer %o",lay);
     var layerName = lay;
     var layer;
     if (typeof lay != 'string') {
@@ -439,11 +538,11 @@ MASCP.CondensedSequenceRenderer.prototype.showLayer = function(lay,consumeChange
         layer = MASCP.SequenceRenderer._layers[lay];
         layerName = lay;
     }
-    
+    log("I am here!! %o",layer);
     if (layer.disabled) {
         return;
     }
-    
+    log("Showing layer "+layerName);
     this._layer_containers[layerName].attr({ 'display' : 'block' });    
 
     jQuery(this._container).addClass(layerName+'_active');

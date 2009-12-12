@@ -76,10 +76,13 @@
 	<li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>
 	<li id="promex_experimental"><input type="checkbox"/> ProMeX</li>
 	<li id="atproteome"><input type="checkbox"/> ATProteome</li>
+	<li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
+<div style="position: relative;">
 <div style="overflow: auto; width: auto; margin-right: 320px; height: 300px;">
-<div id="condensed_container" ></div>
+<div id="condensed_container"></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
+</div>
 </div>
 </div>
 <div id="sequence_container" style="font-family: monospace;">
@@ -94,7 +97,12 @@
 			MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
 		} else {
 			MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
-			jQuery('#condensed_container').append(GOMap.Diagram.addZoomControls(MASCP.renderer));
+			var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
+			zoom_controls.style.position = 'absolute';
+			zoom_controls.style.top = '0px';
+			zoom_controls.style.left = '0px';
+			zoom_controls.style.float = 'left';		
+			jQuery('#condensed_container').parent().parent().append(zoom_controls);
 			var dragger = new GOMap.Diagram.Dragger();
 			dragger.applyToElement(document.getElementById('condensed_container').parentNode);
 			dragger.targetElement = document.getElementById('condensed_container').parentNode;
@@ -105,9 +113,11 @@
 		}
 		jQuery(MASCP).bind('layerRegistered', function(e,layer) {
 			MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
+
 			MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);		
 			MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);		
 			MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
+			MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0]);
 			jQuery('#sequence_controllers').sortable({
 				update: function(event, ui) {
 					if (MASCP.renderer.setTrackOrder) {
@@ -127,8 +137,12 @@
 				return;
 			}
 			
+			
 			var agi = jQuery('#agi')[0].value;
 			MASCP.renderer.reset();
+
+			MASCP.renderer.getHydropathyPlot(4);
+			jQuery('#hydropathy').show();					
 			
 			if (MASCP.SubaReader.existing_map) {
 	            log("Removing existing map");
@@ -202,8 +216,8 @@
 				return;
 			}
 			MASCP.renderer.setSequence(this.result.getSequence());
-			jQuery('#hydropathy_container').text('');
-			jQuery('#hydropathy_container').append(MASCP.renderer.getHydropathyPlot());			
+//			jQuery('#hydropathy_container').text('');
+//			jQuery('#hydropathy_container').append();			
 //			MASCP.renderer.setSequence(this.result.getSequence());
 		});
 		reader.retrieve();
