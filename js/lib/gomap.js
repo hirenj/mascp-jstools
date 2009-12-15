@@ -594,7 +594,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
         range.addEventListener('change',function() {
             zoomElement.zoom = this.value;
         },false);
-        zoomElement.registerEvent('zoomchange',function() {
+        zoomElement.registerEvent('zoomChange',function() {
             range.value = zoomElement.zoom;
         },false);
         controls_container.appendChild(range);

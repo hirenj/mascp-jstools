@@ -158,7 +158,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         log("Browser does not support addEventListener");
         return;
     }
-    jQuery(canvas).bind('zoomchange', function() {
+    jQuery(canvas).bind('zoomChange', function() {
        if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
            renderer.zoom = 4;
            return;
@@ -230,7 +230,7 @@ MASCP.CondensedSequenceRenderer._drawAxis = function(canvas,lineLength) {
         log("Browser does not support addEventListener");
         return;
     }
-    jQuery(canvas).bind('zoomchange', function() {
+    jQuery(canvas).bind('zoomChange', function() {
            if (this.zoom > 3.6) {
                little_ticks.hide();
                big_ticks.hide();
@@ -604,9 +604,9 @@ MASCP.CondensedSequenceRenderer.setZoom = function(zoomLevel) {
    this.resizeContainer();
    if (this._canvas) {
        this._canvas.zoom = zoomLevel;
-       jQuery(this._canvas).trigger('zoomchange');
+       jQuery(this._canvas).trigger('zoomChange');
    }
-   jQuery(this).trigger('zoomchange');
+   jQuery(this).trigger('zoomChange');
 };
 
 MASCP.CondensedSequenceRenderer.getZoom = function() {
