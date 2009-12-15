@@ -52,13 +52,17 @@
 		#suba_results {
 			width: 300px;
 			height: 300px;
-			position: absolute;
+/*			position: absolute;*/
 			top: 10px;
 			right: 10px;
-			border: solid #8888ff 5px;
+			float: left;
+/*			border: solid #8888ff 5px;
 			-moz-border-radius:10px 10px;
 			-webkit-border-radius:10px 10px;
 			border-radius:10px 10px;
+*/		}
+		#atproteome_map {
+			float: left;
 		}
 	</style>
 </head>
@@ -79,7 +83,7 @@
 	<li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
 <div style="position: relative;">
-<div style="overflow: auto; width: auto; margin-right: 320px; height: 300px;">
+<div style="overflow: auto; width: auto; height: 400px;">
 <div id="condensed_container"></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
 </div>
@@ -89,6 +93,7 @@
 </div>
 <div id="suba_results">
 </div>
+<div id="atproteome_map"></div>
 <script type="text/javascript">
 //<[CDATA[ 
 
@@ -126,6 +131,9 @@
 					}
 				},
 			});
+			jQuery(layer).bind('click',function() {
+				log("In click for %o",layer);
+			});
 	    });
 
 		jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -148,14 +156,20 @@
 	            log("Removing existing map");
 				MASCP.SubaReader.existing_map.destroy();
 	        }
-	        
+	
+	        if (MASCP.AtProteomeReader.existing_map) {
+	            log("Removing existing map");
+				MASCP.AtProteomeReader.existing_map.destroy();		
+			}
+	
+	
 			
 			var suba = new MASCP.SubaReader(agi,'../proxy.pl');
 			suba.retrieve();
 			jQuery(suba).bind('resultReceived',function() {
 				jQuery('#suba_results').text('');
 				jQuery('#suba_results').append(this.result.render());				
-				if (true || this.result._map) {
+				if (this.result._map) {
 					MASCP.SubaReader.existing_map = this.result._map;
 					jQuery('#suba_results').append(this.result.mapController());
 				}
@@ -195,6 +209,11 @@
 				if (this.result == null) {
 					return;
 				}
+				if (this._map) {
+					MASCP.AtProteomeReader.existing_map = this._map;
+					jQuery('#atproteome_map').append(this._map_container);
+				}
+				
 				jQuery('#atproteome').show();
 			});
 			jQuery('#atproteome').hide();

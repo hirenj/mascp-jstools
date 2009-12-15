@@ -108,10 +108,24 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
         };
         an_array.hide = function() {
             this.attr({ 'display' : 'none'});
-        }
+        };
         an_array.show = function() {
             this.attr({ 'display' : 'block'});
-        }
+        };
+        an_array._old_push = an_array.push;
+        an_array._event_proxy = new Object();
+        
+        var event_func = function(ev) {
+            jQuery(an_array._event_proxy).trigger(ev.type);
+        };
+        
+        an_array.push = function(new_el) {
+            this._old_push(new_el);
+            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup'];
+            for (var i = 0 ; i < event_names.length; i++) {
+                jQuery(new_el).bind(event_names[i], event_func);
+            }
+        };
         return an_array;
     };
     
@@ -383,8 +397,6 @@ MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(window_si
     plot.setAttribute('display','none');
     var axis = this._canvas.path('M0 0 m0 '+-1*min_value+' l'+this._sequence_els.length+' 0');
     axis.setAttribute('stroke-width','0.2');    
-    log(plot.getAttribute('d'));
-    log(axis.getAttribute('d'));
     this._layer_containers['hydropathy'].push(plot);    
     this._layer_containers['hydropathy'].push(axis);
     this._layer_containers['hydropathy'].track_height = -1 * min_value + max_value;
@@ -477,6 +489,13 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             renderer.reflowTracks();
             renderer.resizeContainer();
         });
+        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup'];
+        for (var i = 0 ; i < event_names.length; i++) {
+            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev) {
+                jQuery(layer).trigger(ev.type);
+            });
+        }
+        
     }
     this.hideLayer(layer);
 };
@@ -528,7 +547,6 @@ MASCP.CondensedSequenceRenderer.prototype.setTrackOrder = function(order) {
  * @param {String|Object} layer Layer name, or layer object
  */
 MASCP.CondensedSequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
-    log("In here for show layer %o",lay);
     var layerName = lay;
     var layer;
     if (typeof lay != 'string') {
@@ -538,11 +556,9 @@ MASCP.CondensedSequenceRenderer.prototype.showLayer = function(lay,consumeChange
         layer = MASCP.SequenceRenderer._layers[lay];
         layerName = lay;
     }
-    log("I am here!! %o",layer);
     if (layer.disabled) {
         return;
     }
-    log("Showing layer "+layerName);
     this._layer_containers[layerName].attr({ 'display' : 'block' });    
 
     jQuery(this._container).addClass(layerName+'_active');

@@ -564,7 +564,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 };
 
 GOMap.Diagram.addZoomControls = function(zoomElement) {
-    var controls_container = document.createElement('div');    
+    var controls_container = document.createElement('div');
+    controls_container.style.height = '30%';   
     var zoomIn = document.createElement('input');
     zoomIn.setAttribute('type','button');
     zoomIn.setAttribute('value','+');
@@ -587,13 +588,13 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
     range.setAttribute('precision','0.5');
     range.setAttribute('value','1'); 
     range.setAttribute('type','range');
+    range.setAttribute('style','-webkit-appearance: slider-vertical; height: 100%; width: 1em; position: absolute; top: 0px; margin-top: 2em; left: 50%; margin-left: -0.5em;');
 
     if (range.type == 'range') {
         range.addEventListener('change',function() {
             zoomElement.zoom = this.value;
         },false);
         zoomElement.registerEvent('zoomchange',function() {
-            log("Setting value");
             range.value = zoomElement.zoom;
         },false);
         controls_container.appendChild(range);

@@ -380,6 +380,30 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
         	
         	MASCP.SequenceRenderer.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
 
+            var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
+
+            if (typeof GOMap != 'undefined' && do_diagrams) {
+                var map = this._map;
+                if ( ! map ) {
+                    map = new GOMap.Diagram('mature_flower_diagram.svg');
+                    var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
+                    jQuery(map).bind('onload', function() {
+                        map_container.css({'height': '100%','overflow':'visible'});
+                    });
+                    this._map = map;
+                    this._map_container = map_container[0];
+                    map.appendTo(map_container[0]);
+                    
+                }
+                
+                // FIXME FOR MULTIPLE BINDINGS
+                
+                jQuery(sequenceRenderer.getLayer(overlay_name)).bind('mouseover',function() {
+                    map.showKeyword(simple_tissue);
+                });
+            }
+            
+            
         	var positions = this._normalise(this._mergeCounts(peptide_counts));
         	var index = 0;
         	var last_start = null;
