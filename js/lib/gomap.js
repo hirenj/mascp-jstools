@@ -568,7 +568,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
 };
 
-GOMap.Diagram.addZoomControls = function(zoomElement) {
+GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
+    min = min || 0;
+    max = max || 10;
+    precision = precision || 0.5;
+    value = value || min; 
+    
     var controls_container = document.createElement('div');
     controls_container.style.height = '30%';   
     var zoomIn = document.createElement('input');
@@ -584,18 +589,19 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
     controls_container.appendChild(reset);    
 
     reset.addEventListener('click',function() {
-        zoomElement.zoom = 1;
+        zoomElement.zoom = value;
     },false);
     
     var range = document.createElement('input');
-    range.setAttribute('min','0.5');
-    range.setAttribute('max','10');
-    range.setAttribute('precision','0.5');
-    range.setAttribute('value','1'); 
+    range.setAttribute('min',min);
+    range.setAttribute('max',max);
+    range.setAttribute('step',precision);
+    range.setAttribute('value',value); 
     range.setAttribute('type','range');
     range.setAttribute('style','-webkit-appearance: slider-vertical; height: 100%; width: 1em; position: absolute; top: 0px; margin-top: 2em; left: 50%; margin-left: -0.5em;');
 
     if (range.type == 'range') {
+        
         range.addEventListener('change',function() {
             zoomElement.zoom = this.value;
         },false);
@@ -603,6 +609,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
             range.value = zoomElement.zoom;
         },false);
         controls_container.appendChild(range);
+        
     } else {
         if (! zoomIn.addEventListener) {
             var addevlis = function(name,func) {
@@ -613,34 +620,22 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
             zoomOut.addEventListener = addevlis;        
         }
         zoomIn.addEventListener('click',function() {
-            zoomElement.zoom += 0.1;
+            zoomElement.zoom += precision;
         },false);
         zoomOut.addEventListener('click',function() {
-            zoomElement.zoom -= 0.1;
+            zoomElement.zoom -= precision;
         },false);
 
         controls_container.appendChild(zoomOut);
         controls_container.appendChild(zoomIn);
     }
 
+    this.scrollZoomControls(controls_container,zoomElement,precision);
+
     return controls_container;
 };
 
-GOMap.Diagram.prototype.makeDraggable = function() {
-    
-    var root = this.element;
-    var container = this._container;
-
-    try {
-        var foo = root.addEventListener;
-    } catch(err) {
-        log("Browser does not support addEventListener");
-        return;
-    }
-    
-    new GOMap.Diagram.Dragger().applyToElement(root);
-//    GOMap.Diagram.createDragEvents(root);
-
+GOMap.Diagram.scrollZoomControls = function(controlElement,target,precision) {
     var hookEvent = function(element, eventName, callback) {
       if (typeof(element) == 'string') {
         element = document.getElementById(element);
@@ -664,28 +659,92 @@ GOMap.Diagram.prototype.makeDraggable = function() {
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
       if (wheelData > 0) {
-        root.currentScale = root.currentScale * 1.1;
+        target.zoom = target.zoom += precision;
       } else {
-        root.currentScale = root.currentScale / 1.1;
+        target.zoom = target.zoom -= precision;
       }
       if (e.preventDefault) {
         e.preventDefault();
       }
-
       return false;
     };
-    
-    
+
     var isFF = false;
 
     if (navigator.userAgent.indexOf('Gecko') >= 0) {
       isFF = parseFloat(navigator.userAgent.split('Firefox/')[1]) || undefined;
     }                         
-    
+
     if (isFF && svgweb.getHandlerType() == 'native') {
-      hookEvent(root, 'mousewheel',
+      hookEvent(controlElement, 'mousewheel',
                 mouseWheel);
     } else {
-      hookEvent(container, 'mousewheel', mouseWheel);
-    }    
+      hookEvent(controlElement, 'mousewheel', mouseWheel);
+    }
+};
+
+GOMap.Diagram.prototype.registerEvent = function(evt,func) {
+    var container = this._container;
+    if ( ! container.addEventListener ) {
+        container.addEventListener = function(name,funct) {
+            this.attachEvent(name,funct);
+        };
+    }
+    container.addEventListener(evt,func);
+};
+
+/**
+ *  @lends GOMap.Diagram.prototype
+ *  @property   {Number}    zoom        The zoom level for a diagram. Minimum zoom level is zero, and defaults to 1
+ */
+(function() {
+var accessors = {
+    setZoom: function(zoomLevel) {
+        if (zoomLevel < 0) {
+            zoomLevel = 0;
+        }
+        if (zoomLevel > 2) {
+            zoomLevel = 2;
+        }
+        
+        if (this.element) {
+            this.element.currentScale = zoomLevel;
+        }
+        var evt = document.createEvent('Events');
+        evt.initEvent('zoomChange',false,true);
+        this._container.dispatchEvent(evt);
+    },
+
+    getZoom: function() {
+        return this.element.currentScale;
+    }
+};
+
+if (GOMap.Diagram.prototype.__defineSetter__) {    
+    GOMap.Diagram.prototype.__defineSetter__("zoom", accessors.setZoom);
+    GOMap.Diagram.prototype.__defineGetter__("zoom", accessors.getZoom);
+}
+
+})();
+
+GOMap.Diagram.prototype.makeDraggable = function() {
+    
+    var root = this.element;
+    var container = this._container;
+    
+    var diagram = this;
+    
+    try {
+        var foo = root.addEventListener;
+    } catch(err) {
+        log("Browser does not support addEventListener");
+        return;
+    }
+    
+    new GOMap.Diagram.Dragger().applyToElement(root);
+    var controls = GOMap.Diagram.addZoomControls(this,0.1,2,0.1,1);
+    container.appendChild(controls);
+    controls.style.position = 'absolute';
+    controls.style.top = '0px';
+    controls.style.left = '0px';
 };

@@ -594,6 +594,13 @@ var accessors = {
     },
 
     setZoom: function(zoomLevel) {
+        if (zoomLevel < 0.5) {
+            zoomLevel = 0.5;
+        }
+        if (zoomLevel > 10) {
+            zoomLevel = 10;
+        }
+
         this._zoomLevel = zoomLevel;
         if (this._canvas) {
             this._canvas.zoom = zoomLevel;
