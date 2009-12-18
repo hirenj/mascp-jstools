@@ -112,6 +112,7 @@
 			dragger.applyToElement(document.getElementById('condensed_container').parentNode);
 			dragger.targetElement = document.getElementById('condensed_container').parentNode;
 			MASCP.renderer.zoom = 0.81;
+			MASCP.renderer.padding = 10;
 			jQuery(MASCP.renderer).bind('sequenceChange', function() {
 				dragger.applyToElement(MASCP.renderer._canvas);
 			})
@@ -123,14 +124,13 @@
 			MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);		
 			MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
 			MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0]);
-			jQuery('#sequence_controllers').sortable({
+			MASCP.renderer.trackOrder = jQuery('#sequence_controllers').sortable({
 				update: function(event, ui) {
-					if (MASCP.renderer.setTrackOrder) {
-						MASCP.renderer.setTrackOrder(jQuery('#sequence_controllers').sortable('toArray'));
-						MASCP.renderer.reflowTracks();
+					if (MASCP.renderer.trackOrder) {
+						MASCP.renderer.trackOrder = jQuery('#sequence_controllers').sortable('toArray');
 					}
 				},
-			});
+			}).sortable('toArray');
 			jQuery(layer).bind('click',function() {
 				log("In click for %o",layer);
 			});

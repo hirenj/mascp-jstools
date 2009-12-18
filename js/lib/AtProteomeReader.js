@@ -387,7 +387,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
                 if ( ! map ) {
                     map = new GOMap.Diagram('mature_flower_diagram.svg');
                     var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-                    jQuery(map).bind('onload', function() {
+                    map_container.bind('load', function() {
                         map_container.css({'height': '100%','overflow':'visible'});
                     });
                     this._map = map;

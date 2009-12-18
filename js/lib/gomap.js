@@ -1,13 +1,12 @@
-
 /**
- *  @fileOverview   Basic classes and defitions for the MASCP services
+ *  @fileOverview   Basic classes and defitions for a Gene Ontology ID based map
  */
 
 /*
  *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
  *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
  */
-if (document.write) {
+if (document.write && (typeof svgweb == 'undefined')) {
     if (typeof SVGWEB_PATH != 'undefined') {
         document.write('<script src="'+SVGWEB_PATH+'svg-uncompressed.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
@@ -28,6 +27,7 @@ log = (typeof log == 'undefined') ? function(msg) {
     }
     return this;
 } : log ;
+
 
 if ( typeof GOMap == 'undefined' ) {
     /**
@@ -65,51 +65,56 @@ GOMap.Diagram = function(image) {
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'object') {
         url = image.getAttribute('src') || image.getAttribute('data');
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {
-        this._element = image;
+        this.element = image;
         this._svgLoaded();
-        if (typeof jQuery != 'undefined') {
-            jQuery(self).trigger('onload');
-        }
+        var evt = document.createEvent('load');
+        evt.initEvent('ready',false,true);
+        image.dispatchEvent(evt);
         return;
     }
 
     
-    this._element = document.createElement('object',true);
+    this.element = document.createElement('object',true);
     
-    this._element.setAttribute('data',url);
-    this._element.setAttribute('type','image/svg+xml');
-    this._element.setAttribute('width','100%');
-    this._element.setAttribute('height','100%');
+    this.element.setAttribute('data',url);
+    this.element.setAttribute('type','image/svg+xml');
+    this.element.setAttribute('width','100%');
+    this.element.setAttribute('height','100%');
 
     var self = this;
-    this._element.addEventListener('load',function() {
-        self._element = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
-        self._object = this;
+    this.element.addEventListener('load',function() {
+        self.element = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
+        
+        // Make the destroy function an anonymous function, so it can access this new
+        // element without having to store it in a field
+        
+        var svg_object = this;
+        self.destroy = function() {
+            svgweb.removeChild(svg_object, svg_object.parentNode);
+        };
+
         self._svgLoaded();
-        if (typeof jQuery != 'undefined') {
-            jQuery(self).trigger('onload');
+        if (self._container) {
+            var evt = document.createEvent('Events');
+            evt.initEvent('load',false,true);
+            self._container.dispatchEvent(evt);
         }
     },false);
     
     if (image) {
-        svgweb.appendChild(this._element,image.parentNode);
+        this.appendTo(image.parentNode);
         image.parentNode.removeChild(image);
     }
-    
 };
 
-GOMap.Diagram.prototype.destroy = function() {
-    svgweb.removeChild(this._object, this._object.parentNode);
-}
+
+//GOMap.Diagram.prototype = document.createElement('div',false);
 
 /**
  * Retrieve the SVG element for this diagram
  * @returns SVG element used to render the diagram
  * @type Element
  */
-GOMap.Diagram.prototype.element = function() {
-    return this._element;
-};
 
 /**
  * Append this diagram to the given parent node
@@ -117,7 +122,7 @@ GOMap.Diagram.prototype.element = function() {
  */
 GOMap.Diagram.prototype.appendTo = function(parent) {
     this._container = parent;
-    svgweb.appendChild(this._element,parent);
+    svgweb.appendChild(this.element,parent);
     return this;
 }
 
@@ -200,7 +205,7 @@ GOMap.Diagram.prototype._svgLoaded = function() {
 };
 
 GOMap.Diagram.prototype._elementsForKeyword = function(keyword) {
-    var root_svg = this._element;
+    var root_svg = this.element;
     var els = [];
 
     if (! GOMap.IE ) {
@@ -317,7 +322,7 @@ GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
         return 'url(#'+cleaned_name+')';
     }
     
-    var root_svg = this.element();
+    var root_svg = this.element;
     var defs_el = root_svg.ownerDocument.getElementsByTagNameNS(svgns,'defs')[0];
 
     var new_pattern = document.createElementNS(svgns,'pattern');
@@ -367,7 +372,7 @@ GOMap.Diagram.prototype._highlightElement = function(element) {
 };
 
 GOMap.Diagram.prototype._forceOpacity = function() {
-    var root_svg = this.element();
+    var root_svg = this.element;
     var suspend_id = root_svg.suspendRedraw(5000);
     var els = root_svg.ownerDocument.getElementsByTagNameNS(svgns,'*');
     for (var i = 0; i < els.length; i++ ) {
@@ -623,7 +628,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement) {
 
 GOMap.Diagram.prototype.makeDraggable = function() {
     
-    var root = this._element;
+    var root = this.element;
     var container = this._container;
 
     try {

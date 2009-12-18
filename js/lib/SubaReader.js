@@ -199,7 +199,8 @@ MASCP.SubaReader.Result.prototype.render = function()
         container.text('');
         var map = new GOMap.Diagram('cell.svg');
         var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-        jQuery(map).bind('onload', function() {
+        container.append(map_container);
+        map_container.bind('load', function() {
             for (var i in ms_loc) {
                 map.showKeyword(ms_loc[i]);
             }            
@@ -209,7 +210,6 @@ MASCP.SubaReader.Result.prototype.render = function()
             map_container.css({'height': '100%','overflow':'visible'});
             map.makeDraggable();
         });
-        container.append(map_container);
         map.appendTo(map_container[0]);
         container.append('<div style="height: 0px; width: 100%; clear: both; float: none;"></div>');
         this._map = map;

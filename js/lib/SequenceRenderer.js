@@ -147,7 +147,7 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     return results;
 };
 
-/**
+/*
  * Show the row numbers on the display of the sequence.
  */
 MASCP.SequenceRenderer.prototype.showRowNumbers = function() {
@@ -184,20 +184,15 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
  * @param {String|Object} layer Layer name, or layer object
  */
 MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
-    var layerName = lay;
-    var layer;
-    if (typeof lay != 'string') {
-        layerName = lay.name;
-        layer = lay;
-    } else {
-        layer = MASCP.SequenceRenderer._layers[lay];
-        layerName = lay;
+    var layer = this.getLayer(lay);
+
+    if (layer.disabled) {
+        return;
     }
-    
-    jQuery(this._container).addClass(layerName+'_active');
+    jQuery(this._container).addClass(layer.name+'_active');
     jQuery(this._container).addClass('active_layer');    
-    jQuery(this._container).removeClass(layerName+'_inactive');
-    if (! consumeChange ) {
+    jQuery(this._container).removeClass(layer.name+'_inactive');
+    if ( ! consumeChange ) {
         jQuery(layer).trigger('visibilityChange',[this,true]);
     }
     return this;
@@ -208,19 +203,16 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
  * @param {String|Object} layer Layer name, or layer object
  */
 MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
-    var layerName = lay;
-    var layer;
-    if (typeof lay != 'string') {
-        layerName = lay.name;
-        layer = lay;
-    } else {
-        layer = MASCP.SequenceRenderer._layers[lay];
-        layerName = lay;
+    var layer = this.getLayer(lay);
+
+    if (layer.disabled) {
+        return;
     }
-    
-    jQuery(this._container).removeClass(layerName+'_active');
+        
+    jQuery(this._container).removeClass(layer.name+'_active');
     jQuery(this._container).removeClass('active_layer');
-    jQuery(this._container).addClass(layerName+'_inactive');
+    jQuery(this._container).addClass(layer.name+'_inactive');
+
     if (! consumeChange ) {
         jQuery(layer).trigger('visibilityChange',[this,false]);
     }
