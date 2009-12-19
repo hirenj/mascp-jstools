@@ -196,7 +196,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     axis.push(canvas.path('M'+(lineLength)+' 10 l0 20'));
 
     this._axis_height = 30;
-    
+
     var big_ticks = canvas.set();
     var little_ticks = canvas.set();
     var big_labels = canvas.set();
