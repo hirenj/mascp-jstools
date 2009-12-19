@@ -13,6 +13,7 @@ if ( typeof MASCP == 'undefined' ) {
  * @author  hjjoshi
  * @param   {Element} sequenceContainer Container element that the sequence currently is found in, and also 
  *                                      the container that data will be re-inserted into.
+ * @requires jQuery
  */
 MASCP.SequenceRenderer = function(sequenceContainer) {
     if (sequenceContainer != null) {
@@ -34,18 +35,43 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 };
 
 /**
+ * Event fired when a layer is registered with the global layer registry
+ * @name    MASCP#layerRegistered
+ * @event
+ * @param   {Object}    e
+ * @param   {Object}    layer Layer just registered
+ */
+
+/**
+ * Event fired when a group is registered with the global group registry
+ * @name    MASCP#groupRegistered
+ * @event
+ * @param   {Object}    e
+ * @param   {Object}    group Group just registered
+ */
+
+/**
+ * Event fired when the sequence is changed in a sequence renderer
  * @name    MASCP.SequenceRenderer#sequenceChange
  * @event
  * @param   {Object}    e
  */
 
 /**
- * @name    MASCP.SequenceRenderer#visibilityChange
+ * @name    MASCP.SequenceRenderer.Group#visibilityChange
  * @event
  * @param   {Object}    e
  * @param   {Object}    renderer
  * @param   {Boolean}   visibility
  */
+
+ /**
+  * @name    MASCP.SequenceRenderer.Layer#visibilityChange
+  * @event
+  * @param   {Object}    e
+  * @param   {Object}    renderer
+  * @param   {Boolean}   visibility
+  */
 
 
 
@@ -58,8 +84,25 @@ MASCP.SequenceRenderer.prototype = {
 };
 
 /**
- * Set the sequence for this renderer
+ * @class
+ * Metadata for a group of layers to be rendered
+ */
+MASCP.SequenceRenderer.Group = function() {
+    return;
+};
+
+/**
+ * @class
+ * Metadata for a single layer to be rendered
+ */
+MASCP.SequenceRenderer.Layer = function() {
+    return;
+};
+
+/**
+ * Set the sequence for this renderer. Fires the sequenceChange event when the sequence is set.
  * @param {String} sequence Sequence to render
+ * @see MASCP.SequenceRenderer#event:sequenceChange
  */
 MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
 {
@@ -165,6 +208,7 @@ MASCP.SequenceRenderer.prototype.showRowNumbers = function() {
 /**
  * Toggle the display of the given layer
  * @param {String|Object} layer Layer name, or layer object
+ * @see MASCP.SequenceRenderer.Layer#event:visibilityChange
  */
 MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
     var layerName = layer;
@@ -182,6 +226,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
 /**
  * Show the given layer
  * @param {String|Object} layer Layer name, or layer object
+ * @see MASCP.SequenceRenderer.Layer#event:visibilityChange
  */
 MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
     var layer = this.getLayer(lay);
@@ -201,6 +246,7 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
 /**
  * Hide the given layer
  * @param {String|Object} layer Layer name, or layer object
+ * @see MASCP.SequenceRenderer.Layer#event:visibilityChange
  */
 MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     var layer = this.getLayer(lay);
@@ -219,6 +265,12 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     return this;
 };
 
+/**
+ * Hide or show a group. Fires an event when this method is called.
+ * @param {Object} grp Group to set the visibility for
+ * @param {Boolean} visibility True for visible, false for hidden
+ * @see MASCP.SequenceRenderer.Group#event:visibilityChange
+ */
 MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
     var groupName = grp;
     var group;
@@ -246,15 +298,29 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
         jQuery(group).trigger('visibilityChange',[renderer,visibility]);
     }
 };
-
+/**
+ * Hide a group. Fires an event when this method is called.
+ * @param {Object} grp Group to set the visibility for
+ * @see MASCP.SequenceRenderer.Group#event:visibilityChange
+ */
 MASCP.SequenceRenderer.prototype.hideGroup = function(group) {
     this.setGroupVisibility(group,false);
 }
 
+/**
+ * Show a group. Fires an event when this method is called.
+ * @param {Object} grp Group to set the visibility for
+ * @see MASCP.SequenceRenderer.Group#event:visibilityChange
+ */
 MASCP.SequenceRenderer.prototype.showGroup = function(group) {
     this.setGroupVisibility(group,true);
 }
 
+/**
+ * Toggle the visibility for a group. Fires an event when this method is called.
+ * @param {Object} grp Group to set the visibility for
+ * @see MASCP.SequenceRenderer.Group#event:visibilityChange
+ */
 MASCP.SequenceRenderer.prototype.toggleGroup = function(group) {
     this.setGroupVisibility(group);
 }
@@ -581,6 +647,7 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, wi
  * @static
  * @param {String} groupName Name to give to this group
  * @param {String} options Options to give this group: name, and flags for hiding group member and whole group controllers: hide_member_controllers and hide_group_controller respectively
+ * @see MASCP#event:groupRegistered
  */
 MASCP.SequenceRenderer.registerGroup = function(groupName, options)
 {
@@ -591,7 +658,7 @@ MASCP.SequenceRenderer.registerGroup = function(groupName, options)
         return;
     }
     
-    var group = {};
+    var group = new MASCP.SequenceRenderer.Group();
     
     group['name'] = groupName;
     
@@ -646,6 +713,7 @@ MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
  * @static
  * @param {String} layerName Name to give to this layer
  * @param {String} options Options to give this layer: fullname, color and optional CSS block.
+ * @see MASCP#event:layerRegistered
  */
 MASCP.SequenceRenderer.registerLayer = function(layerName, options)
 {
@@ -657,7 +725,7 @@ MASCP.SequenceRenderer.registerLayer = function(layerName, options)
         return;
     }
     
-    var layer = {};
+    var layer = new MASCP.SequenceRenderer.Layer();
     
     layer['name'] = layerName;
     

@@ -48,10 +48,10 @@ if (document.write) {
 
 
 /**
- * @class   A diagram that can be marked up with keywords.
- * @param   image   Image to be used for the diagram. Either an url to an svg file, an existing object element with a src attribute, or a reference to an SVG element if the SVG has been inlined.
- * @author hjjoshi
- * @requires svgweb
+ * @class       A diagram that can be marked up with keywords.
+ * @param       image   Image to be used for the diagram. Either an url to an svg file, an existing object element with a src attribute, or a reference to an SVG element if the SVG has been inlined.
+ * @author      hjjoshi
+ * @requires    svgweb
  */
 GOMap.Diagram = function(image) {
 
@@ -106,9 +106,6 @@ GOMap.Diagram = function(image) {
         image.parentNode.removeChild(image);
     }
 };
-
-
-//GOMap.Diagram.prototype = document.createElement('div',false);
 
 /**
  * Retrieve the SVG element for this diagram
@@ -197,13 +194,102 @@ GOMap.Diagram.prototype.toggleKeyword = function(keyword,color) {
     }
 };
 
+/**
+ *  Register a function callback for an event with this object. Actually binds the event to the container
+ *  element associated with this Diagram using addEventListener
+ *  @param  {Object}    evt     Event name to bind to
+ *  @param  {Function}  func    Function to call when event occurs
+ */
+GOMap.Diagram.prototype.registerEvent = function(evt,func) {
+    var container = this._container;
+    if ( ! container.addEventListener ) {
+        container.addEventListener = function(name,funct) {
+            this.attachEvent(name,funct);
+        };
+    }
+    container.addEventListener(evt,func);
+};
 
-GOMap.Diagram.prototype._svgLoaded = function() {
-    if (true || GOMap.IE) {
-        this._forceOpacity();
+/**
+ * Event fired when the zoom property is changed
+ * @name    GOMap.Diagram#zoomChange
+ * @event
+ * @param   {Object}    e
+ * @see     #zoom
+ */
+
+/**
+ *  @lends GOMap.Diagram.prototype
+ *  @property   {Number}    zoom        The zoom level for a diagram. Minimum zoom level is zero, and defaults to 1
+ *  @see GOMap.Diagram#event:zoomChange
+ */
+(function() {
+var accessors = {
+    setZoom: function(zoomLevel) {
+        if (zoomLevel < 0) {
+            zoomLevel = 0;
+        }
+        if (zoomLevel > 2) {
+            zoomLevel = 2;
+        }
+        
+        if (this.element) {
+            this.element.currentScale = zoomLevel;
+        }
+        var evt = document.createEvent('Events');
+        evt.initEvent('zoomChange',false,true);
+        this._container.dispatchEvent(evt);
+    },
+
+    getZoom: function() {
+        return this.element.currentScale;
     }
 };
 
+if (GOMap.Diagram.prototype.__defineSetter__) {    
+    GOMap.Diagram.prototype.__defineSetter__("zoom", accessors.setZoom);
+    GOMap.Diagram.prototype.__defineGetter__("zoom", accessors.getZoom);
+}
+
+})();
+
+/**
+ * Allow for zooming and panning on the diagram
+ */
+GOMap.Diagram.prototype.makeInteractive = function() {
+    
+    var root = this.element;
+    var container = this._container;
+    
+    var diagram = this;
+    
+    try {
+        var foo = root.addEventListener;
+    } catch(err) {
+        log("Browser does not support addEventListener");
+        return;
+    }
+    
+    new GOMap.Diagram.Dragger().applyToElement(root);
+    var controls = GOMap.Diagram.addZoomControls(this,0.1,2,0.1,1);
+    container.appendChild(controls);
+    controls.style.position = 'absolute';
+    controls.style.top = '0px';
+    controls.style.left = '0px';
+};
+
+/*
+ * Set the opacity of all the elements for the diagram to translucent
+ */
+GOMap.Diagram.prototype._svgLoaded = function() {
+    this._forceOpacity();
+};
+
+/*
+ * Retrieve all the SVG elements that match the given keyword. The SVG document
+ * should have elements marked up with a keyword attribute.
+ * @param {String}  keyword     Keyword to use to search for elements
+ */
 GOMap.Diagram.prototype._elementsForKeyword = function(keyword) {
     var root_svg = this.element;
     var els = [];
@@ -222,6 +308,12 @@ GOMap.Diagram.prototype._elementsForKeyword = function(keyword) {
     return els;
 };
 
+/* 
+ * Execute an xpath query upon a document, pulling the results into an array of elements
+ * @param {Element} element Start element
+ * @param {String} xpath Xpath query to execute
+ * @param {Document} document Parent document
+ */
 GOMap.Diagram.prototype._execute_xpath = function(element, xpath, doc) {
     var results = [];
     if (doc.evaluate) {
@@ -239,7 +331,11 @@ GOMap.Diagram.prototype._execute_xpath = function(element, xpath, doc) {
     }
     return results;
 };
-
+/*
+ * Perform a breadth-first traversal of the nodelist.
+ * @param {Array} nodelist Starting list of nodes to perform traversal over
+ * @param {Function} function Callback for this traversal. Callback function takes a single argument, which is the currently inspected node.
+ */
 GOMap.Diagram.prototype._recurse = function(nodelist,callback) {
     for (var i = 0; i < nodelist.length; i++) {
         callback.call(this,nodelist[i]);        
@@ -248,7 +344,11 @@ GOMap.Diagram.prototype._recurse = function(nodelist,callback) {
         }
     }
 };
-
+/*
+ * Cache the old style for this element. We need to cache the style for the element so that we can restore the
+ * element style when it is active.
+ * @param {Element} el Element to store the style for
+ */
 GOMap.Diagram.prototype._cacheStyle = function(el) {    
     if ( ! el.id ) {
         var an_id = 'svg'+(new Date).getTime().toString();
@@ -267,6 +367,11 @@ GOMap.Diagram.prototype._cacheStyle = function(el) {
     };
 };
 
+/*
+ * Restore the style for an element from the cache
+ * @param {Element} element Element to restore the style for. This element must have cache data.
+ */
+
 GOMap.Diagram.prototype._restoreStyle = function(element) {
     if ( ! element.style ) {
         return;
@@ -275,6 +380,7 @@ GOMap.Diagram.prototype._restoreStyle = function(element) {
         var cacher = this._styles_cache[element.id];
         var properties = {'stroke-width':null,'opacity':null,'stroke':null,'fill-opacity':null,'stroke-opacity':null};
         for (var prop in properties) {
+            // We don't set null properties in IE because they cause the wrong styles to be displayed
             if ( GOMap.IE && ! cacher[prop] ) {
                 continue;
             }
@@ -283,8 +389,11 @@ GOMap.Diagram.prototype._restoreStyle = function(element) {
     }
 };
 
-
-GOMap.Diagram.prototype._outlineElement = function(element,color) {
+/*
+ * Draw an outline around the given element
+ * @param {Element} element Element to outline
+ */
+GOMap.Diagram.prototype._outlineElement = function(element) {
     if ( ! element.style ) {
         return;
     }
@@ -296,6 +405,12 @@ GOMap.Diagram.prototype._outlineElement = function(element,color) {
     element.style.setProperty('stroke-width',4,null);
     element.style.setProperty('stroke-opacity',1,null);
 };
+
+/*
+ * Calculate the color fill. Since there may be more than one color highlighted
+ * on this element, we build the pattern if needed, and return a reference to 
+ * that pattern if a pattern is to be used.
+ */
 
 GOMap.Diagram.prototype._calculateColorForElement = function(element) {
     var pattern = "pat";
@@ -313,7 +428,13 @@ GOMap.Diagram.prototype._calculateColorForElement = function(element) {
     }
     
 };
-
+/*
+ * Create a pattern element under the defs element for the svg. If there isn't a defs element
+ * there already, create one and append it to the document.
+ * @param {String} pattern_name Underscore separated pattern name - each component of the pattern should be represented. e.g. ff0000_00ff00_0000ff
+ * @returns The color name that can be used to reference this pattern
+ * @type String
+ */
 GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
     var pattern_els = pattern_name.split('_');
     this._cached_patterns = this._cached_patterns || {};
@@ -324,6 +445,11 @@ GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
     
     var root_svg = this.element;
     var defs_el = root_svg.ownerDocument.getElementsByTagNameNS(svgns,'defs')[0];
+
+    if ( ! defs_el ) {
+        defs_el = document.createElementNS(svgns,'defs');
+        root_svg.appendChild(defs_el);
+    }
 
     var new_pattern = document.createElementNS(svgns,'pattern');
     new_pattern.setAttribute('x','0');
@@ -354,11 +480,15 @@ GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
     return 'url(#'+cleaned_name+')';
 };
 
-
+/* Highlight an element by making it opaque
+ * @param {Element} element Element to make opaque
+ */
 GOMap.Diagram.prototype._highlightElement = function(element) {
+    // Skip this if we don't have a style or has no id and isn't a group
     if (! element.style || (! element.id && ! element.nodeName == 'g') ) {
         return;
     }
+    
     this._cacheStyle(element);
 
     if (element.nodeName == 'path' || element.nodeName == 'circle') {
@@ -371,6 +501,12 @@ GOMap.Diagram.prototype._highlightElement = function(element) {
     element.style.setProperty('stroke-opacity',1,null);
 };
 
+/* Go through all the elements in the svg document and force the opacity to be translucent. Since
+ * svgweb doesn't support the referencing of extrinsic stylesheets, we need to go through and 
+ * explicitly set the opacity for all the elements. This is really slow on Internet Explorer.
+ * We've got different behaviour for the different svg element types as they all react differently
+ * to having their opacity set.
+ */
 GOMap.Diagram.prototype._forceOpacity = function() {
     var root_svg = this.element;
     var suspend_id = root_svg.suspendRedraw(5000);
@@ -400,6 +536,13 @@ GOMap.Diagram.prototype._forceOpacity = function() {
     root_svg.unsuspendRedraw(suspend_id);
 };
 
+
+/**
+ * @class       State class for adding panning functionality to an element. Each element that is to be panned needs a new instance
+ *              of the Dragger to store state.
+ * @author      hjjoshi
+ * @requires    svgweb
+ */
 GOMap.Diagram.Dragger = function() {
   this.oX = 0;
   this.oY = 0;
@@ -409,6 +552,12 @@ GOMap.Diagram.Dragger = function() {
   this.targetElement = null;
 };
 
+/**
+ * Connect this dragger to a particular element. If an SVG element is given, panning occurs within the bounding box of the SVG, and
+ * the image is shifted by using the currentTranslate property. If a regular HTML element is given, the scrollLeft and scrollTop attributes
+ * are used to move the viewport around. 
+ * @param {Element} targetElement Element to enable panning upon.
+ */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
     var svgMouseDown = function(evt) {
@@ -554,7 +703,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.attachEvent(name,func);
         }
     }
-    
+
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
@@ -565,9 +714,22 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         targetElement.addEventListener('mouseup', mouseUp, false);        
         targetElement.addEventListener('mouseout',mouseOut, false);
     }
-    
-};
 
+};
+/**
+ * Given an element that implements a zoom attribute, creates a div that contains controls for controlling the zoom attribute. The
+ * zoomElement must have a zoom attribute, and can fire the zoomChange event whenever the zoom value is changed on the object. The
+ * scrollwheel is connected to this element so that when the mouse hovers over the controls, it can control the zoom using only
+ * the scroll wheel.
+ * @param {Object} zoomElement Element to control the zooming for.
+ * @param {Number} min Minimum value for the zoom attribute (default 0)
+ * @param {Number} max Maximum value for the zoom attribute (default 10)
+ * @param {Number} precision Step precision for the zoom control (default 0.5)
+ * @param {Number} value Default value for this control
+ * @returns DIV element containing the controls
+ * @type Element
+ * @see GOMap.Diagram#event:zoomChange
+ */
 GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     min = min || 0;
     max = max || 10;
@@ -630,12 +792,15 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
         controls_container.appendChild(zoomIn);
     }
 
-    this.scrollZoomControls(controls_container,zoomElement,precision);
+    this._scrollZoomControls(controls_container,zoomElement,precision);
 
     return controls_container;
 };
 
-GOMap.Diagram.scrollZoomControls = function(controlElement,target,precision) {
+/**
+ * Connect the scroll wheel to the controls to control zoom
+ */
+GOMap.Diagram._scrollZoomControls = function(controlElement,target,precision) {
     var hookEvent = function(element, eventName, callback) {
       if (typeof(element) == 'string') {
         element = document.getElementById(element);
@@ -683,68 +848,3 @@ GOMap.Diagram.scrollZoomControls = function(controlElement,target,precision) {
     }
 };
 
-GOMap.Diagram.prototype.registerEvent = function(evt,func) {
-    var container = this._container;
-    if ( ! container.addEventListener ) {
-        container.addEventListener = function(name,funct) {
-            this.attachEvent(name,funct);
-        };
-    }
-    container.addEventListener(evt,func);
-};
-
-/**
- *  @lends GOMap.Diagram.prototype
- *  @property   {Number}    zoom        The zoom level for a diagram. Minimum zoom level is zero, and defaults to 1
- */
-(function() {
-var accessors = {
-    setZoom: function(zoomLevel) {
-        if (zoomLevel < 0) {
-            zoomLevel = 0;
-        }
-        if (zoomLevel > 2) {
-            zoomLevel = 2;
-        }
-        
-        if (this.element) {
-            this.element.currentScale = zoomLevel;
-        }
-        var evt = document.createEvent('Events');
-        evt.initEvent('zoomChange',false,true);
-        this._container.dispatchEvent(evt);
-    },
-
-    getZoom: function() {
-        return this.element.currentScale;
-    }
-};
-
-if (GOMap.Diagram.prototype.__defineSetter__) {    
-    GOMap.Diagram.prototype.__defineSetter__("zoom", accessors.setZoom);
-    GOMap.Diagram.prototype.__defineGetter__("zoom", accessors.getZoom);
-}
-
-})();
-
-GOMap.Diagram.prototype.makeDraggable = function() {
-    
-    var root = this.element;
-    var container = this._container;
-    
-    var diagram = this;
-    
-    try {
-        var foo = root.addEventListener;
-    } catch(err) {
-        log("Browser does not support addEventListener");
-        return;
-    }
-    
-    new GOMap.Diagram.Dragger().applyToElement(root);
-    var controls = GOMap.Diagram.addZoomControls(this,0.1,2,0.1,1);
-    container.appendChild(controls);
-    controls.style.position = 'absolute';
-    controls.style.top = '0px';
-    controls.style.left = '0px';
-};

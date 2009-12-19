@@ -208,7 +208,7 @@ MASCP.SubaReader.Result.prototype.render = function()
                 map.showKeyword(gfp_loc[i],'#00ff00');
             }
             map_container.css({'height': '100%','overflow':'visible'});
-            map.makeDraggable();
+            map.makeInteractive();
         });
         map.appendTo(map_container[0]);
         container.append('<div style="height: 0px; width: 100%; clear: both; float: none;"></div>');
