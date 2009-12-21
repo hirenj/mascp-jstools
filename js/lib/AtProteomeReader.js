@@ -361,7 +361,7 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
 
 MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-	MASCP.SequenceRenderer.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+	MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
     this.bind('resultReceived', function() {
         var tissues = this.result? this.result.tissues() : [];
@@ -378,7 +378,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
             
         	var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
         	
-        	MASCP.SequenceRenderer.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
+        	MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
 
             var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
 

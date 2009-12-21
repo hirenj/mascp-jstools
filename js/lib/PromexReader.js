@@ -91,7 +91,7 @@ MASCP.PromexReader.Result.prototype._cleanSequence = function(sequence)
 MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
 
-    MASCP.SequenceRenderer.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff9900' });
+    MASCP.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff9900' });
 
     this.bind('resultReceived', function() {
         var spectra = this.result.getSpectraURLs();
@@ -99,7 +99,7 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         var css_block = '.active { text-decoration: underline; color: #000000; } .active a { color: #000000; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
     	jQuery(this.result.getPeptides()).each(function(i) {
             
-        	MASCP.SequenceRenderer.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'ProMex spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
+        	MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'ProMex spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
     	    var a_spectra = spectra[i];
     	    var peptide = this;
     	    var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);

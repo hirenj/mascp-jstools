@@ -7,6 +7,108 @@ if ( typeof MASCP == 'undefined' ) {
 }
 
 /**
+ * Register a group with metadata for all sequence renderers.
+ * @static
+ * @param {String} groupName Name to give to this group
+ * @param {String} options Options to give this group: name, and flags for hiding group member and whole group controllers: hide_member_controllers and hide_group_controller respectively
+ * @see MASCP.event:groupRegistered
+ */
+MASCP.registerGroup = function(groupName, options)
+{
+    if ( ! this._groups ) {
+        this._groups = {};
+    }
+    if (this._groups[groupName]) {
+        return;
+    }
+    
+    var group = new MASCP.SequenceRenderer.Group();
+    
+    group['name'] = groupName;
+    
+    options = options || {};
+    
+    if (options['hide_member_controllers']) {
+        group['hide_member_controllers'] = true;
+    }
+
+    if (options['hide_group_controller']) {
+        group['hide_group_controller'] = true;
+    }
+
+    if (options['fullname']) {
+        group['fullname'] = options['fullname'];
+    }
+    
+    if (options['color']) {
+        group['color'] = options['color'];
+    }
+
+    group._layers = [];
+
+    group.group_id = new Date().getMilliseconds();
+    
+    this._groups[groupName] = group;
+    
+    jQuery(MASCP).trigger('groupRegistered',[group]);
+};
+
+/**
+ * Register a layer with metadata for all sequence renderers.
+ * @static
+ * @param {String} layerName Name to give to this layer
+ * @param {String} options Options to give this layer: fullname, color and optional CSS block.
+ * @see MASCP.event:layerRegistered
+ */
+MASCP.registerLayer = function(layerName, options)
+{
+    if ( ! this._layers ) {
+        this._layers = {};
+    }
+    if (this._layers[layerName]) {
+        this._layers[layerName].disabled = false;
+        return;
+    }
+    
+    var layer = new MASCP.SequenceRenderer.Layer();
+    
+    layer['name'] = layerName;
+    
+    options = options || {};
+    
+    if (options['fullname']) {
+        layer['fullname'] = options['fullname'];
+    }
+    
+    if (options['color']) {
+        layer['color'] = options['color'];
+    }
+    
+    if (options['group']) {
+        layer['group'] = this._groups ? this._groups[options['group']] : null;
+        if ( ! layer['group'] ) {
+            throw "Cannot register this layer with the given group - the group has not been registered yet";
+        }
+        layer['group']._layers.push(layer);
+    }
+    
+    
+    this._layers[layerName] = layer;
+    
+    if (options['css']) {
+        layerCss = options['css'];
+        layerCss = layerCss.replace(/\.inactive/g, '.'+layerName+'_inactive .'+layerName);
+        layerCss = layerCss.replace(/\.tracks\s+\.active/g, '.'+layerName+'_active .track .'+layerName);
+        layerCss = layerCss.replace(/\.active/g, '.'+layerName+'_active .'+layerName);
+        layerCss = layerCss.replace(/\.overlay/g, '.'+layerName+'_overlay');
+        jQuery('<style type="text/css">'+layerCss+'</style>').appendTo('head');
+    }
+    layer.layer_id = new Date().getMilliseconds();
+    
+    jQuery(MASCP).trigger('layerRegistered',[layer]);
+};
+
+/**
  * @class   Reformatter for sequences in html pages. The object retrieves the amino acid sequence from the 
  *          given element, and then reformats the display of the sequence so that rendering layers can be
  *          applied to it. 
@@ -215,7 +317,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
     if (typeof layer != 'string') {
         layerName = layer.name;
     } else {
-        layer = MASCP.SequenceRenderer._layers[layer];
+        layer = MASCP._layers[layer];
     }
     jQuery(this._container).toggleClass(layerName+'_active');
     jQuery(this._container).toggleClass(layerName+'_inactive');
@@ -278,7 +380,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
         groupName = group.name;
         group = grp;
     } else {
-        group = MASCP.SequenceRenderer._groups[grp];
+        group = MASCP._groups[grp];
         groupName = group.name;
     }
     var renderer = this;
@@ -354,7 +456,7 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
 
     var renderer = this;
     
-    jQuery(MASCP.SequenceRenderer).bind('layerRegistered', function(e) {
+    jQuery(MASCP).bind('layerRegistered', function(e) {
 		jQuery(controller_box).accordion('destroy');
 		jQuery(controller_box).accordion({header : 'h3', collapsible : true, autoHeight: true, active: false });
 	});
@@ -405,14 +507,14 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
     };
 
     
-    jQuery(MASCP.SequenceRenderer).bind("layerRegistered",function(e,layer) {
+    jQuery(MASCP).bind("layerRegistered",function(e,layer) {
         if (layer.group && layer.group.hide_member_controllers) {
             return;
         }
         controller_box.add_layer(layer);
     });
 
-    jQuery(MASCP.SequenceRenderer).bind("groupRegistered",function(e,group) {
+    jQuery(MASCP).bind("groupRegistered",function(e,group) {
         if (group.hide_group_controller) {
             return;
         }
@@ -420,9 +522,9 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
     });
 
     
-    if (MASCP.SequenceRenderer._layers) {
-        for (var layerName in MASCP.SequenceRenderer._layers) {
-            var layer = MASCP.SequenceRenderer._layers[layerName]
+    if (MASCP._layers) {
+        for (var layerName in MASCP._layers) {
+            var layer = MASCP._layers[layerName]
             if (layer.group && layer.group.hide_member_controllers) {
                 continue;
             }
@@ -446,14 +548,14 @@ MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
  */
 MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement) {
     var renderer = this;
-    if (! MASCP.SequenceRenderer._layers[layer]) {
+    if (! MASCP._layers[layer]) {
         return;
     }
 
     var layerObj = null;
     
-    if (typeof layer == 'string' && MASCP.SequenceRenderer._layers ) {
-        layerObj = MASCP.SequenceRenderer._layers[layer];
+    if (typeof layer == 'string' && MASCP._layers ) {
+        layerObj = MASCP._layers[layer];
     } else if (typeof layer == 'object') {
         layerObj = layer;
     }
@@ -513,14 +615,14 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
 
 
 MASCP.SequenceRenderer.prototype.getLayer = function(layer) {
-    return (typeof layer == 'string') ? MASCP.SequenceRenderer._layers[layer] : layer;    
+    return (typeof layer == 'string') ? MASCP._layers[layer] : layer;    
 };
 
 MASCP.SequenceRenderer.prototype.getGroup = function(group) {
-    if ( ! MASCP.SequenceRenderer._groups ) {
+    if ( ! MASCP._groups ) {
         return;
     }
-    return (typeof group == 'string') ? MASCP.SequenceRenderer._groups[group] : group;
+    return (typeof group == 'string') ? MASCP._groups[group] : group;
 };
 
 
@@ -642,63 +744,16 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, wi
     return this;
 };
 
-/**
- * Register a group with metadata for all sequence renderers.
- * @static
- * @param {String} groupName Name to give to this group
- * @param {String} options Options to give this group: name, and flags for hiding group member and whole group controllers: hide_member_controllers and hide_group_controller respectively
- * @see MASCP.SequenceRenderer#event:groupRegistered
- */
-MASCP.SequenceRenderer.registerGroup = function(groupName, options)
-{
-    if ( ! this._groups ) {
-        this._groups = {};
-    }
-    if (this._groups[groupName]) {
-        return;
-    }
-    
-    var group = new MASCP.SequenceRenderer.Group();
-    
-    group['name'] = groupName;
-    
-    options = options || {};
-    
-    if (options['hide_member_controllers']) {
-        group['hide_member_controllers'] = true;
-    }
-
-    if (options['hide_group_controller']) {
-        group['hide_group_controller'] = true;
-    }
-
-    if (options['fullname']) {
-        group['fullname'] = options['fullname'];
-    }
-    
-    if (options['color']) {
-        group['color'] = options['color'];
-    }
-
-    group._layers = [];
-
-    group.group_id = new Date().getMilliseconds();
-    
-    this._groups[groupName] = group;
-    
-    jQuery(MASCP.SequenceRenderer).trigger('groupRegistered',[group]);
-}
-
 MASCP.SequenceRenderer.prototype.reset = function()
 {
     jQuery(this._container).attr('class',null);
-    for ( var group in MASCP.SequenceRenderer._groups) {
+    for ( var group in MASCP._groups) {
         log("Hiding the group "+this.getGroup(group).group_id);
         this.hideGroup(group);
     }    
-    for ( var layer in MASCP.SequenceRenderer._layers) {
+    for ( var layer in MASCP._layers) {
         this.hideLayer(layer);
-        MASCP.SequenceRenderer._layers[layer].disabled = true;
+        MASCP._layers[layer].disabled = true;
     }
 };
 
@@ -706,59 +761,4 @@ MASCP.SequenceRenderer.prototype.reset = function()
 MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
 {
     jQuery(this).bind(ev,func);
-};
-
-/**
- * Register a layer with metadata for all sequence renderers.
- * @static
- * @param {String} layerName Name to give to this layer
- * @param {String} options Options to give this layer: fullname, color and optional CSS block.
- * @see MASCP.SequenceRenderer#event:layerRegistered
- */
-MASCP.SequenceRenderer.registerLayer = function(layerName, options)
-{
-    if ( ! this._layers ) {
-        this._layers = {};
-    }
-    if (this._layers[layerName]) {
-        this._layers[layerName].disabled = false;
-        return;
-    }
-    
-    var layer = new MASCP.SequenceRenderer.Layer();
-    
-    layer['name'] = layerName;
-    
-    options = options || {};
-    
-    if (options['fullname']) {
-        layer['fullname'] = options['fullname'];
-    }
-    
-    if (options['color']) {
-        layer['color'] = options['color'];
-    }
-    
-    if (options['group']) {
-        layer['group'] = this._groups ? this._groups[options['group']] : null;
-        if ( ! layer['group'] ) {
-            throw "Cannot register this layer with the given group - the group has not been registered yet";
-        }
-        layer['group']._layers.push(layer);
-    }
-    
-    
-    this._layers[layerName] = layer;
-    
-    if (options['css']) {
-        layerCss = options['css'];
-        layerCss = layerCss.replace(/\.inactive/g, '.'+layerName+'_inactive .'+layerName);
-        layerCss = layerCss.replace(/\.tracks\s+\.active/g, '.'+layerName+'_active .track .'+layerName);
-        layerCss = layerCss.replace(/\.active/g, '.'+layerName+'_active .'+layerName);
-        layerCss = layerCss.replace(/\.overlay/g, '.'+layerName+'_overlay');
-        jQuery('<style type="text/css">'+layerCss+'</style>').appendTo('head');
-    }
-    layer.layer_id = new Date().getMilliseconds();
-    
-    jQuery(MASCP.SequenceRenderer).trigger('layerRegistered',[layer]);
 };

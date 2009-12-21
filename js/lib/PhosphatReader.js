@@ -132,19 +132,19 @@ MASCP.PhosphatReader.Result.prototype.render = function()
 
 MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-    MASCP.SequenceRenderer.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : true, 'hide_group_controller': true });
-	MASCP.SequenceRenderer.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
-	MASCP.SequenceRenderer.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+    MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : true, 'hide_group_controller': true });
+	MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
+	MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
 
     this.bind('resultReceived', function() {
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllPredictedPositions())).each(function(i) {
-            MASCP.SequenceRenderer.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-        	MASCP.SequenceRenderer.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
+            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
+        	MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
             this.addToLayer('phosphat_theoretical');
         });
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
-            MASCP.SequenceRenderer.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-        	MASCP.SequenceRenderer.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
+        	MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
             this.addToLayer('phosphat_experimental');
         });
     })

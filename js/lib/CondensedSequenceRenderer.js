@@ -22,6 +22,7 @@ if (document.write && (typeof svgweb == 'undefined')) {
  *  @extends    MASCP.SequenceRenderer
  */
 MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
+    log(this);
     MASCP.SequenceRenderer.apply(this,arguments);
     var self = this;
     
@@ -30,7 +31,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
-    jQuery(MASCP.SequenceRenderer).bind('layerRegistered', function(e,layer) {
+    jQuery(MASCP).bind('layerRegistered', function(e,layer) {
         self.addTrack(layer);
         self.hideLayer(layer);
     });
@@ -39,9 +40,9 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     // inheriting from CondensedSequenceRenderer
     jQuery(this).unbind('sequenceChange');
     jQuery(this).bind('sequenceChange',function() {
-        for (var layername in MASCP.SequenceRenderer._layers) {
-            self.addTrack(MASCP.SequenceRenderer._layers[layername]);
-            MASCP.SequenceRenderer._layers[layername].disabled = true;
+        for (var layername in MASCP._layers) {
+            self.addTrack(MASCP._layers[layername]);
+            MASCP._layers[layername].disabled = true;
         }
         self.zoom = self.zoom;
     });
@@ -361,7 +362,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
  * @type Array
  */
 MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(windowSize) {
-    MASCP.SequenceRenderer.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
+    MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
     var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
            'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
            'L': 3.8,'K':-3.9,'M': 1.9,'F': 2.8,'P':-1.6,
@@ -414,7 +415,7 @@ var addElementToLayer = function(layerName) {
     var rect =  canvas.rect(-0.25+this._index,60,1,4);    
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+    rect.style.fill = MASCP._layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
 
@@ -426,7 +427,7 @@ var addElementToLayer = function(layerName) {
 
     var tracer = canvas.rect(this._index+0.25,10,0.1,0);
     tracer.style.strokeWidth = '0px';
-    tracer.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+    tracer.style.fill = MASCP._layers[layerName].color;
     tracer.setAttribute('display','none');
     
     if ( ! this._renderer._layer_containers[layerName].tracers) {
@@ -447,7 +448,7 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
     rect.setAttribute('display', 'none');
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+    rect.style.fill = MASCP._layers[layerName].color;
 
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(shine);    
@@ -462,7 +463,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';    
-    rect.style.fill = MASCP.SequenceRenderer._layers[layerName].color;
+    rect.style.fill = MASCP._layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
 
