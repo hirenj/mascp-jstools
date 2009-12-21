@@ -30,7 +30,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
-    jQuery(MASCP).bind('layerRegistered', function(e,layer) {
+    jQuery(MASCP.SequenceRenderer).bind('layerRegistered', function(e,layer) {
         self.addTrack(layer);
         self.hideLayer(layer);
     });

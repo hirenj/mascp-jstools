@@ -36,7 +36,7 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 
 /**
  * Event fired when a layer is registered with the global layer registry
- * @name    MASCP#layerRegistered
+ * @name    MASCP.SequenceRenderer.layerRegistered
  * @event
  * @param   {Object}    e
  * @param   {Object}    layer Layer just registered
@@ -44,7 +44,7 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 
 /**
  * Event fired when a group is registered with the global group registry
- * @name    MASCP#groupRegistered
+ * @name    MASCP.SequenceRenderer.groupRegistered
  * @event
  * @param   {Object}    e
  * @param   {Object}    group Group just registered
@@ -354,7 +354,7 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
 
     var renderer = this;
     
-    jQuery(MASCP).bind('layerRegistered', function(e) {
+    jQuery(MASCP.SequenceRenderer).bind('layerRegistered', function(e) {
 		jQuery(controller_box).accordion('destroy');
 		jQuery(controller_box).accordion({header : 'h3', collapsible : true, autoHeight: true, active: false });
 	});
@@ -405,14 +405,14 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
     };
 
     
-    jQuery(MASCP).bind("layerRegistered",function(e,layer) {
+    jQuery(MASCP.SequenceRenderer).bind("layerRegistered",function(e,layer) {
         if (layer.group && layer.group.hide_member_controllers) {
             return;
         }
         controller_box.add_layer(layer);
     });
 
-    jQuery(MASCP).bind("groupRegistered",function(e,group) {
+    jQuery(MASCP.SequenceRenderer).bind("groupRegistered",function(e,group) {
         if (group.hide_group_controller) {
             return;
         }
@@ -647,7 +647,7 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, wi
  * @static
  * @param {String} groupName Name to give to this group
  * @param {String} options Options to give this group: name, and flags for hiding group member and whole group controllers: hide_member_controllers and hide_group_controller respectively
- * @see MASCP#event:groupRegistered
+ * @see MASCP.SequenceRenderer#event:groupRegistered
  */
 MASCP.SequenceRenderer.registerGroup = function(groupName, options)
 {
@@ -686,7 +686,7 @@ MASCP.SequenceRenderer.registerGroup = function(groupName, options)
     
     this._groups[groupName] = group;
     
-    jQuery(MASCP).trigger('groupRegistered',[group]);
+    jQuery(MASCP.SequenceRenderer).trigger('groupRegistered',[group]);
 }
 
 MASCP.SequenceRenderer.prototype.reset = function()
@@ -713,7 +713,7 @@ MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
  * @static
  * @param {String} layerName Name to give to this layer
  * @param {String} options Options to give this layer: fullname, color and optional CSS block.
- * @see MASCP#event:layerRegistered
+ * @see MASCP.SequenceRenderer#event:layerRegistered
  */
 MASCP.SequenceRenderer.registerLayer = function(layerName, options)
 {
@@ -760,5 +760,5 @@ MASCP.SequenceRenderer.registerLayer = function(layerName, options)
     }
     layer.layer_id = new Date().getMilliseconds();
     
-    jQuery(MASCP).trigger('layerRegistered',[layer]);
+    jQuery(MASCP.SequenceRenderer).trigger('layerRegistered',[layer]);
 };

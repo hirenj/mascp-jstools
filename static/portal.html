@@ -117,7 +117,7 @@
                 dragger.applyToElement(MASCP.renderer._canvas);
             })
         }
-        jQuery(MASCP).bind('layerRegistered', function(e,layer) {
+        jQuery(MASCP.SequenceRenderer).bind('layerRegistered', function(e,layer) {
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
 
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);      
