@@ -398,7 +398,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
                 
                 // FIXME FOR MULTIPLE BINDINGS
                 
-                jQuery(sequenceRenderer.getLayer(overlay_name)).bind('mouseover',function() {
+                jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
                     map.showKeyword(simple_tissue);
                 });
             }

@@ -22,7 +22,6 @@ if (document.write && (typeof svgweb == 'undefined')) {
  *  @extends    MASCP.SequenceRenderer
  */
 MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
-    log(this);
     MASCP.SequenceRenderer.apply(this,arguments);
     var self = this;
     
@@ -40,9 +39,9 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     // inheriting from CondensedSequenceRenderer
     jQuery(this).unbind('sequenceChange');
     jQuery(this).bind('sequenceChange',function() {
-        for (var layername in MASCP._layers) {
-            self.addTrack(MASCP._layers[layername]);
-            MASCP._layers[layername].disabled = true;
+        for (var layername in MASCP.layers) {
+            self.addTrack(MASCP.layers[layername]);
+            MASCP.layers[layername].disabled = true;
         }
         self.zoom = self.zoom;
     });
@@ -250,7 +249,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                big_labels.attr({'font-size': '2pt'});
                axis.hide();
                if (this.tracers) {
-                   this.tracers.show();
+                   this._visibleTracers().show();
                }
            } else if (this.zoom > 1.8) {
                axis.show();
@@ -264,8 +263,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                little_ticks.show();
                little_labels.show();
                if (this.tracers) {
-                this.tracers.hide();
-                }
+                   this.tracers.hide();
+               }
            } else {
                 if (this.tracers) {
                 this.tracers.hide();
@@ -415,7 +414,7 @@ var addElementToLayer = function(layerName) {
     var rect =  canvas.rect(-0.25+this._index,60,1,4);    
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';
-    rect.style.fill = MASCP._layers[layerName].color;
+    rect.style.fill = MASCP.layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
 
@@ -427,14 +426,19 @@ var addElementToLayer = function(layerName) {
 
     var tracer = canvas.rect(this._index+0.25,10,0.1,0);
     tracer.style.strokeWidth = '0px';
-    tracer.style.fill = MASCP._layers[layerName].color;
+    tracer.style.fill = MASCP.layers[layerName].color;
     tracer.setAttribute('display','none');
+    
+    var renderer = this._renderer;
     
     if ( ! this._renderer._layer_containers[layerName].tracers) {
         this._renderer._layer_containers[layerName].tracers = canvas.set();
     }
     if ( ! canvas.tracers ) {
         canvas.tracers = canvas.set();
+        canvas._visibleTracers = function() {
+            return renderer._visibleTracers();
+        }
     }
     
     this._renderer._layer_containers[layerName].tracers.push(tracer);
@@ -448,7 +452,7 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
     rect.setAttribute('display', 'none');
-    rect.style.fill = MASCP._layers[layerName].color;
+    rect.style.fill = MASCP.layers[layerName].color;
 
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(shine);    
@@ -463,7 +467,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';    
-    rect.style.fill = MASCP._layers[layerName].color;
+    rect.style.fill = MASCP.layers[layerName].color;
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
 
@@ -496,6 +500,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         this._layer_containers = {};
         this._track_order = [];
     }
+
     
     if ( ! this._layer_containers[layer.name] ) {                
         this._layer_containers[layer.name] = this._canvas.set();
@@ -513,7 +518,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             if (visibility) {
                 containers[layer.name].attr({'display' : 'block'});
             } else {
-                containers[layer.name].attr({'display' : 'none'});                
+                containers[layer.name].attr({'display' : 'none'});
+                if (containers[layer.name].tracers) {
+                    containers[layer.name].tracers.hide();
+                }
             }
             
             renderer.refresh();
@@ -527,6 +535,23 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         }
     }
     this.hideLayer(layer);
+};
+
+/*
+ * Get a canvas set of the visible tracers on this renderer
+ */
+MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
+    var tracers = null;
+    for (var i in MASCP.layers) {
+        if (this.isLayerActive(i) && this._layer_containers[i].tracers) {
+            if ( ! tracers ) {
+                tracers = this._layer_containers[i].tracers;
+            } else {
+                tracers.concat(this._layer_containers[i].tracers);
+            }
+        }
+    }
+    return tracers;
 };
 
 MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
@@ -581,17 +606,19 @@ var accessors = {
     setTrackOrder: function(order) {
         var track_order = [];
         for (var i = 0; i < order.length; i++) {
-            if (this.getLayer(order[i])) {
+            if (MASCP.getLayer(order[i])) {
                 track_order.push(order[i]);
-            } else if (this.getGroup(order[i])) {
-                var group_layers = this.getGroup(order[i])._layers;
+            } else if (MASCP.getGroup(order[i])) {
+                var group_layers = MASCP.getGroup(order[i])._layers;
                 for (var j = 0; j < group_layers.length; j++ ) {
                     track_order.push(group_layers[j].name);
                 }
             }
         }
         this._track_order = track_order;
-        this.refresh();
+        if (this._canvas) {
+            this.refresh();
+        }
     },
 
     setZoom: function(zoomLevel) {
