@@ -248,7 +248,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                little_labels.attr({'font-size':'2pt'});
                big_labels.attr({'font-size': '2pt'});
                axis.hide();
-               if (this.tracers) {
+               if (this._visibleTracers()) {
                    this._visibleTracers().show();
                }
            } else if (this.zoom > 1.8) {
