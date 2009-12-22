@@ -23,6 +23,8 @@
     h1 a { text-decoration: none }
     h2 { font-size: 1.5em; color: #0e0f2e; }
     h3 { text-align: center; color: #0e0f2e; }
+    #gallery a img { border: 10px solid #999999; border-right: 0px;}
+    #gallery a:last-child img { border-right: 10px solid #999999;}
     a { color: #0e0f2e; }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
@@ -62,8 +64,7 @@
     </div>
 
     <div id="gallery">
-        <a href="images/gomap.png"><img src="images/gomap_thumb.png"/></a>
-        <a href="images/tracks.png"><img src="images/tracks_thumb.png"/></a>
+        <a href="images/gomap.png" title="Gene Ontology Map highlighting functionality" ><img src="images/gomap_thumb.png"/></a><a href="images/tracks.png" title="Display sequences in a condensed track view"><img src="images/tracks_thumb.png"/></a><a href="images/tracks2.png" title="Zoom in to see annotations on individual amino acids"><img src="images/tracks2_thumb.png"/></a>
     </div>
     <h2>Contact</h2>
     <p> Hiren Joshi (hjjoshi@lbl.gov)</p>
