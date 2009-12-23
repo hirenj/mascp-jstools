@@ -487,6 +487,48 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 })();
 
 /**
+ * Mouseover event for a layer
+ * @name    MASCP.Layer#mouseover
+ * @event
+ * @param   {Object}    e
+ */
+ 
+/**
+ * Mouseout event for a layer
+ * @name    MASCP.Layer#mouseout
+ * @event
+ * @param   {Object}    e
+ */
+  
+/**
+ * Mousemove event for a layer
+ * @name    MASCP.Layer#mousemove
+ * @event
+ * @param   {Object}    e
+ */
+
+/**
+ * Mousedown event for a layer
+ * @name    MASCP.Layer#mousedown
+ * @event
+ * @param   {Object}    e
+ */
+ 
+/**
+ * Mouseup event for a layer
+ * @name    MASCP.Layer#mouseup
+ * @event
+ * @param   {Object}    e
+ */
+
+/**
+ * Click event for a layer
+ * @name    MASCP.Layer#click
+ * @event
+ * @param   {Object}    e
+ */
+
+/**
  * Add a layer to this renderer.
  * @param {Object} layer    Layer object to add. The layer data is used to create a track that can be independently shown/hidden.
  *                          The track itself is by default hidden.
