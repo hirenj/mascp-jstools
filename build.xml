@@ -8,6 +8,8 @@
 	
 	<property name="javascript.dir" value="js"/>
 
+	<property name="jsdoc.version" value="2.3.2" />
+
     <property name="ivy.install.version" value="2.1.0-rc1" />
 	
 	<property name="ivy.jar.filename" value="ivy-${ivy.install.version}.jar"/>
@@ -55,14 +57,15 @@
 		<mkdir dir="${project.temp.dir}"/>
 		<mkdir dir="${apidoc.dir}/js"/>
 		
-	    <unzip src="${project.java.extlib.dir}/jsdoc-dist-2.1.0.zip" dest="${project.temp.dir}/jsdoc-toolkit"/>
+	    <unzip src="${project.java.extlib.dir}/jsdoc-dist-${jsdoc.version}.zip" dest="${project.temp.dir}/jsdoc-toolkit"/>
 		<taskdef name="jsdoctoolkit" classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit" >
 	        <classpath>
+<!--	            <fileset dir="${project.temp.dir}/jsdoc-toolkit" includes="**/*.jar"/>-->
 	            <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
 	        </classpath>
 	    </taskdef>
 		<echo>Making jsdoc in ${apidoc.dir}/js from ${javascript.dir}</echo>
-	    <jsdoctoolkit jsdochome="${project.temp.dir}/jsdoc-toolkit/jsdoc_toolkit-2.1.0/jsdoc-toolkit/" template="jsdoc" outputdir="${apidoc.dir}/doc">
+	    <jsdoctoolkit jsdochome="${project.temp.dir}/jsdoc-toolkit/jsdoc_toolkit-${jsdoc.version}/jsdoc-toolkit/" template="jsdoc" outputdir="${apidoc.dir}/js">
 	    	<fileset dir="${javascript.dir}">
 	        	<include name="lib/*.js"/>
 	        </fileset>

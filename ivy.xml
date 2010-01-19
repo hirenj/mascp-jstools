@@ -9,17 +9,20 @@
             on the jar is broken.
         -->
 
-      <dependency org="org.jsdoctoolkit" name="jsdoc-dist" rev="2.1.0">
-          <artifact type="zip" name="jsdoc-dist" url="http://jsdoc-toolkit.googlecode.com/files/jsdoc_toolkit-2.1.0.zip"/>                
+      <dependency org="org.jsdoctoolkit" name="jsdoc-dist" rev="2.3.2">
+          <artifact type="zip" name="jsdoc-dist" url="http://jsdoc-toolkit.googlecode.com/files/jsdoc_toolkit-2.3.2.zip"/>                
       </dependency>
 
-      <dependency org="org.jsdoctoolkit" name="jsdoc" rev="2.1.0">
-          <artifact type="jar" name="jsdoc" url="http://mirrors.ibiblio.org/pub/mirrors/maven2/org/jsdoctoolkit/jsdoc/2.1.0/jsdoc-2.1.0.jar"/>
+      <dependency org="rhino" name="js" rev="1.7R2"/>
+
+<!--
+      <dependency org="org.jsdoctoolkit" name="jsdoc" rev="2.3.2">
+          <artifact type="jar" name="jsdoc" url="http://mirrors.ibiblio.org/pub/mirrors/maven2/org/jsdoctoolkit/jsdoc/2.3.2/jsdoc-2.3.2.jar"/>
       </dependency>
+-->
     
-      <dependency org="org.jsdoctoolkit" name="jsdoctoolkit-ant-task" rev="1.0">
-          <exclude module="ant-contrib"/>
-          <exclude module="jsdoc"/>
+      <dependency org="org.jsdoctoolkit" name="jsdoctoolkit-ant-task" rev="1.0.1">
+          <artifact type="jar" name="jsdoctoolkit-ant-task" url="http://jsdoc-toolkit-ant-task.googlecode.com/files/jsdoctoolkit-ant-task-1.0.1.jar"/>
       </dependency>
 
     </dependencies>
