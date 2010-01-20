@@ -106,7 +106,7 @@ MASCP.AtProteomeTissueReader.prototype.requestData = function()
 MASCP.AtProteomeTissueReader.Result = MASCP.AtProteomeTissueReader.Result;
 
 /*
- * The retrieved ID from the AtProteome database
+ * Get the total number of spectra defined in the AtProteome Database for a single tissue
  */
 MASCP.AtProteomeTissueReader.Result.prototype.getTotalSpectra = function()
 {
@@ -128,7 +128,7 @@ MASCP.AtProteomeTissueReader.Result.prototype.getTotalSpectra = function()
     
     var tds = trs[trs.length-1].getElementsByTagName('td');
     if (tds.length > 0) {
-        return jQuery(tds[1]).text();
+        return parseInt(jQuery(tds[1]).text());
     } else{
         return null;
     }
@@ -201,7 +201,7 @@ MASCP.AtProteomeReader.lookupAgi = function(agi,reader)
             if (this.result.getId()) {
                 reader.retrieve();
             }
-        }).retrieve();
+        }).setAsync(reader.async).retrieve();
         return null;
     }
     return this.agi_cache[agi];
@@ -324,6 +324,7 @@ MASCP.AtProteomeReader.Result.prototype.retrieveSpectraByTissue = function()
     for (var i in tissues) {
         this.spectra[tissues[i]] = 0;
         var tissue_reader = new MASCP.AtProteomeTissueReader(this.agi,this.reader._endpointURL);
+        tissue_reader.setAsync(this.reader.async);
         tissue_reader.tissue = tissues[i];
         var tissue_name = tissues[i];
 

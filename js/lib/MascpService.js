@@ -194,13 +194,15 @@ MASCP.Service.prototype = {};
 
 /**
  *  @lends MASCP.Service.prototype
- *  @property   {String}  agi             AGI to retrieve data for
+ *  @property   {String}  agi               AGI to retrieve data for
  *  @property   {MASCP.Service.Result}  result  Result from the query
+ *  @property   {Boolean} async             Flag for using asynchronous requests - defaults to true
  */
 jQuery.extend(MASCP.Service.prototype,{
   'agi'     : null,
   'result'  : null, 
-  '__result_class' : null
+  '__result_class' : null,
+  'async'   : true,
 });
 
 
@@ -240,6 +242,20 @@ MASCP.Service.prototype.bind = function(type,func)
 };
 
 /**
+ *  Unbinds a handler from one or more events. Returns a reference to self, so this method
+ *  can be chained.
+ *
+ *  @param  {String}    type        Event type to unbind
+ *  @param  {Function}  function    Handler to unbind from event
+ *  @see jQuery <a href="http://docs.jquery.com/Events/unbind">unbind function</a>.
+ */
+MASCP.Service.prototype.unbind = function(type,func)
+{
+    jQuery(this).unbind(type,func);
+    return this;    
+};
+
+/**
  * @name    MASCP.Service#resultReceived
  * @event
  * @param   {Object}    e
@@ -267,8 +283,9 @@ MASCP.Service.prototype.retrieve = function()
     }
     jQuery.ajax(
         jQuery.extend({
+        async:      this.async,
         url:        this._endpointURL,
-        error:      function(response) {
+        error:      function(response,req,settings) {
                         jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     },
@@ -279,6 +296,18 @@ MASCP.Service.prototype.retrieve = function()
                     }
         },request_data)
     );
+    return this;
+};
+
+/**
+ * Set the async parameter for this service.
+ * @param {Boolean} asyncFlag   Asynchronous flag - true for asynchronous action, false for asynchronous
+ * @returns Reference to self
+ * @type MASCP.Service.prototype
+ */
+MASCP.Service.prototype.setAsync = function(asyncFlag)
+{
+    this.async = asyncFlag;
     return this;
 };
 

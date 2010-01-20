@@ -27,6 +27,7 @@ my $URLS = {
   'suba'     => 'http://www.plantenergy.uwa.edu.au/suba2/handler.php',
   'promex'   => 'http://www.promexdb.org/cgi-bin/peplib.pl',
   'atproteome' => 'http://fgcz-atproteome.unizh.ch/index.php',
+  'atproteome-json' => 'http://fgcz-atproteome.unizh.ch/mascpv2.php',
   'tair'    => 'http://www.arabidopsis.org/servlets/TairObject',
 };
 
@@ -64,7 +65,9 @@ if ( -e $cached )
 }
 
 
-my $request = HTTP::Request->new('POST', $url,new HTTP::Headers( Content_Type => 'application/x-www-form-urlencoded' ),$data);
+my $request;
+
+$request = HTTP::Request->new('POST', $url,new HTTP::Headers( Content_Type => 'application/x-www-form-urlencoded' ),$data);
 
 if ($tidy->{$service}) {
     print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
@@ -82,6 +85,7 @@ if ($tidy->{$service}) {
     close $outfile;
 } else {
     print CGI->header(-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
+    print STDERR $data;
     my $content = LWP::UserAgent->new->request($request)->content;    
     print $content;
     open $outfile, ">".$cached;
