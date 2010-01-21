@@ -277,26 +277,71 @@ MASCP.Service.prototype.unbind = function(type,func)
 MASCP.Service.prototype.retrieve = function()
 {
     var self = this;
+
     var request_data = this.requestData();
     if (! request_data ) {
         return this;
     }
-    jQuery.ajax(
-        jQuery.extend({
-        async:      this.async,
-        url:        this._endpointURL,
-        error:      function(response,req,settings) {
-                        jQuery(self).trigger("error");
-                        throw "Error occurred retrieving data for service "+self._endpointURL;
-                    },
-        success:    function(data,status) {
-                        self._dataReceived(data,status);
-                        jQuery(self).trigger("resultReceived");
-                        jQuery(MASCP.Service).trigger("resultReceived");
-                    }
-        },request_data)
-    );
+    request_data = jQuery.extend({
+    async:      this.async,
+    url:        this._endpointURL,
+    error:      function(response,req,settings) {
+                    jQuery(self).trigger("error");
+                    alert("Erroring out");
+                    throw "Error occurred retrieving data for service "+self._endpointURL;
+                },
+    success:    function(data,status) {
+                    self._dataReceived(data,status);
+                    jQuery(self).trigger("resultReceived");
+                    jQuery(MASCP.Service).trigger("resultReceived");
+                }
+    },request_data);
+    
+    if (jQuery.browser.msie && window.XDomainRequest) {
+        this._retrieveIE(request_data);
+        return this;
+    }
+    
+    jQuery.ajax(request_data);
     return this;
+};
+
+/**
+ * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
+ * parameters passed to the jQuery method, and builds an XDR object. There is no support for a locking
+ * synchronous method to do these requests (that is required for Unit testing) so an alert box is used
+ * to provide the locking.
+ * @private
+ * @param {Object} dataHash Hash with the data and settings used to build the query.
+ */
+
+
+MASCP.Service.prototype._retrieveIE = function(dataHash)
+{
+    // Use XDR
+    var xdr = new XDomainRequest();
+    var loaded = false;
+    var counter = 0;
+    xdr.onerror = dataHash['error'];
+    xdr.open("post",dataHash['url']);
+    xdr.onload = function() {
+        loaded = true;
+        if (dataHash.dataType == 'xml') {
+           dataHash.success(xdr.responseXml, 'success');
+        } else if (dataHash.dataType == 'json' ) {
+           dataHash.success(JSON.parse(xdr.responseText),'success');
+        } else {
+           dataHash.success(xdr.responseText, 'success');
+        }
+    };
+    xdr.send(jQuery.param(dataHash['data']));
+    while (! dataHash.async && ! loaded && counter < 3) {
+        alert("This browser does not support synchronous requests, click OK while we're waiting for data");
+        counter += 1;
+    }
+    if ( ! dataHash.async && ! loaded ) {
+        alert("No data");
+    }
 };
 
 /**

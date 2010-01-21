@@ -15,7 +15,7 @@ my $data;
 if ($method == 'POST') {
 	$tmpStr;
 	read( STDIN, $tmpStr, $ENV{ "CONTENT_LENGTH" } );
-	$data = $tmpStr;
+	$data = $tmpStr;	
 } else {
 	$data = $ENV{'QUERY_STRING'};
 }
@@ -52,9 +52,9 @@ my $cached = File::Spec->catfile($tmpdir,"masc-".$hash->hexdigest);
 if ( -e $cached )
 {
     if ($tidy->{$service}) {
-        print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');        
+        print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');        
     } else {
-        print CGI->header(-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');        
+        print CGI->header(-Content_type => 'text/plain', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
     }
     undef $/;
     open $infile, "<".$cached;
@@ -70,7 +70,7 @@ my $request;
 $request = HTTP::Request->new('POST', $url,new HTTP::Headers( Content_Type => 'application/x-www-form-urlencoded' ),$data);
 
 if ($tidy->{$service}) {
-    print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
+    print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
     my $tidy = HTML::Tidy->new( { output_xml => 1, add_xml_decl => 1 });
     my $start_content = LWP::UserAgent->new->request($request)->content;
     my $repl_doctype = qq|<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">|;
@@ -84,8 +84,7 @@ if ($tidy->{$service}) {
     print $outfile $cleaned;
     close $outfile;
 } else {
-    print CGI->header(-Access_Control_Allow_Origin => 'http://localhost', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
-    print STDERR $data;
+    print CGI->header(-Content_type => 'text/plain', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
     my $content = LWP::UserAgent->new->request($request)->content;    
     print $content;
     open $outfile, ">".$cached;
