@@ -15,31 +15,17 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.SubaReader = MASCP.buildService(function(data) {
-                        jQuery.extend(this,MASCP.SUBA_FIELDS);
-
-                        for (var result_field in MASCP.SUBA_FIELDS) {
-                            if (data && data.rows && data.rows.length > 0) {
-                                this[result_field] = data.rows[0][result_field];
-                            }
-                        }
+                        this._raw_data = data;
                         return this;
                     });
 
 MASCP.SubaReader.prototype.requestData = function()
 {
-    var data = [{'type':'condition','sql':{'column':'locus','operator':'in','value':this.agi}}];
     return {
-        type: "POST",
+        type: "GET",
         dataType: "json",
-        data: { 'where' : data.toJSON ? data.toJSON() : JSON.stringify(data),
-                'sort'  : 'locus',
-                'start' : '0',
-                'limit' : '50',
-                'dir'   : 'ASC',
-                'db'    : 'suba',
-                'action': 'db_filter',
-                'table' : 'suba2',
-                'service' : 'suba' 
+        data: { 'agi'       : this.agi,
+                'service'   : 'suba' 
         }
     };
 };
@@ -86,6 +72,22 @@ MASCP.SUBA_FIELDS =
 
 /**#@-*/
 
+
+MASCP.SubaReader.Result.prototype._getLocalisation = function(localisation)
+{
+    var results = {};
+    for (var i = 0; i < this._raw_data['observed'].length; i++) {
+        var obs = this._raw_data['observed'][i];
+        if (obs[2] == localisation) {
+            if (! results[obs[0]]) {
+                results[obs[0]] = [];
+            }
+            results[obs[0]].push(obs[1]);
+        }
+    }
+    return results;
+};
+
 MASCP.SubaReader.Result.prototype._parseLocalisation = function(localisation)
 {
     if (localisation == null || localisation.length == 0 )
@@ -121,7 +123,7 @@ MASCP.SubaReader.Result.prototype._sortLocalisation = function(loc_data)
  */
 MASCP.SubaReader.Result.prototype.getMassSpecLocalisation = function()
 {
-    return this._parseLocalisation(this.location_ms);
+    return this._getLocalisation('ms');
 };
 
 
@@ -130,7 +132,7 @@ MASCP.SubaReader.Result.prototype.getMassSpecLocalisation = function()
  */
 MASCP.SubaReader.Result.prototype.getGfpLocalisation = function()
 {
-    return this._parseLocalisation(this.location_gfp);
+    return this._getLocalisation('gfp');
 };
 
 MASCP.SubaReader.Result.prototype.mapController = function(inputElement)

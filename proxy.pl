@@ -12,19 +12,27 @@ use File::Spec;
 my $method = $ENV{REQUEST_METHOD};
 
 my $data;
-if ($method == 'POST') {
+
+print STDERR "In a request";
+
+if ($method eq 'POST') {    
 	$tmpStr;
 	read( STDIN, $tmpStr, $ENV{ "CONTENT_LENGTH" } );
-	$data = $tmpStr;	
+	$data = $tmpStr;
+	print STDERR "In a POST request";
+	print STDERR "${method}";
+	print STDERR "Data is ${data}";
 } else {
+    print STDERR "GET request";
 	$data = $ENV{'QUERY_STRING'};
+	print STDERR "Data is ${data}";
 }
 
 my $cgi = new CGI($data);
 
 my $URLS = {
   'phosphat' => 'http://phosphat.mpimp-golm.mpg.de/PhosPhAtHost30/productive/views/Prediction.php',
-  'suba'     => 'http://www.plantenergy.uwa.edu.au/suba2/handler.php',
+  'suba'     => 'http://suba.plantenergy.uwa.edu.au/services/byAGI.php',
   'promex'   => 'http://www.promexdb.org/cgi-bin/peplib.pl',
   'atproteome' => 'http://fgcz-atproteome.unizh.ch/index.php',
   'atproteome-json' => 'http://fgcz-atproteome.unizh.ch/mascpv2.php',
@@ -46,6 +54,8 @@ my $hash = Digest::MD5->new();
 $hash->add($service);
 $hash->add($data);
 
+print STDERR "Determined service is ${service}";
+
 my $tmpdir = File::Spec->tmpdir();
 my $cached = File::Spec->catfile($tmpdir,"masc-".$hash->hexdigest);
 
@@ -66,8 +76,11 @@ if ( -e $cached )
 
 
 my $request;
-
-$request = HTTP::Request->new('POST', $url,new HTTP::Headers( Content_Type => 'application/x-www-form-urlencoded' ),$data);
+if ($method eq 'GET') {
+    $request = HTTP::Request->new('POST', "${url}?${data}");
+} else {
+    $request = HTTP::Request->new('POST', $url,new HTTP::Headers( Content_Type => 'application/x-www-form-urlencoded' ),$data);
+}
 
 if ($tidy->{$service}) {
     print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
