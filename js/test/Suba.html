@@ -58,8 +58,7 @@
                 for (var i in gfp_loc) {
                     map.showKeyword(gfp_loc[i],'#00ff00');
                 }
-                
-                alert("Check highlights: Only the peroxisome should be highlighted");
+                assertEquals(true,confirm("Is only the Peroxisome highlighted in the diagram? (OK = Yes, Cancel = No)"));
             });
             reader.retrieve();
         }
@@ -81,8 +80,7 @@
                 for (var i in gfp_loc) {
                     map.showKeyword(gfp_loc[i],'#00ff00');
                 }
-
-                alert("Check highlights: Only the golgi should be highlighted");
+                assertEquals(true,confirm("Is only the Golgi highlighted in the diagram? (OK = Yes, Cancel = No)"));
             });
             reader.retrieve();
         }
