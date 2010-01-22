@@ -15,31 +15,17 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.SubaReader = MASCP.buildService(function(data) {
-                        jQuery.extend(this,MASCP.SUBA_FIELDS);
-
-                        for (var result_field in MASCP.SUBA_FIELDS) {
-                            if (data && data.rows && data.rows.length > 0) {
-                                this[result_field] = data.rows[0][result_field];
-                            }
-                        }
+                        this._raw_data = data;
                         return this;
                     });
 
 MASCP.SubaReader.prototype.requestData = function()
 {
-    var data = [{'type':'condition','sql':{'column':'locus','operator':'in','value':this.agi}}];
     return {
-        type: "POST",
+        type: "GET",
         dataType: "json",
-        data: { 'where' : data.toJSON ? data.toJSON() : JSON.stringify(data),
-                'sort'  : 'locus',
-                'start' : '0',
-                'limit' : '50',
-                'dir'   : 'ASC',
-                'db'    : 'suba',
-                'action': 'db_filter',
-                'table' : 'suba2',
-                'service' : 'suba' 
+        data: { 'agi'       : this.agi,
+                'service'   : 'suba' 
         }
     };
 };
@@ -86,6 +72,27 @@ MASCP.SUBA_FIELDS =
 
 /**#@-*/
 
+
+MASCP.SubaReader.Result.prototype._getLocalisation = function(localisation)
+{
+    var results = {};
+    var any_data = false;
+    for (var i = 0; i < this._raw_data['observed'].length; i++) {
+        var obs = this._raw_data['observed'][i];
+        if (obs[2] == localisation) {
+            if (! results[obs[0]]) {
+                results[obs[0]] = [];
+            }
+            results[obs[0]].push(obs[1]);
+            any_data = true;
+        }
+    }
+    if ( ! any_data ) {
+        return null;
+    }
+    return results;
+};
+
 MASCP.SubaReader.Result.prototype._parseLocalisation = function(localisation)
 {
     if (localisation == null || localisation.length == 0 )
@@ -108,7 +115,6 @@ MASCP.SubaReader.Result.prototype._sortLocalisation = function(loc_data)
     for (var i in loc_data) {
         loc_keys.push(i);
     }
-    
     loc_keys = loc_keys.sort(function(a,b) {
         return loc_data[a].length - loc_data[b].length;
     });
@@ -121,7 +127,7 @@ MASCP.SubaReader.Result.prototype._sortLocalisation = function(loc_data)
  */
 MASCP.SubaReader.Result.prototype.getMassSpecLocalisation = function()
 {
-    return this._parseLocalisation(this.location_ms);
+    return this._getLocalisation('ms');
 };
 
 
@@ -130,7 +136,7 @@ MASCP.SubaReader.Result.prototype.getMassSpecLocalisation = function()
  */
 MASCP.SubaReader.Result.prototype.getGfpLocalisation = function()
 {
-    return this._parseLocalisation(this.location_gfp);
+    return this._getLocalisation('gfp');
 };
 
 MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
@@ -155,7 +161,7 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
                     map.hideKeyword(ms_loc[i], '#ff0000');
                 }                
             }
-        }).attr('checked', true);
+        }).attr('checked', (ms_loc.length > 0));
     }
     if ( ! this.getGfpLocalisation() )  {
         jQuery('div.gfp', inputElement).css({ 'display': 'none' });
@@ -171,7 +177,7 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
                     map.hideKeyword(gfp_loc[i], '#00ff00');
                 }                
             }
-        }).attr('checked', true);
+        }).attr('checked', (gfp_loc.length > 0));
     }
 
     return inputElement[0];
@@ -181,7 +187,7 @@ MASCP.SubaReader.Result.prototype.render = function()
 {
     var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
     var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
-    var container = jQuery('<div><a style="display: block; float: right;" href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.reader.agi+'">SUBA</a></div>')
+    var container = jQuery('<div><a style="display: block; float: right;" href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.reader.agi+'">SUBA</a></div>');
     if ( ms_loc.length == 0 && gfp_loc.length == 0 ) {
         return jQuery('<div>No data</div>');
     }
@@ -214,5 +220,5 @@ MASCP.SubaReader.Result.prototype.render = function()
         container.append('<div style="height: 0px; width: 100%; clear: both; float: none;"></div>');
         this._map = map;
     }
-    return container;
+    return container[0];
 };

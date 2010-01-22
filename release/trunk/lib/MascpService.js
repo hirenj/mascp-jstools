@@ -287,7 +287,6 @@ MASCP.Service.prototype.retrieve = function()
     url:        this._endpointURL,
     error:      function(response,req,settings) {
                     jQuery(self).trigger("error");
-                    alert("Erroring out");
                     throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status) {
@@ -327,14 +326,21 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
     xdr.onload = function() {
         loaded = true;
         if (dataHash.dataType == 'xml') {
-           dataHash.success(xdr.responseXml, 'success');
+            var dom = new ActiveXObject("Microsoft.XMLDOM");
+            dom.async = false;
+            dom.loadXML(xhr.responseText,200);
+            dataHash.success(dom, 'success');
         } else if (dataHash.dataType == 'json' ) {
-           dataHash.success(JSON.parse(xdr.responseText),'success');
+            dataHash.success(JSON.parse(xdr.responseText),'success');
         } else {
-           dataHash.success(xdr.responseText, 'success');
+            dataHash.success(xdr.responseText, 'success');
         }
     };
+    
+    // We can't set the content-type on the parameters here to url-encoded form data.
+    
     xdr.send(jQuery.param(dataHash['data']));
+    
     while (! dataHash.async && ! loaded && counter < 3) {
         alert("This browser does not support synchronous requests, click OK while we're waiting for data");
         counter += 1;

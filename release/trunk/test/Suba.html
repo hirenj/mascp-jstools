@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>AtProteomeJson</title>
+    <script type="text/javascript" charset="utf-8" src="../../jsunit/app/jsUnitCore.js"></script>
+    <script type="text/javascript">SVGWEB_PATH='../lib/svgweb/';</script>
+    <script type="text/javascript" src="../lib/gomap.js"></script>
+    <script type="text/javascript" src="../jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="../jquery-ui-1.7.2.custom.min.js"></script>
+    <script type="text/javascript" src="../lib/MascpService.js"></script>
+    <script type="text/javascript" src="../lib/SubaReader.js"></script>
+    <script type="text/javascript" src="../lib/PhosphatReader.js"></script>
+    <script type="text/javascript" src="../lib/PromexReader.js"></script>
+    <script type="text/javascript" src="../lib/TairReader.js"></script>
+    <script type="text/javascript" src="../lib/AtProteomeReader.js"></script>
+    <script type="text/javascript" src="../lib/AtProteomeReaderJson.js"></script>
+    <script type="text/javascript" src="../json2.js"></script>
+</head>
+<body>
+    <h1>Test results for SUBA</h1>
+    <div id="map">
+    </div>
+    <div id="map_a"></div>
+    <script type="text/javascript" charset="utf-8">
+
+        var map;
+        function setUpPage() {
+            map = new GOMap.Diagram('cell.svg');
+            map.appendTo(document.getElementById('map'));
+            document.getElementById('map').addEventListener('load', function() {
+                setUpPageStatus = 'complete';
+            });
+        }
+
+        function setUp() {
+            map.hideAllKeywords();
+        }
+
+        function testSimpleSubaRetrieve() {
+            var reader = new MASCP.SubaReader('AT3G15450.1','http://suba.plantenergy.uwa.edu.au/services/byAGI.php');
+            reader.async = false;           
+            reader.bind('resultReceived',function() {
+                assertEquals("AT3G15450.1",this.result.agi);
+                assertEquals(1, this.result.getGfpLocalisation().peroxisome.length);
+                assertEquals(true, isEmpty(this.result.getMassSpecLocalisation()));
+                assertEquals(false, isEmpty(this.result.getGfpLocalisation()));
+
+                var ms_loc = this.result._sortLocalisation(this.result.getMassSpecLocalisation());
+                var gfp_loc = this.result._sortLocalisation(this.result.getGfpLocalisation());
+                for (var i in ms_loc) {
+                    map.showKeyword(ms_loc[i]);
+                }            
+                for (var i in gfp_loc) {
+                    map.showKeyword(gfp_loc[i],'#00ff00');
+                }
+                
+                alert("Check highlights: Only the peroxisome should be highlighted");
+            });
+            reader.retrieve();
+        }
+
+        function testSimpleSubaRetrieveComplexData() {
+            var reader = new MASCP.SubaReader('AT3G61130.1','http://suba.plantenergy.uwa.edu.au/services/byAGI.php');
+            reader.async = false;           
+            reader.bind('resultReceived',function() {
+                assertEquals("AT3G61130.1",this.result.agi);
+                assertEquals(false, isEmpty(this.result.getMassSpecLocalisation()));
+                assertEquals(true, isEmpty(this.result.getGfpLocalisation()));
+                assertEquals(1, this.result.getMassSpecLocalisation().golgi.length);                
+
+                var ms_loc = this.result._sortLocalisation(this.result.getMassSpecLocalisation());
+                var gfp_loc = this.result._sortLocalisation(this.result.getGfpLocalisation());
+                for (var i in ms_loc) {
+                    map.showKeyword(ms_loc[i]);
+                }            
+                for (var i in gfp_loc) {
+                    map.showKeyword(gfp_loc[i],'#00ff00');
+                }
+
+                alert("Check highlights: Only the golgi should be highlighted");
+            });
+            reader.retrieve();
+        }
+
+
+        function isEmpty(obj) {
+            for(var prop in obj) {
+                if(obj.hasOwnProperty(prop))
+                    return false;
+            }
+            return true;
+        }
+        
+    </script>
+</body>
+</html>
