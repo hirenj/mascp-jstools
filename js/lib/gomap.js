@@ -8,9 +8,9 @@
  */
 if (document.write && (typeof svgweb == 'undefined')) {
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg-uncompressed.js" data-path="'+SVGWEB_PATH+'"></script>');        
+        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
-        document.write('<script src="svgweb/src/svg-uncompressed.js" data-path="svgweb/src/"></script>');
+        document.write('<script src="svgweb/src/svg.js" data-path="svgweb/src/"></script>');
     }
 }
 
@@ -153,6 +153,15 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
     });
         
 };
+
+/**
+ * Hide all the keywords currently being highlighted on this diagram
+ */
+GOMap.Diagram.prototype.hideAllKeywords = function() {
+    for (var key in this._highlighted) {
+        this.hideKeyword(key);
+    }
+}
 
 /**
  * Hide a given keyword on the diagram
