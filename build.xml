@@ -26,7 +26,10 @@
 	        <fileset dir="${project.java.extlib.dir}" includes="*.jar" excludes="${ivy.jar.filename}"/>
 	    </delete>
 	    <ivy:settings file="ivysettings.xml" />
-	    <ivy:retrieve pattern="${project.java.extlib.dir}/[artifact]-[revision].[ext]" />
+	    <ivy:retrieve pattern="${project.java.extlib.dir}/[artifact]-[revision].[ext]" type="jar" />
+
+	    <ivy:retrieve pattern="js/[artifact]-[revision].[ext]" type="js"/>
+
 	</target>
 
 
