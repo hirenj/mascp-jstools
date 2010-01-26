@@ -37,6 +37,8 @@ MASCP.AtProteomeReaderJson.prototype.requestData = function()
 };
 
 
+MASCP.AtProteomeReaderJson.SERVICE_URL = 'http://fgcz-atproteome.unizh.ch/mascpv2.php';
+
 /**
  * @class   Container class for results from the AtProteome service
  * @extends MASCP.Service.Result

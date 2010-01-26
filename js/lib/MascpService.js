@@ -42,7 +42,11 @@ MASCP.buildService = function(dataExtractor)
 {
     var clazz = function(agi,endpointURL)
     {
-        this._endpointURL = endpointURL;
+        if (typeof endpointURL != 'undefined') {
+            this._endpointURL = endpointURL;
+        } else {
+            this._endpointURL = clazz.SERVICE_URL;
+        }
         this.agi = agi;
         return this;
     };
