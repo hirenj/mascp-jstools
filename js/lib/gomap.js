@@ -57,7 +57,6 @@ GOMap.Diagram = function(image) {
 
     this._highlighted = {};
     this._styles_cache = {};
-
     var url = null;
     if (typeof image == 'string') {
         url = image;
@@ -67,8 +66,8 @@ GOMap.Diagram = function(image) {
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {
         this.element = image;
         this._svgLoaded();
-        var evt = document.createEvent('load');
-        evt.initEvent('ready',false,true);
+        var evt = document.createEvent('Events');
+        evt.initEvent('load',false,true);
         image.dispatchEvent(evt);
         return;
     }
