@@ -14,6 +14,7 @@
 </head>
 <body>
     <input id="yesbutton" type="button" value="YES"/><input id="nobutton" type="button" value="NO"/>
+    
     <script type="image/svg+xml">
        <svg 
            width="200" height="200"
@@ -27,13 +28,14 @@
             </g>
        </svg>
     </script>
+   
     <script type="text/javascript" charset="utf-8">
         var map;
         var valueflag = null;
         var all_results = [];
         function setUpPage() {
-            setupYesNoButtons();
             map = new GOMap.Diagram(document.getElementById('canvas'));
+            setupYesNoButtons();
             map.showKeyword('test_title');
             doUserInputTests();
         }
@@ -50,7 +52,7 @@
         
         function doUserInputTests() {
             
-            var tests = [function() {            
+            var tests = [function() {
                 jQuery('#test_name').text('Red circle, green border');
                 map.showKeyword('test1','#00ff00');
             },

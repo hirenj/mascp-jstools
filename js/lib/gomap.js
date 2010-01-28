@@ -66,9 +66,15 @@ GOMap.Diagram = function(image) {
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {
         this.element = image;
         this._svgLoaded();
-        var evt = document.createEvent('Events');
-        evt.initEvent('load',false,true);
-        image.dispatchEvent(evt);
+        if (image.fireEvent) {
+            var ev = document.createEventObject();
+            ev.type = 'load';
+            document.body.fireEvent("onreadystatechange",ev);
+        } else {
+            var evt = document.createEvent('Events');
+            evt.initEvent('load',false,true);
+            image.dispatchEvent(evt);
+        }
         return;
     }
 
@@ -505,8 +511,10 @@ GOMap.Diagram.prototype._highlightElement = function(element) {
     }
     element.setAttribute('fill-opacity','1');
     element.setAttribute('stroke-opacity','1');
-    element.style.setProperty('fill-opacity',1,null);
-    element.style.setProperty('stroke-opacity',1,null);
+    if (element.style.setProperty) {
+        element.style.setProperty('fill-opacity',1,null);
+        element.style.setProperty('stroke-opacity',1,null);
+    }
 };
 
 /* Go through all the elements in the svg document and force the opacity to be translucent. Since
