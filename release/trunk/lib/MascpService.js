@@ -343,7 +343,7 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
     };
     
     // We can't set the content-type on the parameters here to url-encoded form data.
-    
+    alert(jQuery.param(dataHash['data']));
     xdr.send(jQuery.param(dataHash['data']));
     
     while (! dataHash.async && ! loaded && counter < 3) {
