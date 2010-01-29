@@ -1,4 +1,4 @@
-alert('IMPORTANT: Remove this line from json2.js before deployment.');
+//alert('IMPORTANT: Remove this line from json2.js before deployment.');
 /*
     http://www.JSON.org/json2.js
     2009-09-29

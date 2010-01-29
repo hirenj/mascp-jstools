@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>SUBA data retrieval demonstration</title>
+	<meta name="generator" content="TextMate http://macromates.com/">
+    <script type="text/javascript">SVGWEB_PATH='../release/trunk/svgweb/';</script>	
+    <script type="text/javascript" src="../release/trunk/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="../release/trunk/jquery-ui-1.7.2.min.js"></script>
+    <script type="text/javascript" src="../release/trunk/lib/MascpService.js"></script>
+    <script type="text/javascript" src="../release/trunk/lib/SubaReader.js"></script>
+    <script type="text/javascript" src="../release/trunk/json-2.js"></script>
+</head>
+<body>
+    <h1>SUBA Data retrieval demonstration</h1>
+    <p>Using this</p>
+    <input type="text" id="agi" name="agi" value="AT1G58360.1"/><br/>
+    <input type="button" id="retrieve" name="retrieve" value="Retrieve"/>
+    <div>
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+    <script type="text/javascript">
+        jQuery(document).ready( function() {
+            var reader = new MASCP.SubaReader();
+
+            reader.bind('resultReceived',function(e) {
+                log(reader.agi);
+                if ( ! this.result ) {
+                    jQuery('#results').text('No localisation data');
+                    return;                    
+                }
+                jQuery('#results').text('');
+                var localisation = this.result.getMassSpecLocalisation();
+                var results = [];
+                log(this.results);
+                log(localisation);
+                for (var name in localisation) {
+                    var pubmeds = localisation[name];
+                    log(pubmeds);
+                    var pubmed_links = [];
+                    for (var i = 0; i < pubmeds.length; i++) {
+                        pubmed_links.push('<a href="http://www.ncbi.nlm.nih.gov/pubmed/'+pubmeds[i]+'">PubMed</a>');
+                    }
+                    results.push("Localisation "+name+" with references "+pubmed_links.join(',') );
+                }
+                jQuery('#results').append('<ul><li>'+results.join('</li><li>')+'</li>');
+            });
+
+            jQuery('#retrieve').click(function() {
+                reader.agi = jQuery('#agi')[0].value;
+                reader.retrieve();
+            });
+                        
+        });
+        
+    </script>
+</body>
+</html>
