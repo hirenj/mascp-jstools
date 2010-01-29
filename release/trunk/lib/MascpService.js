@@ -334,7 +334,8 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
             dom.async = false;
             dom.loadXML(xhr.responseText,200);
             dataHash.success(dom, 'success');
-        } else if (dataHash.dataType == 'json' ) {
+        } else if (dataHash.dataType == 'json') {
+            alert(xdr.responseText);
             dataHash.success(JSON.parse(xdr.responseText),'success');
         } else {
             dataHash.success(xdr.responseText, 'success');
