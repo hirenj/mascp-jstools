@@ -90,7 +90,7 @@ MASCP.PromexReader.Result.prototype._cleanSequence = function(sequence)
 
 MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-
+    var reader = this;
     MASCP.registerGroup('promex_experimental', {'fullname' : 'ProMex spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff9900' });
 
     this.bind('resultReceived', function() {
@@ -109,6 +109,7 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     	        window.open(a_spectra);
     	    });
     	});
+    	jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
     })
     return this;
 };

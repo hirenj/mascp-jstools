@@ -189,6 +189,14 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
  */
 
 /**
+ * Event fired when a result is rendered on this renderer
+ * @name    MASCP.SequenceRenderer#resultRendered
+ * @event
+ * @param   {Object}    e
+ * @param   {MASCP.Service} reader  Reader that rendered the result.
+ */
+
+/**
  * @name    MASCP.Group#visibilityChange
  * @event
  * @param   {Object}    e
@@ -196,13 +204,13 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
  * @param   {Boolean}   visibility
  */
 
- /**
-  * @name    MASCP.Layer#visibilityChange
-  * @event
-  * @param   {Object}    e
-  * @param   {Object}    renderer
-  * @param   {Boolean}   visibility
-  */
+/**
+ * @name    MASCP.Layer#visibilityChange
+ * @event
+ * @param   {Object}    e
+ * @param   {Object}    renderer
+ * @param   {Boolean}   visibility
+ */
 
 
 
@@ -816,7 +824,6 @@ MASCP.SequenceRenderer.prototype.reset = function()
 {
     jQuery(this._container).attr('class',null);
     for ( var group in MASCP.groups) {
-        log("Hiding the group "+MASCP.getGroup(group).group_id);
         this.hideGroup(group);
     }    
     for ( var layer in MASCP.layers) {

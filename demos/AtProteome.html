@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>AtProteome data retrieval demonstration</title>
+	<meta name="generator" content="TextMate http://macromates.com/">
+    <script type="text/javascript">SVGWEB_PATH='../release/trunk/svgweb/';</script>	
+    <script type="text/javascript" src="../release/trunk/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="../release/trunk/jquery-ui-1.7.2.min.js"></script>
+    <script type="text/javascript" src="../release/trunk/lib/MascpService.js"></script>
+    <script type="text/javascript" src="../release/trunk/lib/AtProteomeReaderJson.js"></script>
+    <script type="text/javascript" src="../release/trunk/json-2.js"></script>
+    <script type="text/javascript" src="../release/trunk/lib/SequenceRenderer.js"></script>    
+    <script type="text/javascript" src="../release/trunk/lib/CondensedSequenceRenderer.js"></script>
+</head>
+<body>
+    <h1>AtProteome Data retrieval demonstration</h1>
+    <p>Using this</p>
+    <input type="text" id="agi" name="agi" value="AT1G58360.1"/><br/>
+    <input type="button" id="retrieve" name="retrieve" value="Retrieve"/>
+    <div>
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+    <script type="text/javascript">
+        jQuery(document).ready( function() {
+            var reader = new MASCP.AtProteomeReaderJson();
+            var renderer = null;
+            if (MASCP.IE) {
+                renderer = new MASCP.SequenceRenderer(document.getElementById('results'));
+            } else {
+                renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('results'));                
+            }
+
+            reader.registerSequenceRenderer(renderer);
+
+            jQuery(renderer).bind('resultsRendered',function(e,resultReader) {
+                if (resultReader == reader) {
+                    renderer.showGroup('atproteome');
+                    renderer.zoom = 0.9;
+                }
+            });
+
+            jQuery('#retrieve').click(function() {
+                reader.agi = jQuery('#agi')[0].value;
+                reader.retrieve();
+            });
+                        
+        });
+        
+    </script>
+</body>
+</html>

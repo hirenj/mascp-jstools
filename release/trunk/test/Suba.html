@@ -28,13 +28,13 @@
         var map;
         function setUpPage() {
             map = new GOMap.Diagram('cell.svg');
-            map.appendTo(document.getElementById('map'));
-            document.getElementById('map').addEventListener('load', function() {
+            jQuery('#map').bind('load', function() {
                 setUpPageStatus = 'complete';
                 this.style.width='300px';
                 this.style.height='300px';
                 this.style.position = 'fixed';
-            },false);
+            });
+            map.appendTo(document.getElementById('map'));
         }
 
         function setUp() {

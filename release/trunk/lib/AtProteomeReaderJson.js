@@ -63,7 +63,10 @@ MASCP.AtProteomeReaderJson.Result.prototype = jQuery.extend(MASCP.AtProteomeRead
     spectra :   null,
     /** @field
      *  @description Hash keyed by tissue name containing the number of spectra for each peptide (keyed by "start-end" position) */
-    peptide_counts_by_tissue : null
+    peptide_counts_by_tissue : null,
+    /** @field
+     *  @description String containing the sequence for the retrieved AGI */
+    sequence : null
 });
 
 MASCP.AtProteomeReaderJson.Result.prototype._populate_spectra = function(data)
@@ -85,6 +88,9 @@ MASCP.AtProteomeReaderJson.Result.prototype._populate_peptides = function(data)
     if ( ! data || ! data.peptides ) {
         return;
     }
+        
+    this.sequence = data.sequence;
+    
     for (var i = 0; i < data.peptides.length; i++ ) {
         var a_peptide = data.peptides[i];
         var peptide_position = a_peptide.position+'-'+(parseInt(a_peptide.position)+parseInt(a_peptide.sequence.length));
@@ -112,65 +118,80 @@ MASCP.AtProteomeReaderJson.Result.prototype.render = function()
     return a_container;
 };
 
+MASCP.AtProteomeReaderJson.prototype._rendererRunner = function(sequenceRenderer) {
+    var tissues = this.result? this.result.tissues() : [];
+    for (var tiss in tissues) {
+        var tissue = tissues[tiss];
+        if (this.result.spectra[tissue] < 1) {
+            continue;
+        }
+        var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
+        var simple_tissue = tissue.replace(/\s/g,'');
+        var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
+    	
+        // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+        
+    	var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
+    	
+    	MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
+
+        var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
+
+        if (typeof GOMap != 'undefined' && do_diagrams) {
+            var map = this._map;
+            if ( ! map ) {
+                map = new GOMap.Diagram('mature_flower_diagram.svg');
+                var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
+                map_container.bind('load', function() {
+                    map_container.css({'height': '100%','overflow':'visible'});
+                });
+                this._map = map;
+                this._map_container = map_container[0];
+                map.appendTo(map_container[0]);
+                
+            }
+            
+            // FIXME FOR MULTIPLE BINDINGS
+            
+            jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
+                map.showKeyword(simple_tissue);
+            });
+        }
+        
+        
+    	var positions = this._normalise(this._mergeCounts(peptide_counts));
+    	var index = 0;
+    	var last_start = null;
+    	while (index <= positions.length) {
+    	    if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
+    	        sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
+    	        last_start = null;
+    	    }
+    	    if (positions[index] > 0 && last_start == null) {
+    	        last_start = index;
+    	    }
+    	    index += 1;
+    	}
+    }
+};
 
 MASCP.AtProteomeReaderJson.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
 	MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
+    var reader = this;
+
     this.bind('resultReceived', function() {
-        var tissues = this.result? this.result.tissues() : [];
-        for (var tiss in tissues) {
-            var tissue = tissues[tiss];
-            if (this.result.spectra[tissue] < 1) {
-                continue;
-            }
-            var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
-            var simple_tissue = tissue.replace(/\s/g,'');
-            var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
-        	
-            // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
-            
-        	var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
-        	
-        	MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
-
-            var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
-
-            if (typeof GOMap != 'undefined' && do_diagrams) {
-                var map = this._map;
-                if ( ! map ) {
-                    map = new GOMap.Diagram('mature_flower_diagram.svg');
-                    var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-                    map_container.bind('load', function() {
-                        map_container.css({'height': '100%','overflow':'visible'});
-                    });
-                    this._map = map;
-                    this._map_container = map_container[0];
-                    map.appendTo(map_container[0]);
-                    
-                }
-                
-                // FIXME FOR MULTIPLE BINDINGS
-                
-                jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
-                    map.showKeyword(simple_tissue);
-                });
-            }
-            
-            
-        	var positions = this._normalise(this._mergeCounts(peptide_counts));
-        	var index = 0;
-        	var last_start = null;
-        	while (index <= positions.length) {
-        	    if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
-        	        sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
-        	        last_start = null;
-        	    }
-        	    if (positions[index] > 0 && last_start == null) {
-        	        last_start = index;
-        	    }
-        	    index += 1;
-        	}
+        if ( sequenceRenderer.sequence != this.result.sequence ) {
+            jQuery(sequenceRenderer).bind('sequenceChange',function() {
+                jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
+                reader._rendererRunner(sequenceRenderer);
+                jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            });
+            sequenceRenderer.setSequence(this.result.sequence);
+        } else {
+            reader._rendererRunner(sequenceRenderer);
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);            
         }
     });
 

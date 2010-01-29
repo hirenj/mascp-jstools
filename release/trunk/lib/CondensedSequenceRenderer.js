@@ -32,7 +32,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     // add a track within this rendererer.
     jQuery(MASCP).bind('layerRegistered', function(e,layer) {
         self.addTrack(layer);
-        self.hideLayer(layer);
     });
     
     // We want to unbind the default handler for sequence change that we get from
@@ -248,7 +247,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                little_labels.attr({'font-size':'2pt'});
                big_labels.attr({'font-size': '2pt'});
                axis.hide();
-               if (this._visibleTracers()) {
+               if (this._visibleTracers && this._visibleTracers()) {
                    this._visibleTracers().show();
                }
            } else if (this.zoom > 1.8) {
@@ -282,7 +281,14 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
 };
 
 MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
-    this.sequence = this._cleanSequence(sequence);
+    var new_sequence = this._cleanSequence(sequence);
+    if (new_sequence == this.sequence && new_sequence != null) {
+        jQuery(this).trigger('sequenceChange');
+        return;
+    }
+    
+    this.sequence = new_sequence;
+    
     var seq_chars = this.sequence.split('');
     var line_length = seq_chars.length;
 
@@ -543,7 +549,6 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         this._track_order = [];
     }
 
-    
     if ( ! this._layer_containers[layer.name] ) {                
         this._layer_containers[layer.name] = this._canvas.set();
         this._track_order = this._track_order.concat([layer.name]);
@@ -576,7 +581,8 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             });
         }
     }
-    this.hideLayer(layer);
+    this.refresh();
+    this._resizeContainer();
 };
 
 /*
