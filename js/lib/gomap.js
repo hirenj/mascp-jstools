@@ -8,9 +8,9 @@
  */
 if (document.write && (typeof svgweb == 'undefined')) {
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
+        document.write('<script src="'+SVGWEB_PATH+'svg-uncompressed.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
-        document.write('<script src="svgweb/src/svg.js" data-path="svgweb/src/"></script>');
+        document.write('<script src="svgweb/src/svg-uncompressed.js" data-path="svgweb/src/"></script>');
     }
 }
 
@@ -47,6 +47,12 @@ if (document.write) {
 }
 
 
+if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
+    window.onload = function() { GOMap.LOADED = true; };
+} else {
+    GOMap.LOADED = true;
+}
+
 /**
  * @class       A diagram that can be marked up with keywords.
  * @param       image   Image to be used for the diagram. Either an url to an svg file, an existing object element with a src attribute, or a reference to an SVG element if the SVG has been inlined.
@@ -54,7 +60,6 @@ if (document.write) {
  * @requires    svgweb
  */
 GOMap.Diagram = function(image) {
-
     this._highlighted = {};
     this._styles_cache = {};
     var url = null;
@@ -63,31 +68,38 @@ GOMap.Diagram = function(image) {
         image = null;
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'object') {
         url = image.getAttribute('src') || image.getAttribute('data');
-    } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {
-        this.element = image;
-        this._svgLoaded();
-        if (image.fireEvent) {
-            var ev = document.createEventObject();
-            ev.type = 'load';
-            document.body.fireEvent("onreadystatechange",ev);
-        } else {
-            var evt = document.createEvent('Events');
-            evt.initEvent('load',false,true);
-            image.dispatchEvent(evt);
-        }
+    } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {        
+        var self = this;
+        (function() {
+            if ( ! GOMap.LOADED ) {
+                window.attachEvent('onload',arguments.callee);
+                return;
+            }
+            self.element = image;
+            self._svgLoaded();
+            if (image.fireEvent) {
+                var ev = document.createEventObject();
+                ev.type = 'load';
+                image.fireEvent("onreadystatechange",ev);
+            } else {
+                var evt = document.createEvent('Events');
+                evt.initEvent('load',false,true);
+                image.dispatchEvent(evt);
+            }
+        })();
         return;
     }
 
-    
     this.element = document.createElement('object',true);
     
     this.element.setAttribute('data',url);
     this.element.setAttribute('type','image/svg+xml');
     this.element.setAttribute('width','100%');
     this.element.setAttribute('height','100%');
-
+    
     var self = this;
     this.element.addEventListener('load',function() {
+        alert("This point");
         self.element = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
         
         // Make the destroy function an anonymous function, so it can access this new
@@ -105,11 +117,12 @@ GOMap.Diagram = function(image) {
             self._container.dispatchEvent(evt);
         }
     },false);
-    
+
     if (image) {
         this.appendTo(image.parentNode);
         image.parentNode.removeChild(image);
     }
+
 };
 
 /**
@@ -125,6 +138,7 @@ GOMap.Diagram = function(image) {
 GOMap.Diagram.prototype.appendTo = function(parent) {
     this._container = parent;
     svgweb.appendChild(this.element,parent);
+    alert("Done append");
     return this;
 }
 
