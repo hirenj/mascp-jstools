@@ -8,9 +8,9 @@
  */
 if (document.write && (typeof svgweb == 'undefined')) {
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg-uncompressed.js" data-path="'+SVGWEB_PATH+'"></script>');        
+        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
-        document.write('<script src="svgweb/src/svg-uncompressed.js" data-path="svgweb/src/"></script>');
+        document.write('<script src="svgweb/src/svg.js" data-path="svgweb/src/"></script>');
     }
 }
 
