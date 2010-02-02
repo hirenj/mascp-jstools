@@ -42,6 +42,9 @@
             }
             
             map.appendTo(document.getElementById('map'));
+            
+            // Manually populate the svgweb reference on top, since svgweb will get confused
+            // running within a frame
             if ( top ) {
                 top.svgweb = window.svgweb;
             }
