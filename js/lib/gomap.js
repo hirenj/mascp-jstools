@@ -58,10 +58,11 @@ if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
 /**
  * @class       A diagram that can be marked up with keywords.
  * @param       image   Image to be used for the diagram. Either an url to an svg file, an existing object element with a src attribute, or a reference to an SVG element if the SVG has been inlined.
+ * @param       params  Params to be passed into initialisation. Possible values include 'load', which is a function to be executed when the diagram is loaded.
  * @author      hjjoshi
  * @requires    svgweb
  */
-GOMap.Diagram = function(image) {
+GOMap.Diagram = function(image,params) {
     this._highlighted = {};
     this._styles_cache = {};
     var url = null;
@@ -79,15 +80,10 @@ GOMap.Diagram = function(image) {
             }
             self.element = image;
             self._svgLoaded();
-            if (image.fireEvent) {
-                var ev = document.createEventObject();
-                ev.type = 'load';
-                image.fireEvent("onreadystatechange",ev);
-            } else {
-                var evt = document.createEvent('Events');
-                evt.initEvent('load',false,true);
-                image.dispatchEvent(evt);
-            }
+            
+            if (params['load']) {
+                params['load'].apply(self);
+            }            
         })();
         return;
     }
@@ -116,17 +112,11 @@ GOMap.Diagram = function(image) {
         };
 
         self._svgLoaded();
-        if (self._container) {
-            if (self._container.fireEvent) {
-                var ev = document.createEventObject();
-                ev.type = 'load';
-                self._container.fireEvent("onreadystatechange",ev);
-            } else {
-                var evt = document.createEvent('Events');
-                evt.initEvent('load',false,true);
-                self._container.dispatchEvent(evt);
-            }
-        }
+        
+        if (params['load']) {
+            params['load'].apply(self);
+        }        
+        
     },false);
 
     if (image) {

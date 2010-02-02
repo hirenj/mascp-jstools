@@ -27,20 +27,13 @@
 
         var map;
         function setUpPage() {
-            map = new GOMap.Diagram('test_cell.svg');
-            var load_func = function() {
+            map = new GOMap.Diagram('test_cell.svg',{'load' : (function() {
                 setUpPageStatus = 'complete';
                 this.style.width='300px';
                 this.style.height='300px';
-                this.style.position = 'fixed';
-            };
-            
-            jQuery('#map').bind('load', load_func);
+                this.style.position = 'fixed';                
+            })});
 
-            if (window.attachEvent) {
-                jQuery('#map')[0].attachEvent('onreadystatechange',load_func);
-            }
-            
             map.appendTo(document.getElementById('map'));
             
             // Manually populate the svgweb reference on top, since svgweb will get confused
