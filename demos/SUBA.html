@@ -14,18 +14,28 @@
 <body>
     <h1>SUBA Data retrieval demonstration</h1>
     <p>Using this</p>
-    <input type="text" id="agi" name="agi" value="AT1G58360.1"/><br/>
+    <input type="text" id="agi" name="agi" value="AT3G15450.1"/><br/>
     <input type="button" id="retrieve" name="retrieve" value="Retrieve"/>
     <div>
-        <h2>Results</h2>
+        <h2>Mass Spectrometric experimental results</h2>
         <div id="results"></div>
+        <h2>GFP experimental results</h2>
+        <div id="results_gfp"></div>
     </div>
     <script type="text/javascript">
+    
+        function pubmed_to_links(pubmeds) {
+            var pubmed_links = [];
+            for (var i = 0; i < pubmeds.length; i++) {
+                pubmed_links.push('<a href="http://www.ncbi.nlm.nih.gov/pubmed/'+pubmeds[i]+'">PubMed</a>');
+            }
+            return pubmed_links;
+        }
+    
         jQuery(document).ready( function() {
             var reader = new MASCP.SubaReader();
 
             reader.bind('resultReceived',function(e) {
-                log(reader.agi);
                 if ( ! this.result ) {
                     jQuery('#results').text('No localisation data');
                     return;                    
@@ -33,18 +43,23 @@
                 jQuery('#results').text('');
                 var localisation = this.result.getMassSpecLocalisation();
                 var results = [];
-                log(this.results);
-                log(localisation);
                 for (var name in localisation) {
-                    var pubmeds = localisation[name];
-                    log(pubmeds);
-                    var pubmed_links = [];
-                    for (var i = 0; i < pubmeds.length; i++) {
-                        pubmed_links.push('<a href="http://www.ncbi.nlm.nih.gov/pubmed/'+pubmeds[i]+'">PubMed</a>');
-                    }
-                    results.push("Localisation "+name+" with references "+pubmed_links.join(',') );
+                    results.push("Localisation "+name+" with references "+pubmed_to_links(localisation[name]).join(',') );
                 }
-                jQuery('#results').append('<ul><li>'+results.join('</li><li>')+'</li>');
+                if (results.length > 0) {
+                    jQuery('#results').append('<ul><li>'+results.join('</li><li>')+'</li>');
+                }
+                
+                jQuery('#results_gfp').text('');
+                var localisation = this.result.getGfpLocalisation();
+                results = [];
+                for (var name in localisation) {
+                    results.push("Localisation "+name+" with references "+pubmed_to_links(localisation[name]).join(',') );
+                }
+                if (results.length > 0) {                
+                    jQuery('#results_gfp').append('<ul><li>'+results.join('</li><li>')+'</li>');
+                }
+                
             });
 
             jQuery('#retrieve').click(function() {
