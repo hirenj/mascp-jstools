@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <title>AtProteomeJson</title>
+    <title>SUBA Test</title>
     <script type="text/javascript" charset="utf-8" src="../../jsunit/app/jsUnitCore.js"></script>
     <script type="text/javascript">SVGWEB_PATH='../svgweb/';</script>
     <script type="text/javascript" src="../lib/gomap.js"></script>
@@ -28,13 +28,23 @@
         var map;
         function setUpPage() {
             map = new GOMap.Diagram('cell.svg');
-            jQuery('#map').bind('load', function() {
+            var load_func = function() {
                 setUpPageStatus = 'complete';
                 this.style.width='300px';
                 this.style.height='300px';
                 this.style.position = 'fixed';
-            });
+            };
+            
+            jQuery('#map').bind('load', load_func);
+
+            if (window.attachEvent) {
+                jQuery('#map')[0].attachEvent('onreadystatechange',load_func);
+            }
+            
             map.appendTo(document.getElementById('map'));
+            if ( top ) {
+                top.svgweb = window.svgweb;
+            }
         }
 
         function setUp() {
@@ -65,7 +75,7 @@
 
         function testSimpleSubaRetrieveComplexData() {
             var reader = new MASCP.SubaReader('AT3G61130.1');
-            reader.async = false;           
+            reader.async = false;
             reader.bind('resultReceived',function() {
                 assertEquals("AT3G61130.1",this.result.agi);
                 assertEquals(false, isEmpty(this.result.getMassSpecLocalisation()));

@@ -48,7 +48,9 @@ if (document.write) {
 
 
 if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
-    window.onload = function() { GOMap.LOADED = true; };
+    window.onload = function() {
+        GOMap.LOADED = true;
+    };
 } else {
     GOMap.LOADED = true;
 }
@@ -99,8 +101,11 @@ GOMap.Diagram = function(image) {
     
     var self = this;
     this.element.addEventListener('load',function() {
-        alert("This point");
-        self.element = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
+        if (this.contentDocument != null) {
+            self.element = this.contentDocument.rootElement;
+        } else {
+            self.element = this.getAttribute('contentDocument').rootElement
+        }
         
         // Make the destroy function an anonymous function, so it can access this new
         // element without having to store it in a field
@@ -112,9 +117,15 @@ GOMap.Diagram = function(image) {
 
         self._svgLoaded();
         if (self._container) {
-            var evt = document.createEvent('Events');
-            evt.initEvent('load',false,true);
-            self._container.dispatchEvent(evt);
+            if (self._container.fireEvent) {
+                var ev = document.createEventObject();
+                ev.type = 'load';
+                self._container.fireEvent("onreadystatechange",ev);
+            } else {
+                var evt = document.createEvent('Events');
+                evt.initEvent('load',false,true);
+                self._container.dispatchEvent(evt);
+            }
         }
     },false);
 
@@ -122,7 +133,6 @@ GOMap.Diagram = function(image) {
         this.appendTo(image.parentNode);
         image.parentNode.removeChild(image);
     }
-
 };
 
 /**
@@ -138,7 +148,6 @@ GOMap.Diagram = function(image) {
 GOMap.Diagram.prototype.appendTo = function(parent) {
     this._container = parent;
     svgweb.appendChild(this.element,parent);
-    alert("Done append");
     return this;
 }
 
