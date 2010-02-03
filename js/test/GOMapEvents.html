@@ -43,22 +43,24 @@
 
         function testFiringZoom() {
             map.zoom = 0.1;
-            console.log("Fixing zoom");
+            var regularZoomVar = false;
             map.addEventListener('zoomChange',function() {
-                console.log("Changing zoom");
+                regularZoomVar = true;
             });
-            console.log("And now triggering the event");
+            assert("AddEventListener bind has been called too early", ! regularZoomVar );
             map.zoom = 10;
+            assert("AddEventListener bind has been called", regularZoomVar );
         }
         
         function testJQueryFiringZoom() {
-            map.zoom = 0.1
-            console.log("Binding zoom change to map via jquery");            
+            map.zoom = 0.1;
+            var jQueryZoomVar = false;
             jQuery.event.add(map,'zoomChange',function() {
-                console.log("Jquery zoom change");
+                jQueryZoomVar = true;
             });
-            console.log("Bound zoom change to map via jquery, now triggering");
+            assert("jQuery bind has been called too early", ! jQueryZoomVar );
             map.zoom = 10;
+            assert("jQuery bind has been called", jQueryZoomVar );
         }
         
     </script>
