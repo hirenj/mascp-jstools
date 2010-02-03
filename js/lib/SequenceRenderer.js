@@ -837,6 +837,7 @@ MASCP.SequenceRenderer.prototype.reset = function()
  * @param {String} ev Event name
  * @param {Function} func Function to execute
  */
+
 MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
 {
     jQuery(this).bind(ev,func);

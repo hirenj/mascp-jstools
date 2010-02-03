@@ -78,6 +78,7 @@ GOMap.Diagram = function(image,params) {
                 window.attachEvent('onload',arguments.callee);
                 return;
             }
+            self._container = image.parentNode;
             self.element = image;
             self._svgLoaded();
             
@@ -227,21 +228,22 @@ GOMap.Diagram.prototype.toggleKeyword = function(keyword,color) {
  *  @param  {Object}    evt     Event name to bind to
  *  @param  {Function}  func    Function to call when event occurs
  */
-GOMap.Diagram.prototype.registerEvent = function(evt,func) {
-    var container = this._container;
-    if ( ! container.addEventListener ) {
-        container.addEventListener = function(name,funct) {
-            this.attachEvent(name,funct);
-        };
+GOMap.Diagram.prototype.addEventListener = function(evt,func) {
+    if ( ! this._events ) {
+        this._events = {};
     }
-    container.addEventListener(evt,func);
+    if ( ! this._events[evt] ) {
+        this._events[evt] = [];
+    }
+    
+    this._events[evt].push(func);
 };
 
 /**
  * Event fired when the zoom property is changed
  * @name    GOMap.Diagram#zoomChange
- * @event
  * @param   {Object}    e
+ * @event
  * @see     #zoom
  */
 
@@ -251,7 +253,18 @@ GOMap.Diagram.prototype.registerEvent = function(evt,func) {
  *  @see GOMap.Diagram#event:zoomChange
  */
 (function() {
+
+var zoomChange = function() {
+    if ( ! this._events || ! this._events['zoomChange'] ) {
+        return;
+    }
+    for ( var i = 0; i < this._events['zoomChange'].length; i++ ) {
+        this._events['zoomChange'][i].apply(this,[{'type' : 'zoomChange'}]);
+    }        
+};
+
 var accessors = {
+        
     setZoom: function(zoomLevel) {
         if (zoomLevel < 0) {
             zoomLevel = 0;
@@ -263,9 +276,9 @@ var accessors = {
         if (this.element) {
             this.element.currentScale = zoomLevel;
         }
-        var evt = document.createEvent('Events');
-        evt.initEvent('zoomChange',false,true);
-        this._container.dispatchEvent(evt);
+        
+        zoomChange.apply(this);
+
     },
 
     getZoom: function() {
@@ -273,7 +286,9 @@ var accessors = {
     }
 };
 
-if (GOMap.Diagram.prototype.__defineSetter__) {    
+
+
+if (GOMap.Diagram.prototype.__defineSetter__) {
     GOMap.Diagram.prototype.__defineSetter__("zoom", accessors.setZoom);
     GOMap.Diagram.prototype.__defineGetter__("zoom", accessors.getZoom);
 }
@@ -796,9 +811,17 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
         range.addEventListener('change',function() {
             zoomElement.zoom = this.value;
         },false);
-        zoomElement.registerEvent('zoomChange',function() {
+        
+        var evFunction = null;
+        if (zoomElement.addEventListener) {
+            evFunction = zoomElement.addEventListener;
+        } else if (zoomElement.registerEvent){
+            evFunction = zoomElement.registerEvent;
+        }
+        
+        evFunction.apply(zoomElement,['zoomChange',function() {
             range.value = zoomElement.zoom;
-        },false);
+        },false]);
         controls_container.appendChild(range);
         
     } else {

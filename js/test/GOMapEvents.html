@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>GOMap Events</title>
+	<meta name="author" content="Hiren J. Joshi">
+	<script type="text/javascript" charset="utf-8" src="../../jsunit/app/jsUnitCore.js"></script>
+    <script type="text/javascript">SVGWEB_PATH='../svgweb/';</script>
+    <script type="text/javascript" src="../lib/gomap.js"></script>
+    <script type="text/javascript" src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.js"></script>
+    <!--<script type="text/javascript" src="../jquery-1.3.2.min.js"></script>-->
+	<!-- Date: 2010-01-26 -->
+</head>
+<body>
+    <input id="yesbutton" type="button" value="YES"/><input id="nobutton" type="button" value="NO"/>
+    
+    <script type="image/svg+xml">
+       <svg 
+           width="200" height="200"
+           style="background-color: #ffffff; display: block;"
+           id="canvas">
+            <g id="test_title" keyword="test_title" style="font-size: 12px; text-anchor: middle; font-family: Helvetica, sans-serif;">
+                <text id="test_name" x="100" y="20">TEST TITLE</text>           
+            </g>
+            <g keyword="test1" >
+                <circle keyword="test1" cx="100" cy="100" r="20" style="fill: #ff0000;"/>
+            </g>
+       </svg>
+    </script>
+   
+    <script type="text/javascript" charset="utf-8">
+        var map;
+        var valueflag = null;
+        var all_results = [];
+        function setUpPage() {
+            map = new GOMap.Diagram(document.getElementById('canvas'), { 'load' : (function() {
+                this.showKeyword('test_title');
+                this.makeInteractive();
+                setUpPageStatus = 'complete';                
+            })});
+        }
+
+        function testFiringZoom() {
+            map.zoom = 0.1;
+            console.log("Fixing zoom");
+            map.addEventListener('zoomChange',function() {
+                console.log("Changing zoom");
+            });
+            console.log("And now triggering the event");
+            map.zoom = 10;
+        }
+        
+        function testJQueryFiringZoom() {
+            map.zoom = 0.1
+            console.log("Binding zoom change to map via jquery");            
+            jQuery.event.add(map,'zoomChange',function() {
+                console.log("Jquery zoom change");
+            });
+            console.log("Bound zoom change to map via jquery, now triggering");
+            map.zoom = 10;
+        }
+        
+    </script>
+</body>
+</html>
