@@ -34,19 +34,12 @@
         var valueflag = null;
         var all_results = [];
         function setUpPage() {
-            map = new GOMap.Diagram(document.getElementById('canvas'));
-            jQuery(map).bind('load',function() {
+            new GOMap.Diagram(document.getElementById('canvas'), { 'load' : (function() {
+                map = this;
                 setupYesNoButtons();
-                map.showKeyword('test_title');
-                doUserInputTests();                
-            });
-            if (window.attachEvent) {
-                document.getElementById('canvas').attachEvent('onreadystatechange',function() {
-                    setupYesNoButtons();
-                    map.showKeyword('test_title');
-                    doUserInputTests();                
-                });
-            }
+                this.showKeyword('test_title');
+                doUserInputTests();                              
+            })});
         }
         
         function setupYesNoButtons() {
@@ -59,39 +52,44 @@
             });            
         }
         
+        function setTestName(name) {
+            jQuery('#test_name')[0].childNodes[0].nodeValue = name;
+        }
+        
         function doUserInputTests() {
             
             var tests = [function() {
-//                jQuery('#test_name').text('Red circle, green border');
+                var test_name = jQuery('#test_name')[0];
+                setTestName('Red circle, green border');
                 map.showKeyword('test1','#00ff00');
             },
             function() {
-//                jQuery('#test_name').text('Red circle, green/blue border');
+                setTestName('Red circle, green/blue border');
                 map.showKeyword('test1','#0000ff');            
             },
             function() {
-//                jQuery('#test_name').text('Red circle, green/blue/white border');
+                setTestName('Red circle, green/blue/white border');
                 map.showKeyword('test1','#ffffff');
             },
             function() {
-//                jQuery('#test_name').text('Faded red circle only');
+                setTestName('Faded red circle only');
                 map.hideAllKeywords();
                 map.showKeyword('test_title');
             },
             function() {
-//                jQuery('#test_name').text('Another faded red circle only');
+                setTestName('Another faded red circle only');
                 map.showKeyword('test1','#ff0000');                
                 map.showKeyword('test1','#00ff00');
                 map.hideKeyword('test1');
             },
             function() {
-                // jQuery('#test_name').text('Green border on red circle');
+                setTestName('Green border on red circle');
                 map.showKeyword('test1','#0000ff');                
                 map.showKeyword('test1','#00ff00');
                 map.hideKeyword('test1','#0000ff');
             },
             function() {
-                // jQuery('#test_name').text('Green and white border on red circle');
+                setTestName('Green and white border on red circle');
                 map.showKeyword('test1','#0000ff');                
                 map.showKeyword('test1','#00ff00');
                 map.hideKeyword('test1','#0000ff');

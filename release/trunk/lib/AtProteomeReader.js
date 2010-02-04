@@ -386,11 +386,12 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
             if (typeof GOMap != 'undefined' && do_diagrams) {
                 var map = this._map;
                 if ( ! map ) {
-                    map = new GOMap.Diagram('mature_flower_diagram.svg');
                     var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-                    map_container.bind('load', function() {
+
+                    map = new GOMap.Diagram('mature_flower_diagram.svg', { 'load' : (function() {
                         map_container.css({'height': '100%','overflow':'visible'});
-                    });
+                    })});
+
                     this._map = map;
                     this._map_container = map_container[0];
                     map.appendTo(map_container[0]);
