@@ -34,12 +34,19 @@
         function setUpPage() {
             map = new GOMap.Diagram('test_cell.svg', { 'load' : (function() {
                 firstLoadOk = true;
-                setUpPageStatus = 'complete';                
+                if (secondLoadOk)
+                    setUpPageStatus = 'complete';                
             })});
+            
+            // Fix for running this in a frame
+            top.svgweb = window.svgweb;
+            
             map.appendTo(document.getElementById('results'));
             
             new GOMap.Diagram(document.getElementById('canvas'), { 'load' : (function() {
                 secondLoadOk = true;
+                if (firstLoadOk)
+                    setUpPageStatus = 'complete';
             })});
             
         }

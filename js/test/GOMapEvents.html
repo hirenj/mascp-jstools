@@ -34,10 +34,12 @@
         var valueflag = null;
         var all_results = [];
         function setUpPage() {
+            top.svgweb = window.svgweb;
+            
             map = new GOMap.Diagram(document.getElementById('canvas'), { 'load' : (function() {
                 this.showKeyword('test_title');
                 this.makeInteractive();
-                setUpPageStatus = 'complete';                
+                setUpPageStatus = 'complete';  
             })});
         }
 
