@@ -1,173 +1,6 @@
 /**
- *  @fileOverview Classes for reading data from the AtProteome database
+ *  @fileOverview Classes for reading data from the AtProteome database using JSON data
  */
-
-if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
-    throw "MASCP.Service is not defined, required class";
-}
-
-
-/*
- * @class   Service that will retrieve the AtProteome ID for this entry given an AGI.
- * @description Default class constructor
- * @param   {String} agi            Agi to look up
- * @param   {String} endpointURL    Endpoint URL for this service
- * @extends MASCP.Service
- */
-MASCP.AtProteomeIdReader = MASCP.buildService(function(data) {
-                            this._raw_data = data;
-                        });
-
-MASCP.AtProteomeIdReader.prototype.requestData = function()
-{
-    var agi = (this.agi+"").replace(/\..*$/,'');
-    return {
-        type: "POST",
-        dataType: "xml",
-        data: { 'page'      : 'query_protein',
-                'myassembly': '1#9',
-                'queryf'    : agi,
-                'service'   : 'atproteome' 
-        }
-    };    
-};
-
-/*
- * @class
- * @extends MASCP.Service.Result
- */
-// We need this line for the JsDoc to pick up this class
-MASCP.AtProteomeIdReader.Result = MASCP.AtProteomeIdReader.Result;
-
-/*
- * The retrieved ID from the AtProteome database
- */
-MASCP.AtProteomeIdReader.Result.prototype.getId = function()
-{
-    var doc = this._raw_data;
-    var trs = doc.getElementsByTagName('tr');
-    for (var i = 0; i < trs.length; i++) {
-        if (trs[i].getAttribute('onclick') != null) {
-            if (trs[i].getAttribute('onclick').match(/protein_id=(\d+)/)) {
-                return RegExp.$1;
-            }
-        }
-    }
-    var content = null;
-    if (this._raw_data.getElementById) {
-        content = this._raw_data.getElementById('contentArea');
-    } else {
-        content = this._raw_data.selectSingleNode("//*[@id = 'contentArea']");
-    }
-    return content || -1;
-};
-
-/*
- * @class   Service that will retrieve the AtProteome Tissue data for this entry given an AGI.
- * @description Default class constructor
- * @param   {String} agi            Agi to look up
- * @param   {String} endpointURL    Endpoint URL for this service
- * @extends MASCP.Service
- */
-MASCP.AtProteomeTissueReader = MASCP.buildService(function(data) {
-                            this._raw_data = data;
-                        });
-
-MASCP.AtProteomeTissueReader.prototype.requestData = function()
-{
-    var agi = (this.agi+"").replace(/\..*$/,'');
-
-    var protein_id = MASCP.AtProteomeReader.lookupAgi(agi,this);
-        
-    if ( ! protein_id ) {
-        return null;
-    }
-    
-    if ( protein_id < 0 ) {
-        return null;
-    }
-    
-    return {
-        type: "POST",
-        dataType: "xml",
-        data: { 'myassembly'    : '1#9',
-                'page'          : 'query_protein',
-                'querystring'   : 'protein_id='+protein_id+'&tissue='+this.tissue,
-                'service'       : 'atproteome' 
-        }
-    };    
-};
-
-/*
- * @class
- * @extends MASCP.Service.Result
- */
-// We need this line for the JsDoc to pick up this class
-MASCP.AtProteomeTissueReader.Result = MASCP.AtProteomeTissueReader.Result;
-
-/*
- * Get the total number of spectra defined in the AtProteome Database for a single tissue
- */
-MASCP.AtProteomeTissueReader.Result.prototype.getTotalSpectra = function()
-{
-    if ( ! this._raw_data ) {
-        return null;
-    }
-    var doc = this._raw_data;
-    var headings = doc.getElementsByTagName('h1');
-    var peptide_table = null;
-    for (var i = 0; i < headings.length; i++) {
-        if (jQuery(headings[i]).text() == 'Peptides') {
-            peptide_table = headings[i].parentNode.getElementsByTagName('table')[1];
-        }
-    }
-    if ( ! peptide_table ) {
-        return null;
-    }
-    var trs = peptide_table.getElementsByTagName('tr');
-    
-    var tds = trs[trs.length-1].getElementsByTagName('td');
-    if (tds.length > 0) {
-        return parseInt(jQuery(tds[1]).text());
-    } else{
-        return null;
-    }
-};
-
-
-/*
- * Get the spectral counts for every peptide in this tissue
- * @returns Hash mapping peptide position (start-end) to spectra count
- * @type Hash
- */
-MASCP.AtProteomeTissueReader.Result.prototype.getPeptideCounts = function()
-{
-    if ( ! this._raw_data ) {
-        return null;
-    }
-    var doc = this._raw_data;
-    var headings = doc.getElementsByTagName('h1');
-    var peptide_table = null;
-    for (var i = 0; i < headings.length; i++) {
-        if (jQuery(headings[i]).text() == 'Peptides') {
-            peptide_table = headings[i].parentNode.getElementsByTagName('table')[1];
-        }
-    }
-    if ( ! peptide_table ) {
-        return null;
-    }
-    var trs = peptide_table.getElementsByTagName('tr');    
-    var pep_counts = {};
-    for (var i = 1; i < trs.length - 1; i++) {
-        var tds = trs[i].getElementsByTagName('td');
-        var pep_seq = jQuery(tds[0]).text().replace(/\s/g,'');
-        var spectra_count = parseInt(jQuery(tds[1]).text());
-        var start = parseInt(jQuery(tds[2]).text());
-        var end = start + pep_seq.length;
-        pep_counts[start+"-"+end] = spectra_count;
-    }
-    return pep_counts;
-}
 
 /**
  * @class   Service class that will retrieve AtProteome data for this entry given an AGI.
@@ -183,67 +16,28 @@ MASCP.AtProteomeTissueReader.Result.prototype.getPeptideCounts = function()
  */
 MASCP.AtProteomeReader = MASCP.buildService(function(data) {
                         this._raw_data = data;
+                        if (data) {
+                            this._populate_spectra(data);
+                            this._populate_peptides(data);
+                        }
                         return this;
                     });
 
-
-/**
- * Retrieve the protein ID for a given AGI
- */
-MASCP.AtProteomeReader.lookupAgi = function(agi,reader)
-{
-    if (! this.agi_cache || ! this.agi_cache[agi]) {
-        new MASCP.AtProteomeIdReader(agi,reader._endpointURL).bind("resultReceived", function (e) {
-            if ( ! MASCP.AtProteomeReader.agi_cache ) {
-                MASCP.AtProteomeReader.agi_cache = [];
-            }
-            MASCP.AtProteomeReader.agi_cache[this.agi] = this.result.getId();
-            if (this.result.getId()) {
-                reader.retrieve();
-            }
-        }).setAsync(reader.async).retrieve();
-        return null;
-    }
-    return this.agi_cache[agi];
-};
-
-
 MASCP.AtProteomeReader.prototype.requestData = function()
 {
-    var agi = (this.agi+"").replace(/\..*$/,'');
-    
-    var protein_id = MASCP.AtProteomeReader.lookupAgi(agi,this);
-    
-    if ( ! protein_id ) {
-        return null;
-    }
-    if ( protein_id < 0 ) {
-        jQuery(this).trigger('resultReceived');        
-    }
-    
     var self = this;
-    
+    var agi = this.agi;
     return {
         type: "POST",
-        dataType: "xml",
-        data: { 'myassembly': '1#9',
-                'page'      : 'query_protein',
-                'queryf'    : agi,
-                'querystring' : 'protein_id='+protein_id,
-                'service'   : 'atproteome' 
-        },
-        success: function(data,status) {
-            self._dataReceived(data,status);
-            if (self.result) {
-                jQuery(self.result).bind('spectrareceived',function() {
-                   jQuery(self).trigger('resultReceived'); 
-                });
-                self.result.retrieveSpectraByTissue();
-            }
+        dataType: "json",
+        data: { 'agi'       : agi,
+                'service'   : 'atproteome-json' 
         }
     };
 };
 
+
+MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-atproteome.unizh.ch/mascpv3.php';
 
 /**
  * @class   Container class for results from the AtProteome service
@@ -253,43 +47,13 @@ MASCP.AtProteomeReader.prototype.requestData = function()
 MASCP.AtProteomeReader.Result = MASCP.AtProteomeReader.Result;
 
 /**
- * The list of tissue names that are used by AtProteome. This list is
- * indepedent of spectral data
+ * The list of tissue names that are used by AtProteome for this particular AGI
  *  @returns {[String]} Tissue names
  */
 MASCP.AtProteomeReader.Result.prototype.tissues = function()
 {
-    if ( ! this._raw_data ) {
-        return null;
-    }
-    var doc = this._raw_data;
-    var headings = doc.getElementsByTagName('h1');
-    var tissue_table = null;
-    for (var i = 0; i < headings.length; i++) {
-        if (jQuery(headings[i]).text() == 'Peptides') {
-            tissue_table = headings[i].parentNode.getElementsByTagName('table')[0];
-        }
-    }
-    if ( ! tissue_table ) {
-        return null;
-    }
-    
-    var table_headings = tissue_table.getElementsByTagName('tr')[0].getElementsByTagName('td');
-    var tissue_names = []
-    for (var i = 0; i < table_headings.length; i++) {
-        if (jQuery(table_headings[i]).text() != "\nAll samples\n") {
-            tissue_names.push(jQuery(table_headings[i]).text());
-        }
-    }
-    return tissue_names;
-}
-
-/**
- * @name    MASCP.AtProteomeReader.Result#spectrareceived
- * @event
- * @param   {Object}    e
- */
-
+    return this._tissues;
+};
 
 MASCP.AtProteomeReader.Result.prototype = jQuery.extend(MASCP.AtProteomeReader.Result.prototype,
 /** @lends MASCP.AtProteomeReader.Result.prototype */
@@ -298,51 +62,46 @@ MASCP.AtProteomeReader.Result.prototype = jQuery.extend(MASCP.AtProteomeReader.R
      *  @description Hash keyed by tissue name containing the number of spectra for each tissue for this AGI */
     spectra :   null,
     /** @field
-     *  @description Hash keyed by tissue name containing the number of spectra for each peptide (keyed by "start-end" position) */
-    peptide_counts_by_tissue : null
+     *  @description Hash keyed by the Plant Ontology ID containing the number of spectra for each peptide (keyed by "start-end" position) */
+    peptide_counts_by_tissue : null,
+    /** @field
+     *  @description String containing the sequence for the retrieved AGI */
+    sequence : null
 });
 
-
-/**
- *  Retrieve the spectral data for this result. Fires a {@link MASCP.AtProteomeReader.Result#event:spectrareceived} when the spectra
- *  are fully populated into the spectra field.
- */
-MASCP.AtProteomeReader.Result.prototype.retrieveSpectraByTissue = function()
-{   
-    var tissues = this.tissues();
-    if ( ! tissues ) {
-        return null;
-    }
-    
-    var this_result = this;
-    
-    
+MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
+{
     this.spectra = {};
-    this.peptide_counts_by_tissue = {}
-    var total_tissues = tissues.length;
-    
-    for (var i in tissues) {
-        this.spectra[tissues[i]] = 0;
-        var tissue_reader = new MASCP.AtProteomeTissueReader(this.agi,this.reader._endpointURL);
-        tissue_reader.setAsync(this.reader.async);
-        tissue_reader.tissue = tissues[i];
-        var tissue_name = tissues[i];
-
-        new function() { 
-            var some_tissue = tissue_name;
-        tissue_reader.bind("resultReceived",function() {
-            total_tissues--;
-            this_result.spectra[some_tissue] = this.result.getTotalSpectra();
-            this_result.peptide_counts_by_tissue[some_tissue] = this.result.getPeptideCounts();
-            if (total_tissues == 0)
-            {
-                jQuery(this_result).trigger('spectrareceived');
-            }
-        }).retrieve();
-        }();
+    this._tissues = [];
+    if ( ! data || ! data.tissues ) {
+        return;
     }
+    for (var i = 0; i < data.tissues.length; i++ ) {
+        this._tissues[i] = data.tissues[i].tissue;
+        this.spectra[data.tissues[i]['PO:tissue']] = parseInt(data.tissues[i].qty_spectra);
+    }
+};
+
+MASCP.AtProteomeReader.Result.prototype._populate_peptides = function(data)
+{
+    this.peptide_counts_by_tissue = {};
+    if ( ! data || ! data.peptides ) {
+        return;
+    }
+        
+    this.sequence = data.sequence;
     
-    return null;
+    for (var i = 0; i < data.peptides.length; i++ ) {
+        var a_peptide = data.peptides[i];
+        var peptide_position = a_peptide.position+'-'+(parseInt(a_peptide.position)+parseInt(a_peptide.sequence.length));
+        for (var j = 0; j < a_peptide.tissues.length; j++ ) {
+            var a_tissue = a_peptide.tissues[j];
+            if (! this.peptide_counts_by_tissue[a_tissue['PO:tissue']]) {
+                this.peptide_counts_by_tissue[a_tissue['PO:tissue']] = {};
+            }
+            this.peptide_counts_by_tissue[a_tissue['PO:tissue']][peptide_position] = parseInt(a_tissue.qty_spectra);
+        }
+    }
 };
 
 MASCP.AtProteomeReader.Result.prototype.render = function()
@@ -359,66 +118,81 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
     return a_container;
 };
 
+MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
+    var tissues = this.result? this.result.tissues() : [];
+    for (var tiss in tissues) {
+        var tissue = tissues[tiss];
+        if (this.result.spectra[tissue] < 1) {
+            continue;
+        }
+        var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
+        var simple_tissue = tissue.replace(/\s/g,'');
+        var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
+        
+        // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+        
+        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
+        
+        MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
+
+        var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
+
+        if (typeof GOMap != 'undefined' && do_diagrams) {
+            var map = this._map;
+            if ( ! map ) {
+                var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
+
+                map = new GOMap.Diagram('mature_flower_diagram.svg', { 'load' : (function() {
+                    map_container.css({'height': '100%','overflow':'visible'});
+                })});
+
+                this._map = map;
+                this._map_container = map_container[0];
+                map.appendTo(map_container[0]);
+                
+            }
+            
+            // FIXME FOR MULTIPLE BINDINGS
+            
+            jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
+                map.showKeyword(simple_tissue);
+            });
+        }
+        
+        
+        var positions = this._normalise(this._mergeCounts(peptide_counts));
+        var index = 0;
+        var last_start = null;
+        while (index <= positions.length) {
+            if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
+                sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
+                last_start = null;
+            }
+            if (positions[index] > 0 && last_start == null) {
+                last_start = index;
+            }
+            index += 1;
+        }
+    }
+};
 
 MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-	MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+    MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+
+    var reader = this;
 
     this.bind('resultReceived', function() {
-        var tissues = this.result? this.result.tissues() : [];
-        for (var tiss in tissues) {
-            var tissue = tissues[tiss];
-            if (this.result.spectra[tissue] < 1) {
-                continue;
-            }
-            var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
-            var simple_tissue = tissue.replace(/\s/g,'');
-            var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
-        	
-            // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
-            
-        	var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
-        	
-        	MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
-
-            var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
-
-            if (typeof GOMap != 'undefined' && do_diagrams) {
-                var map = this._map;
-                if ( ! map ) {
-                    var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-
-                    map = new GOMap.Diagram('mature_flower_diagram.svg', { 'load' : (function() {
-                        map_container.css({'height': '100%','overflow':'visible'});
-                    })});
-
-                    this._map = map;
-                    this._map_container = map_container[0];
-                    map.appendTo(map_container[0]);
-                    
-                }
-                
-                // FIXME FOR MULTIPLE BINDINGS
-                
-                jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
-                    map.showKeyword(simple_tissue);
-                });
-            }
-            
-            
-        	var positions = this._normalise(this._mergeCounts(peptide_counts));
-        	var index = 0;
-        	var last_start = null;
-        	while (index <= positions.length) {
-        	    if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
-        	        sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
-        	        last_start = null;
-        	    }
-        	    if (positions[index] > 0 && last_start == null) {
-        	        last_start = index;
-        	    }
-        	    index += 1;
-        	}
+        if ( sequenceRenderer.sequence != this.result.sequence ) {
+            jQuery(sequenceRenderer).bind('sequenceChange',function() {
+                jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
+                reader._rendererRunner(sequenceRenderer);
+                jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            });
+            sequenceRenderer.setSequence(this.result.sequence);
+        } else {
+            reader._rendererRunner(sequenceRenderer);
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);            
         }
     });
 
@@ -459,3 +233,4 @@ MASCP.AtProteomeReader.prototype._mergeCounts = function(hash)
     }
     return counts;
 };
+

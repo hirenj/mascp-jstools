@@ -13,14 +13,13 @@
     <script type="text/javascript" src="../lib/PromexReader.js"></script>
     <script type="text/javascript" src="../lib/TairReader.js"></script>
     <script type="text/javascript" src="../lib/AtProteomeReader.js"></script>
-    <script type="text/javascript" src="../lib/AtProteomeReaderJson.js"></script>
     <script type="text/javascript" src="../json-2.js"></script>
 </head>
 <body>
     <script type="text/javascript" charset="utf-8">
 
         function testSimpleAtProteomeRetrieve() {
-            var reader = new MASCP.AtProteomeReaderJson('AT1G58360.1');
+            var reader = new MASCP.AtProteomeReader('AT1G58360.1');
             reader.async = false;           
             reader.bind('resultReceived',function() {
                 assertEquals("AT1G58360.1",this.result.agi);
@@ -32,7 +31,7 @@
         }
         
         function testMissingAtProteomeResult() {
-            var reader = new MASCP.AtProteomeReaderJson('THISGIVESNORESULTS');
+            var reader = new MASCP.AtProteomeReader('THISGIVESNORESULTS');
             reader.async = false;
             reader.bind('resultReceived',function() {
                 assertEquals('THISGIVESNORESULTS',this.result.agi);
@@ -43,7 +42,7 @@
         }
 
         function testDoubleAtProteomeRetrieve() {
-            var reader = new MASCP.AtProteomeReaderJson('AT1G58360.1');
+            var reader = new MASCP.AtProteomeReader('AT1G58360.1');
             reader.async = false;
             reader.bind('resultReceived',function() {
                 assertEquals(reader.agi,this.result.agi);
@@ -55,7 +54,7 @@
         }        
 
         function testResultRebinding() {
-            var reader = new MASCP.AtProteomeReaderJson('AT1G58360.1');
+            var reader = new MASCP.AtProteomeReader('AT1G58360.1');
             reader.async = false;
             reader.bind('resultReceived',function() {
                 assertEquals(reader.agi,this.result.agi);

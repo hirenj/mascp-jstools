@@ -17,7 +17,7 @@
     <script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
     <script type="text/javascript" src="../js/lib/PromexReader.js"></script>
     <script type="text/javascript" src="../js/lib/TairReader.js"></script>
-    <script type="text/javascript" src="../js/lib/AtProteomeReaderJson.js"></script>
+    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
     <script type="text/javascript" src="../js/json-2.js"></script>
     <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>    
     <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>   
@@ -157,9 +157,9 @@
                 MASCP.SubaReader.existing_map.destroy();
             }
     
-            if (MASCP.AtProteomeReaderJson.existing_map) {
+            if (MASCP.AtProteomeReader.existing_map) {
                 log("Removing existing map");
-                MASCP.AtProteomeReaderJson.existing_map.destroy();      
+                MASCP.AtProteomeReader.existing_map.destroy();      
             }
     
     
@@ -202,7 +202,7 @@
             jQuery('#promex_experimental').hide();
             promex.retrieve();
             
-            var atproteome = new MASCP.AtProteomeReaderJson(agi,'http://fgcz-atproteome.unizh.ch/mascpv2.php');
+            var atproteome = new MASCP.AtProteomeReader(agi,'http://fgcz-atproteome.unizh.ch/mascpv2.php');
             atproteome.registerSequenceRenderer(MASCP.renderer);
             atproteome.bind('resultReceived',function() {
                 MASCP.renderer.hideGroup('atproteome');
@@ -210,7 +210,7 @@
                     return;
                 }
                 if (this._map) {
-                    MASCP.AtProteomeReaderJson.existing_map = this._map;
+                    MASCP.AtProteomeReader.existing_map = this._map;
                     jQuery('#atproteome_map').append(this._map_container);
                 }
                 
