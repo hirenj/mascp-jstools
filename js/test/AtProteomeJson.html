@@ -24,9 +24,9 @@
             reader.async = false;           
             reader.bind('resultReceived',function() {
                 assertEquals("AT1G58360.1",this.result.agi);
-                assertEquals(7,this.result.spectra["flower carpels"]);
-                assertEquals(1,this.result.peptide_counts_by_tissue['flower carpels']['3-28']);
-                assertEquals(6,this.result.peptide_counts_by_tissue['flower carpels']['226-243']);
+                assertEquals(7,this.result.spectra['0009030']);
+                assertEquals(1,this.result.peptide_counts_by_tissue['0009030']['3-28']);
+                assertEquals(6,this.result.peptide_counts_by_tissue['0009030']['226-243']);
             });
             reader.retrieve();
         }
@@ -60,14 +60,14 @@
             reader.bind('resultReceived',function() {
                 assertEquals(reader.agi,this.result.agi);
                 assertEquals(false,isEmpty(this.result.spectra));
-                assertEquals(undefined,this.result.spectra['flower buds']);
+                assertEquals(undefined,this.result.spectra['0000056']);
             }).retrieve();
             reader.unbind('resultReceived');            
             reader.agi = 'AT3G15450.1';
             reader.bind('resultReceived',function() {
                 assertEquals(reader.agi,this.result.agi);
                 assertEquals(false,isEmpty(this.result.spectra));
-                assertEquals(21,this.result.spectra['flower buds']);
+                assertEquals(21,this.result.spectra['0000056']);
             }).retrieve();
         }
 

@@ -190,7 +190,7 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 
 /**
  * Event fired when a result is rendered on this renderer
- * @name    MASCP.SequenceRenderer#resultRendered
+ * @name    MASCP.SequenceRenderer#resultsRendered
  * @event
  * @param   {Object}    e
  * @param   {MASCP.Service} reader  Reader that rendered the result.
@@ -838,7 +838,7 @@ MASCP.SequenceRenderer.prototype.reset = function()
  * @param {Function} func Function to execute
  */
 
-MASCP.SequenceRenderer.prototype.registerEvent = function(ev,func)
+MASCP.SequenceRenderer.prototype.bind = function(ev,func)
 {
     jQuery(this).bind(ev,func);
 };
