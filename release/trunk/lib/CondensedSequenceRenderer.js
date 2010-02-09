@@ -639,6 +639,13 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
 };
 
 /**
+ * Zoom level has changed for this renderer
+ * @name    MASCP.CondensedSequenceRenderer#zoomChange
+ * @event
+ * @param   {Object}    e
+ */
+
+/**
  *  @lends MASCP.CondensedSequenceRenderer.prototype
  *  @property   {Number}    zoom        The zoom level for a renderer. Minimum zoom level is zero, and defaults to 1
  *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.

@@ -37,7 +37,7 @@ MASCP.AtProteomeReaderJson.prototype.requestData = function()
 };
 
 
-MASCP.AtProteomeReaderJson.SERVICE_URL = 'http://fgcz-atproteome.unizh.ch/mascpv2.php';
+MASCP.AtProteomeReaderJson.SERVICE_URL = 'http://fgcz-atproteome.unizh.ch/mascpv3.php';
 
 /**
  * @class   Container class for results from the AtProteome service
@@ -62,7 +62,7 @@ MASCP.AtProteomeReaderJson.Result.prototype = jQuery.extend(MASCP.AtProteomeRead
      *  @description Hash keyed by tissue name containing the number of spectra for each tissue for this AGI */
     spectra :   null,
     /** @field
-     *  @description Hash keyed by tissue name containing the number of spectra for each peptide (keyed by "start-end" position) */
+     *  @description Hash keyed by the Plant Ontology ID containing the number of spectra for each peptide (keyed by "start-end" position) */
     peptide_counts_by_tissue : null,
     /** @field
      *  @description String containing the sequence for the retrieved AGI */
@@ -78,7 +78,7 @@ MASCP.AtProteomeReaderJson.Result.prototype._populate_spectra = function(data)
     }
     for (var i = 0; i < data.tissues.length; i++ ) {
         this._tissues[i] = data.tissues[i].tissue;
-        this.spectra[data.tissues[i].tissue] = parseInt(data.tissues[i].qty_spectra);
+        this.spectra[data.tissues[i]['PO:tissue']] = parseInt(data.tissues[i].qty_spectra);
     }
 };
 
@@ -96,10 +96,10 @@ MASCP.AtProteomeReaderJson.Result.prototype._populate_peptides = function(data)
         var peptide_position = a_peptide.position+'-'+(parseInt(a_peptide.position)+parseInt(a_peptide.sequence.length));
         for (var j = 0; j < a_peptide.tissues.length; j++ ) {
             var a_tissue = a_peptide.tissues[j];
-            if (! this.peptide_counts_by_tissue[a_tissue.tissue]) {
-                this.peptide_counts_by_tissue[a_tissue.tissue] = {};
+            if (! this.peptide_counts_by_tissue[a_tissue['PO:tissue']]) {
+                this.peptide_counts_by_tissue[a_tissue['PO:tissue']] = {};
             }
-            this.peptide_counts_by_tissue[a_tissue.tissue][peptide_position] = parseInt(a_tissue.qty_spectra);
+            this.peptide_counts_by_tissue[a_tissue['PO:tissue']][peptide_position] = parseInt(a_tissue.qty_spectra);
         }
     }
 };
@@ -128,12 +128,12 @@ MASCP.AtProteomeReaderJson.prototype._rendererRunner = function(sequenceRenderer
         var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
         var simple_tissue = tissue.replace(/\s/g,'');
         var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
-    	
+        
         // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
-    	var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
-    	
-    	MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
+        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
+        
+        MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
 
         var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
 
@@ -160,25 +160,25 @@ MASCP.AtProteomeReaderJson.prototype._rendererRunner = function(sequenceRenderer
         }
         
         
-    	var positions = this._normalise(this._mergeCounts(peptide_counts));
-    	var index = 0;
-    	var last_start = null;
-    	while (index <= positions.length) {
-    	    if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
-    	        sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
-    	        last_start = null;
-    	    }
-    	    if (positions[index] > 0 && last_start == null) {
-    	        last_start = index;
-    	    }
-    	    index += 1;
-    	}
+        var positions = this._normalise(this._mergeCounts(peptide_counts));
+        var index = 0;
+        var last_start = null;
+        while (index <= positions.length) {
+            if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
+                sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
+                last_start = null;
+            }
+            if (positions[index] > 0 && last_start == null) {
+                last_start = index;
+            }
+            index += 1;
+        }
     }
 };
 
 MASCP.AtProteomeReaderJson.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-	MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+    MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
     var reader = this;
 
