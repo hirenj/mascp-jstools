@@ -202,7 +202,7 @@
             jQuery('#promex_experimental').hide();
             promex.retrieve();
             
-            var atproteome = new MASCP.AtProteomeReader(agi,'http://fgcz-atproteome.unizh.ch/mascpv2.php');
+            var atproteome = new MASCP.AtProteomeReader(agi);
             atproteome.registerSequenceRenderer(MASCP.renderer);
             atproteome.bind('resultReceived',function() {
                 MASCP.renderer.hideGroup('atproteome');

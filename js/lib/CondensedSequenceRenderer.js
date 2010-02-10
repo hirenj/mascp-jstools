@@ -22,11 +22,15 @@ if (document.write && (typeof svgweb == 'undefined')) {
  *  @extends    MASCP.SequenceRenderer
  */
 MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
+    this._RS = 50;
     MASCP.SequenceRenderer.apply(this,arguments);
     var self = this;
     
     
     this.__class__ = MASCP.CondensedSequenceRenderer;
+    
+    // Render Scale
+    
     
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
@@ -78,8 +82,11 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     return canvas;
 };
 
-MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
-
+MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
+    // We're going to use a render scale
+    
+    var RS = this._RS;
+    
     canvas.path = function(pathdesc) {
       var a_path = document.createElementNS(svgns,'path');
       a_path.setAttribute('d', pathdesc);
@@ -91,10 +98,10 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
 
     canvas.rect = function(x,y,width,height) {
       var a_rect = document.createElementNS(svgns,'rect');
-      a_rect.setAttribute('x', x);
-      a_rect.setAttribute('y', y);
-      a_rect.setAttribute('width', width);
-      a_rect.setAttribute('height', height);
+      a_rect.setAttribute('x', x * RS);
+      a_rect.setAttribute('y', y * RS);
+      a_rect.setAttribute('width', width * RS);
+      a_rect.setAttribute('height', height * RS);
       a_rect.setAttribute('stroke','#000000');
       this.appendChild(a_rect);
       return a_rect;
@@ -108,7 +115,7 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
                     an_array[i].setAttribute(key, hash[key]);
                     if (key == 'y' && an_array[i].hasAttribute('d')) {
                         var curr_path = an_array[i].getAttribute('d');
-                        var re = /M(\d+) (\d+)/;
+                        var re = /M([\d\.]+) ([\d\.]+)/;
                         curr_path = curr_path.replace(re,'');
                         an_array[i].setAttribute('d', 'M0 '+parseInt(hash[key])+' '+curr_path);
                     }
@@ -142,14 +149,15 @@ MASCP.CondensedSequenceRenderer._extendWithSVGApi = function(canvas) {
         var a_text = document.createElementNS(svgns,'text');
         a_text.textContent = text;
         a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
-        a_text.setAttribute('x',x);
-        a_text.setAttribute('y',y);        
+        a_text.setAttribute('x',x * RS);
+        a_text.setAttribute('y',y * RS);        
         this.appendChild(a_text);
         return a_text;
     };    
 };
 
 MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
+    var RS = this._RS;
     var seq_chars = this.sequence.split('');
     var renderer = this;
     var amino_acids = canvas.set();
@@ -159,7 +167,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         amino_acids.push(canvas.text(x,12,seq_chars[i]));
         x += 1;
     }
-    amino_acids.attr( { 'display':'none','width': '1','text-anchor':'start','dominant-baseline':'hanging','height': '1','font-size':'1','fill':'#000000', 'font-family':'monospace'});
+    amino_acids.attr( { 'display':'none','width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000', 'font-family':'monospace'});
 
     try {
         var foo = canvas.addEventListener;
@@ -189,10 +197,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength) {
+    var RS = this._RS;
     var x = 0;
     var axis = canvas.set();
-    axis.push(canvas.path('M0 10 l0 20'));
-    axis.push(canvas.path('M'+(lineLength)+' 10 l0 20'));
+    axis.push(canvas.path('M0 '+10*RS+' l0 '+20*RS));
+    axis.push(canvas.path('M'+(lineLength*RS)+' '+10*RS+' l0 '+20*RS));
 
     this._axis_height = 30;
 
@@ -203,9 +212,9 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     for (var i = 0; i < (lineLength/5); i++ ) {
 
         if ( (x % 10) == 0) {
-            big_ticks.push(canvas.path('M'+x+' 14 l 0 12'));
+            big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+12*RS));
         } else {
-            little_ticks.push(canvas.path('M'+x+' 16 l 0 8'));
+            little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+8*RS));
         }
 
         if ( (x % 20) == 0 && x != 0) {
@@ -220,13 +229,13 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     for ( var i = 0; i < big_labels.length; i++ ) {
         big_labels[i].style.textAnchor = 'middle';
         big_labels[i].setAttribute('dominant-baseline','hanging');
-        big_labels[i].setAttribute('font-size','7pt');
+        big_labels[i].setAttribute('font-size',7*RS+'pt');
     }
 
     for ( var i = 0; i < little_labels.length; i++ ) {
         little_labels[i].style.textAnchor = 'middle';
         little_labels[i].setAttribute('dominant-baseline','hanging');
-        little_labels[i].setAttribute('font-size','2pt');        
+        little_labels[i].setAttribute('font-size',2*RS+'pt');        
         little_labels[i].style.fill = '#000000';
     }
     
@@ -244,8 +253,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
            if (this.zoom > 3.6) {
                little_ticks.hide();
                big_ticks.hide();
-               little_labels.attr({'font-size':'2pt'});
-               big_labels.attr({'font-size': '2pt'});
+               little_labels.attr({'font-size':2*RS+'pt'});
+               big_labels.attr({'font-size': 2*RS+'pt'});
                axis.hide();
                if (this._visibleTracers && this._visibleTracers()) {
                    this._visibleTracers().show();
@@ -256,8 +265,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                axis.attr({'stroke-width':'0.5pt'});
                big_ticks.attr({'stroke-width':'0.5pt'});
                big_labels.show();
-               big_labels.attr({'font-size':'4pt','y':'7'});
-               little_labels.attr({'font-size':'4pt'});
+               big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
+               little_labels.attr({'font-size':4*RS+'pt'});
                little_ticks.attr({'stroke-width':'0.3pt'});
                little_ticks.show();
                little_labels.show();
@@ -269,11 +278,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                 this.tracers.hide();
                 }
                axis.show();
-               axis.attr({'stroke-width':'1pt'});
+               axis.attr({'stroke-width':RS+'pt'});
                big_ticks.show();
-               big_ticks.attr({'stroke-width':'1pt'});
+               big_ticks.attr({'stroke-width':RS+'pt'});
                big_labels.show();
-               big_labels.attr({'font-size':'7pt','y':'5'});
+               big_labels.attr({'font-size':7*RS+'pt','y':5*RS});
                little_ticks.hide();
                little_labels.hide();
            }
@@ -318,11 +327,12 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     var canvas = this._createCanvasObject();
 
+    var RS = this._RS;
 
     jQuery(this).unbind('svgready').bind('svgready',function(canv) {
         var canv = renderer._canvas;
-        MASCP.CondensedSequenceRenderer._extendWithSVGApi(canv);
-        canv.setAttribute('viewBox', '-1 0 '+(line_length+(this.padding))+' '+(100+(this.padding)));
+        renderer._extendWithSVGApi(canv);
+        canv.setAttribute('viewBox', ''+(-1*RS)+' 0 '+(line_length+(this.padding))*RS+' '+(100+(this.padding))*RS);
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
@@ -367,16 +377,17 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
  * @type Array
  */
 MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(windowSize) {
+    var RS = this._RS;
     MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
     var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
            'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
            'L': 3.8,'K':-3.9,'M': 1.9,'F': 2.8,'P':-1.6,
            'S':-0.8,'T':-0.7,'W':-0.9,'Y':-1.3,'V': 4.2 };
-    var plot_path = 'm'+(windowSize-1)+' 0 ';
+    var plot_path = 'm'+RS*(windowSize-1)+' 0 ';
     var last_value = null;
     var max_value = -100;
     var min_value = null;
-    var scale_factor = 2.5;
+    var scale_factor = 2.5 * RS;
     var values = [];
     for (var i = windowSize; i < (this._sequence_els.length - windowSize); i++ ) {
         var value = 0;
@@ -392,25 +403,24 @@ MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(windowSiz
         }
         values[i] = value;
         if ( ! last_value ) {
-            plot_path += ' m1 '+(-1*scale_factor*value);
+            plot_path += ' m'+RS+' '+(-1*scale_factor*value);
         } else {
-            plot_path += ' l1 '+(-1 * scale_factor * (last_value + value));
+            plot_path += ' l'+RS+' '+(-1 * scale_factor * (last_value + value));
         }
         last_value = value * -1;
     }
     
     var plot = this._canvas.path('M0 0 m0 '+max_value+' '+plot_path);
     plot.setAttribute('stroke','#ff0000');
-    plot.setAttribute('stroke-width', '0.35');
+    plot.setAttribute('stroke-width', 0.35*RS);
     plot.setAttribute('fill', 'none');
     plot.setAttribute('display','none');
-    var axis = this._canvas.path('M0 0 m0 '+-1*min_value+' l'+this._sequence_els.length+' 0');
-    axis.setAttribute('stroke-width','0.2');
+    var axis = this._canvas.path('M0 0 m0 '+(-1*min_value)+' l'+this._sequence_els.length*RS+' 0');
+    axis.setAttribute('stroke-width',0.2*RS);
     axis.setAttribute('display','none');
     this._layer_containers['hydropathy'].push(plot);    
     this._layer_containers['hydropathy'].push(axis);
-    this._layer_containers['hydropathy'].fixed_track_height = -1 * min_value + max_value;
-    
+    this._layer_containers['hydropathy'].fixed_track_height = (-1*min_value+max_value) / RS;
     return values;
 };
 
@@ -540,6 +550,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
  *                          The track itself is by default hidden.
  */
 MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
+    var RS = this._RS;
     if ( ! this._canvas ) {
         throw "No canvas, cannot add track";
         return;
@@ -603,9 +614,10 @@ MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
 };
 
 MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
+    var RS = this._RS;
     if (this._container && this._canvas) {
         this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
-        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height)+'px';
+        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';
     }
 };
 
@@ -613,6 +625,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  */
 MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
+    var RS = this._RS;
     var track_heights = 0;
     if ( ! this._track_order ) {
         return;
@@ -621,19 +634,25 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
         if (! this.isLayerActive(this._track_order[i])) {
             continue;
         }
-        track_heights += (this.trackGap / this.zoom);
-        this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights), 'height' :  this._layer_containers[this._track_order[i]].track_height / this.zoom });
+        
         if (this._layer_containers[this._track_order[i]].tracers) {
             var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
-            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style ,'height' : this._axis_height + track_heights - this.trackGap });
+            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style , 'y' : 10*RS,'height' : (-10 + this._axis_height + track_heights / this.zoom )*RS });
         }
+
         if (this._layer_containers[this._track_order[i]].fixed_track_height) {
-            track_heights += this._layer_containers[this._track_order[i]].fixed_track_height;
+            var track_height = this._layer_containers[this._track_order[i]].fixed_track_height;
+            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights / this.zoom)*RS });
+            track_heights += this.zoom * (track_height) + this.trackGap;
+        } else {
+            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom });
+            track_heights += this._layer_containers[this._track_order[i]].track_height + this.trackGap;
         }
+
     }
     var viewBox = [-1,0,0,0];
-    viewBox[2] = this.sequence.split('').length+(this.padding);
-    viewBox[3] = this._axis_height + track_heights + (this.padding);
+    viewBox[2] = (this.sequence.split('').length+(this.padding))*RS;
+    viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];
 };
