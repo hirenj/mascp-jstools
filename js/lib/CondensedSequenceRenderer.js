@@ -239,7 +239,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
         little_labels[i].style.fill = '#000000';
     }
     
-    little_ticks.attr({ 'stroke':'#555555', 'stroke-width':'0.5pt'});
+    little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
     little_ticks.hide();
     little_labels.hide();
 
@@ -262,12 +262,12 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
            } else if (this.zoom > 1.8) {
                axis.show();
                big_ticks.show();
-               axis.attr({'stroke-width':'0.5pt'});
-               big_ticks.attr({'stroke-width':'0.5pt'});
+               axis.attr({'stroke-width':0.5*RS+'pt'});
+               big_ticks.attr({'stroke-width':0.5*RS+'pt'});
                big_labels.show();
                big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
                little_labels.attr({'font-size':4*RS+'pt'});
-               little_ticks.attr({'stroke-width':'0.3pt'});
+               little_ticks.attr({'stroke-width':0.3*RS+'pt'});
                little_ticks.show();
                little_labels.show();
                if (this.tracers) {
