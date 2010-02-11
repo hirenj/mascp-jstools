@@ -95,6 +95,7 @@ GOMap.Diagram = function(image,params) {
     this.element.setAttribute('type','image/svg+xml');
     this.element.setAttribute('width','100%');
     this.element.setAttribute('height','100%');
+    this.element.setAttribute('style','background: transparent;');
     
     var self = this;
     this.element.addEventListener('load',function() {
@@ -176,7 +177,7 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
 /**
  * Hide all the keywords currently being highlighted on this diagram
  */
-GOMap.Diagram.prototype.hideAllKeywords = function() {
+GOMap.Diagram.prototype.hideAllKeywords = function() {    
     for (var key in this._highlighted) {
         this.hideKeyword(key);
     }

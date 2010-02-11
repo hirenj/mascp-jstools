@@ -126,40 +126,14 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
             continue;
         }
         var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
-        var simple_tissue = tissue.replace(/\s/g,'');
-        var overlay_name = 'atproteome_by_tissue_'+simple_tissue;
+        var overlay_name = 'atproteome_by_tissue_'+tissue;
         
         // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
         var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
         
-        MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block });
-
-        var do_diagrams = (window.location.search.replace(/^\?/, '').indexOf('drawMap') >= 0);
-
-        if (typeof GOMap != 'undefined' && do_diagrams) {
-            var map = this._map;
-            if ( ! map ) {
-                var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-
-                map = new GOMap.Diagram('mature_flower_diagram.svg', { 'load' : (function() {
-                    map_container.css({'height': '100%','overflow':'visible'});
-                })});
-
-                this._map = map;
-                this._map_container = map_container[0];
-                map.appendTo(map_container[0]);
+        MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue } });
                 
-            }
-            
-            // FIXME FOR MULTIPLE BINDINGS
-            
-            jQuery(MASCP.getLayer(overlay_name)).bind('mouseover',function() {
-                map.showKeyword(simple_tissue);
-            });
-        }
-        
-        
         var positions = this._normalise(this._mergeCounts(peptide_counts));
         var index = 0;
         var last_start = null;

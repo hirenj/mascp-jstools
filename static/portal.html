@@ -117,6 +117,20 @@
                 dragger.applyToElement(MASCP.renderer._canvas);
             })
         }
+        
+        var tissue_map = null;
+        
+        if (typeof GOMap != 'undefined') {
+            var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
+            tissue_map = new GOMap.Diagram('plant_tissues.svg', { 'load' : (function() {
+                map_container.css({'height': '100%','overflow':'visible'});
+            })});
+
+            tissue_map.appendTo(map_container[0]);
+            jQuery('#atproteome_map').append(map_container);                
+        }
+        
+        
         jQuery(MASCP).bind('layerRegistered', function(e,layer) {
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
 
@@ -131,9 +145,31 @@
                     }
                 },
             }).sortable('toArray');
-            jQuery(layer).bind('click',function() {
-                log("In click for %o",layer);
-            });
+            
+            if (layer.group && layer.group.name == 'atproteome') {
+                jQuery(layer).bind('mousedown',function(e,ev) {                
+                    jQuery('#atproteome_map')[0].style.position = 'fixed';
+                    jQuery('#atproteome_map')[0].style.zIndex = 1;
+                    jQuery('#atproteome_map')[0].style.height = 60+'px';
+                    jQuery('#atproteome_map')[0].style.width = 110+'px';
+                    var offset = jQuery('#condensed_container').offset();
+                    jQuery('#atproteome_map')[0].style.top = (offset.top + ev.pageY+10 - jQuery(document).scrollTop())+'px';
+                    jQuery('#atproteome_map')[0].style.left = (offset.left + ev.pageX+10 - jQuery(document).scrollLeft())+'px';
+                    tissue_map.hideAllKeywords();
+                    tissue_map.showKeyword('border');
+                    tissue_map.showKeyword(layer.data['po']);
+                
+                
+                });
+                var mouse_out_func = function(e,ev) {
+                    jQuery('#atproteome_map')[0].style.position = 'fixed';                
+                    jQuery('#atproteome_map')[0].style.top = '-10000px';                
+                    jQuery('#atproteome_map')[0].style.left = '-10000px';                                
+                };
+            
+                jQuery(layer).bind('mouseup',mouse_out_func);
+                jQuery(layer).bind('mouseout',mouse_out_func);
+            }
         });
 
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -164,9 +200,10 @@
     
     
             
-            var suba = new MASCP.SubaReader(agi,'http://suba.plantenergy.uwa.edu.au/services/byAGI.php');
+            var suba = new MASCP.SubaReader(agi);
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
+                log("I am here");
                 jQuery('#suba_results').text('');
                 jQuery('#suba_results').append(this.result.render());               
                 if (this.result._map) {
@@ -201,17 +238,13 @@
             });
             jQuery('#promex_experimental').hide();
             promex.retrieve();
-            
+
             var atproteome = new MASCP.AtProteomeReader(agi);
             atproteome.registerSequenceRenderer(MASCP.renderer);
             atproteome.bind('resultReceived',function() {
                 MASCP.renderer.hideGroup('atproteome');
                 if (this.result == null) {
                     return;
-                }
-                if (this._map) {
-                    MASCP.AtProteomeReader.existing_map = this._map;
-                    jQuery('#atproteome_map').append(this._map_container);
                 }
                 
                 jQuery('#atproteome').show();

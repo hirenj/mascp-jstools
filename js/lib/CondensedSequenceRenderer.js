@@ -132,15 +132,22 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         an_array._event_proxy = new Object();
         
         var event_func = function(ev) {
-            jQuery(an_array._event_proxy).trigger(ev.type);
+            jQuery(an_array._event_proxy).trigger(ev.type,[ev]);
         };
         
         an_array.push = function(new_el) {
             this._old_push(new_el);
-            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup'];
+            if ( ! new_el || typeof new_el == 'undefined' ) {
+                return;
+            }
+            if (new_el._has_proxy) {
+                return;
+            }
+            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
             for (var i = 0 ; i < event_names.length; i++) {
                 jQuery(new_el).bind(event_names[i], event_func);
             }
+            new_el._has_proxy = true;
         };
         return an_array;
     };
@@ -585,10 +592,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             renderer.refresh();
             renderer._resizeContainer();
         });
-        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup'];
+        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
-            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev) {
-                jQuery(layer).trigger(ev.type);
+            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event) {
+                jQuery(layer).trigger(ev.type,[original_event]);
             });
         }
     }

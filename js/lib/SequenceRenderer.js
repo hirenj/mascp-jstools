@@ -75,6 +75,7 @@ MASCP.registerGroup = function(groupName, options)
  *  @property   {String}        color       Color string to apply to this layer
  *  @property   {MASCP.Group}   group       Group that this layer is part of. Either a group object, or the name for the group.
  *  @property   {String}        css         CSS block for this layer. Active and inactive layers are children of the .active and .inactive classes respectively. To target a track-based rendering, use the .tracks class first, and to target overlays, use the .overlay class last
+ *  @property   {Object}        data        Data for this layer
  */
 
 /**
@@ -117,6 +118,10 @@ MASCP.registerLayer = function(layerName, options)
             throw "Cannot register this layer with the given group - the group has not been registered yet";
         }
         layer['group']._layers.push(layer);
+    }
+    
+    if (options['data']) {
+        layer['data'] = options['data'];
     }
     
     
