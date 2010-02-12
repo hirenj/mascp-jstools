@@ -673,7 +673,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
 
 /**
  *  @lends MASCP.CondensedSequenceRenderer.prototype
- *  @property   {Number}    zoom        The zoom level for a renderer. Minimum zoom level is zero, and defaults to 1
+ *  @property   {Number}    zoom        The zoom level for a renderer. Minimum zoom level is zero, and defaults to the default zoom value
+ *  @property   {Number}    defaultZoom The default zoom level for a renderer.
  *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
  *  @property   {Number}    padding     Padding to apply to the right and top of plots (default 10).
  *  @property   {Number}    trackGap    Vertical gap between tracks (default 10)
@@ -722,6 +723,14 @@ var accessors = {
         return this._zoomLevel || 1;
     },
 
+    getDefaultZoom: function() {
+        return this._defaultZoom || 1;
+    },
+    
+    setDefaultZoom: function(zoom) {
+        this._defaultZoom = zoom;
+    }
+
     getPadding: function() {
         return this._padding || 10;
     },
@@ -744,6 +753,8 @@ var accessors = {
 if (MASCP.CondensedSequenceRenderer.prototype.__defineSetter__) {    
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("zoom", accessors.setZoom);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("zoom", accessors.getZoom);
+    MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("defaultZoom", accessors.setDefaultZoom);
+    MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("defaultZoom", accessors.getDefaultZoom);
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("trackOrder", accessors.setTrackOrder);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("trackOrder", accessors.getTrackOrder);
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("padding", accessors.setPadding);

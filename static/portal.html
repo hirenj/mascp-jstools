@@ -46,23 +46,47 @@
         }
 
         #sequence_controllers {
+            position: absolute;
+            display: block;
+            padding: 0px;
             list-style: none;
+            height: 100%;
+            overflow: auto;            
+            left: 5em;
+            right: 0px;
+        }
+        #sequence_control {
+            position: relative;
+            width: 300px;
+            height: 100px;
+        }
+
+        #zoom_controls {
+            height: 100%;
+            left: 0px;
+            top: 0px;
+            position: absolute;
         }
 
         #suba_results {
             width: 300px;
-            height: 300px;
-/*          position: absolute;*/
-            top: 10px;
+            height: 230px;
+            position: absolute;
             right: 10px;
-            float: left;
-/*          border: solid #8888ff 5px;
-            -moz-border-radius:10px 10px;
-            -webkit-border-radius:10px 10px;
-            border-radius:10px 10px;
-*/      }
+            top: 75px;
+        }
+        
+        #suba_controller {
+            position: absolute;
+            right: 100%;
+            width: 100px;
+            top: 0px;
+        }
+        
         #atproteome_map {
-            float: left;
+            position: fixed;
+            top: -10000px;
+            left: -10000px;
         }
     </style>
 </head>
@@ -72,9 +96,10 @@
 <h1 style="position: relative;">MASCP AggreGATOR <img style="height: 60px; top: 50%;" src="gator.png" /></h1>
 </div>
 <div style="margin-bottom: 10px;">
-    <label for="agi">Select AGI </label><input id="agi" type="text" name="agi" value="AT1G58360.1"/>
+    <label for="agi">Select AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
 <h2 id="selected_agi"></h2>
+<div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
     <li id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</li>
     <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>
@@ -82,8 +107,9 @@
     <li id="atproteome"><input type="checkbox"/> ATProteome</li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
-<div style="position: relative;">
-<div style="overflow: auto; width: auto; height: 400px;">
+</div>
+<div style="position: absolute; left: 10px; top: 300px; bottom: 0px; right: 10px;">
+<div style="overflow: auto; width: auto; height: 100%;">
 <div id="condensed_container"></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
 </div>
@@ -103,17 +129,17 @@
         } else {
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
             var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
-            zoom_controls.style.position = 'absolute';
-            zoom_controls.style.top = '0px';
-            zoom_controls.style.left = '0px';
-            zoom_controls.style.float = 'left';     
-            jQuery('#condensed_container').parent().parent().append(zoom_controls);
+            zoom_controls.id = 'zoom_controls';        
+            jQuery('#sequence_control').append(zoom_controls);
             var dragger = new GOMap.Diagram.Dragger();
             dragger.applyToElement(document.getElementById('condensed_container').parentNode);
             dragger.targetElement = document.getElementById('condensed_container').parentNode;
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
             jQuery(MASCP.renderer).bind('sequenceChange', function() {
+                var zoomFactor = document.width / (2 * MASCP.renderer.sequence.length);
+                MASCP.renderer.defaultZoom = zoomFactor;
+                MASCP.renderer.zoom = zoomFactor;
                 dragger.applyToElement(MASCP.renderer._canvas);
             })
         }
@@ -191,11 +217,13 @@
             if (MASCP.SubaReader.existing_map) {
                 log("Removing existing map");
                 MASCP.SubaReader.existing_map.destroy();
+                MASCP.SubaReader.existing_map = null;
             }
     
             if (MASCP.AtProteomeReader.existing_map) {
                 log("Removing existing map");
                 MASCP.AtProteomeReader.existing_map.destroy();      
+                MASCP.AtProteomeReader.existing_map = null;
             }
     
     
@@ -203,12 +231,13 @@
             var suba = new MASCP.SubaReader(agi);
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
-                log("I am here");
                 jQuery('#suba_results').text('');
                 jQuery('#suba_results').append(this.result.render());               
                 if (this.result._map) {
                     MASCP.SubaReader.existing_map = this.result._map;
-                    jQuery('#suba_results').append(this.result.mapController());
+                    var controller = this.result.mapController();
+                    controller.setAttribute('id','suba_controller');
+                    jQuery('#suba_results').append(controller);
                 }
             });
             var phosphat = new MASCP.PhosphatReader(agi,'../proxy.pl');
@@ -268,6 +297,7 @@
                 return;
             }
             MASCP.renderer.setSequence(this.result.getSequence());
+                        
 //          jQuery('#hydropathy_container').text('');
 //          jQuery('#hydropathy_container').append();           
 //          MASCP.renderer.setSequence(this.result.getSequence());

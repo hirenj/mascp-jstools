@@ -319,6 +319,7 @@ GOMap.Diagram.prototype.makeInteractive = function() {
     controls.style.position = 'absolute';
     controls.style.top = '0px';
     controls.style.left = '0px';
+    controls.style.height = '30%';
 };
 
 /*
@@ -782,7 +783,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     value = value || min; 
     
     var controls_container = document.createElement('div');
-    controls_container.style.height = '30%';   
+    
     var zoomIn = document.createElement('input');
     zoomIn.setAttribute('type','button');
     zoomIn.setAttribute('value','+');
@@ -796,7 +797,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     controls_container.appendChild(reset);    
 
     reset.addEventListener('click',function() {
-        zoomElement.zoom = value;
+        zoomElement.zoom = zoomElement.defaultZoom || value;
     },false);
     
     var range = document.createElement('input');
@@ -805,7 +806,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     range.setAttribute('step',precision);
     range.setAttribute('value',value); 
     range.setAttribute('type','range');
-    range.setAttribute('style','-webkit-appearance: slider-vertical; height: 100%; width: 1em; position: absolute; top: 0px; margin-top: 2em; left: 50%; margin-left: -0.5em;');
+    range.setAttribute('style','-webkit-appearance: slider-vertical; width: 1em; position: absolute; top: 0px; bottom: 0px; margin-top: 2em; left: 50%; margin-left: -0.5em;');
 
     if (range.type == 'range') {
         
