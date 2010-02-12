@@ -656,12 +656,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     }
     
     var mouseMove = function(evt) {
-        this.style.cursor = 'all-scroll';
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
         var positions = mousePosition(evt);
         if (!self.dragging) {
            return;
         }
-        this.style.cursor = '-moz-grabbing';
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
+//        this.style.cursor = '-moz-grabbing';
         targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
         targetElement.scrollTop = self.dY + (self.oY - positions[1]);
         evt.preventDefault(true);
@@ -678,12 +679,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
     
     var svgMouseMove = function(evt) {
-        this.style.cursor = 'all-scroll';
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
         var positions = mousePosition(evt);
         if (!self.dragging) {
             return;
         }
-        this.style.cursor = '-moz-grabbing';        
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
+//        this.style.cursor = '-moz-grabbing';        
         if (self.targetElement) {
             self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
             self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);

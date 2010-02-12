@@ -112,12 +112,18 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         an_array.attr = function(hash) {
             for (var key in hash) {
                 for (var i = 0; i < an_array.length; i++) {
-                    an_array[i].setAttribute(key, hash[key]);
+                    var value = hash[key];
+                    if (key == 'style' && an_array[i].hasAttribute('style')) {
+                        var curr_style = an_array[i].getAttribute('style');
+                        curr_style += '; '+hash[key];
+                        value = curr_style;
+                    }
+                    an_array[i].setAttribute(key, value);
                     if (key == 'y' && an_array[i].hasAttribute('d')) {
                         var curr_path = an_array[i].getAttribute('d');
                         var re = /M([\d\.]+) ([\d\.]+)/;
                         curr_path = curr_path.replace(re,'');
-                        an_array[i].setAttribute('d', 'M0 '+parseInt(hash[key])+' '+curr_path);
+                        an_array[i].setAttribute('d', 'M0 '+parseInt(value)+' '+curr_path);
                     }
                 }
             }
@@ -603,6 +609,17 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
     this._resizeContainer();
 };
 
+MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
+    if ( ! this._layer_containers ) {
+        return;
+    }
+
+    if ( this._layer_containers[layer] ) {
+        var layer_container = this._layer_containers[layer];
+        layer_container.attr({'style' : style});
+    }
+};
+
 /*
  * Get a canvas set of the visible tracers on this renderer
  */
@@ -729,7 +746,7 @@ var accessors = {
     
     setDefaultZoom: function(zoom) {
         this._defaultZoom = zoom;
-    }
+    },
 
     getPadding: function() {
         return this._padding || 10;

@@ -194,7 +194,7 @@
                 };
             
                 jQuery(layer).bind('mouseup',mouse_out_func);
-                jQuery(layer).bind('mouseout',mouse_out_func);
+                jQuery(layer).bind('mouseout',mouse_out_func);                                
             }
         });
 
@@ -275,7 +275,9 @@
                 if (this.result == null) {
                     return;
                 }
-                
+                jQuery(MASCP.getGroup('atproteome')._layers).each(function() {
+                    MASCP.renderer.applyStyle(this.name,'cursor: pointer');                    
+                });
                 jQuery('#atproteome').show();
             });
             jQuery('#atproteome').hide();
