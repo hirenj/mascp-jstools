@@ -163,7 +163,7 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
     for (var i = 0; i < els.length; i++ ) {
         els[i]._highlighted = els[i]._highlighted || {};
         els[i]._highlighted[color] = true;
-        if (els[i].nodeName == 'path' || els[i].nodeName == 'circle') {
+        if (els[i].nodeName == 'path' || els[i].nodeName == 'circle' || els[i].nodeName == 'ellipse') {
             this._outlineElement(els[i]);
         }
     }
@@ -395,16 +395,21 @@ GOMap.Diagram.prototype._recurse = function(nodelist,callback) {
  */
 GOMap.Diagram.prototype._cacheStyle = function(el) {    
     if ( ! el.id ) {
-        var an_id = 'svg'+(new Date).getTime().toString();
+        var an_id = 'svg'+(new Date()).getTime().toString()+Math.floor(Math.random()*1000);
         el.setAttribute('id',an_id);
     }
 
     if (this._styles_cache[el.id] != null || ! el.style || ! el.id ) {
         return;
     }
+    
+    if (el.style.stroke && ! el.style.strokeWidth && ! el.style.getPropertyValue('stroke-width')) {
+        el.style.strokeWidth = '1';
+    }
+    
     this._styles_cache[el.id] = {
-        'stroke'         : el.style.getPropertyValue('stroke'),
-        'stroke-width'   : el.style.getPropertyValue('stroke-width') || '0px',
+        'stroke'         : el.style.stroke || el.style.getPropertyValue('stroke'),
+        'stroke-width'   : el.style.strokeWidth || el.style.getPropertyValue('stroke-width') || '0px',
         'opacity'        : el.style.getPropertyValue('opacity'),
         'fill-opacity'   : el.style.fillOpacity || el.style.getPropertyValue('fill-opacity'),
         'stroke-opacity' : el.style.strokeOpacity || el.style.getPropertyValue('stroke-opacity')
@@ -446,7 +451,7 @@ GOMap.Diagram.prototype._outlineElement = function(element) {
     var target_color = this._calculateColorForElement(element);
     
     element.style.setProperty('stroke',target_color,null);
-    element.style.setProperty('stroke-width',4,null);
+    element.style.setProperty('stroke-width',1,null);
     element.style.setProperty('stroke-opacity',1,null);
 };
 
@@ -535,7 +540,7 @@ GOMap.Diagram.prototype._highlightElement = function(element) {
     
     this._cacheStyle(element);
 
-    if (element.nodeName == 'path' || element.nodeName == 'circle') {
+    if (element.nodeName == 'path' || element.nodeName == 'circle' || element.nodeName == 'ellipse') {
         element.setAttribute('opacity','1');
         element.style.setProperty('opacity',1,null);
     }
