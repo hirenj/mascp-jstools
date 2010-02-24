@@ -63,6 +63,9 @@ if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
  * @requires    svgweb
  */
 GOMap.Diagram = function(image,params) {
+    if (image == null) {
+        return;
+    }
     this._highlighted = {};
     this._styles_cache = {};
     var url = null;
@@ -170,6 +173,7 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
     var self = this;
     this._recurse(els, function(el) {
         self._highlightElement(el);
+        return true;
     });
         
 };
@@ -199,13 +203,17 @@ GOMap.Diagram.prototype.hideKeyword = function(keyword,color) {
         } else {
             el._highlighted = {};
         }
+
         for (var col in el._highlighted) {
             if (el._highlighted[col] == true) {
-                self._outlineElement(el);
-                return;
+                if (el.nodeName == 'path' || el.nodeName == 'circle' || el.nodeName == 'ellipse') {
+                    self._outlineElement(el);
+                }
+                return false;
             }
         }
         self._restoreStyle(el);
+        return true;
     });
 };
 
@@ -382,7 +390,10 @@ GOMap.Diagram.prototype._execute_xpath = function(element, xpath, doc) {
  */
 GOMap.Diagram.prototype._recurse = function(nodelist,callback) {
     for (var i = 0; i < nodelist.length; i++) {
-        callback.call(this,nodelist[i]);        
+        var return_val = callback.call(this,nodelist[i]);
+        if ( ! return_val ) {
+            continue;
+        }
         if (nodelist[i].childNodes.length > 0) {
             this._recurse(nodelist[i].childNodes,callback);
         }
@@ -464,16 +475,40 @@ GOMap.Diagram.prototype._outlineElement = function(element) {
 GOMap.Diagram.prototype._calculateColorForElement = function(element) {
     var pattern = "pat";
     var total_keywords = 0;
+    
+    if (element._animates) {
+        for (var i = 0; i < element._animates.length; i++ ) {
+            element.removeChild(element._animates[i]);
+        }
+        element._animates = null;
+    }
+    
     for (var col in element._highlighted) {
         if (element._highlighted && element._highlighted[col] == true) {
             pattern += "_"+col;
             total_keywords++;
         }
     }
+    
+    // Internet Explorer is waiting on support for this http://code.google.com/p/svgweb/issues/detail?id=145
+    // Firefox needs at least v 3.7 to support this
+    
+    var animation_supported = document.createElementNS(svgns,'animate').beginElement;
+    
     if (total_keywords == 1) {
         return pattern.split(/_/)[1];
-    } else {
-        return this._buildPattern(pattern);
+    } else {        
+        if (animation_supported) {        
+            var animates = this._buildAnimatedColor(pattern,element.id);
+            for (var i = 0 ; i < animates.length; i++ ) {            
+                element.appendChild(animates[i]);
+            }
+            animates[0].beginElement();
+            element._animates = animates;
+            return pattern.split(/_/)[1];
+        } else {
+            return this._buildPattern(pattern);
+        }
     }
     
 };
@@ -486,6 +521,7 @@ GOMap.Diagram.prototype._calculateColorForElement = function(element) {
  */
 GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
     var pattern_els = pattern_name.split('_');
+    pattern_els.shift();
     this._cached_patterns = this._cached_patterns || {};
     var cleaned_name = pattern_name.replace(/#/g,'');
     if (this._cached_patterns[cleaned_name]) {
@@ -509,10 +545,11 @@ GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
     new_pattern.setAttribute('patternUnits','userSpaceOnUse');
     new_pattern.setAttribute('patternTransform','rotate(45)');
     new_pattern.setAttribute('id',cleaned_name);
-    var pattern_width = 100.0 / (pattern_els.length - 1);
+    
+    var pattern_width = 100.0 / (pattern_els.length);
     var start_pos = 0;
     
-    for (var i = 1; i < pattern_els.length; i++ ) {
+    for (var i = 0; i < pattern_els.length; i++ ) {
         var a_box = document.createElementNS(svgns, 'rect');
         a_box.setAttribute('x', start_pos);
         start_pos += pattern_width;
@@ -523,11 +560,58 @@ GOMap.Diagram.prototype._buildPattern = function(pattern_name) {
         new_pattern.appendChild(a_box);
     }
 
-
     defs_el.appendChild(new_pattern);
     this._cached_patterns[cleaned_name] = true;
     return 'url(#'+cleaned_name+')';
 };
+
+GOMap.Diagram.prototype._buildAnimatedColor = function(pattern_name,id_prefix) {
+    var pattern_els = pattern_name.split('_');
+    pattern_els.shift();
+    this._cached_patterns = this._cached_patterns || {};
+    var cleaned_name = pattern_name.replace(/#/g,'');
+    if (this._cached_patterns[cleaned_name]) {
+        return 'url(#'+cleaned_name+')';
+    }
+    
+    cleaned_name = id_prefix+cleaned_name;
+    
+    var root_svg = this.element;
+    var defs_el = root_svg.ownerDocument.getElementsByTagNameNS(svgns,'defs')[0];
+
+    if ( ! defs_el ) {
+        defs_el = document.createElementNS(svgns,'defs');
+        root_svg.appendChild(defs_el);
+    }
+    
+    var animates = [];
+
+    for ( var i = 0; i < pattern_els.length; i++ ) {
+        var an_anim = document.createElementNS(svgns,'animate');
+        an_anim.setAttribute('id',cleaned_name+i);
+        an_anim.setAttribute('from',pattern_els[i]);
+        var to_string = '';
+        if ( pattern_els.length <= (i+1) ) {
+            to_string = pattern_els[0];
+        } else {
+            to_string = pattern_els[i+1];
+        }
+        an_anim.setAttribute('to',to_string);
+        var begin_string = '';
+        if ( i == 0 ) {
+            begin_string = 'SVGLoad;indefinite;'+(cleaned_name+(pattern_els.length-1))+'.end';
+        } else {
+            begin_string = cleaned_name+(i-1)+'.end';
+        }
+        an_anim.setAttribute('attributeType','CSS');
+        an_anim.setAttribute('attributeName','stroke');
+        an_anim.setAttribute('begin',begin_string);
+        an_anim.setAttribute('dur','1s');
+        animates.push(an_anim);
+    }
+
+    return animates;
+}
 
 /* Highlight an element by making it opaque
  * @param {Element} element Element to make opaque
@@ -831,8 +915,10 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
         evFunction.apply(zoomElement,['zoomChange',function() {
             range.value = zoomElement.zoom;
         },false]);
-        controls_container.appendChild(range);
         
+        
+        controls_container.appendChild(range);
+        controls_container.style.height = '100%';
     } else {
         if (! zoomIn.addEventListener) {
             var addevlis = function(name,func) {

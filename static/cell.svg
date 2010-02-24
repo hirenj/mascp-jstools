@@ -17,7 +17,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M37.75,67.5c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C34.5,60.25,37.75,63.5,37.75,67.5L37.75,67.5z"/>
-		<text transform="matrix(1 0 0 1 10.1924 69.25)" style="font-family:'Helvetica'; font-size:5;">Cell wall</text>
+		<text transform="matrix(1 0 0 1 10.1924 69.25)" style="font-family:'Helvetica'; font-size:4pt;">Cell wall</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="37.75" y1="68.25" x2="52.5" y2="70.5"/>
@@ -39,7 +39,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M48,92.25c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C44.75,85,48,88.25,48,92.25L48,92.25z"/>
-		<text transform="matrix(1 0 0 1 21.4141 90.75)"><tspan x="0" y="0" style="font-family:'Helvetica'; font-size:5;">Plasma</tspan><tspan x="-3.61" y="6" style="font-family:'Helvetica'; font-size:5;">membrane</tspan></text>
+		<text transform="matrix(1 0 0 1 21.4141 90.75)"><tspan x="0" y="0" style="font-family:'Helvetica'; font-size:4pt;">Plasma</tspan><tspan x="-3.61" y="6" style="font-family:'Helvetica'; font-size:4pt;">membrane</tspan></text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="48" y1="93" x2="62.75" y2="95.25"/>
@@ -120,7 +120,7 @@
 		</g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M189.25,19c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C186,11.75,189.25,15,189.25,19L189.25,19z"/>
-		<text transform="matrix(1 0 0 1 157.6875 20.5)" style="font-family:'Helvetica'; font-size:5;">Mitochondria</text>
+		<text transform="matrix(1 0 0 1 157.6875 20.5)" style="font-family:'Helvetica'; font-size:4pt;">Mitochondria</text>
 	</g>
 </g>
 <g keyword="vacuole">
@@ -131,7 +131,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M158,59c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C154.75,51.75,158,55,158,59L158,59z"/>
-		<text transform="matrix(1 0 0 1 130.7158 60.75)" style="font-family:'Helvetica'; font-size:5;">Vacuole</text>
+		<text transform="matrix(1 0 0 1 130.7158 60.75)" style="font-family:'Helvetica'; font-size:4pt;">Vacuole</text>
 	</g>
 </g>
 <g keyword="plastid">
@@ -596,7 +596,7 @@
 		</g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M108.5,9.25c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C105.25,2,108.5,5.25,108.5,9.25L108.5,9.25z"/>
-		<text transform="matrix(1 0 0 1 78.3545 10.75)" style="font-family:'Helvetica'; font-size:5;">Chloroplast</text>
+		<text transform="matrix(1 0 0 1 78.3545 10.75)" style="font-family:'Helvetica'; font-size:4pt;">Chloroplast</text>
 	</g>
 </g>
 <g keyword="peroxisome">
@@ -607,7 +607,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M238.75,34c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C235.5,26.75,238.75,30,238.75,34L238.75,34z"/>
-		<text transform="matrix(1 0 0 1 208.3008 35.25)" style="font-family:'Helvetica'; font-size:5;">Peroxisome</text>
+		<text transform="matrix(1 0 0 1 208.3008 35.25)" style="font-family:'Helvetica'; font-size:4pt;">Peroxisome</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="203.5" y1="36" x2="199.25" y2="40"/>
@@ -626,7 +626,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M194.75,85.25c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C191.5,78,194.75,81.25,194.75,85.25L194.75,85.25z"/>
-		<text transform="matrix(1 0 0 1 167.4678 87)" style="font-family:'Helvetica'; font-size:5;">Nucleus</text>
+		<text transform="matrix(1 0 0 1 167.4678 87)" style="font-family:'Helvetica'; font-size:4pt;">Nucleus</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="159.25" y1="85.25" x2="140.5" y2="95.75"/>
@@ -658,7 +658,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M142.25,123.5c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C139,116.25,142.25,119.5,142.25,123.5L142.25,123.5z"/>
-		<text transform="matrix(1 0 0 1 111.2168 125.25)" style="font-family:'Helvetica'; font-size:5;">Smooth ER</text>
+		<text transform="matrix(1 0 0 1 111.2168 125.25)" style="font-family:'Helvetica'; font-size:4pt;">Smooth ER</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="118" y1="116" x2="114" y2="101.75"/>
@@ -838,7 +838,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M97.25,115c0,4-3.25,7.25-7.25,7.25H69c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C94,107.75,97.25,111,97.25,115L97.25,115z"/>
-		<text transform="matrix(1 0 0 1 67.4658 116.75)" style="font-family:'Helvetica'; font-size:5;">Rough ER</text>
+		<text transform="matrix(1 0 0 1 67.4658 116.75)" style="font-family:'Helvetica'; font-size:4pt;">Rough ER</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="91.75" y1="107.75" x2="100.62" y2="98.88"/>
@@ -877,7 +877,7 @@
 	<g>
 		<path style="fill:#FFFFFF;stroke:#000000;" d="M58.5,44.25c0,4-3.25,7.25-7.25,7.25h-21c-4,0-7.25-3.25-7.25-7.25l0,0
 			c0-4,3.25-7.25,7.25-7.25h21C55.25,37,58.5,40.25,58.5,44.25L58.5,44.25z"/>
-		<text transform="matrix(1 0 0 1 34.4141 46)" style="font-family:'Helvetica'; font-size:5;">Golgi</text>
+		<text transform="matrix(1 0 0 1 34.4141 46)" style="font-family:'Helvetica'; font-size:4pt;">Golgi</text>
 		<g>
 			<g>
 				<line style="fill:none;stroke:#000000;" x1="58.5" y1="45" x2="73.25" y2="47.25"/>

@@ -46,13 +46,13 @@
         }
 
         #sequence_controllers {
-            position: absolute;
+            position: relative;
             display: block;
             padding: 0px;
             list-style: none;
             height: 100%;
             overflow: auto;            
-            left: 5em;
+            left: 0em;
             right: 0px;
         }
         #sequence_control {
@@ -62,10 +62,9 @@
         }
 
         #zoom_controls {
-            height: 100%;
             left: 0px;
-            top: 0px;
-            position: absolute;
+            bottom: 0px;
+            position: relative;
         }
 
         #suba_results {
@@ -131,6 +130,10 @@
             var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
             zoom_controls.id = 'zoom_controls';        
             jQuery('#sequence_control').append(zoom_controls);
+            if (zoom_controls.style.height == '100%') {
+                jQuery('#sequence_controllers').css('left','5em').css('position','absolute');
+                zoom_controls.style.position = 'absolute';
+            }
             var dragger = new GOMap.Diagram.Dragger();
             dragger.applyToElement(document.getElementById('condensed_container').parentNode);
             dragger.targetElement = document.getElementById('condensed_container').parentNode;

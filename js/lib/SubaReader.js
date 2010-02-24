@@ -154,7 +154,7 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
     } else {
         var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
         jQuery('input.ms', inputElement).bind('change', function() {
-            if (this.value) {
+            if (this.checked) {
                 for (var i in ms_loc) {
                     map.showKeyword(ms_loc[i], '#ff0000');
                 }                            
@@ -170,7 +170,7 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
     } else {
         var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
         jQuery('input.gfp', inputElement).bind('change', function() {
-            if (this.value) {
+            if (this.checked) {
                 for (var i in gfp_loc) {
                     map.showKeyword(gfp_loc[i], '#00ff00');
                 }                            
