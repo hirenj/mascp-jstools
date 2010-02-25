@@ -23,7 +23,7 @@ log = (typeof log == 'undefined') ? function(msg) {
     if (typeof msg == 'String' && arguments.length == 1) {
         console.log("%s", msg);
     } else {
-        console.log.apply(console,arguments);
+        console.log("%o: %o", msg, this);
     }
     return this;
 } : log ;
@@ -101,27 +101,32 @@ GOMap.Diagram = function(image,params) {
     this.element.setAttribute('style','background: transparent;');
     
     var self = this;
+
     this.element.addEventListener('load',function() {
-        if (this.contentDocument != null) {
-            self.element = this.contentDocument.rootElement;
+        var object_el = this;
+        if (! this.nodeName) {
+            log("The SVG hasn't been loaded properly");
+            return;
+        }
+        if (object_el.contentDocument != null) {
+            self.element = object_el.contentDocument.rootElement;
         } else {
-            self.element = this.getAttribute('contentDocument').rootElement
+            self.element = object_el.getAttribute('contentDocument').rootElement
         }
         
         // Make the destroy function an anonymous function, so it can access this new
         // element without having to store it in a field
         
-        var svg_object = this;
+        var svg_object = object_el;
         self.destroy = function() {
             svgweb.removeChild(svg_object, svg_object.parentNode);
         };
 
         self._svgLoaded();
-        
+
         if (params['load']) {
             params['load'].apply(self);
         }        
-        
     },false);
 
     if (image) {

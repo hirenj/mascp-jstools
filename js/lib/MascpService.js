@@ -300,7 +300,7 @@ MASCP.Service.prototype.retrieve = function()
                 }
     },request_data);
     
-    if (jQuery.browser.msie && window.XDomainRequest) {
+    if (jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
         this._retrieveIE(request_data);
         return this;
     }
@@ -332,7 +332,7 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
         if (dataHash.dataType == 'xml') {
             var dom = new ActiveXObject("Microsoft.XMLDOM");
             dom.async = false;
-            dom.loadXML(xhr.responseText,200);
+            dom.loadXML(xdr.responseText);
             dataHash.success(dom, 'success');
         } else if (dataHash.dataType == 'json') {
             dataHash.success(JSON.parse(xdr.responseText),'success');

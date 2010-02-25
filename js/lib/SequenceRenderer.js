@@ -253,6 +253,9 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
     this.sequence = this._cleanSequence(sequence);
     var sequence_els = [];
     var renderer = this;
+    if ( ! this.sequence ) {
+        return;
+    }
     var seq_chars = this.sequence.split('');
     for (var i =0; i < seq_chars.length; i++) {
         var aa = seq_chars[i];
@@ -593,15 +596,15 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
     return this;
 };
 
-/**
+/*
  * Create a hydropathy plot for this renderer
  * @returns Element with the hydropathy plot
  * @type Element
- */
 MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
     var base_url = 'http://www.plantenergy.uwa.edu.au/applications/hydropathy/hydropathy.php?title=Hydropathy&amp;sequence=';
     return jQuery('<img style="width: '+(this.sequence.length * 2)+'px;" src="'+base_url+this.sequence+'"/>')[0];
 };
+*/
 
 /**
  * Create a checkbox that is used to control the given layer

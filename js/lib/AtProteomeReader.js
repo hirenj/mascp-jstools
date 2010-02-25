@@ -130,7 +130,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
         
         // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
-        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: none; border-bottom: solid #000000 1px; } ';
+        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
         MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue } });
                 

@@ -389,7 +389,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
  * @returns Hydropathy values for each of the residues
  * @type Array
  */
-MASCP.CondensedSequenceRenderer.prototype.getHydropathyPlot = function(windowSize) {
+MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windowSize) {
     var RS = this._RS;
     MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
     var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,

@@ -21,6 +21,7 @@
     <script type="text/javascript" src="../js/json-2.js"></script>
     <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>    
     <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>   
+
     <style type="text/css">
         body {
             font-family: Verdana, Helvetica, Arial, sans-serif;
@@ -122,7 +123,7 @@
 <script type="text/javascript">
 //<[CDATA[ 
 
-    jQuery(document).ready(function() {
+    jQuery(document).ready(function() {        
         if (MASCP.IE) {
             MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
         } else {
@@ -213,9 +214,10 @@
             
             var agi = jQuery('#agi')[0].value;
             MASCP.renderer.reset();
-
-            MASCP.renderer.getHydropathyPlot(4);
-            jQuery('#hydropathy').show();                   
+            if (MASCP.renderer.createHydropathyLayer) {
+                MASCP.renderer.createHydropathyLayer(4);
+                jQuery('#hydropathy').show();
+            }
             
             if (MASCP.SubaReader.existing_map) {
                 log("Removing existing map");
@@ -279,7 +281,9 @@
                     return;
                 }
                 jQuery(MASCP.getGroup('atproteome')._layers).each(function() {
-                    MASCP.renderer.applyStyle(this.name,'cursor: pointer');                    
+                    if (MASCP.renderer.applyStyle) {
+                        MASCP.renderer.applyStyle(this.name,'cursor: pointer');
+                    }
                 });
                 jQuery('#atproteome').show();
             });
