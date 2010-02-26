@@ -96,7 +96,7 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     this.bind('resultReceived', function() {
         var spectra = this.result.getSpectraURLs();
         // var css_block = '.active { background: #ff9900; color: #ffffff;} :indeterminate { background: #ff0000; } .active a:hover { background: transparent !important; } .inactive { }';
-        var css_block = '.active { background: #ff9900; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
+        var css_block = '.active .overlay { background: #ff9900; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
     	jQuery(this.result.getPeptides()).each(function(i) {
             
         	MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'ProMex spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });

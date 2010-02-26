@@ -122,7 +122,8 @@
 <div id="atproteome_map"></div>
 <script type="text/javascript">
 //<[CDATA[ 
-
+    window.onload = null;
+    
     jQuery(document).ready(function() {        
         if (MASCP.IE) {
             MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
@@ -173,11 +174,22 @@
                     if (MASCP.renderer.trackOrder) {
                         MASCP.renderer.trackOrder = jQuery('#sequence_controllers').sortable('toArray');
                     }
+                    if (MASCP.renderer.setTrackOrder) {
+                        MASCP.renderer.setTrackOrder(jQuery('#sequence_controllers').sortable('toArray'));
+                    }
                 },
             }).sortable('toArray');
+
+            if (MASCP.renderer.setTrackOrder) {
+                MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
+            }
             
             if (layer.group && layer.group.name == 'atproteome') {
-                jQuery(layer).bind('mousedown',function(e,ev) {                
+                jQuery(layer).bind('mousedown',function(e,orig_event,source) {
+                    var ev = orig_event;
+                    if (! ev) {
+                        ev = e;
+                    }
                     jQuery('#atproteome_map')[0].style.position = 'fixed';
                     jQuery('#atproteome_map')[0].style.zIndex = 1;
                     jQuery('#atproteome_map')[0].style.height = 60+'px';
@@ -185,6 +197,10 @@
                     var offset = jQuery('#condensed_container').offset();
                     jQuery('#atproteome_map')[0].style.top = (offset.top + ev.pageY+10 - jQuery(document).scrollTop())+'px';
                     jQuery('#atproteome_map')[0].style.left = (offset.left + ev.pageX+10 - jQuery(document).scrollLeft())+'px';
+                    if (source == 'SequenceRenderer') {
+                        jQuery('#atproteome_map')[0].style.top = ev.pageY+'px';
+                        jQuery('#atproteome_map')[0].style.left = ev.pageX+'px';
+                    }
                     tissue_map.hideAllKeywords();
                     tissue_map.showKeyword('border');
                     tissue_map.showKeyword(layer.data['po']);

@@ -649,6 +649,9 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  */
 MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
+    if ( ! this._canvas ) {
+        return;
+    }
     var RS = this._RS;
     var track_heights = 0;
     if ( ! this._track_order ) {
@@ -698,28 +701,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
  */
 (function() {
 var accessors = { 
-    getTrackOrder: function() {
-        return this._track_order;
-    },
-
-    setTrackOrder: function(order) {
-        var track_order = [];
-        for (var i = 0; i < order.length; i++) {
-            if (MASCP.getLayer(order[i])) {
-                track_order.push(order[i]);
-            } else if (MASCP.getGroup(order[i])) {
-                var group_layers = MASCP.getGroup(order[i])._layers;
-                for (var j = 0; j < group_layers.length; j++ ) {
-                    track_order.push(group_layers[j].name);
-                }
-            }
-        }
-        this._track_order = track_order;
-        if (this._canvas) {
-            this.refresh();
-        }
-    },
-
     setZoom: function(zoomLevel) {
         if (zoomLevel < 0.5) {
             zoomLevel = 0.5;
@@ -772,20 +753,29 @@ if (MASCP.CondensedSequenceRenderer.prototype.__defineSetter__) {
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("zoom", accessors.getZoom);
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("defaultZoom", accessors.setDefaultZoom);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("defaultZoom", accessors.getDefaultZoom);
-    MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("trackOrder", accessors.setTrackOrder);
-    MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("trackOrder", accessors.getTrackOrder);
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("padding", accessors.setPadding);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("padding", accessors.getPadding);
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("trackGap", accessors.setTrackGap);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("trackGap", accessors.getTrackGap);
 }
-
-})();
-
-
-/* We can't use defineProperty in Internet Explorer since it doesn't support defineProperty on Objects
-Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"zoom",{
-    get : MASCP.CondensedSequenceRenderer.getZoom,
-    set : MASCP.CondensedSequenceRenderer.setZoom
-});
+/*
+if (Object.defineProperty) {
+    Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"zoom", {
+        get : accessors.getZoom,
+        set : accessors.setZoom
+    });
+    Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"defaultZoom", {
+        get : accessors.getDefaultZoom,
+        set : accessors.setDefaultZoom
+    });
+    Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"padding", {
+        get : accessors.getPadding,
+        set : accessors.setPadding
+    });
+    Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"trackGap", {
+        get : accessors.getTrackGap,
+        set : accessors.setTrackGap
+    });
+}
 */
+})();

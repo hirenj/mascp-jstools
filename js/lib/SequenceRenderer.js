@@ -226,6 +226,10 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 MASCP.SequenceRenderer.prototype = {
     sequence: null 
 };
+ 
+if ( MASCP.IE ) {
+    MASCP.SequenceRenderer.prototype.prototype = document.createElement('div');
+}
 
 /**
  * @class
@@ -784,7 +788,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
  */
 MASCP.SequenceRenderer.addElementToLayer = function(layerName)
 {
-    jQuery(this).addClass(layerName);
+    this.addBoxOverlay(layerName,1);
     return this;
 };
 
@@ -799,10 +803,13 @@ MASCP.SequenceRenderer.addElementToLayer = function(layerName)
 MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, width)
 {
     jQuery(this).addClass(layerName);
-    jQuery(this).append(jQuery('<a href="'+url+'" class="'+layerName+'_overlay" style="display: box; left: 0px; top: 0px; width: 100%; position: absolute; height: 100%;">&nbsp;</a>'));
+    var new_el = jQuery(this).append(jQuery('<a href="'+url+'" class="'+layerName+'_overlay" style="display: box; left: 0px; top: 0px; width: 100%; position: absolute; height: 100%;">&nbsp;</a>'))[0];
     while (width && width > 0) {
         this._renderer._sequence_els[this._index + width].addToLayerWithLink(layerName,url);
         width -= 1;
+    }
+    if (this._z_indexes && this._z_indexes[layerName]) {
+        new_el.style.zIndex = this._z_indexes[layerName];
     }
     return this;    
 };
@@ -817,11 +824,20 @@ MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, widt
 MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, width)
 {
     jQuery(this).addClass(layerName);
-    jQuery(this).append(jQuery('<div class="'+layerName+'_overlay" style="top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';"></div>'));
+    var new_el = jQuery(this).append(jQuery('<div class="'+layerName+'_overlay" style="top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';"></div>'))[0];
     while (width && width > 0) {
         this._renderer._sequence_els[this._index + width].addBoxOverlay(layerName,fraction);
         width -= 1;
     }
+    if (this._z_indexes && this._z_indexes[layerName]) {
+        new_el.style.zIndex = this._z_indexes[layerName];
+    }
+    var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
+    for (var i = 0 ; i < event_names.length; i++) {
+        jQuery(new_el).bind(event_names[i],function(e) {
+            jQuery(MASCP.getLayer(layerName)).trigger(e.type,[e,'SequenceRenderer']);
+        });
+    }    
     return this;
 };
 
@@ -841,6 +857,22 @@ MASCP.SequenceRenderer.prototype.reset = function()
     }
 };
 
+MASCP.SequenceRenderer.prototype.refresh = function()
+{
+    var z_index = -2;
+    if ( ! this._z_indexes) {
+        this._z_indexes = {};
+    }
+    for (var i = 0; i < this._track_order.length; i++ ) {
+        if (! this.isLayerActive(this._track_order[i])) {
+            continue;
+        }
+        jQuery('.'+this._track_order[i]+'_overlay').css('z-index',z_index);
+        this._z_indexes[this._track_order[i]] = z_index;
+        z_index -= 1;
+    }
+};
+
 /**
  * Bind a function to execute on a particular event for this object
  * @param {String} ev Event name
@@ -851,3 +883,56 @@ MASCP.SequenceRenderer.prototype.bind = function(ev,func)
 {
     jQuery(this).bind(ev,func);
 };
+
+/**
+ *  @lends MASCP.SequenceRenderer.prototype
+ *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
+ */
+(function() {
+var accessors = { 
+    getTrackOrder: function() {
+        return this._track_order;
+    },
+
+    setTrackOrder: function(order) {
+        var track_order = [];
+        for (var i = 0; i < order.length; i++) {
+            if (MASCP.getLayer(order[i])) {
+                track_order.push(order[i]);
+            } else if (MASCP.getGroup(order[i])) {
+                var group_layers = MASCP.getGroup(order[i])._layers;
+                for (var j = 0; j < group_layers.length; j++ ) {
+                    track_order.push(group_layers[j].name);
+                }
+            }
+        }
+        this._track_order = track_order;
+        if (this.refresh) {
+            this.refresh();
+        }
+    }
+};
+
+if (MASCP.SequenceRenderer.prototype.__defineSetter__) {    
+    MASCP.SequenceRenderer.prototype.__defineSetter__("trackOrder", accessors.setTrackOrder);
+    MASCP.SequenceRenderer.prototype.__defineGetter__("trackOrder", accessors.getTrackOrder);
+}
+
+if (MASCP.IE) {
+    MASCP.SequenceRenderer.prototype.setTrackOrder = accessors.setTrackOrder;
+}
+
+/*
+
+if (Object.defineProperty && MASCP.IE) {
+    log("Setting a property on some weird-arse prototype");
+    Object.defineProperty(MASCP.SequenceRenderer.prototype.prototype,"trackOrder", {
+        get : accessors.getTrackOrder,
+        set : accessors.setTrackOrder
+    });
+}
+
+*/
+
+})();
+
