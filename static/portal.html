@@ -104,7 +104,7 @@
     <li id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</li>
     <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>
     <li id="promex_experimental"><input type="checkbox"/> ProMeX</li>
-    <li id="atproteome"><input type="checkbox"/> ATProteome</li>
+    <li id="atproteome_controller"><input type="checkbox"/> ATProteome</li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
 </div>
@@ -167,18 +167,22 @@
 
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);      
             MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);      
-            MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome input')[0]);
+            MASCP.renderer.createLayerCheckbox('atproteome_controller',jQuery('#atproteome_controller input')[0]);
             MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0]);
-            MASCP.renderer.trackOrder = jQuery('#sequence_controllers').sortable({
+            var tweak_track_order = function(array) {
+                array.splice(array.indexOf('atproteome_controller')+1,0,'atproteome');
+                return array;
+            };
+            MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable({
                 update: function(event, ui) {
                     if (MASCP.renderer.trackOrder) {
-                        MASCP.renderer.trackOrder = jQuery('#sequence_controllers').sortable('toArray');
+                        MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable('toArray'));
                     }
                     if (MASCP.renderer.setTrackOrder) {
-                        MASCP.renderer.setTrackOrder(jQuery('#sequence_controllers').sortable('toArray'));
+                        MASCP.renderer.setTrackOrder(tweak_track_order(jQuery('#sequence_controllers').sortable('toArray')));
                     }
                 },
-            }).sortable('toArray');
+            }).sortable('toArray'));
 
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
@@ -301,9 +305,9 @@
                         MASCP.renderer.applyStyle(this.name,'cursor: pointer');
                     }
                 });
-                jQuery('#atproteome').show();
+                jQuery('#atproteome_controller').show();
             });
-            jQuery('#atproteome').hide();
+            jQuery('#atproteome_controller').hide();
             atproteome.retrieve();
         });
         

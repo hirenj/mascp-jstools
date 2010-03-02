@@ -442,7 +442,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
     var groupName = grp;
     var group;
     if (typeof grp != 'string') {
-        groupName = group.name;
+        groupName = grp.name;
         group = grp;
     } else {
         group = MASCP.groups[grp];
@@ -832,7 +832,7 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, wi
     if (this._z_indexes && this._z_indexes[layerName]) {
         new_el.style.zIndex = this._z_indexes[layerName];
     }
-    var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
+    var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','mouseup','mouseenter','mouseleave'];
     for (var i = 0 ; i < event_names.length; i++) {
         jQuery(new_el).bind(event_names[i],function(e) {
             jQuery(MASCP.getLayer(layerName)).trigger(e.type,[e,'SequenceRenderer']);
@@ -857,6 +857,21 @@ MASCP.SequenceRenderer.prototype.reset = function()
     }
 };
 
+/**
+ * Execute the given block of code (in the renderer context) moving the refresh method away so that it is not called
+ * @param {Function} func Function that contains operations to run without refreshing the renderer
+ */
+MASCP.SequenceRenderer.prototype.withoutRefresh = function(func)
+{
+    var curr_refresh = this.refresh;
+    this.refresh = function() {};
+    func.apply(this);
+    this.refresh = curr_refresh;
+}
+
+/**
+ * Refresh the display for this sequence renderer
+ */
 MASCP.SequenceRenderer.prototype.refresh = function()
 {
     var z_index = -2;

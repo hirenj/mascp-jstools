@@ -109,7 +109,60 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
     canvas.set = function() {
         var an_array = new Array();
-        an_array.attr = function(hash) {
+        an_array.attr = function(hsh,animated) {
+            var hash = jQuery.extend({},hsh);
+            if (animated && typeof hash['y'] != 'undefined') {
+                var counter = 0;
+                var curr_y = an_array[0] ? parseInt(an_array[0].getAttribute('y')) : 0;
+                var curr_disp = an_array[0].getAttribute('display') || 'none';
+                var target_y = parseInt(hash['y']);
+                var target_disp = hash['display'];
+                if (curr_disp == target_disp && target_disp == 'none') {
+                    an_array.attr(hsh);
+                    return;
+                }
+
+                delete hash['y'];                
+
+                if (curr_disp == target_disp && target_disp == 'block' ) {
+                    delete hash['display'];
+                    target_disp = null;                    
+                    an_array.attr({'display' : 'block'});
+                }
+
+                if (hash['display'] == 'none') {
+                    delete hash['display'];
+                    hash['opacity'] = 0.9;
+                }
+
+                if (hash['display'] == 'block') {
+                    hash['opacity'] = 0;
+                }
+
+                an_array.attr(hash);                
+                if (target_y != curr_y) {
+                    var diff = (target_y - curr_y) / 10;
+                    hash['y'] = curr_y || 0;
+                    var orig_func = arguments.callee;
+                    window.setTimeout(function() {
+                        orig_func.apply(an_array,[hash]);
+                        counter += 1;
+                        if (target_disp == 'none') {
+                            hash['opacity'] -= 0.1;
+                        }
+                        if (target_disp == 'block') {
+                            hash['opacity'] += 0.1;
+                        }
+                        if (counter <= 10) {
+                            hash['y'] += diff;
+                            window.setTimeout(arguments.callee,10);
+                        } else if (target_disp) {
+                            an_array.attr({'display' : target_disp});
+                        }
+                    },10);
+                }
+                return;
+            }
             for (var key in hash) {
                 for (var i = 0; i < an_array.length; i++) {
                     var value = hash[key];
@@ -149,7 +202,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             if (new_el._has_proxy) {
                 return;
             }
-            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
+            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','mouseup','mouseenter','mouseleave'];
             for (var i = 0 ; i < event_names.length; i++) {
                 jQuery(new_el).bind(event_names[i], event_func);
             }
@@ -205,7 +258,6 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
            amino_acids.attr({'display':'none'});           
        }
        renderer.refresh();
-       renderer._resizeContainer();
    });
 };
 
@@ -557,6 +609,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
  * @param   {Object}    e
  */
 
+ /**
+  * Double click event for a layer
+  * @name    MASCP.Layer#dblclick
+  * @event
+  * @param   {Object}    e
+  */
+
+
 /**
  * Add a layer to this renderer.
  * @param {Object} layer    Layer object to add. The layer data is used to create a track that can be independently shown/hidden.
@@ -586,17 +646,12 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
                 return;
             }
             
-            if (visibility) {
-                containers[layer.name].attr({'display' : 'block'});
-            } else {
-                containers[layer.name].attr({'display' : 'none'});
+            if (! visibility) {
                 if (containers[layer.name].tracers) {
                     containers[layer.name].tracers.hide();
                 }
             }
-            
             renderer.refresh();
-            renderer._resizeContainer();
         });
         var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
@@ -606,7 +661,6 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         }
     }
     this.refresh();
-    this._resizeContainer();
 };
 
 MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
@@ -646,9 +700,42 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 };
 
 /**
- * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
+ * Create a layer based controller for a group. Clicking on the nominated layer will animate out the expansion of the
+ * group.
+ * @param {Object} lay Layer to turn into a group controller
+ * @param {Object} grp Group to be controlled by this layer.
  */
-MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
+
+MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,grp) {
+    var layer = MASCP.getLayer(lay);
+    var group = MASCP.getGroup(grp);
+
+    var expanded = false;
+    var sticky = false;
+    
+    var self = this;
+    
+    jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+        if (rend == self) {
+            self.setGroupVisibility(group, expanded && visible);
+            self.refresh();
+        }
+    });
+    jQuery(layer).bind('mousedown',function(ev) {
+        expanded = ! expanded;
+        self.withoutRefresh(function() {
+            self.setGroupVisibility(group,expanded);            
+        });
+        self.refresh(true);
+    });
+
+};
+
+/**
+ * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
+ * @param {Boolean} animateds Cause this refresh to be an animated refresh
+ */
+MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
     }
@@ -659,20 +746,23 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
     }
     for (var i = 0; i < this._track_order.length; i++ ) {
         if (! this.isLayerActive(this._track_order[i])) {
+            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height  + (track_heights - this._layer_containers[this._track_order[i]].track_height )/ this.zoom)*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom ,'display' : 'none' },animated);
             continue;
+        } else {
+            this._layer_containers[this._track_order[i]].attr({ 'opacity' : '1' });            
         }
         
         if (this._layer_containers[this._track_order[i]].tracers) {
             var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
-            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style , 'y' : 10*RS,'height' : (-10 + this._axis_height + track_heights / this.zoom )*RS });
+            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style , 'y' : 10*RS,'height' : (-10 + this._axis_height + track_heights / this.zoom )*RS },animated);
         }
 
         if (this._layer_containers[this._track_order[i]].fixed_track_height) {
             var track_height = this._layer_containers[this._track_order[i]].fixed_track_height;
-            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights / this.zoom)*RS });
+            this._layer_containers[this._track_order[i]].attr({ 'display' : 'block','y' : (this._axis_height + track_heights / this.zoom)*RS },animated);
             track_heights += this.zoom * (track_height) + this.trackGap;
         } else {
-            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom });
+            this._layer_containers[this._track_order[i]].attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom },animated);
             track_heights += this._layer_containers[this._track_order[i]].track_height + this.trackGap;
         }
 
@@ -682,6 +772,9 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function() {
     viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];
+
+    this._resizeContainer();
+    
 };
 
 /**

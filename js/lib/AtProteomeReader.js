@@ -120,12 +120,14 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
 
 MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
     var tissues = this.result? this.result.tissues() : [];
+        
     for (var tiss in tissues) {
         var tissue = tissues[tiss];
         if (this.result.spectra[tissue] < 1) {
             continue;
         }
         var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
+
         var overlay_name = 'atproteome_by_tissue_'+tissue;
         
         // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
@@ -150,6 +152,69 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
     }
 };
 
+MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
+{
+    var tissues = this.result? this.result.tissues() : [];
+    var positions = [];
+    
+    var tissue_func = function() {
+        var tissues = [];
+        for (var tiss in this) {
+            tissues.push(tiss);
+        }
+        return tissues.sort().join(',');
+    }
+    
+    for (var tiss in tissues) {
+        var tissue = tissues[tiss];
+        if (this.result.spectra[tissue] < 1) {
+            continue;
+        }
+
+        var peptide_counts = this._mergeCounts(this.result.peptide_counts_by_tissue[tissue]);
+
+        for (var i = 0; i < peptide_counts.length; i++ ) {
+            if ( peptide_counts[i] > 0 ) {
+                if (! positions[i]) {
+                    positions[i] = {};
+                    positions[i].tissue = tissue_func;
+                }
+                positions[i][tissue] = true;              
+            }
+        }
+    }    
+
+    var index = 0;
+    var last_start = null;
+    var last_tissue = null;
+    
+    var overlay_name = 'atproteome_controller';
+
+    var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+    
+    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtProteome results', 'color' : '#000099', 'css' : css_block });
+
+    while (index <= positions.length) {
+        if ((! positions[index] || positions[index].tissue() != last_tissue || (index == positions.length) ) && last_start != null) {
+            var endpoint = index - last_start;
+            if ( ! positions[index] ) {
+                endpoint -= 1;
+            }
+            sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,endpoint);
+            last_start = null;
+        }
+        if (positions[index] && last_start == null) {
+            last_tissue = positions[index].tissue();
+            last_start = index;
+        }
+        index += 1;
+    }
+    
+    if (sequenceRenderer.createGroupController) {
+        sequenceRenderer.createGroupController('atproteome_controller','atproteome');
+    }
+};
+
 MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
@@ -161,11 +226,13 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
             jQuery(sequenceRenderer).bind('sequenceChange',function() {
                 jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
                 reader._rendererRunner(sequenceRenderer);
+                reader._groupSummary(sequenceRenderer);
                 jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
             });
             sequenceRenderer.setSequence(this.result.sequence);
         } else {
             reader._rendererRunner(sequenceRenderer);
+            reader._groupSummary(sequenceRenderer);
             jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);            
         }
     });
@@ -207,4 +274,3 @@ MASCP.AtProteomeReader.prototype._mergeCounts = function(hash)
     }
     return counts;
 };
-
