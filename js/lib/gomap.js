@@ -236,6 +236,73 @@ GOMap.Diagram.prototype.toggleKeyword = function(keyword,color) {
     }
 };
 
+GOMap.Diagram.prototype.clearMarkers = function(keyword) {
+    if ( ! this.markers ) {
+        return;
+    }
+    if (keyword) {
+        this._clearMarkers(this.markers[keyword]);
+        return;
+    }
+    for (var key in this.markers) {
+        this._clearMarkers(this.markers[key]);
+    }
+    this.markers = {};
+};
+
+GOMap.Diagram.prototype._clearMarkers = function(elements) {
+    if ( ! elements ) {
+        return;
+    }
+    for (var i = 0 ; i < elements.length ; i++ ) {
+        elements[i].parentNode.removeChild(elements[i]);
+    }
+}
+
+GOMap.Diagram.prototype.addMarker = function(keyword,value) {
+    if ( ! this.markers ) {
+        this.markers = {};
+    }
+    
+    if ( ! value ) {
+        value = 1;
+    }
+    
+    var root_svg = this.element;
+    
+    if ( this.markers[keyword]) {
+        this.markers[keyword].current_radius += value;
+        for (var i = 0; i < this.markers[keyword].length ; i++ ) {
+            this.markers[keyword][i].setAttribute('r',this.markers[keyword].current_radius);
+        }
+        return;
+    }
+
+    var els = this._elementsForKeyword(keyword);
+
+    this.markers[keyword] = [];
+    
+    this.markers[keyword].current_radius = value;
+    
+    for ( var i = 0 ; i < els.length; i++ ) {
+        var node = els[i];
+        if ( node.nodeName != 'g' ) {
+            continue;
+        }
+        var bbox = node.getBBox();
+        var mid_x = bbox.x + (bbox.width / 2);
+        var mid_y = bbox.y + (bbox.height / 2);
+        circle = document.createElementNS(svgns,'circle');
+        circle.setAttribute('cx',mid_x);
+        circle.setAttribute('cy',mid_y);
+        circle.setAttribute('r',this.markers[keyword].current_radius);
+        circle.setAttribute('fill','#ff0000');
+        this.markers[keyword].push(circle);
+        root_svg.appendChild(circle);
+    }
+};
+
+
 /**
  *  Register a function callback for an event with this object. Actually binds the event to the container
  *  element associated with this Diagram using addEventListener

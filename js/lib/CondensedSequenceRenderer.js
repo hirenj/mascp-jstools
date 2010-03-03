@@ -524,6 +524,7 @@ var addElementToLayer = function(layerName) {
     
     this._renderer._layer_containers[layerName].tracers.push(tracer);
     canvas.tracers.push(tracer);
+    return rect;
 };
 
 var addBoxOverlayToElement = function(layerName,fraction,width) {
@@ -540,7 +541,7 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     shine.style.strokeWidth = '0px';
     shine.style.fill = 'url(#track_shine)';
     shine.setAttribute('display','none');
-
+    return rect;
 };
 
 var addElementToLayerWithLink = function(layerName,url,width) {
@@ -557,7 +558,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     shine.style.strokeWidth = '0px';
     shine.style.fill = 'url(#track_shine)';
     shine.setAttribute('display','none');
-
+    return rect;
 };
 
 MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {

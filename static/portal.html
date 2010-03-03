@@ -189,7 +189,7 @@
             }
             
             if (layer.group && layer.group.name == 'atproteome') {
-                jQuery(layer).bind('mousedown',function(e,orig_event,source) {
+                jQuery(layer).bind('mousemove',function(e,orig_event,source) {
                     var ev = orig_event;
                     if (! ev) {
                         ev = e;
@@ -208,7 +208,8 @@
                     tissue_map.hideAllKeywords();
                     tissue_map.showKeyword('border');
                     tissue_map.showKeyword(layer.data['po']);
-                
+                    tissue_map.clearMarkers();
+                    tissue_map.addMarker(layer.data['po'],50);
                 
                 });
                 var mouse_out_func = function(e,ev) {
@@ -300,7 +301,7 @@
                 if (this.result == null) {
                     return;
                 }
-                jQuery(MASCP.getGroup('atproteome')._layers).each(function() {
+                jQuery(MASCP.getLayer('atproteome_controller')).each(function() {
                     if (MASCP.renderer.applyStyle) {
                         MASCP.renderer.applyStyle(this.name,'cursor: pointer');
                     }
