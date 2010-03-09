@@ -113,6 +113,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             var hash = jQuery.extend({},hsh);
             if (animated && typeof hash['y'] != 'undefined') {
                 var counter = 0;
+                if (an_array.length == 0) {
+                    return;
+                }
                 var curr_y = an_array[0] ? parseInt(an_array[0].getAttribute('y')) : 0;
                 var curr_disp = an_array[0].getAttribute('display') || 'none';
                 var target_y = parseInt(hash['y']);

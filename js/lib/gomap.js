@@ -184,6 +184,42 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
 };
 
 /**
+ * Set the viewport for the image to be centered around a single keyword. This method picks the first
+ * group element matching the keyword, and modifies the viewBox attribute to center around that group
+ * only. Using currentTranslate/currentScale yields unpredictable results, so viewBox manipulation has
+ * to be performed.
+ * @param {String} keyword Keyword to zoom in to
+ */
+GOMap.Diagram.prototype.zoomToKeyword = function(keyword) {
+    var self = this;
+    var root = this.element;
+    
+    var els = this._elementsForKeyword(keyword);
+    var targetEl = null;
+    for (var i = 0; i < els.length; i++ ) {
+        if (els[i].nodeName == 'g') {
+            targetEl = els[i];
+            break;
+        }
+    }
+    if ( ! targetEl ) {
+        if (root._baseViewBox) {
+            root.setAttribute('viewBox',root._baseViewBox);
+        }
+        return;
+    }
+    
+    var bbox = targetEl.getBBox();    
+    var root_bbox = root.getBBox();
+    
+    if ( ! root._baseViewBox) {
+        root._baseViewBox = root.getAttribute('viewBox');
+    }
+    var location = [bbox.x-10,bbox.y-10,bbox.width+20,bbox.height+20];
+    root.setAttribute('viewBox',location.join(' '));
+};
+
+/**
  * Hide all the keywords currently being highlighted on this diagram
  */
 GOMap.Diagram.prototype.hideAllKeywords = function() {    
@@ -350,9 +386,9 @@ var accessors = {
         if (zoomLevel < 0) {
             zoomLevel = 0;
         }
-        if (zoomLevel > 2) {
-            zoomLevel = 2;
-        }
+        // if (zoomLevel > 2) {
+        //     zoomLevel = 2;
+        // }
         
         if (this.element) {
             this.element.currentScale = zoomLevel;
