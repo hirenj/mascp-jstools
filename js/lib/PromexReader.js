@@ -50,6 +50,9 @@ MASCP.PromexReader.Result.prototype.getSpectraURLs = function()
     } else {
         content = this._raw_data.selectSingleNode("//*[@id = 'contentArea']");
     }
+    if ( ! content ) {
+        return [];
+    }
     var imgs = content.getElementsByTagName('img');
     var urls  = [];
     for (var i = 0; i < imgs.length; i++) {
@@ -72,6 +75,11 @@ MASCP.PromexReader.Result.prototype.getPeptides = function()
     } else {
         content = this._raw_data.selectSingleNode("//*[@id = 'contentArea']");
     }
+    
+    if (! content ) {
+        return [];
+    }
+    
     var tds = jQuery(content.getElementsByTagName('td'));
     var peptides = [];
     var result = this;

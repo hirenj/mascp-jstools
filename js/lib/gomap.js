@@ -209,6 +209,10 @@ GOMap.Diagram.prototype.zoomToKeyword = function(keyword) {
         return;
     }
     
+    if (! targetEl.getBBox) {
+        return;
+    }
+    
     var bbox = targetEl.getBBox();    
     var root_bbox = root.getBBox();
     

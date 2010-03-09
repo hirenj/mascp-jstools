@@ -171,7 +171,9 @@
             MASCP.renderer.createLayerCheckbox('atproteome_controller',jQuery('#atproteome_controller input')[0]);
             MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0]);
             var tweak_track_order = function(array) {
-                array.splice(array.indexOf('atproteome_controller')+1,0,'atproteome');
+                if (array.splice && array.indexOf) {
+                    array.splice(array.indexOf('atproteome_controller')+1,0,'atproteome');
+                }
                 return array;
             };
             MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable({

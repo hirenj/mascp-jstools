@@ -780,6 +780,26 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
 };
 
 /**
+ * Create a layer based controller for a group. This layer can act as a proxy for the other layers
+ * @param {Object} lay Layer to turn into a group controller
+ * @param {Object} grp Group to be controlled by this layer.
+ */
+
+MASCP.SequenceRenderer.prototype.createGroupController = function(lay,grp) {
+    var layer = MASCP.getLayer(lay);
+    var group = MASCP.getGroup(grp);
+
+    var self = this;
+    
+    jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+        if (rend == self) {
+            self.setGroupVisibility(group, visible);
+            self.refresh();
+        }
+    });
+};
+
+/**
  * Function to be added to Amino acid elements to facilitate adding elements to layers
  * @private
  * @param {String} layerName The layer that this amino acid should be added to
