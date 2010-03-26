@@ -439,7 +439,6 @@ GOMap.Diagram.prototype.makeInteractive = function() {
         log("Browser does not support addEventListener");
         return;
     }
-    
     new GOMap.Diagram.Dragger().applyToElement(root);
     var controls = GOMap.Diagram.addZoomControls(this,0.1,2,0.1,1);
     container.appendChild(controls);
@@ -897,10 +896,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (self.targetElement) {
             self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
             self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);
-            evt.preventDefault(true);
+//            evt.preventDefault(true);
           return;
         }
-        evt.preventDefault(true);
+//        evt.preventDefault(true);
 
 
         var p = targetElement.createSVGPoint();
@@ -919,7 +918,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         self.dY = p.y;
 
         if (p.x > 0 || p.y > 0) {
-            return;
+//            return;
         }
 
         if (targetElement.currentTranslate.setXY) {
@@ -930,19 +929,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         }
     };
 
-    var mouseOut = function(e) {
-        var toTarget = e.relatedTarget || e.toElement;
-        e.preventDefault(true);
-
-        while (toTarget != null) {
-            if (toTarget == this) {
-                return;
-            }
-            toTarget = toTarget.parentNode;
-        }
-        self.dragging = false;
-    };
-    
     var mouseUp = function(evt) { 
       self.oX = 0;
       self.oY = 0;
@@ -951,6 +937,25 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       self.dragging = false;
       evt.preventDefault(true);
     };
+
+    var mouseOut = function(e) {
+
+        if (this == e.relatedTarget) {
+            mouseUp(e);
+            return;
+        }
+
+        var toTarget = e.relatedTarget || e.toElement;
+        
+        while (toTarget != null) {
+            if (toTarget == this) {
+                return;
+            }
+            toTarget = toTarget.parentNode;
+        }
+        mouseUp(e);
+    };
+    
     
     targetElement.setAttribute('cursor','pointer');    
     
@@ -964,6 +969,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
         targetElement.addEventListener('mouseup', mouseUp, false);
+        targetElement.addEventListener('mouseout',mouseOut, false);
     } else {
         targetElement.addEventListener('mousedown', mouseDown, false);
         targetElement.addEventListener('mousemove', mouseMove, false);        
