@@ -156,12 +156,18 @@ GOMap.Diagram.prototype.appendTo = function(parent) {
  * Highlight a given keyword on the diagram
  * @param {String} keyword  GO keyword to highlight
  * @param {String} color    CSS color string to use as the highlighting colour. Defaults to #ff0000.
+ * @returns True if keyword is found, False if keyword is not in map
+ * @type Boolean
  */
 GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
     var els = this._elementsForKeyword(keyword);
     
+    if (els.length == 0) {
+        return false;
+    }
+    
     if (this._highlighted[keyword] && ! color) {
-        return;
+        return true;
     }
     
     color = color || '#ff0000';
@@ -180,7 +186,8 @@ GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
         self._highlightElement(el);
         return true;
     });
-        
+    
+    return true;
 };
 
 /**

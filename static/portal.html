@@ -190,6 +190,12 @@
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
             }
+
+            var mouse_out_func = function(e,ev) {
+                jQuery('#atproteome_map')[0].style.position = 'fixed';                
+                jQuery('#atproteome_map')[0].style.top = '-10000px';                
+                jQuery('#atproteome_map')[0].style.left = '-10000px';                                
+            };
             
             if (layer.group && layer.group.name == 'atproteome') {
                 jQuery(layer).bind('mousemove',function(e,orig_event,source) {
@@ -199,8 +205,8 @@
                     }
                     jQuery('#atproteome_map')[0].style.position = 'fixed';
                     jQuery('#atproteome_map')[0].style.zIndex = 1;
-                    jQuery('#atproteome_map')[0].style.height = 210+'px';
-                    jQuery('#atproteome_map')[0].style.width = 300+'px';
+                    jQuery('#atproteome_map')[0].style.height = 100+'px';
+                    jQuery('#atproteome_map')[0].style.width = 150+'px';
                     var offset = jQuery('#condensed_container').offset();
                     jQuery('#atproteome_map')[0].style.top = (offset.top + ev.pageY+10 - jQuery(document).scrollTop())+'px';
                     jQuery('#atproteome_map')[0].style.left = (offset.left + ev.pageX+10 - jQuery(document).scrollLeft())+'px';
@@ -210,17 +216,15 @@
                     }
                     tissue_map.hideAllKeywords();
                     tissue_map.showKeyword('border');
-                    tissue_map.showKeyword(layer.data['po']);
-                    tissue_map.zoomToKeyword(layer.data['po']);
+                    if ( tissue_map.showKeyword(layer.data['po']) ) {
+                        tissue_map.zoomToKeyword(layer.data['po']);
+                    } else {
+                        mouse_out_func();
+                    }
 //                    tissue_map.clearMarkers();
 //                    tissue_map.showKeyword(layer.data['po'],50);
                 
                 });
-                var mouse_out_func = function(e,ev) {
-                    jQuery('#atproteome_map')[0].style.position = 'fixed';                
-                    jQuery('#atproteome_map')[0].style.top = '-10000px';                
-                    jQuery('#atproteome_map')[0].style.left = '-10000px';                                
-                };
             
                 jQuery(layer).bind('mouseup',mouse_out_func);
                 jQuery(layer).bind('mouseleave',mouse_out_func);                                
