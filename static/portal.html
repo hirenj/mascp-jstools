@@ -103,7 +103,7 @@
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
     <li id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</li>
     <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>
-    <li id="promex_experimental"><input type="checkbox"/> ProMeX</li>
+    <li id="promex_controller"><input type="checkbox"/> ProMeX</li>
     <li id="atproteome_controller"><input type="checkbox"/> ATProteome</li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
@@ -167,12 +167,13 @@
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0]);
 
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0]);      
-            MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_experimental input')[0]);      
+            MASCP.renderer.createLayerCheckbox('promex_controller',jQuery('#promex_controller input')[0]);      
             MASCP.renderer.createLayerCheckbox('atproteome_controller',jQuery('#atproteome_controller input')[0]);
             MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0]);
             var tweak_track_order = function(array) {
                 if (array.splice && array.indexOf) {
                     array.splice(array.indexOf('atproteome_controller')+1,0,'atproteome');
+                    array.splice(array.indexOf('promex_controller')+1,0,'promex_experimental');
                 }
                 return array;
             };
@@ -261,9 +262,7 @@
                 MASCP.AtProteomeReader.existing_map.destroy();      
                 MASCP.AtProteomeReader.existing_map = null;
             }
-    
-    
-            
+
             var suba = new MASCP.SubaReader(agi);
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
@@ -276,6 +275,7 @@
                     jQuery('#suba_results').append(controller);
                 }
             });
+
             var phosphat = new MASCP.PhosphatReader(agi,'../proxy.pl');
             phosphat.registerSequenceRenderer(MASCP.renderer);
             phosphat.bind('resultReceived',function() {
@@ -293,15 +293,15 @@
             jQuery('#phosphat_theoretical').hide();
             phosphat.retrieve();
             
-            var promex = new MASCP.PromexReader(agi,'../proxy.pl');
+            var promex = new MASCP.PromexReader(agi);
             promex.registerSequenceRenderer(MASCP.renderer);
             promex.bind('resultReceived',function() {
                 MASCP.renderer.hideGroup('promex_experimental');
-                if (this.result.getSpectraURLs().length > 0) {
-                    jQuery('#promex_experimental').show();
-                }           
+                if (this.result.getPeptides().length > 0) {
+                    jQuery('#promex_controller').show();
+                }
             });
-            jQuery('#promex_experimental').hide();
+            jQuery('#promex_controller').hide();
             promex.retrieve();
 
             var atproteome = new MASCP.AtProteomeReader(agi);
@@ -330,6 +330,11 @@
         if (agi.length < 1) {
             return;
         }
+        
+        for (var layername in MASCP.layers) {
+            MASCP.renderer.hideLayer(layername);
+        }
+        
         jQuery('#selected_agi').text("Data for "+agi);
         var reader = new MASCP.TairReader(agi,'../proxy.pl');
         jQuery(reader).bind('resultReceived',function() {
