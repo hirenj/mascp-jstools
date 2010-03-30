@@ -271,7 +271,6 @@ MASCP.Service.prototype.unbind = function(type,func)
  * @param   {Object}    e
  */
 
-
 /**
  *  Asynchronously retrieves data from the remote source. When data is received, a 
  *  resultReceived.mascp event is triggered upon this service, while an error.mascp
@@ -286,6 +285,7 @@ MASCP.Service.prototype.retrieve = function()
     if (! request_data ) {
         return this;
     }
+        
     request_data = jQuery.extend({
     async:      this.async,
     url:        this._endpointURL,
@@ -297,7 +297,23 @@ MASCP.Service.prototype.retrieve = function()
                     self._dataReceived(data,status);
                     jQuery(self).trigger("resultReceived");
                     jQuery(MASCP.Service).trigger("resultReceived");
-                }
+                },
+    /*  There is a really strange WebKit bug, where when you make a XDR request
+        with the X-Requested-With header set, it caused the body to be returned
+        to be duplicated. We're going to disable the preflighting on these requests
+        for now.
+        Submitted a bug to the webkit people https://bugs.webkit.org/show_bug.cgi?id=36854
+    */
+    xhr:        function() {
+                    var xhr = jQuery.ajaxSettings.xhr();
+                    var oldSetRequestHeader = xhr.setRequestHeader;
+                    xhr.setRequestHeader = function(key,val) {
+                        if (key != 'X-Requested-With') {
+                            oldSetRequestHeader.apply(xhr,[key,val]);
+                        }
+                    };
+                    return xhr;
+                }, 
     },request_data);
     
     if (jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
