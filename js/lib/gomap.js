@@ -10,7 +10,7 @@ if (document.write && (typeof svgweb == 'undefined')) {
     if (typeof SVGWEB_PATH != 'undefined') {
         document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
-        document.write('<script src="svgweb/src/svg.js" data-path="svgweb/src/"></script>');
+        document.write('<script src="svgweb/svg.js" data-path="svgweb/"></script>');
     }
 }
 
@@ -101,6 +101,12 @@ GOMap.Diagram = function(image,params) {
     this.element.setAttribute('style','background: transparent;');
     
     var self = this;
+
+    if ( ! this.element.addEventListener ) {
+        this.element.addEventListener = function(ev,func) {
+            this.attachEvent(ev,func);
+        };
+    }
 
     this.element.addEventListener('load',function() {
         var object_el = this;

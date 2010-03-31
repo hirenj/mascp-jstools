@@ -8,7 +8,9 @@
  *  @param  {Object}    message Message to log
  */
 
-jQuery.noConflict();
+if (typeof jQuery != 'undefined') {
+    jQuery.noConflict();
+}
 
 log = (typeof log == 'undefined') ? function(msg) {
     if (typeof msg == 'String') {
@@ -56,18 +58,26 @@ MASCP.buildService = function(dataExtractor)
         jQuery.extend(this,dataExtractor.apply(this,[data]));
     };
     
-    clazz.prototype = jQuery.extend(new MASCP.Service(),{
+    
+    clazz.prototype = MASCP.extend(new MASCP.Service(),{
         '__class__'       :       clazz,
         '__result_class'  :       clazz.Result,
         '_endpointURL'    :       null
     });
     
-    clazz.Result.prototype = jQuery.extend(new MASCP.Service.Result(),{
+    clazz.Result.prototype = MASCP.extend(new MASCP.Service.Result(),{
        '__class__'        :       clazz.Result
     });
 
-    clazz.Result.prototype = jQuery.extend(clazz.Result.prototype,dataExtractor.apply({},[]));
+    clazz.Result.prototype = MASCP.extend(clazz.Result.prototype,dataExtractor.apply({},[]));
     return clazz;
+};
+
+MASCP.extend = function(in_hsh,hsh) {
+    for (var i in hsh) {
+        in_hsh[i] = hsh[i];
+    }
+    return in_hsh;        
 };
 
 /**
@@ -193,21 +203,18 @@ MASCP.Service = function(agi,endpointURL)
 {
 };
 
-
-MASCP.Service.prototype = {};
-
 /**
  *  @lends MASCP.Service.prototype
  *  @property   {String}  agi               AGI to retrieve data for
  *  @property   {MASCP.Service.Result}  result  Result from the query
  *  @property   {Boolean} async             Flag for using asynchronous requests - defaults to true
  */
-jQuery.extend(MASCP.Service.prototype,{
+MASCP.Service.prototype = {
   'agi'     : null,
   'result'  : null, 
   '__result_class' : null,
   'async'   : true,
-});
+};
 
 
 /*
@@ -306,12 +313,14 @@ MASCP.Service.prototype.retrieve = function()
     */
     xhr:        function() {
                     var xhr = jQuery.ajaxSettings.xhr();
-                    var oldSetRequestHeader = xhr.setRequestHeader;
-                    xhr.setRequestHeader = function(key,val) {
-                        if (key != 'X-Requested-With') {
-                            oldSetRequestHeader.apply(xhr,[key,val]);
-                        }
-                    };
+                    if ( ! MASCP.IE ) {
+                        var oldSetRequestHeader = xhr.setRequestHeader;
+                        xhr.setRequestHeader = function(key,val) {
+                            if (key != 'X-Requested-With') {
+                                oldSetRequestHeader.apply(xhr,[key,val]);
+                            }
+                        };
+                    }
                     return xhr;
                 }, 
     },request_data);
@@ -443,11 +452,10 @@ MASCP.Service.Result = function()
 {  
 };
 
-MASCP.Service.Result.prototype = {};
-jQuery.extend(MASCP.Service.Result.prototype, { 
+MASCP.Service.Result.prototype = {
     agi     :   null,
     reader  :   null
-});
+};
 
 
 MASCP.Service.Result.prototype.render = function() {

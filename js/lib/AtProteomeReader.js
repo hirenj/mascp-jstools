@@ -55,7 +55,7 @@ MASCP.AtProteomeReader.Result.prototype.tissues = function()
     return this._tissues;
 };
 
-MASCP.AtProteomeReader.Result.prototype = jQuery.extend(MASCP.AtProteomeReader.Result.prototype,
+MASCP.AtProteomeReader.Result.prototype = MASCP.extend(MASCP.AtProteomeReader.Result.prototype,
 /** @lends MASCP.AtProteomeReader.Result.prototype */
 {
     /** @field 

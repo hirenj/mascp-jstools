@@ -655,7 +655,6 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
         this._removeOtherBindings(layerObj,the_input);
     }
     
-    
     for (var i = 0; i < the_input._current_bindings.length; i++) {
         if (    the_input._current_bindings[i].layer == layer && 
                 the_input._current_bindings[i].renderer == renderer ) {
@@ -698,7 +697,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
         }
     };
 
-    jQuery(the_input).bind('change',input_func);
+    jQuery(the_input).bind( (MASCP.IE ? 'click' : 'change'),input_func);
     
     the_input._current_bindings.push({ 'layer' : layer , 'renderer' : renderer, 'input_function' : input_func, 'object_function' : layer_func });    
     
@@ -802,7 +801,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
         }
     };
     
-    the_input.bind('change',input_func);
+    the_input.bind((MASCP.IE ? 'click' : 'change'),input_func);
 
     var group_func = null;
 
