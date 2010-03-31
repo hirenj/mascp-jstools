@@ -70,7 +70,7 @@ MASCP.PromexReader.Result.prototype.getPeptides = function()
 {
     var content = null;
     
-    if (! this._raw_data ) {
+    if (! this._raw_data || ! this._raw_data.peptides ) {
         return [];
     }    
     var peptides = [];

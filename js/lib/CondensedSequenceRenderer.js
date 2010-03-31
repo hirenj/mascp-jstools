@@ -713,7 +713,12 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,grp) {
     var layer = MASCP.getLayer(lay);
     var group = MASCP.getGroup(grp);
-
+    if (layer._group_controller) {
+        return;
+    }
+    
+    layer._group_controller = true;
+    
     var expanded = false;
     var sticky = false;
     

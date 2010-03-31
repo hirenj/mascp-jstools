@@ -239,6 +239,17 @@ MASCP.Group = function() {
     return;
 };
 
+
+MASCP.Group.prototype.size = function() {
+    var counter = 0;
+    for (var i = 0 ; i < this._layers.length; i++ ) {
+        if (! this._layers[i].disabled) {
+            counter += 1;
+        }
+    }
+    return counter;
+};
+
 /**
  * @class
  * Metadata for a single layer to be rendered
@@ -617,7 +628,7 @@ MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
  * @returns Checkbox element that when checked will toggle on the layer, and toggle it off when unchecked
  * @type Object
  */
-MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement) {
+MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement,exclusive) {
     var renderer = this;
     if (! MASCP.layers[layer]) {
         return;
@@ -640,6 +651,11 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     
     the_input._current_bindings = the_input._current_bindings || [];
     
+    if (exclusive) {
+        this._removeOtherBindings(layerObj,the_input);
+    }
+    
+    
     for (var i = 0; i < the_input._current_bindings.length; i++) {
         if (    the_input._current_bindings[i].layer == layer && 
                 the_input._current_bindings[i].renderer == renderer ) {
@@ -650,8 +666,10 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     the_input.removeAttribute('checked');
     the_input.checked = this.isLayerActive(layer);
 
+    var layer_func = null;
+
     if (layerObj && the_input._current_bindings.length == 0) {
-        jQuery(layerObj).bind("visibilityChange",function(e,rend,visibility) {
+        layer_func = function(e,rend,visibility) {
             if (rend != renderer) {
                 return;
             }
@@ -661,16 +679,15 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
                 the_input.checked = false;
                 the_input.removeAttribute('checked');
             }
-        });
+        };
+        jQuery(layerObj).bind("visibilityChange",layer_func);
         if (the_input.parentNode) {
             the_input.parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+layerObj.color+'; width: 1em; height: 1em;"></div>')[0],the_input);
         }
     }
 
-    
-    the_input._current_bindings.push({ 'layer' : layer , 'renderer' : renderer });
 
-    jQuery(the_input).bind('change',function(e) {
+    var input_func = function(e) {
         if (this.checked) {
             renderer.showLayer(layer,false);
         } else {
@@ -679,7 +696,11 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
         if (MASCP.getLayer(layer).group && MASCP.getLayer(layer).group._check_intermediate) {
             MASCP.getLayer(layer).group._check_intermediate();
         }
-    });
+    };
+
+    jQuery(the_input).bind('change',input_func);
+    
+    the_input._current_bindings.push({ 'layer' : layer , 'renderer' : renderer, 'input_function' : input_func, 'object_function' : layer_func });    
     
     return the_input;    
 };
@@ -712,6 +733,29 @@ MASCP.getGroup = function(group) {
     return (typeof group == 'string') ? MASCP.groups[group] : group;
 };
 
+MASCP.SequenceRenderer.prototype._removeOtherBindings = function(object,inputElement) {
+    var renderer = this;
+    
+    for (var i = 0; i < inputElement._current_bindings.length; i++) {
+        if ( inputElement._current_bindings[i].renderer != renderer ) {
+            continue;
+        }
+        var cb = inputElement._current_bindings[i];
+        
+        if ( cb.layer && cb.layer != object.name ) {
+            jQuery(MASCP.getLayer(cb.layer)).unbind('visibilityChange',cb.object_function);
+            jQuery(inputElement).unbind('change',cb.input_function);
+        }
+        
+        if ( cb.group && cb.group != object.name ) {
+            jQuery(MASCP.getGroup(cb.group)).unbind('visibilityChange',cb.object_function);
+            jQuery(inputElement).unbind('change',cb.input_function);
+        }
+        cb.group = null;
+        cb.layer = null;
+    }
+}
+
 /**
  * Create a checkbox that is used to control the given group
  * @param {String|Object} group Group name or group object that a controller should be generated for
@@ -719,7 +763,7 @@ MASCP.getGroup = function(group) {
  * @returns Checkbox element that when checked will toggle on the group, and toggle it off when unchecked
  * @type Object
  */
-MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputElement) {
+MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputElement,exclusive) {
     var renderer = this;
     var the_input = inputElement ? jQuery(inputElement) : jQuery('<input type="checkbox" value="true"/>');
     var groupObject = MASCP.getGroup(group);
@@ -729,6 +773,10 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
     }
 
     the_input[0]._current_bindings = the_input[0]._current_bindings || [];
+
+    if (exclusive) {
+        this._removeOtherBindings(groupObject,the_input[0]);
+    }
     
     for (var i = 0; i < the_input[0]._current_bindings.length; i++) {
         if (    the_input[0]._current_bindings[i].group == group && 
@@ -738,7 +786,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
     }
     
     the_input[0].removeAttribute('checked');
-    the_input.bind('change',function(e) {        
+    var input_func = function(e) {        
         group_obj = MASCP.getGroup(group);
         if (! group_obj ) {
             return;
@@ -752,11 +800,14 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
                 renderer.hideLayer(this.name,false);
             });                
         }
-    });
+    };
+    
+    the_input.bind('change',input_func);
 
+    var group_func = null;
 
     if (groupObject && the_input[0]._current_bindings.length == 0) {
-        jQuery(MASCP.getGroup(group)).bind('visibilityChange', function(e,rend,visibility) {
+        group_func = function(e,rend,visibility) {
             if (rend != renderer) {
                 return;
             }
@@ -764,13 +815,16 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
             if ( ! visibility ) {
                 the_input[0].removeAttribute('checked');
             }
-        });
+        };
+        
+        jQuery(MASCP.getGroup(group)).bind('visibilityChange', group_func);
+        
         if (the_input[0].parentNode) {
             the_input[0].parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+groupObject.color+'; width: 1em; height: 1em;"></div>')[0],the_input[0]);
         }
     }
 
-    the_input[0]._current_bindings.push({ 'group' : group , 'renderer' : renderer });
+    the_input[0]._current_bindings.push({ 'group' : group , 'renderer' : renderer, 'input_function' : input_func, 'object_function' : group_func });
 
     the_input.bind('click',function(e) {
         e.stopPropagation();
