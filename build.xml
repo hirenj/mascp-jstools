@@ -75,11 +75,43 @@
 	    </jsdoctoolkit>
 	</target>
 
+    <target name="build" description="Build the minified js files">
+        <taskdef name="jsmin"
+                classname="net.matthaynes.jsmin.JSMin_Task">
+                <classpath>
+                    <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
+                </classpath>                
+        </taskdef>
+		<mkdir dir="build"/>
+        <jsmin destdir="build">
+            <fileset dir="js/lib" includes="**/*.js"/>
+            <fileset dir="js" includes="json-2.js" />
+        </jsmin>
+        <concat destfile="dist/maschup.services.min.js"
+                  force="yes">
+            <fileset dir="build" includes="json-2.js"/>            
+            <fileset dir="build" includes="MascpService.js"/>
+            <fileset dir="build" includes="*Reader.js"/>
+        </concat>
+        <concat destfile="dist/maschup.map.min.js"
+                  force="yes">
+            <fileset dir="build" includes="gomap.js"/>                  
+        </concat>
+        <concat destfile="dist/maschup.renderers.min.js"
+                  force="yes">
+            <fileset dir="build" includes="SequenceRenderer.js"/>
+            <fileset dir="build" includes="CondensedSequenceRenderer.js"/>
+        </concat>
+        
+        <concat destfile="dist/maschup.min.js" force="yes">
+            <fileset dir="dist" includes="maschup.services.min.js"/>
+            <fileset dir="dist" includes="maschup.renderers.min.js"/>
+            <fileset dir="dist" includes="maschup.map.min.js"/>
+        </concat>
+        
+    </target>
+
 	<target name="dist" description="Generate a distribution directory for the demo app">
-		<mkdir dir="dist"/>
-		<copy todir="dist/js">
-			<fileset dir="js"/>
-		</copy>
 		
 		<copy todir="dist/css">
 			<fileset dir="css"/>

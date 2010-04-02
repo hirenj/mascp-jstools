@@ -9,21 +9,29 @@
     <link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
 <!--    <script language="javascript" type="text/javascript" src="http://getfirebug.com/releases/lite/1.2/firebug-lite.js"></script>-->
     <script type="text/javascript">SVGWEB_PATH='../js/svgweb/';</script>
-    <script type="text/javascript" src="../js/lib/gomap.js"></script>
-    <script type="text/javascript" src="../js/lib/MascpService.js"></script>
-    <script type="text/javascript" src="../js/lib/SubaReader.js"></script>
+<!--[if IE 8]>
+    <script type="text/javascript" src="../js/svgweb/svg.js" data-path="../js/svgweb/"></script>
+<![endif]-->
+    <script type="text/javascript" src="../js/maschup.min.js"></script>
+    
+    <!-- <script type="text/javascript" src="../js/maschup.services.min.js"></script>
+    <script type="text/javascript" src="../js/maschup.map.min.js"></script>
+    <script type="text/javascript" src="../js/maschup.renderers.min.js"></script> -->
+
+    <!-- <script type="text/javascript" src="../js/lib/gomap.js"></script>
+    <script type="text/javascript" src="../js/json-2.js"></script>
+    <script type="text/javascript" src="../js/lib/MascpService.js"></script> -->
+    <!-- <script type="text/javascript" src="../js/lib/SubaReader.js"></script>
     <script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
     <script type="text/javascript" src="../js/lib/PromexReader.js"></script>
     <script type="text/javascript" src="../js/lib/TairReader.js"></script>
-    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
-    <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>    
-    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>   
-    <script type="text/javascript" src="../js/json-2.js"></script>
+    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script> -->
+    <!-- <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>    
+    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>    -->
+
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
-    <!--
-        <script type="text/javascript" src="../js/jquery-1.3.2.min.js"></script>
-    -->
     <script type="text/javascript" src="../js/jquery-ui-1.7.2.min.js"></script>
+
     <style type="text/css">
         body {
             font-family: Verdana, Helvetica, Arial, sans-serif;
@@ -189,7 +197,6 @@
             if (rendering_readers.length > 0) {
                 return;
             }
-            
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0],true);
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0],true);      
             if (MASCP.getGroup('promex_experimental').size() > 1) {
@@ -221,6 +228,7 @@
                 }
                 return array;
             };
+            
             MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable({
                 update: function(event, ui) {
                     if (MASCP.renderer.trackOrder) {
@@ -231,6 +239,7 @@
                     }
                 },
             }).sortable('toArray'));
+            
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
             }

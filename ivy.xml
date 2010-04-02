@@ -21,6 +21,10 @@
       </dependency>
 -->
     
+      <dependency org="net.matthaynes" name="jsmin" rev="0.2.4">
+          <artifact type="jar" name="jsmin" url="http://jsmin-ant-task.googlecode.com/files/jsmin.0.2.4.jar"/>          
+      </dependency>
+    
       <dependency org="org.jsdoctoolkit" name="jsdoctoolkit-ant-task" rev="1.0.1">
           <artifact type="jar" name="jsdoctoolkit-ant-task" url="http://jsdoc-toolkit-ant-task.googlecode.com/files/jsdoctoolkit-ant-task-1.0.1.jar"/>
       </dependency>

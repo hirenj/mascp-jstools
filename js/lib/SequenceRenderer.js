@@ -4,6 +4,12 @@
 
 if ( typeof MASCP == 'undefined' ) {
     MASCP = {};
+
+    if (document.write) {
+        document.write('<!--[if IE 7]><script type="text/javascript">MASCP.IE = true; MASCP.IE7 = true; MASCP.IELTE7 = true;</script><![endif]-->');
+        document.write('<!--[if IE 8]><script type="text/javascript">MASCP.IE = true; MASCP.IE8 = true; MASCP.IELTE8 = true;</script><![endif]-->');
+    }
+
 }
 
 

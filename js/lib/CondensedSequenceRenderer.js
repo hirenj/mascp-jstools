@@ -6,12 +6,25 @@
  *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
  *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
  */
-if (document.write && (typeof svgweb == 'undefined')) {
+if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined')) {
+
+    // var svg_path = 'svgweb/';
+    // if (typeof SVGWEB_PATH != 'undefined') {
+    //     svg_path = SVGWEB_PATH;
+    // }
+    // var scriptTag = document.createElement("script");
+    // scriptTag.src = svg_path + 'svg.js';
+    // scriptTag.type="text/javascript";
+    // scriptTag.setAttribute('data-path',svg_path);
+    // document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
+
     if (typeof SVGWEB_PATH != 'undefined') {
         document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
         document.write('<script src="svgweb/svg.js" data-path="svgweb/"></script>');
     }
+    
+    SVGWEB_LOADING = true;
 }
 
 
