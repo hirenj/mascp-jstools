@@ -6,30 +6,15 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
     <title>GATOR</title>
+
     <link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
-<!--    <script language="javascript" type="text/javascript" src="http://getfirebug.com/releases/lite/1.2/firebug-lite.js"></script>-->
-    <script type="text/javascript">SVGWEB_PATH='../js/svgweb/';</script>
-<!--[if IE 8]>
+
     <script type="text/javascript" src="../js/svgweb/svg.js" data-path="../js/svgweb/"></script>
-<![endif]-->
+
     <script type="text/javascript" src="../js/maschup.min.js"></script>
     
-    <!-- <script type="text/javascript" src="../js/maschup.services.min.js"></script>
-    <script type="text/javascript" src="../js/maschup.map.min.js"></script>
-    <script type="text/javascript" src="../js/maschup.renderers.min.js"></script> -->
-
-    <!-- <script type="text/javascript" src="../js/lib/gomap.js"></script>
-    <script type="text/javascript" src="../js/json-2.js"></script>
-    <script type="text/javascript" src="../js/lib/MascpService.js"></script> -->
-    <!-- <script type="text/javascript" src="../js/lib/SubaReader.js"></script>
-    <script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
-    <script type="text/javascript" src="../js/lib/PromexReader.js"></script>
-    <script type="text/javascript" src="../js/lib/TairReader.js"></script>
-    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script> -->
-    <!-- <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>    
-    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>    -->
-
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
+
     <script type="text/javascript" src="../js/jquery-ui-1.7.2.min.js"></script>
 
     <style type="text/css">
@@ -61,16 +46,20 @@
             display: none;
         }
 
+
         #sequence_controllers {
             position: relative;
             display: block;
             padding: 0px;
             list-style: none;
-            height: 100%;
             overflow: auto;            
             left: 0em;
             right: 0px;
+            bottom: 10px;
+            top: 10px;
+            margin: 0px;
         }
+        
         #sequence_control {
             position: relative;
             width: 300px;
@@ -84,11 +73,10 @@
         }
 
         #suba_results {
-            width: 300px;
-            height: 230px;
-            position: absolute;
-            right: 10px;
-            top: 75px;
+            position: relative;
+            width: 45%;
+            left: 10px;
+            top: 0px;
         }
         
         #suba_controller {
@@ -99,21 +87,27 @@
         }
         
         #atproteome_map {
-            position: fixed;
-            top: -10000px;
-            left: -10000px;
+            position: absolute;
+            width: 45%;
+            right: 10px;
+            top: 0px;
         }
+        
+        #agi_input, #agi_input input {
+            font-size: 40pt;
+        }
+        
+        
     </style>
 </head>
 
 <body>
-<div style="width: 50%;">
-<h1 style="position: relative;">MASCP AggreGATOR <img style="height: 60px; top: 50%;" src="gator.png" /></h1>
+<div style="position: absolute; top: 10px; right: 10px; width: 50%;">
+<h1 style="position: absolute; right: 0px; top: 0px;">MASCP AggreGATOR <img style="height: 50px; top: 50%;" src="gator.png" /></h1>
 </div>
-<div style="margin-bottom: 10px;">
-    <label for="agi">Select AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
+<div id="agi_input" style="height: 70px; margin-bottom: 10px;">
+    <label for="agi">AGI: </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
-<h2 id="selected_agi"></h2>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
     <li id="phosphat_experimental"><input type="checkbox"/> PhosPhAT experimental</li>
@@ -123,7 +117,7 @@
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
 </div>
-<div style="position: absolute; left: 10px; top: 300px; bottom: 0px; right: 10px;">
+<div style="position: relative;">
 <div style="overflow: auto; width: auto; height: 100%;">
 <div id="condensed_container"></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
@@ -132,9 +126,11 @@
 </div>
 <div id="sequence_container" style="font-family: monospace;">
 </div>
+<div style="position: relative;">
 <div id="suba_results">
 </div>
 <div id="atproteome_map"></div>
+</div>
 <script type="text/javascript">
 //<[CDATA[ 
     window.onload = null;
@@ -150,6 +146,8 @@
             if (zoom_controls.style.height == '100%') {
                 jQuery('#sequence_controllers').css('left','5em').css('position','absolute');
                 zoom_controls.style.position = 'absolute';
+                zoom_controls.style.height = '75%';
+                zoom_controls.style.top = '0px';
             }
             zoom_controls.style.zIndex = 2;
             var dragger = new GOMap.Diagram.Dragger();
@@ -162,7 +160,7 @@
                 MASCP.renderer.defaultZoom = zoomFactor;
                 MASCP.renderer.zoom = zoomFactor;
                 dragger.applyToElement(MASCP.renderer._canvas);
-            })
+            });
         }
         
         var tissue_map = null;
@@ -240,6 +238,8 @@
                 },
             }).sortable('toArray'));
             
+            jQuery('#sequence_control').dialog({draggable: true, title: "Data", width: '300px', position: ['right','top']});
+            
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
             }
@@ -248,35 +248,14 @@
         jQuery(MASCP).bind('layerRegistered', function(e,layer) {
 
             var mouse_out_func = function(e,ev) {
-                jQuery('#atproteome_map')[0].style.position = 'fixed';                
-                jQuery('#atproteome_map')[0].style.top = '-10000px';                
-                jQuery('#atproteome_map')[0].style.left = '-10000px';                                
+                tissue_map.hideAllKeywords();
             };
             
             if (layer.group && layer.group.name == 'atproteome') {
                 jQuery(layer).bind('mousemove',function(e,orig_event,source) {
-                    var ev = orig_event;
-                    if (! ev) {
-                        ev = e;
-                    }
-                    jQuery('#atproteome_map')[0].style.position = 'fixed';
-                    jQuery('#atproteome_map')[0].style.zIndex = 1;
-                    jQuery('#atproteome_map')[0].style.height = 100+'px';
-                    jQuery('#atproteome_map')[0].style.width = 150+'px';
-                    var offset = jQuery('#condensed_container').offset();
-                    jQuery('#atproteome_map')[0].style.top = (offset.top + ev.pageY+10 - jQuery(document).scrollTop())+'px';
-                    jQuery('#atproteome_map')[0].style.left = (offset.left + ev.pageX+10 - jQuery(document).scrollLeft())+'px';
-                    if (source == 'SequenceRenderer') {
-                        jQuery('#atproteome_map')[0].style.top = ev.pageY+'px';
-                        jQuery('#atproteome_map')[0].style.left = ev.pageX+'px';
-                    }
                     tissue_map.hideAllKeywords();
                     tissue_map.showKeyword('border');
-                    if ( tissue_map.showKeyword(layer.data['po']) ) {
-                        tissue_map.zoomToKeyword(layer.data['po']);
-                    } else {
-                        mouse_out_func();
-                    }
+                    tissue_map.showKeyword(layer.data['po']);
                 });
             
                 jQuery(layer).bind('mouseup',mouse_out_func);
@@ -304,12 +283,6 @@
                 MASCP.SubaReader.existing_map = null;
             }
     
-            if (MASCP.AtProteomeReader.existing_map) {
-                log("Removing existing map");
-                MASCP.AtProteomeReader.existing_map.destroy();      
-                MASCP.AtProteomeReader.existing_map = null;
-            }
-
             var suba = new MASCP.SubaReader(agi);
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
@@ -394,7 +367,6 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        jQuery('#selected_agi').text("Data for "+agi);
         var reader = new MASCP.TairReader(agi,'../proxy.pl');
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == '') {
