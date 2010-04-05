@@ -299,8 +299,9 @@ GOMap.Diagram.prototype.hideKeyword = function(keyword,color) {
 GOMap.Diagram.prototype.toggleKeyword = function(keyword,color) {
     if (this._highlighted[keyword]) {
         this.hideKeyword(keyword);
+        return false;
     } else {
-        this.showKeyword(keyword,color);
+        return this.showKeyword(keyword,color);
     }
 };
 

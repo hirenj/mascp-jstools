@@ -22,11 +22,7 @@
             font-family: Verdana, Helvetica, Arial, sans-serif;
             font-size: 11pt;
         }
-        
-        
-        h1 {
-            font-family: Gill Sans;
-        }
+                
         .track {
             position: relative;
         }
@@ -94,7 +90,8 @@
         }
         
         #agi_input, #agi_input input {
-            font-size: 40pt;
+            font-size: 30pt;
+            border: 0px;
         }
         
         
@@ -106,7 +103,7 @@
 <h1 style="position: absolute; right: 0px; top: 0px;">MASCP AggreGATOR <img style="height: 50px; top: 50%;" src="gator.png" /></h1>
 </div>
 <div id="agi_input" style="height: 70px; margin-bottom: 10px;">
-    <label for="agi">AGI: </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
+    <label for="agi">AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -252,16 +249,33 @@
             };
             
             if (layer.group && layer.group.name == 'atproteome') {
-                jQuery(layer).bind('mousemove',function(e,orig_event,source) {
-                    tissue_map.hideAllKeywords();
-                    tissue_map.showKeyword('border');
-                    tissue_map.showKeyword(layer.data['po']);
+                jQuery(layer).bind('click',function(e,orig_event,source) {
+                    if (tissue_map.toggleKeyword(layer.data['po'])) {
+                        MASCP.renderer.setHighlight(layer,true);
+                    } else {
+                        MASCP.renderer.setHighlight(layer,false);                        
+                    }
                 });
-            
-                jQuery(layer).bind('mouseup',mouse_out_func);
-                jQuery(layer).bind('mouseleave',mouse_out_func);                                
-                jQuery(layer).bind('mouseout',mouse_out_func);                                
-
+                jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+                    if (! visible) {
+                        tissue_map.hideKeyword(layer.data['po']);
+                        MASCP.renderer.setHighlight(layer,false);
+                    }                    
+                });
+            }
+            if (layer.name == 'atproteome_controller') {
+                var is_highlighted = false;
+                jQuery(layer).bind('click',function(e,orig_event,source) {
+                    is_highlighted = ! is_highlighted;
+                    MASCP.renderer.setHighlight(layer,is_highlighted);
+                    MASCP.getGroup('atproteome').eachLayer(function() {
+                        if (is_highlighted) {
+                            tissue_map.showKeyword(this.data['po']);
+                        } else {
+                            tissue_map.hideKeyword(this.data['po']);                            
+                        }
+                    });
+                });                
             }
         });
 

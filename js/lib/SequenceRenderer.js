@@ -245,7 +245,13 @@ MASCP.Group = function() {
     return;
 };
 
-
+/**
+ * Describe what this method does
+ * @private
+ * @param {String|Object|Array|Boolean|Number} paramName Describe this parameter
+ * @returns Describe what it returns
+ * @type String|Object|Array|Boolean|Number
+ */
 MASCP.Group.prototype.size = function() {
     var counter = 0;
     for (var i = 0 ; i < this._layers.length; i++ ) {
@@ -255,6 +261,14 @@ MASCP.Group.prototype.size = function() {
     }
     return counter;
 };
+
+MASCP.Group.prototype.eachLayer = function(func) {
+    for (var i = 0 ; i < this._layers.length; i++ ) {
+        if (! this._layers[i].disabled) {
+            func.apply(this._layers[i]);
+        }
+    }    
+}
 
 /**
  * @class

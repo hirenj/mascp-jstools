@@ -207,6 +207,24 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         an_array._event_proxy = new Object();
         
         var event_func = function(ev) {
+            var target_el = this;
+            
+            if (ev.type != 'mousemove' && target_el._longclick) {
+                window.clearTimeout(target_el._longclick);
+            }
+            if (ev.type == 'click' && target_el._consume_click) {
+                target_el._consume_click = false;
+                return;
+            }
+            if (ev.type == 'mousedown') {
+                log(ev);
+                target_el._longclick = window.setTimeout(function() {
+                    target_el._longclick = null;
+                    jQuery(an_array._event_proxy).trigger('longclick',[ev]);
+                    target_el._consume_click = true;
+                },500);
+            }
+            
             jQuery(an_array._event_proxy).trigger(ev.type,[ev]);
         };
         
@@ -218,7 +236,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             if (new_el._has_proxy) {
                 return;
             }
-            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','mouseup','mouseenter','mouseleave'];
+            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
             for (var i = 0 ; i < event_names.length; i++) {
                 jQuery(new_el).bind(event_names[i], event_func);
             }
@@ -439,6 +457,35 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         gradient.appendChild(stop2);
         gradient.appendChild(stop3);
         
+        var makeEl = function(name,attributes) {
+            var result = document.createElementNS(svgns,name);
+            for (var attribute in attributes) {
+                result.setAttribute(attribute, attributes[attribute]);
+            }
+            return result;
+        };
+
+        var glow = makeEl('filter',{
+            'id':'track_glow',
+            'filterUnits':'objectBoundingBox',
+            'x':'-25%',
+            'y':'-25%',
+            'width':'150%',
+            'height':'150%'
+        });
+        glow.appendChild(makeEl('feMorphology', {
+            'in' : 'SourceGraphic',
+            'result':'morphedAlpha',
+            'radius':'20',
+            'operator':'dilate'
+        }));        
+
+        glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));
+        glow.appendChild(makeEl('feComposite',{'operator':'in','in':'flooded','in2':'morphedAlpha','result':'coloredShadow'}));
+        glow.appendChild(makeEl('feComposite',{'in':'SourceGraphic','in2':'coloredShadow','operator':'under'}));
+        
+        defs.appendChild(glow);
+        
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
         jQuery(renderer).trigger('sequenceChange');
@@ -520,6 +567,7 @@ var addElementToLayer = function(layerName) {
     shine.style.strokeWidth = '0px';
     shine.style.fill = 'url(#track_shine)';
     shine.setAttribute('display','none');
+    shine._is_shine = true;
 
     var tracer = canvas.rect(this._index+0.25,10,0.1,0);
     tracer.style.strokeWidth = '0px';
@@ -557,6 +605,7 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     shine.style.strokeWidth = '0px';
     shine.style.fill = 'url(#track_shine)';
     shine.setAttribute('display','none');
+    shine._is_shine = true;
     return rect;
 };
 
@@ -574,6 +623,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     shine.style.strokeWidth = '0px';
     shine.style.fill = 'url(#track_shine)';
     shine.setAttribute('display','none');
+    shine._is_shine = true;
+
     return rect;
 };
 
@@ -627,8 +678,8 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
  */
 
  /**
-  * Double click event for a layer
-  * @name    MASCP.Layer#dblclick
+  * Long click event for a layer
+  * @name    MASCP.Layer#longclick
   * @event
   * @param   {Object}    e
   */
@@ -670,7 +721,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             }
             renderer.refresh();
         });
-        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
+        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','longclick','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event) {
                 jQuery(layer).trigger(ev.type,[original_event]);
@@ -679,17 +730,62 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
     }
     this.refresh();
 };
-
+/**
+ * Describe what this method does
+ * @private
+ * @param {String|Object|Array|Boolean|Number} paramName Describe this parameter
+ * @returns Describe what it returns
+ * @type String|Object|Array|Boolean|Number
+ */
 MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
     if ( ! this._layer_containers ) {
         return;
     }
-
+    if (typeof layer != 'string') {
+        layer = layer.name;
+    }
     if ( this._layer_containers[layer] ) {
         var layer_container = this._layer_containers[layer];
         layer_container.attr({'style' : style});
     }
 };
+
+MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighlight) {
+    if ( ! this._layer_containers ) {
+        return;
+    }
+    if (typeof layer != 'string') {
+        layer = layer.name;
+    }
+
+    if ( ! this._layer_containers[layer] ) {
+        return;
+    }
+
+    var layer_container = this._layer_containers[layer];
+
+    var redraw_id = this._canvas.suspendRedraw(5000);
+
+    if (doHighlight) {
+        for (var i = 0 ; i < layer_container.length; i++ ) {
+            if (layer_container[i]._is_shine) {
+                continue;
+            }
+            layer_container[i].setAttribute('filter','url(#track_glow)');
+        }
+    } else {
+        for (var i = 0 ; i < layer_container.length; i++ ) {
+            if (layer_container[i]._is_shine) {
+                continue;
+            }
+            layer_container[i].setAttribute('filter','');
+        }
+    }
+    
+    this._canvas.unsuspendRedraw(redraw_id);
+    
+}
+
 
 /*
  * Get a canvas set of the visible tracers on this renderer
@@ -743,7 +839,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
             self.refresh();
         }
     });
-    jQuery(layer).bind('mousedown',function(ev) {
+    jQuery(layer).bind('longclick',function(ev) {
         expanded = ! expanded;
         self.withoutRefresh(function() {
             self.setGroupVisibility(group,expanded);            
