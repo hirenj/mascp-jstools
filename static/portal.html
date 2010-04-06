@@ -256,26 +256,34 @@
                         MASCP.renderer.setHighlight(layer,false);                        
                     }
                 });
-                jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
-                    if (! visible) {
-                        tissue_map.hideKeyword(layer.data['po']);
-                        MASCP.renderer.setHighlight(layer,false);
-                    }                    
-                });
             }
             if (layer.name == 'atproteome_controller') {
                 var is_highlighted = false;
+                var is_open = false;
+                
                 jQuery(layer).bind('click',function(e,orig_event,source) {
                     is_highlighted = ! is_highlighted;
+                    
                     MASCP.renderer.setHighlight(layer,is_highlighted);
                     MASCP.getGroup('atproteome').eachLayer(function() {
                         if (is_highlighted) {
-                            tissue_map.showKeyword(this.data['po']);
+                                MASCP.renderer.setHighlight(this,tissue_map.showKeyword(this.data['po']) && is_open);
                         } else {
-                            tissue_map.hideKeyword(this.data['po']);                            
+                            tissue_map.hideKeyword(this.data['po']);
+                            MASCP.renderer.setHighlight(this,false);                                
                         }
                     });
-                });                
+                });
+                jQuery(layer).bind('longclick',function(e,orig_event,source) {
+                    is_open = ! is_open;
+                    MASCP.getGroup('atproteome').eachLayer(function() {
+                        if (is_open && is_highlighted && tissue_map.showKeyword(this.data['po'])) {
+                            MASCP.renderer.setHighlight(this,true);
+                        } else {
+                            MASCP.renderer.setHighlight(this,false);                            
+                        }
+                    });
+                });
             }
         });
 

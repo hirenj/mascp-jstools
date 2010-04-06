@@ -123,7 +123,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     canvas.set = function() {
         var an_array = new Array();
         an_array.attr = function(hsh,animated) {
+            
             var hash = jQuery.extend({},hsh);
+            
             if (animated && typeof hash['y'] != 'undefined') {
                 var counter = 0;
                 if (an_array.length == 0) {
@@ -160,6 +162,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     var diff = (target_y - curr_y) / 10;
                     hash['y'] = curr_y || 0;
                     var orig_func = arguments.callee;
+                    jQuery(an_array).trigger('_anim_begin');
                     window.setTimeout(function() {
                         orig_func.apply(an_array,[hash]);
                         counter += 1;
@@ -174,6 +177,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             window.setTimeout(arguments.callee,10);
                         } else if (target_disp) {
                             an_array.attr({'display' : target_disp});
+                            jQuery(an_array).trigger('_anim_end');
                         }
                     },10);
                 }
@@ -217,7 +221,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 return;
             }
             if (ev.type == 'mousedown') {
-                log(ev);
                 target_el._longclick = window.setTimeout(function() {
                     target_el._longclick = null;
                     jQuery(an_array._event_proxy).trigger('longclick',[ev]);
@@ -468,22 +471,12 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         var glow = makeEl('filter',{
             'id':'track_glow',
             'filterUnits':'objectBoundingBox',
-            'x':'-25%',
-            'y':'-25%',
-            'width':'150%',
-            'height':'150%'
+            'x':'-2%',
+            'y':'-2%',
+            'width':'105%',
+            'height':'105%'
         });
-        glow.appendChild(makeEl('feMorphology', {
-            'in' : 'SourceGraphic',
-            'result':'morphedAlpha',
-            'radius':'20',
-            'operator':'dilate'
-        }));        
-
-        glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));
-        glow.appendChild(makeEl('feComposite',{'operator':'in','in':'flooded','in2':'morphedAlpha','result':'coloredShadow'}));
-        glow.appendChild(makeEl('feComposite',{'in':'SourceGraphic','in2':'coloredShadow','operator':'under'}));
-        
+        glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
         defs.appendChild(glow);
         
         renderer._drawAxis(canv,line_length);
@@ -751,11 +744,15 @@ MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighlight) {
+    var self = this;
     if ( ! this._layer_containers ) {
         return;
     }
+    var layerObj = layer;
     if (typeof layer != 'string') {
-        layer = layer.name;
+        layer = layer.name;        
+    } else {
+        layerObj = MASCP.getLayer(layer);
     }
 
     if ( ! this._layer_containers[layer] ) {
@@ -764,7 +761,29 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
 
     var layer_container = this._layer_containers[layer];
 
+    jQuery(layer_container).bind('_anim_begin',function() {
+        layerObj._highlight_filter = [];
+        for (var i = 0; i < layer_container.length; i++ ) {
+            layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter');
+            layer_container[i].removeAttribute('filter');
+        }
+        jQuery(layer_container).unbind('_anim_begin',arguments.callee);
+    });
+
+    jQuery(layer_container).bind('_anim_end',function() {
+        if ( ! layerObj._highlight_filter ) {
+            return;
+        }
+        for (var i = 0; i < layer_container.length; i++ ) {
+            if (layerObj._highlight_filter[i] && ! layer_container[i].getAttribute('filter')) {
+                layer_container[i].setAttribute('filter',layerObj._highlight_filter[i]);
+            }
+        }
+        jQuery(layer_container).unbind('_anim_end',arguments.callee);        
+    });
+
     var redraw_id = this._canvas.suspendRedraw(5000);
+
 
     if (doHighlight) {
         for (var i = 0 ; i < layer_container.length; i++ ) {
