@@ -762,9 +762,12 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
     var layer_container = this._layer_containers[layer];
 
     jQuery(layer_container).bind('_anim_begin',function() {
+        if (layerObj._highlight_filter) {
+            return;
+        }
         layerObj._highlight_filter = [];
         for (var i = 0; i < layer_container.length; i++ ) {
-            layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter');
+            layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter')+"";
             layer_container[i].removeAttribute('filter');
         }
         jQuery(layer_container).unbind('_anim_begin',arguments.callee);
@@ -775,10 +778,11 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             return;
         }
         for (var i = 0; i < layer_container.length; i++ ) {
-            if (layerObj._highlight_filter[i] && ! layer_container[i].getAttribute('filter')) {
+            if (layerObj._highlight_filter[i] && layer_container[i].getAttribute('filter') == null) {
                 layer_container[i].setAttribute('filter',layerObj._highlight_filter[i]);
             }
         }
+        layerObj._highlight_filter = null;        
         jQuery(layer_container).unbind('_anim_end',arguments.callee);        
     });
 
