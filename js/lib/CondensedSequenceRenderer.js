@@ -434,7 +434,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     jQuery(this).unbind('svgready').bind('svgready',function(canv) {
         var canv = renderer._canvas;
         renderer._extendWithSVGApi(canv);
-        canv.setAttribute('viewBox', ''+(-1*RS)+' 0 '+(line_length+(this.padding))*RS+' '+(100+(this.padding))*RS);
+        canv.setAttribute('viewBox', ''+(-2*RS)+' 0 '+(line_length+(this.padding)+2)*RS+' '+(100+(this.padding))*RS);
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
@@ -909,7 +909,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     }
     var viewBox = [-1,0,0,0];
-    viewBox[2] = (this.sequence.split('').length+(this.padding))*RS;
+    viewBox[0] = -2*RS;
+    viewBox[2] = (this.sequence.split('').length+(this.padding)+2)*RS;
     viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];

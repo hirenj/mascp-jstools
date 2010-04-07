@@ -59,7 +59,7 @@
         #sequence_control {
             position: relative;
             width: 300px;
-            height: 100px;
+            height: 200px;
         }
 
         #zoom_controls {
@@ -76,10 +76,9 @@
         }
         
         #suba_controller {
-            position: absolute;
-            right: 100%;
+            position: relative;
+            left: 3em;
             width: 100px;
-            top: 0px;
         }
         
         #atproteome_map {
@@ -89,7 +88,7 @@
             top: 0px;
         }
         
-        #agi_input, #agi_input input {
+        #agi_input, #agi_input input[type='text'] {
             font-size: 30pt;
             border: 0px;
         }
@@ -103,7 +102,8 @@
 <h1 style="position: absolute; right: 0px; top: 0px;">MASCP AggreGATOR <img style="height: 50px; top: 50%;" src="gator.png" /></h1>
 </div>
 <div id="agi_input" style="height: 70px; margin-bottom: 10px;">
-    <label for="agi">AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/>
+    <label for="agi">AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/><br/>
+    <input type="button" id="controls" value="Settings"/>
 </div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -112,6 +112,8 @@
     <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
     <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
+    <li id="suba_ms" class="ms"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #ff0000; width: 1em; height: 1em;"></div><input class="ms" type="checkbox"/> MS</li>
+    <li id="suba_gfp" class="gfp"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #00ff00; width: 1em; height: 1em;"></div><input class="gfp" type="checkbox"/> GFP</li>
 </ul>
 </div>
 <div style="position: relative;">
@@ -141,7 +143,7 @@
             zoom_controls.id = 'zoom_controls';        
             jQuery('#sequence_control').append(zoom_controls);
             if (zoom_controls.style.height == '100%') {
-                jQuery('#sequence_controllers').css('left','5em').css('position','absolute');
+                jQuery('#sequence_controllers').css('left','3em').css('position','relative');
                 zoom_controls.style.position = 'absolute';
                 zoom_controls.style.height = '75%';
                 zoom_controls.style.top = '0px';
@@ -234,8 +236,17 @@
                     }
                 },
             }).sortable('toArray'));
+
+            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px'});
             
-            jQuery('#sequence_control').dialog({draggable: true, title: "Data", width: '300px', position: ['right','top']});
+            jQuery('#controls').unbind('click').bind('click',function() {
+                if (! a_dialog.dialog('isOpen')) {
+                    a_dialog.dialog( 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
+                } else {
+                    a_dialog.dialog('close');
+                }
+            });
+            
             
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
@@ -309,12 +320,17 @@
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
                 jQuery('#suba_results').text('');
+                jQuery('#suba_controller').text('');                
                 jQuery('#suba_results').append(this.result.render());               
                 if (this.result._map) {
                     MASCP.SubaReader.existing_map = this.result._map;
-                    var controller = this.result.mapController();
-                    controller.setAttribute('id','suba_controller');
-                    jQuery('#sequence_control').append(controller);
+                    var controller = this.result.mapController(jQuery('#sequence_controllers')[0]);
+                    if (this.result.getMassSpecLocalisation()) {
+                        jQuery('#sequence_control li.ms').show();
+                    }
+                    if (this.result.getGfpLocalisation()) {
+                        jQuery('#sequence_control li.gfp').show();
+                    }
                 }
             });
 

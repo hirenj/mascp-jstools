@@ -147,13 +147,14 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
         return null;
     }
     var map = this._map;
-    inputElement = inputElement ? jQuery(inputElement) : jQuery('<div><div class="ms"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #ff0000; width: 1em; height: 1em;"></div><input class="ms" type="checkbox"/> MS</div><div class="gfp"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #00ff00; width: 1em; height: 1em;"></div><input class="gfp" type="checkbox"/> GFP</div></div>');
+    log(inputElement);
+    inputElement = inputElement ? jQuery(inputElement) : jQuery('<ul><li class="ms"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #ff0000; width: 1em; height: 1em;"></div><input class="ms" type="checkbox"/> MS</li><li class="gfp"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #00ff00; width: 1em; height: 1em;"></div><input class="gfp" type="checkbox"/> GFP</li></ul>');
     
     if ( ! this.getMassSpecLocalisation() )  {
-        jQuery('div.ms', inputElement).css({ 'display': 'none' });
+        jQuery('li.ms', inputElement).css({ 'display': 'none' });
     } else {
         var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
-        jQuery('input.ms', inputElement).bind('change', function() {
+        jQuery('input.ms', inputElement).unbind('change').bind('change', function() {
             if (this.checked) {
                 for (var i in ms_loc) {
                     map.showKeyword(ms_loc[i], '#ff0000');
@@ -166,10 +167,10 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
         }).attr('checked', (ms_loc.length > 0));
     }
     if ( ! this.getGfpLocalisation() )  {
-        jQuery('div.gfp', inputElement).css({ 'display': 'none' });
+        jQuery('li.gfp', inputElement).css({ 'display': 'none' });
     } else {
         var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
-        jQuery('input.gfp', inputElement).bind('change', function() {
+        jQuery('input.gfp', inputElement).unbind('change').bind('change', function() {
             if (this.checked) {
                 for (var i in gfp_loc) {
                     map.showKeyword(gfp_loc[i], '#00ff00');
