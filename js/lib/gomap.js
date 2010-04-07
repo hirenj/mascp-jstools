@@ -143,7 +143,6 @@ GOMap.Diagram = function(image,params) {
             if ( svg_object && svg_object.parentNode) {
                 svgweb.removeChild(svg_object, svg_object.parentNode);
             }
-            log("Destruction complete");
         };
 
         self._svgLoaded();

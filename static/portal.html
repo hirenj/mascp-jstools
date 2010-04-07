@@ -167,7 +167,6 @@
         if (typeof GOMap != 'undefined') {
             var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
             tissue_map = new GOMap.Diagram('tissue.svg', { 'load' : (function() {
-                console.log("I am in here biznatches");
                 map_container.css({'height': '100%','overflow':'visible'});
             })});
 
@@ -292,7 +291,7 @@
                         if (is_open && is_highlighted && tissue_map.showKeyword(this.data['po'])) {
                             MASCP.renderer.setHighlight(this,true);
                         } else {
-                            MASCP.renderer.setHighlight(this,false);                            
+//                            MASCP.renderer.setHighlight(this,false);                            
                         }
                     });
                 });

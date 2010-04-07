@@ -761,6 +761,8 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
 
     var layer_container = this._layer_containers[layer];
 
+    if ( ! layerObj._highlight_event_bound ) {
+
     jQuery(layer_container).bind('_anim_begin',function() {
         if (layerObj._highlight_filter) {
             return;
@@ -770,7 +772,7 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter')+"";
             layer_container[i].removeAttribute('filter');
         }
-        jQuery(layer_container).unbind('_anim_begin',arguments.callee);
+//        jQuery(layer_container).unbind('_anim_begin',arguments.callee);
     });
 
     jQuery(layer_container).bind('_anim_end',function() {
@@ -783,9 +785,10 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             }
         }
         layerObj._highlight_filter = null;        
-        jQuery(layer_container).unbind('_anim_end',arguments.callee);        
+//        jQuery(layer_container).unbind('_anim_end',arguments.callee);        
     });
-
+    layerObj._highlight_event_bound = true;
+    }
     var redraw_id = this._canvas.suspendRedraw(5000);
 
 
