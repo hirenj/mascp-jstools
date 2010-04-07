@@ -167,6 +167,7 @@
         if (typeof GOMap != 'undefined') {
             var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
             tissue_map = new GOMap.Diagram('tissue.svg', { 'load' : (function() {
+                console.log("I am in here biznatches");
                 map_container.css({'height': '100%','overflow':'visible'});
             })});
 
@@ -320,7 +321,6 @@
             suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
                 jQuery('#suba_results').text('');
-                jQuery('#suba_controller').text('');                
                 jQuery('#suba_results').append(this.result.render());               
                 if (this.result._map) {
                     MASCP.SubaReader.existing_map = this.result._map;

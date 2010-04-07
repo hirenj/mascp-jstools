@@ -538,6 +538,10 @@ MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
     return jQuery(this._container).hasClass(layerName+'_active');
 };
 
+MASCP.SequenceRenderer.prototype.setHighlight = function(layer,isHighlighted) {
+    return;
+};
+
 /**
  * Create a layer controller for this sequence renderer. Attach the controller to the containing box, and shift the box across 20px.
  */
