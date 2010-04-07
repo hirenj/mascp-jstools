@@ -147,7 +147,6 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
         return null;
     }
     var map = this._map;
-    log(inputElement);
     inputElement = inputElement ? jQuery(inputElement) : jQuery('<ul><li class="ms"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #ff0000; width: 1em; height: 1em;"></div><input class="ms" type="checkbox"/> MS</li><li class="gfp"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #00ff00; width: 1em; height: 1em;"></div><input class="gfp" type="checkbox"/> GFP</li></ul>');
     
     if ( ! this.getMassSpecLocalisation() )  {
@@ -215,7 +214,7 @@ MASCP.SubaReader.Result.prototype.render = function()
                 this.showKeyword(gfp_loc[i],'#00ff00');
             }
             map_container.css({'height': '100%','overflow':'visible'});
-            this.makeInteractive();
+//            this.makeInteractive();
         })});
 
         map.appendTo(map_container[0]);
