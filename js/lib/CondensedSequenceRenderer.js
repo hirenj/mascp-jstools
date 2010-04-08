@@ -43,7 +43,12 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     this.__class__ = MASCP.CondensedSequenceRenderer;
     
     // Render Scale
-    
+
+
+    document.addEventListener('touchstart',function() {
+    },false);
+    document.addEventListener('touchmove',function() {
+    },false);    
     
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
@@ -220,7 +225,20 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 target_el._consume_click = false;
                 return;
             }
-            if (ev.type == 'mousedown') {
+            if (ev.type == 'touchstart') {
+                target_el._slide_start = true;
+            }
+            if (ev.type == 'touchmove') {
+                if (target_el._slide_start) {
+                    jQuery(an_array._event_proxy).trigger('slide',[ev]);
+                    target_el._slide_start = false;
+                    target_el._consume_click = true;                    
+                }
+            }
+            if (ev.type == 'touchend') {
+                target_el._slide_start = false;
+            }
+            if (ev.type == 'mousedown' ) {
                 target_el._longclick = window.setTimeout(function() {
                     target_el._longclick = null;
                     jQuery(an_array._event_proxy).trigger('longclick',[ev]);
@@ -243,6 +261,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             for (var i = 0 ; i < event_names.length; i++) {
                 jQuery(new_el).bind(event_names[i], event_func);
             }
+            new_el.addEventListener('touchstart',event_func,false);
+            new_el.addEventListener('touchmove',event_func,false);
+            new_el.addEventListener('touchend',event_func,false);
             new_el._has_proxy = true;
         };
         return an_array;
@@ -714,7 +735,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             }
             renderer.refresh();
         });
-        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','longclick','mouseup','mouseenter','mouseleave'];
+        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','longclick','mouseup','mouseenter','mouseleave','slide'];
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event) {
                 jQuery(layer).trigger(ev.type,[original_event]);
@@ -835,6 +856,8 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
     if (this._container && this._canvas) {
         this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';
+        this._canvas.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
+        this._canvas.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';
     }
 };
 
@@ -872,7 +895,13 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
         });
         self.refresh(true);
     });
-
+    jQuery(layer).bind('slide',function(ev) {
+        expanded = ! expanded;
+        self.withoutRefresh(function() {
+            self.setGroupVisibility(group,expanded);            
+        });
+        self.refresh(true);
+    });
 };
 
 /**
@@ -911,6 +940,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         }
 
     }
+
     var viewBox = [-1,0,0,0];
     viewBox[0] = -2*RS;
     viewBox[2] = (this.sequence.split('').length+(this.padding)+2)*RS;
@@ -919,7 +949,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     this._canvas._canvas_height = viewBox[3];
 
     this._resizeContainer();
-    
 };
 
 /**
