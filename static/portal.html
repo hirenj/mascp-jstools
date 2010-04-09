@@ -237,7 +237,7 @@
                 },
             }).sortable('toArray'));
 
-            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px'});
+            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px', zIndex: 5000});
             
             jQuery('#controls').unbind('click').bind('click',function() {
                 if (! a_dialog.dialog('isOpen')) {

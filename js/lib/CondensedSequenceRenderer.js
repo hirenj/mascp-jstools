@@ -225,10 +225,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 target_el._consume_click = false;
                 return;
             }
-            if (ev.type == 'touchstart') {
+            if (ev.type == 'touchstart' && ev.touches.length == 1) {
                 target_el._slide_start = true;
             }
-            if (ev.type == 'touchmove') {
+            if (ev.type == 'touchmove' && ev.touches.length == 1) {
                 if (target_el._slide_start) {
                     jQuery(an_array._event_proxy).trigger('slide',[ev]);
                     target_el._slide_start = false;

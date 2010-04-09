@@ -837,6 +837,7 @@ GOMap.Diagram.Dragger = function() {
  */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
+    console.log(targetElement);
     var svgMouseDown = function(evt) {
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -916,20 +917,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
-//        this.style.cursor = '-moz-grabbing';        
         if (self.targetElement) {
             self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
             self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);
-//            evt.preventDefault(true);
           return;
         }
-//        evt.preventDefault(true);
-
 
         var p = targetElement.createSVGPoint();
         var positions = mousePosition(evt);
-
-
 
         p.x = positions[0];
         p.y = positions[1];
@@ -940,10 +935,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
         self.dX = p.x;
         self.dY = p.y;
-
-        if (p.x > 0 || p.y > 0) {
-//            return;
-        }
 
         if (targetElement.currentTranslate.setXY) {
             targetElement.currentTranslate.setXY(p.x,p.y);
@@ -979,8 +970,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         }
         mouseUp(e);
     };
-    
-    
+        
     targetElement.setAttribute('cursor','pointer');    
     
     if ( ! targetElement.addEventListener) {
@@ -988,12 +978,53 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.attachEvent(name,func);
         }
     }
+    targetElement.addEventListener('touchstart',function(e) {
+        if (e.targetTouches.length == 2) {
+            for (var i = 0; i < e.targetTouches.length; i++ ) {
+                if (e.targetTouches[i].target != targetElement) {
+                    return;
+                }
+            }
+            var positions = mousePosition(e.targetTouches[0]);
+            self.oX = positions[0];
+            self.oY = positions[1];
+            self.dragging = true;
+            self.dX = self.targetElement.scrollLeft;
+            self.dY = self.targetElement.scrollTop;
+//            self.dX = parseInt((self.targetElement.style.left+'').replace('px','')||'0');
+//            self.dY = parseInt((self.targetElement.style.top+'').replace('px','')||'0');
+            targetElement.style.position = 'relative';
+            e.preventDefault();
+        }
+    },false);
+
+    targetElement.addEventListener('touchmove',function(e) {
+        if (e.targetTouches.length != 2) {
+            self.oX = 0;
+            self.oY = 0;
+            self.dX = null;
+            self.dY = null;
+            self.dragging = false;
+            return;
+        }
+
+        if (!self.dragging) {
+           return;
+        }
+        var positions = mousePosition(e.targetTouches[0]);
+        var new_left = self.dX + (self.oX - positions[0]);
+        var new_top = self.dY + (self.oY - positions[1]);
+        
+        self.targetElement.scrollLeft = new_left;
+        self.targetElement.scrollTop = new_top;
+        e.preventDefault(true);        
+    },false);
 
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
         targetElement.addEventListener('mouseup', mouseUp, false);
-        targetElement.addEventListener('mouseout',mouseOut, false);
+        targetElement.addEventListener('mouseout',mouseOut, false);        
     } else {
         targetElement.addEventListener('mousedown', mouseDown, false);
         targetElement.addEventListener('mousemove', mouseMove, false);        
