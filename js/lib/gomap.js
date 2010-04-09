@@ -1023,6 +1023,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dragging = false;
         }
 
+        var positions = mousePosition(e.targetTouches[0]);
+        
+        if ((2*Math.abs(self.oX - positions[0])) < Math.abs(self.oY - positions[1])) {
+            self.dragging = false;
+        }
+
         if (!self.dragging) {
             self.oX = 0;
             self.oY = 0;
@@ -1032,7 +1038,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         }
         
         
-        var positions = mousePosition(e.targetTouches[0]);
         var new_left = self.dX + (self.oX - positions[0]);
         var new_top = self.dY + (self.oY - positions[1]);
         
