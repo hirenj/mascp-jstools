@@ -210,37 +210,45 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         an_array._old_push = an_array.push;
         an_array._event_proxy = new Object();
         
-        var event_func = function(ev) {
+        var click_func = function(ev) {
             var target_el = this;
             
-            if (ev.type != 'mousemove' && target_el._longclick) {
-                window.clearTimeout(target_el._longclick);
-            }
-            if (ev.type == 'click' && target_el._consume_click) {
+            if (target_el._consume_click) {
                 target_el._consume_click = false;
                 return;
             }
-            if (ev.type == 'touchstart' && ev.touches.length == 1) {
-                target_el._slide_start = true;
+            
+            if (target_el._first_click) {
+                window.clearTimeout(target_el._first_click);
+                target_el._first_click = null;
+                jQuery(an_array._event_proxy).trigger('dblclick',[ev]);
+                return;
             }
-            if (ev.type == 'touchmove' && ev.touches.length == 1) {
-                if (target_el._slide_start) {
-                    jQuery(an_array._event_proxy).trigger('slide',[ev]);
-                    target_el._slide_start = false;
-                    target_el._consume_click = true;                    
-                }
+            
+            target_el._first_click = window.setTimeout(function() {
+                target_el._first_click = null;
+                jQuery(an_array._event_proxy).trigger('click',[ev]);
+            },250);
+            
+            return;            
+        };
+        
+        var event_func = function(ev) {
+            var target_el = this;
+            
+            if ((ev.type != 'mousemove' && ev.type != 'touchmove') && target_el._longclick) {
+                window.clearTimeout(target_el._longclick);
+                target_el._longclick = null;
             }
-            if (ev.type == 'touchend') {
-                target_el._slide_start = false;
-            }
-            if (ev.type == 'mousedown' ) {
+
+            if (ev.type == 'mousedown' || (ev.type == 'touchstart' && ev.touches.length == 1)) {
                 target_el._longclick = window.setTimeout(function() {
                     target_el._longclick = null;
                     jQuery(an_array._event_proxy).trigger('longclick',[ev]);
                     target_el._consume_click = true;
                 },500);
             }
-            
+
             jQuery(an_array._event_proxy).trigger(ev.type,[ev]);
         };
         
@@ -252,13 +260,16 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             if (new_el._has_proxy) {
                 return;
             }
-            var event_names = ['mouseover','mousedown','mousemove','mouseout','click','mouseup','mouseenter','mouseleave'];
+            var event_names = ['mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
             for (var i = 0 ; i < event_names.length; i++) {
                 jQuery(new_el).bind(event_names[i], event_func);
             }
-            new_el.addEventListener('touchstart',event_func,false);
-            new_el.addEventListener('touchmove',event_func,false);
-            new_el.addEventListener('touchend',event_func,false);
+            jQuery(new_el).bind('click',click_func,false);
+            if (new_el.addEventListener) {
+                new_el.addEventListener('touchstart',event_func,false);
+                new_el.addEventListener('touchmove',event_func,false);
+                new_el.addEventListener('touchend',event_func,false);
+            }
             new_el._has_proxy = true;
         };
         return an_array;
@@ -730,7 +741,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             }
             renderer.refresh();
         });
-        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','longclick','mouseup','mouseenter','mouseleave','slide'];
+        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','longclick','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event) {
                 jQuery(layer).trigger(ev.type,[original_event]);
@@ -884,13 +895,6 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
         }
     });
     jQuery(layer).bind('longclick',function(ev) {
-        expanded = ! expanded;
-        self.withoutRefresh(function() {
-            self.setGroupVisibility(group,expanded);            
-        });
-        self.refresh(true);
-    });
-    jQuery(layer).bind('slide',function(ev) {
         expanded = ! expanded;
         self.withoutRefresh(function() {
             self.setGroupVisibility(group,expanded);            
