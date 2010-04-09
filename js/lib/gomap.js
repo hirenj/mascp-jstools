@@ -837,6 +837,15 @@ GOMap.Diagram.Dragger = function() {
  */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
+
+    var left_gradient = jQuery('<div style="background: -moz-linear-gradient(left, rgba(255,255,255,1), rgba(255,255,255,0)); background-image: -webkit-gradient(linear, left top, right top, from(rgba(255,255,255,1)), to(rgba(255,255,255,0))); background-repeat: repeat; width: 50px; height: 100%; position: absolute; top: 0px; left: -1px; z-index: 5000;"></div>')[0];
+    var right_gradient = jQuery('<div style="background: -moz-linear-gradient(left, rgba(255,255,255,0), rgba(255,255,255,1)); background-image: -webkit-gradient(linear, left top, right top, from(rgba(255,255,255,0)), to(rgba(255,255,255,1))); background-repeat: repeat; width: 50px; height: 100%; position: absolute; top: 0px; right: -1px; z-index: 5000;"></div>')[0];
+    left_gradient.style.display = 'none';    
+
+    if (this.targetElement) {    
+        jQuery(this.targetElement).append(left_gradient).append(right_gradient);
+    }
+
     var svgMouseDown = function(evt) {
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -896,6 +905,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 //        this.style.cursor = '-moz-grabbing';
         targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
         targetElement.scrollTop = self.dY + (self.oY - positions[1]);
+        
+        if (targetElement.scrollLeft == 0) {
+            left_gradient.style.display = 'none';
+        } else {
+            console.log("I am changing");
+            left_gradient.style.display = 'block';
+        }
+        
         evt.preventDefault(true);
     };
     
@@ -919,6 +936,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (self.targetElement) {
             self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
             self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);
+
+            if (self.targetElement.scrollLeft == 0) {
+                left_gradient.style.display = 'none';
+            } else {
+                left_gradient.style.display = 'block';
+            }
+
           return;
         }
 
@@ -984,7 +1008,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     },false);
     
     targetElement.addEventListener('touchstart',function(e) {
-        if (e.touches.length == 2) {
+        if (e.touches.length == 1) {
             var positions = mousePosition(e.targetTouches[0]);
             self.oX = positions[0];
             self.oY = positions[1];
@@ -995,7 +1019,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     },false);
 
     targetElement.addEventListener('touchmove',function(e) {
-        if (e.touches.length != 2) {
+        if (e.touches.length != 1) {
             self.dragging = false;
         }
 
@@ -1014,8 +1038,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         
         self.targetElement.scrollLeft = new_left;
         self.targetElement.scrollTop = new_top;
+        
+        if (self.targetElement.scrollLeft == 0) {
+            left_gradient.style.display = 'none';
+        } else {
+            left_gradient.style.display = 'block';            
+        }
+        
         e.preventDefault(true);        
     },false);
+    
 
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);

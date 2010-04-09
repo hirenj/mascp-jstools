@@ -453,6 +453,8 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     container.style.height = '100%';
     
     jQuery(this._container).append(container);
+    
+    
 
     var canvas = this._createCanvasObject();
 
