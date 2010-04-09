@@ -45,11 +45,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     // Render Scale
 
 
-    document.addEventListener('touchstart',function() {
-    },false);
-    document.addEventListener('touchmove',function() {
-    },false);    
-    
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
     jQuery(MASCP).bind('layerRegistered', function(e,layer) {

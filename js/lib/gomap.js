@@ -978,6 +978,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.attachEvent(name,func);
         }
     }
+    
     targetElement.addEventListener('touchstart',function(e) {
         if (e.targetTouches.length == 2) {
             for (var i = 0; i < e.targetTouches.length; i++ ) {
@@ -991,9 +992,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dragging = true;
             self.dX = self.targetElement.scrollLeft;
             self.dY = self.targetElement.scrollTop;
-//            self.dX = parseInt((self.targetElement.style.left+'').replace('px','')||'0');
-//            self.dY = parseInt((self.targetElement.style.top+'').replace('px','')||'0');
-            targetElement.style.position = 'relative';
             e.preventDefault();
         }
     },false);
@@ -1033,6 +1031,24 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     }
 
 };
+
+
+GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
+    touchElement.addEventListener('gesturestart',function(e) {
+        var zoomStart = zoomElement.zoom;
+        var zoomscale = function(ev) {
+            zoomElement.zoom = zoomStart * ev.scale;
+            ev.preventDefault();
+        };
+        this.addEventListener('gesturechange',zoomscale,false);
+        this.addEventListener('gestureend',function(ev) {
+            touchElement.removeEventListener('gesturechange',zoomscale);
+            touchElement.removeEventListener('gesturechange',arguments.callee);            
+        },false);        
+    },false);
+
+}
+
 /**
  * Given an element that implements a zoom attribute, creates a div that contains controls for controlling the zoom attribute. The
  * zoomElement must have a zoom attribute, and can fire the zoomChange event whenever the zoom value is changed on the object. The
