@@ -837,7 +837,6 @@ GOMap.Diagram.Dragger = function() {
  */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
-    console.log(targetElement);
     var svgMouseDown = function(evt) {
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -978,37 +977,37 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.attachEvent(name,func);
         }
     }
+    targetElement.addEventListener('gesturechange',function(e) {
+        if (e.scale < 0.9 || e.scale > 1.1) {
+            self.dragging = false;
+        }
+    },false);
     
     targetElement.addEventListener('touchstart',function(e) {
-        if (e.targetTouches.length == 2) {
-            for (var i = 0; i < e.targetTouches.length; i++ ) {
-                if (e.targetTouches[i].target != targetElement) {
-                    return;
-                }
-            }
+        if (e.touches.length == 2) {
             var positions = mousePosition(e.targetTouches[0]);
             self.oX = positions[0];
             self.oY = positions[1];
             self.dragging = true;
             self.dX = self.targetElement.scrollLeft;
             self.dY = self.targetElement.scrollTop;
-            e.preventDefault();
         }
     },false);
 
     targetElement.addEventListener('touchmove',function(e) {
-        if (e.targetTouches.length != 2) {
-            self.oX = 0;
-            self.oY = 0;
-            self.dX = null;
-            self.dY = null;
+        if (e.touches.length != 2) {
             self.dragging = false;
-            return;
         }
 
         if (!self.dragging) {
-           return;
+            self.oX = 0;
+            self.oY = 0;
+            self.dX = null;
+            self.dY = null;            
+            return;
         }
+        
+        
         var positions = mousePosition(e.targetTouches[0]);
         var new_left = self.dX + (self.oX - positions[0]);
         var new_top = self.dY + (self.oY - positions[1]);
