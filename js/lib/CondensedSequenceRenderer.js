@@ -507,6 +507,29 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         });
         glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
         defs.appendChild(glow);
+
+        // 
+        // 'filterUnits':'objectBoundingBox',
+        // 'x':'-2%',
+        // 'y':'-2%',
+        // 'width':'120%',
+        // 'height':'120%'
+
+        var shadow = makeEl('filter',{
+            'id':'drop_shadow',
+            'filterUnits':'objectBoundingBox',
+            'x': '-100%',
+            'y': '-100%',
+            'width': '300%',
+            'height': '300%'
+        });
+        shadow.appendChild(makeEl('feGaussianBlur',{'in':'SourceAlpha', 'stdDeviation':'50','result':'blur_out'}));        
+        shadow.appendChild(makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'50','dy':'50'}));
+        shadow.appendChild(makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
+        
+        defs.appendChild(shadow);
+
+
         
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
@@ -621,6 +644,8 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     rect.style.strokeWidth = '0px';
     rect.setAttribute('display', 'none');
     rect.style.fill = MASCP.layers[layerName].color;
+
+//    rect.setAttribute('filter','url(#drop_shadow)');
 
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(shine);    

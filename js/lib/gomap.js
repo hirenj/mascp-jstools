@@ -1009,7 +1009,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     targetElement.addEventListener('touchstart',function(e) {
         if (e.touches.length == 1) {
-            var positions = mousePosition(e.targetTouches[0]);
+            var positions = mousePosition(e.touches[0]);
             self.oX = positions[0];
             self.oY = positions[1];
             self.dragging = true;
@@ -1018,14 +1018,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         }
     },false);
 
+    var momentum = 0;
+
     targetElement.addEventListener('touchmove',function(e) {
         if (e.touches.length != 1) {
             self.dragging = false;
         }
 
-        var positions = mousePosition(e.targetTouches[0]);
+        var positions = mousePosition(e.touches[0]);
         
-        if ((2*Math.abs(self.oX - positions[0])) < Math.abs(self.oY - positions[1])) {
+        if ((6*Math.abs(self.oX - positions[0])) < Math.abs(self.oY - positions[1])) {
             self.dragging = false;
         }
 
@@ -1033,10 +1035,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.oX = 0;
             self.oY = 0;
             self.dX = null;
-            self.dY = null;            
+            self.dY = null;
             return;
         }
         
+        
+        momentum = self.oX - positions[0];
         
         var new_left = self.dX + (self.oX - positions[0]);
         var new_top = self.dY + (self.oY - positions[1]);
@@ -1053,6 +1057,27 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         e.preventDefault(true);        
     },false);
     
+    targetElement.addEventListener('touchend',function(e) {
+        window.setTimeout(function() {
+            if (! self.dragging ) {
+                return;
+            }
+            var new_left = self.dX + momentum;
+            self.dX = new_left;
+            momentum = momentum / 1.05 ;
+            self.targetElement.scrollLeft = new_left;
+            if (self.targetElement.scrollLeft == 0) {
+                left_gradient.style.display = 'none';
+            } else {
+                left_gradient.style.display = 'block';            
+            }
+            if (Math.abs(momentum) > 2) {
+                window.setTimeout(arguments.callee,2);
+            } else {
+                self.dragging = false;                
+            }
+        },2);
+    });
 
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
