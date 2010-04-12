@@ -125,8 +125,7 @@ GOMap.Diagram = function(image,params) {
     this.element.addEventListener('load',function() {
         var object_el = this;
         if (! this.nodeName) {
-            log(this);
-            log("The SVG hasn't been loaded properly");
+            console.log("The SVG hasn't been loaded properly");
             return;
         }
         if (object_el.contentDocument != null) {
@@ -460,7 +459,7 @@ GOMap.Diagram.prototype.makeInteractive = function() {
     try {
         var foo = root.addEventListener;
     } catch(err) {
-        log("Browser does not support addEventListener");
+        console.log("Browser does not support addEventListener");
         return;
     }
     new GOMap.Diagram.Dragger().applyToElement(root);
@@ -849,7 +848,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var svgMouseDown = function(evt) {
       var positions = mousePosition(evt);
       self.dragging = true;
+
       if (self.targetElement) {
+
           self.oX = positions[0];
           self.oY = positions[1];
           self.dX = self.targetElement.scrollLeft;
@@ -909,7 +910,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (targetElement.scrollLeft == 0) {
             left_gradient.style.display = 'none';
         } else {
-            console.log("I am changing");
             left_gradient.style.display = 'block';
         }
         
@@ -927,12 +927,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
     
     var svgMouseMove = function(evt) {
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
         var positions = mousePosition(evt);
         if (!self.dragging) {
             return;
         }
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
+        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
         if (self.targetElement) {
             self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
             self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);
@@ -977,13 +977,17 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
 
     var mouseOut = function(e) {
-
-        if (this == e.relatedTarget) {
-            mouseUp(e);
+        if (!self.dragging) {
             return;
         }
-
-        var toTarget = e.relatedTarget || e.toElement;
+        if (this == self.targetElement) {
+            mouseUp(e);
+        }
+        if ( e.target != this ) {
+            return;
+        }
+        
+        var toTarget = e.relatedTarget ? e.relatedTarget : e.toElement;
         
         while (toTarget != null) {
             if (toTarget == this) {
@@ -1008,13 +1012,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     },false);
     
     targetElement.addEventListener('touchstart',function(e) {
+        var targ = self.targetElement ? self.targetElement : targetElement;
         if (e.touches.length == 1) {
             var positions = mousePosition(e.touches[0]);
             self.oX = positions[0];
             self.oY = positions[1];
             self.dragging = true;
-            self.dX = self.targetElement.scrollLeft;
-            self.dY = self.targetElement.scrollTop;
+            self.dX = targ.scrollLeft;
+            self.dY = targ.scrollTop;
         }
     },false);
 
@@ -1044,11 +1049,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         
         var new_left = self.dX + (self.oX - positions[0]);
         var new_top = self.dY + (self.oY - positions[1]);
+
+        var targ = self.targetElement ? self.targetElement : targetElement;
         
-        self.targetElement.scrollLeft = new_left;
-        self.targetElement.scrollTop = new_top;
+        targ.scrollLeft = new_left;
+        targ.scrollTop = new_top;
         
-        if (self.targetElement.scrollLeft == 0) {
+        if (targ.scrollLeft == 0) {
             left_gradient.style.display = 'none';
         } else {
             left_gradient.style.display = 'block';            
@@ -1065,8 +1072,11 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             var new_left = self.dX + momentum;
             self.dX = new_left;
             momentum = momentum / 1.05 ;
-            self.targetElement.scrollLeft = new_left;
-            if (self.targetElement.scrollLeft == 0) {
+
+            var targ = self.targetElement ? self.targetElement : targetElement;
+
+            targ.scrollLeft = new_left;
+            if (targ.scrollLeft == 0) {
                 left_gradient.style.display = 'none';
             } else {
                 left_gradient.style.display = 'block';            
@@ -1083,7 +1093,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
         targetElement.addEventListener('mouseup', mouseUp, false);
-        targetElement.addEventListener('mouseout',mouseOut, false);        
+        targetElement.addEventListener('mouseout',mouseOut, false); 
+        if (self.targetElement) {
+            self.targetElement.addEventListener('mouseout',mouseOut,false);
+        }
     } else {
         targetElement.addEventListener('mousedown', mouseDown, false);
         targetElement.addEventListener('mousemove', mouseMove, false);        
