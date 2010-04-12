@@ -1077,7 +1077,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 self.dragging = false;                
             }
         },2);
-    });
+    },false);
 
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
