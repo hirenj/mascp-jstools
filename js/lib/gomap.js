@@ -864,16 +864,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       p.x = positions[0];
       p.y = positions[1];
 
-      var rootCTM = targetElement.getScreenCTM();
-      self.inverseRootCTM = rootCTM.inverse();
+      var rootCTM = this.getScreenCTM();
+      self.matrix = rootCTM.inverse();
+      
+      p = p.matrixTransform(self.matrix);
 
-      p = p.matrixTransform(self.inverseRootCTM);
+      self.dX = targetElement.currentTranslate.getX ? targetElement.currentTranslate.getX() : targetElement.currentTranslate.x;
+      self.dY = targetElement.currentTranslate.getY ? targetElement.currentTranslate.getY() : targetElement.currentTranslate.y;
 
-      var cur_x = targetElement.currentTranslate.x || targetElement.currentTranslate.getX();
-      var cur_y = targetElement.currentTranslate.y || targetElement.currentTranslate.getY();
-
-      self.oX = p.x - self.dX - cur_x;
-      self.oY = p.y - self.dY - cur_y;
+      self.oX = p.x;
+      self.oY = p.y;
 
       evt.preventDefault(true);
     };
@@ -951,13 +951,50 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
         p.x = positions[0];
         p.y = positions[1];
-        
-        p = p.matrixTransform(self.inverseRootCTM);
-        p.x -= self.oX;
-        p.y -= self.oY;
 
-        self.dX = p.x;
-        self.dY = p.y;
+        console.log(p.x);
+
+        var rootCTM = targetElement.getScreenCTM();
+        p = p.matrixTransform(self.matrix);
+        
+        var viewBoxScale = 1;
+        var vbox = targetElement.getAttribute('viewBox');
+
+        var min_x,min_y,width,height;
+
+        if (vbox) {
+            var viewBox = targetElement.getAttribute('viewBox').split(' ');
+            viewBoxScale = parseFloat(targetElement.style.width) / parseFloat(viewBox[2]);
+            min_x = 0; //parseInt(viewBox[0]);
+            min_y = parseInt(viewBox[1]);
+            width = parseInt(viewBox[2]);
+            height = parseInt(viewBox[3]);
+        }
+
+        
+        
+        p.x = viewBoxScale*(p.x - self.oX);
+        p.y = viewBoxScale*(p.y - self.oY);
+
+        p.x += self.dX;
+        p.y += self.dY;
+        
+        
+        p.y = 0;
+        
+        if (p.x > viewBoxScale * min_x) {
+            p.x = viewBoxScale * min_x;
+        }
+        if (Math.abs(p.x) > 0.90 * viewBoxScale * width ) {
+            p.x = -0.90 * viewBoxScale * width;
+        }
+        
+        if (p.y > viewBoxScale * min_y) {
+            p.y = viewBoxScale * min_y;
+        }
+        if (Math.abs(p.y) > 0.50*viewBoxScale * height ) {
+            p.y = -0.50 * viewBoxScale * height;
+        }
 
         if (targetElement.currentTranslate.setXY) {
             targetElement.currentTranslate.setXY(p.x,p.y);

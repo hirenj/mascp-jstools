@@ -28,7 +28,12 @@
             font-family: Verdana, Helvetica, Arial, sans-serif;
             font-size: 11pt;
         }
-                
+        h1 span {
+            display: block;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
         .track {
             position: relative;
         }
@@ -99,17 +104,26 @@
             border: 0px;
         }
         
+        #controls {
+            font-size: 30pt;
+            width: 1em;
+            height: 1em;
+            background: #dddddd;
+        }
+        
+        #controls span {
+            display: none;
+        }
         
     </style>
 </head>
 
 <body>
 <div style="position: absolute; top: 10px; right: 10px; width: 50%;">
-<h1 style="position: absolute; right: 0px; top: 0px;">MASCP AggreGATOR <img style="height: 50px; top: 50%;" src="gator.png" /></h1>
+<h1 style="position: absolute; right: 0px; top: 0px; margin: 0px; width: 100%;"><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; right: 0px; position: absolute;" src="gator.png" /></h1>
 </div>
-<div id="agi_input" style="height: 70px; margin-bottom: 10px;">
-    <label for="agi">AGI </label><input id="agi" type="text" name="agi" value="at3g15450.1"/><br/>
-    <input type="button" id="controls" value="Settings"/>
+<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative;">
+    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><button id="controls"><span>Settings</span></button>
 </div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -123,7 +137,7 @@
 </ul>
 </div>
 <div style="position: relative;">
-<div style="overflow: auto; width: auto; height: 100%;">
+<div style="overflow: hidden; width: auto; height: 100%;">
 <div id="condensed_container"></div>
 <div id="hydropathy_container" style="margin-bottom: 10px;">
 </div>
@@ -156,7 +170,7 @@
             }
             zoom_controls.style.zIndex = 2;
             var dragger = new GOMap.Diagram.Dragger();
-            dragger.targetElement = document.getElementById('condensed_container').parentNode;
+//            dragger.targetElement = document.getElementById('condensed_container').parentNode;
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
             jQuery(MASCP.renderer).bind('sequenceChange', function() {
