@@ -87,9 +87,12 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     
     canvas.addEventListener('load',function() {
         var container_canv = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
+        var nav_group = document.createElementNS(svgns,'g');
         renderer._nav_canvas = document.createElementNS(svgns,'svg');
+        
         var group = document.createElementNS(svgns,'g');        
         renderer._canvas = document.createElementNS(svgns,'svg');
+
         var canvas_rect = document.createElementNS(svgns,'rect');
         canvas_rect.setAttribute('x','-10%');
         canvas_rect.setAttribute('y','-10%');
@@ -101,11 +104,20 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         container_canv.appendChild(group);        
         group.appendChild(renderer._canvas);
         
-        container_canv.appendChild(renderer._nav_canvas);
-        renderer._canvas.currentTranslate.__proto__.setXY = function(x,y) {
+        container_canv.appendChild(nav_group);
+        nav_group.appendChild(renderer._nav_canvas);
+
+
+        renderer._canvas.setCurrentTranslateXY = function(x,y) {
                 group.setAttribute('transform','translate('+x+' '+y+')');            
-                this.x = x;
-                this.y = y;
+                this.currentTranslate.x = x;
+                this.currentTranslate.y = y;
+        };
+
+        renderer._nav_canvas.setCurrentTranslateXY = function(x,y) {
+                nav_group.setAttribute('transform','translate('+x+' '+y+')');            
+                this.currentTranslate.x = x;
+                this.currentTranslate.y = y;
         };
 
         renderer._addNav();
@@ -120,20 +132,139 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 };
 
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
-    this._extendWithSVGApi(this._nav_canvas);
-    var rect = this._nav_canvas.rect(0,0,1,1);
-    rect.setAttribute('width','25%');
-    rect.setAttribute('height','100%');
-    rect.setAttribute('x','-10');
+    this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
+};
+
+MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
+    this._RS = 1;
+    this._extendWithSVGApi(canvas);
+    this._buildNavPane(canvas);
+    
+    var track_canvas = document.createElementNS(svgns,'svg');    
+    this._buildTrackPane(track_canvas);
+
+    canvas.appendChild(track_canvas);
+};
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
+
+    var rect = canvas.rect(-10,0,'200px','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
     rect.setAttribute('opacity','0.8');
+    rect.style.stroke = '#000000';
+    rect.style.strokeWidth = '2px';
     rect.style.fill = '#000000';
-    var button_canvas = document.createElementNS(svgns,'svg');
-    this._nav_canvas.appendChild(button_canvas);
-    this._nav_canvas._buttons = button_canvas;
-    this._extendWithSVGApi(this._nav_canvas._buttons);
     
+    var close_group = canvas.group();
+    
+    var close_button = canvas.circle('179px','12px','10px');
+    close_button.style.fill = '#000000';
+    close_button.style.stroke = '#ffffff';
+    close_button.style.strokeWidth = '2px';
+    
+    close_group.push(close_button);
+    
+    var a_line = canvas.line('174px','7px','184px','17px');
+    a_line.style.stroke = '#ffffff';
+    a_line.style.strokeWidth = '2px';
+
+    close_group.push(a_line);
+    
+    a_line = canvas.line('184px','7px','174px','17px');
+    a_line.style.stroke = '#ffffff';
+    a_line.style.strokeWidth = '2px';
+
+    close_group.push(a_line);
+
+
+    var open_group = canvas.group();
+    
+    var open_button = canvas.circle('199px','12px','10px');
+    open_button.style.fill = '#000000';
+    open_button.style.stroke = '#ffffff';
+    open_button.style.strokeWidth = '2px';
+    
+    open_group.push(open_button);
+    
+    a_line = canvas.line('199px','7px','199px','17px');
+    a_line.style.stroke = '#ffffff';
+    a_line.style.strokeWidth = '2px';
+
+    open_group.push(a_line);
+    
+    a_line = canvas.line('194px','12px','204px','12px');
+    a_line.style.stroke = '#ffffff';
+    a_line.style.strokeWidth = '2px';
+
+    open_group.push(a_line);
+    
+    open_group.style.cursor = 'pointer';
+    open_group.style.display = 'none';
+    
+    var visible = true;
+    
+    var toggler = function() {
+        visible = ! visible;
+        if (visible) {
+            canvas.setCurrentTranslateXY(0,0);
+            open_group.style.display = 'none';
+        } else {
+            canvas.setCurrentTranslateXY(-190,0);
+            open_group.style.display = 'block';
+        }
+    };
+    
+    close_group.addEventListener('click',toggler,false);
+    open_group.addEventListener('click',toggler,false);    
+    
+};
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
+    this._extendWithSVGApi(canvas);
+
+    canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
+    
+    this.clearTracks = function() {
+        while (canvas.firstChild) 
+            canvas.removeChild(canvas.firstChild);
+    };
+    
+    this.setViewBox = function(viewBox) {
+        canvas.setAttribute('viewBox',viewBox);
+    }
+    
+    this.renderTrack = function(track,y,height,options) {
+        var a_text = canvas.text(3*height,y+1.5*height,track.fullname);
+        a_text.setAttribute('height', 2*height);
+        a_text.setAttribute('font-size',2*height);
+        a_text.setAttribute('width','200');
+        a_text.setAttribute('fill','#ffffff');
+        
+        // var a_rect = canvas.rect(0,y-0.5*height,'100%',2*height);
+        // a_rect.setAttribute('stroke','#000000');
+        // a_rect.setAttribute('stroke-width','2');
+        // a_rect.setAttribute('fill','none');
+        // a_rect.style.zIndex = '-1000';
+        
+        if (track._group_controller) {
+            var group_toggler = canvas.text(height,y+1.5*height, track._isExpanded() ? '▼' : '▶');
+            group_toggler.setAttribute('height', 2*height);
+            group_toggler.setAttribute('font-size',2*height);
+            group_toggler.setAttribute('width','200');
+            group_toggler.setAttribute('fill','#ffffff');
+            group_toggler.style.cursor = 'pointer';
+            group_toggler.addEventListener('click',function() {
+                jQuery(track).trigger('longclick');
+                if (track._isExpanded()) {
+                    group_toggler.textContent = '▼';
+                } else {
+                    group_toggler.textContent = '▶';                    
+                }
+            });
+        }
+        
+    };
 };
 
 MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
@@ -150,12 +281,41 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
       return a_path;
     };
 
+    canvas.circle = function(x,y,radius) {
+        var a_circle = document.createElementNS(svgns,'circle');
+        a_circle.setAttribute('cx', typeof x == 'string' ? x : x * RS);
+        a_circle.setAttribute('cy', typeof y == 'string' ? y : y * RS);
+        a_circle.setAttribute('r', typeof radius == 'string' ? radius : radius * RS);        
+        this.appendChild(a_circle);
+        return a_circle;
+    };
+
+    canvas.group = function() {
+        var a_g = document.createElementNS(svgns,'g');
+        this.appendChild(a_g);
+        a_g.push = function(new_el) {
+            a_g.appendChild(new_el);
+        };
+        
+        return a_g;
+    };
+    
+    canvas.line = function(x,y,x2,y2) {
+        var a_line = document.createElementNS(svgns,'line');
+        a_line.setAttribute('x1', typeof x == 'string' ? x : x * RS);
+        a_line.setAttribute('y1', typeof y == 'string' ? y : y * RS);
+        a_line.setAttribute('x2', typeof x2 == 'string' ? x2 : x2 * RS);
+        a_line.setAttribute('y2', typeof y2 == 'string' ? y2 : y2 * RS);
+        this.appendChild(a_line);
+        return a_line;        
+    };
+
     canvas.rect = function(x,y,width,height) {
       var a_rect = document.createElementNS(svgns,'rect');
-      a_rect.setAttribute('x', x * RS);
-      a_rect.setAttribute('y', y * RS);
-      a_rect.setAttribute('width', width * RS);
-      a_rect.setAttribute('height', height * RS);
+      a_rect.setAttribute('x', typeof x == 'string' ? x : x * RS);
+      a_rect.setAttribute('y', typeof y == 'string' ? y : y * RS);
+      a_rect.setAttribute('width', typeof width == 'string' ? width : width * RS);
+      a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
       a_rect.setAttribute('stroke','#000000');
       this.appendChild(a_rect);
       return a_rect;
@@ -320,12 +480,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         var a_text = document.createElementNS(svgns,'text');
         a_text.textContent = text;
         a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
-        a_text.setAttribute('x',x * RS);
-        a_text.setAttribute('y',y * RS);        
+        a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
+        a_text.setAttribute('y',typeof y == 'string' ? y : y * RS);        
         this.appendChild(a_text);
         return a_text;
     };    
 };
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype._extendWithSVGApi = MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi;
 
 MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var RS = this._RS;
@@ -934,8 +1096,8 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         this._nav_canvas.style.width = '100px';
         this._nav_canvas.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS);
 
-//        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
-//        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
+        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
+        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
     }
 };
 
@@ -959,6 +1121,10 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     var sticky = false;
     
     var self = this;
+    
+    layer._isExpanded = function() {
+        return expanded;
+    }
     
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
         if (rend == self) {
@@ -988,11 +1154,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._track_order ) {
         return;
     }
-    while (this._nav_canvas._buttons.firstChild) 
-     {
-        //The list is LIVE so it will re-index each call
-        this._nav_canvas._buttons.removeChild(this._nav_canvas._buttons.firstChild);
-     };
+    
+    this._Navigation.clearTracks();
     
     for (var i = 0; i < this._track_order.length; i++ ) {
         if (! this.isLayerActive(this._track_order[i])) {
@@ -1013,13 +1176,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
             track_heights += this.zoom * (track_height) + this.trackGap;
         } else {
             this._layer_containers[this._track_order[i]].attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom },animated);
-            var a_text = this._nav_canvas._buttons.text(0,(this._axis_height + (this._layer_containers[this._track_order[i]].track_height + track_heights) / this.zoom ),MASCP.getLayer(this._track_order[i]).fullname);
-
-            a_text.setAttribute('x', 50);
-            a_text.setAttribute('height', 2*(this._layer_containers[this._track_order[i]].track_height / this.zoom) *RS);
-            a_text.setAttribute('font-size',2*(this._layer_containers[this._track_order[i]].track_height / this.zoom) *RS);
-            a_text.setAttribute('width','200');
-            a_text.setAttribute('fill','#ffffff');
+            this._Navigation.renderTrack(MASCP.getLayer(this._track_order[i]), (this._axis_height + track_heights / this.zoom )*RS , RS * this._layer_containers[this._track_order[i]].track_height / this.zoom );
             track_heights += this._layer_containers[this._track_order[i]].track_height + this.trackGap;
         }
     }
@@ -1030,13 +1187,11 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];
-    
-    
-    this._nav_canvas._buttons.setAttribute('preserveAspectRatio','xMinYMin meet');
-    
+        
+
     viewBox[0] = 0;
     
-    this._nav_canvas._buttons.setAttribute('viewBox',viewBox.join(' '));
+    this._Navigation.setViewBox(viewBox.join(' '));
 
     this._resizeContainer();
 

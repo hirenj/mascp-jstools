@@ -996,7 +996,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             p.y = -0.50 * viewBoxScale * height;
         }
 
-        if (targetElement.currentTranslate.setXY) {
+        if (targetElement.setCurrentTranslateXY) {
+            targetElement.setCurrentTranslateXY(p.x,p.y);
+        } else if (targetElement.currentTranslate.setXY) {
             targetElement.currentTranslate.setXY(p.x,p.y);
         } else {
             targetElement.currentTranslate.x = p.x;
