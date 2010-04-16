@@ -6,7 +6,7 @@
  *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
  *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
  */
-if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined')) {
+if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
 
     // var svg_path = 'svgweb/';
     // if (typeof SVGWEB_PATH != 'undefined') {
@@ -169,7 +169,11 @@ GOMap.Diagram = function(image,params) {
  */
 GOMap.Diagram.prototype.appendTo = function(parent) {
     this._container = parent;
-    svgweb.appendChild(this.element,parent);
+    if (typeof svgweb != 'undefined') {
+        svgweb.appendChild(this.element,parent);
+    } else {
+        parent.appendChild(this.element);
+    }
     return this;
 }
 
@@ -1296,7 +1300,7 @@ GOMap.Diagram._scrollZoomControls = function(controlElement,target,precision) {
       isFF = parseFloat(navigator.userAgent.split('Firefox/')[1]) || undefined;
     }                         
 
-    if (isFF && svgweb.getHandlerType() == 'native') {
+    if (isFF && (typeof svgweb != 'undefined')&& svgweb.getHandlerType() == 'native') {
       hookEvent(controlElement, 'mousewheel',
                 mouseWheel);
     } else {

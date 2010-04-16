@@ -8,16 +8,18 @@
     <title>GATOR</title>
 
     <link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
+    <script type="text/javascript">
+    window.svgns = 'http://www.w3.org/2000/svg';
+    </script>
+    <!-- <script type="text/javascript" src="../js/svgweb/svg-uncompressed.js" data-path="../js/svgweb/"></script> -->
 
-    <script type="text/javascript" src="../js/svgweb/svg.js" data-path="../js/svgweb/"></script>
+    <!-- <script type="text/javascript" src="../js/maschup.min.js"></script> -->
 
-    <script type="text/javascript" src="../js/maschup.min.js"></script>
-
-    <!-- <script type="text/javascript" src="../js/maschup.services.min.js"></script>
+    <script type="text/javascript" src="../js/maschup.services.min.js"></script>
 
     <script type="text/javascript" src="../js/lib/gomap.js"></script>
     <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script> -->
+    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>
     
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
@@ -173,6 +175,8 @@
 //            dragger.targetElement = document.getElementById('condensed_container').parentNode;
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
+            console.log("Adding nav");            
+
             jQuery(MASCP.renderer).bind('sequenceChange', function() {
                 var zoomFactor = document.width / (2 * MASCP.renderer.sequence.length);
                 MASCP.renderer.defaultZoom = zoomFactor;
@@ -281,11 +285,12 @@
             
             if (layer.group && layer.group.name == 'atproteome') {
                 jQuery(layer).bind('click',function(e,orig_event,source) {
-                    if (tissue_map.toggleKeyword(layer.data['po'])) {
-                        MASCP.renderer.setHighlight(layer,true);
-                    } else {
-                        MASCP.renderer.setHighlight(layer,false);                        
-                    }
+                    tissue_map.toggleKeyword(layer.data['po']);
+                    // if (tissue_map.toggleKeyword(layer.data['po'])) {
+                    //     MASCP.renderer.setHighlight(layer,true);
+                    // } else {
+                    //     MASCP.renderer.setHighlight(layer,false);                        
+                    // }
                 });
             }
             if (layer.name == 'atproteome_controller') {
@@ -295,13 +300,14 @@
                 jQuery(layer).bind('click',function(e,orig_event,source) {
                     is_highlighted = ! is_highlighted;
                     
-                    MASCP.renderer.setHighlight(layer,is_highlighted);
+//                    MASCP.renderer.setHighlight(layer,is_highlighted);
                     MASCP.getGroup('atproteome').eachLayer(function() {
                         if (is_highlighted) {
-                                MASCP.renderer.setHighlight(this,tissue_map.showKeyword(this.data['po']) && is_open);
+                            tissue_map.showKeyword(this.data['po']);
+                                // MASCP.renderer.setHighlight(this,tissue_map.showKeyword(this.data['po']) && is_open);
                         } else {
                             tissue_map.hideKeyword(this.data['po']);
-                            MASCP.renderer.setHighlight(this,false);                                
+//                            MASCP.renderer.setHighlight(this,false);                                
                         }
                     });
                 });
@@ -309,7 +315,7 @@
                     is_open = ! is_open;
                     MASCP.getGroup('atproteome').eachLayer(function() {
                         if (is_open && is_highlighted && tissue_map.showKeyword(this.data['po'])) {
-                            MASCP.renderer.setHighlight(this,true);
+//                            MASCP.renderer.setHighlight(this,true);
                         } else {
 //                            MASCP.renderer.setHighlight(this,false);                            
                         }
