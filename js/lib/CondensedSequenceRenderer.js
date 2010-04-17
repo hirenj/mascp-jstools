@@ -70,8 +70,10 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     var renderer = this;
 
     if (this._object) {
-        var track_el = this._object.parentNode;        
-        svgweb.removeChild(this._object, this._object.parentNode);
+        var track_el = this._object.parentNode;
+        if (typeof svgweb == 'undefined') {
+            svgweb.removeChild(this._object, this._object.parentNode);
+        }
         track_el.parentNode.removeChild(track_el);
         this._canvas = null;
         this._object = null;
@@ -123,6 +125,10 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         renderer._addNav();
         
         renderer._container_canvas = container_canv;
+        container_canv.setAttribute('preserveAspecRatio','xMinYMin slice');
+        container_canv.setAttribute('width','100%');
+        container_canv.setAttribute('height','100%');
+        
         renderer._canvas._canvas_height = 0;
         renderer._object = this;
         jQuery(renderer).trigger('svgready');
@@ -152,7 +158,7 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
-
+    var self = this;
     var rect = canvas.rect(-10,0,'200px','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
@@ -160,6 +166,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     rect.style.stroke = '#000000';
     rect.style.strokeWidth = '2px';
     rect.style.fill = '#000000';
+
+    // WebKit has problems with clipping paths. Tracking bug: https://bugs.webkit.org/show_bug.cgi?id=15162
 
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
@@ -174,6 +182,13 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     close_group.style.cursor = 'pointer';
     close_group.setAttribute('filter','url(#drop_shadow)');
 
+    var tracks_button = canvas.button('110px','2px','50px','20px','Data');
+    tracks_button.id = 'controls';
+    
+    tracks_button.addEventListener('click',function() {
+        jQuery(self).trigger('click');
+    },false);
+    
     var visible = true;
 
     /*
@@ -186,8 +201,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             canvas.setCurrentTranslateXY(0,0);
             close_group.setAttribute('transform','');
         } else {
-            canvas.setCurrentTranslateXY(-168,0);
-            close_group.setAttribute('transform','rotate(45,179,12) translate(0,0)');
+            canvas.setCurrentTranslateXY(-192,0);
+            close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
         }
         return true;
     };
@@ -220,7 +235,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     this.renderTrack = function(track,y,height,options) {
         var label_group = canvas.group();
 
-        var a_rect = canvas.rect(0,y-0.5*height,'100%',2*height);
+        var a_rect = canvas.rect(0,y-height,'100%',3*height);
         a_rect.setAttribute('stroke','#000000');
         a_rect.setAttribute('stroke-width','2');
         a_rect.setAttribute('fill','url(#simple_gradient)');
@@ -229,11 +244,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         label_group.push(a_rect);
         
         var a_text = canvas.text(3*height,y,track.fullname);
-        a_text.setAttribute('height', 1.5*height);
-        a_text.setAttribute('font-size',1.5*height);
+        a_text.setAttribute('height', 2*height);
+        a_text.setAttribute('font-size',2*height);
         a_text.setAttribute('fill','#ffffff');
-//text-anchor: middle; dominant-baseline: hanging;
-//        a_text.style.textAnchor = 'middle';
         a_text.setAttribute('dominant-baseline', 'hanging');
         
         label_group.push(a_text);
@@ -243,22 +256,38 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             jQuery(track).trigger('click');
             return true;
         },false);
-        label_group.addEventListener('mouseover',function() {
+        
+        var label_begin = function() {
+            
             a_rect.setAttribute('opacity','1');
-            a_text.style.fill = '#dddddd';
+           a_text.style.fill = '#eeeeee';
             return true;
-        },false);
-
-        label_group.addEventListener('mouseout',function() {
+        };
+        
+        var label_end = function() {
             a_rect.setAttribute('opacity','0.1');
             a_text.style.fill = '#ffffff';
             return true;
+        };
+        
+        label_group.addEventListener('touchstart',function() {
+            label_group.onmouseover = undefined;
+            label_group.onmouseout = undefined;
+            label_begin();
         },false);
-        label_group.style.zIndex = -10000;
+        label_group.addEventListener('touchend',function() {
+            label_group.onmouseover = undefined;
+            label_group.onmouseout = undefined;
+            label_end();
+        },false);
+        label_group.addEventListener('mouseover',label_begin,false);
+        label_group.addEventListener('mouseout',label_end,false);
+        label_group.addEventListener('mouseup',label_end,false);
+//        label_group.style.zIndex = -10000;
         if (track._group_controller) {
             var group_toggler = canvas.text(height,y+1.5*height, track._isExpanded() ? '▼' : '▶');
-            group_toggler.setAttribute('height', 2*height);
-            group_toggler.setAttribute('font-size',2*height);
+            group_toggler.setAttribute('height', 1.75*height);
+            group_toggler.setAttribute('font-size',1.75*height);
             group_toggler.setAttribute('fill','#ffffff');
             group_toggler.style.cursor = 'pointer';
             group_toggler.addEventListener('click',function() {
@@ -327,6 +356,46 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
       a_rect.setAttribute('stroke','#000000');
       this.appendChild(a_rect);
       return a_rect;
+    };
+
+    canvas.button = function(x,y,width,height,text) {
+        var button = this.group();
+        var back = this.rect(x,y,width,height);
+        back.setAttribute('rx','10');
+        back.setAttribute('ry','10');
+        back.setAttribute('stroke','#ffffff');
+        back.setAttribute('stroke-width','2');
+        back.setAttribute('fill','url(#simple_gradient)');
+        x = back.x.baseVal.value;
+        y = back.y.baseVal.value;
+        width = back.width.baseVal.value;
+        height = back.height.baseVal.value;
+        
+        var text = this.text(x+width/2,y+(height/3),text);        
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'hanging');
+        text.setAttribute('font-size',0.5*height);
+        text.setAttribute('fill','#ffffff');
+        button.push(back);
+        button.push(text);
+        button.background_element = back;
+        button.text_element = text;
+        
+        button.setAttribute('cursor','pointer');
+        var button_trigger = function() {
+            back.setAttribute('fill','#999999');
+            back.setAttribute('stroke','#000000');
+        };
+        button.addEventListener('mousedown',button_trigger,false);
+        button.addEventListener('touchstart',button_trigger,false);
+        var button_reset = function() {
+            back.setAttribute('stroke','#ffffff');
+            back.setAttribute('fill','url(#simple_gradient)');
+        };
+        button.addEventListener('mouseup',button_reset,false);
+        button.addEventListener('mouseout',button_reset,false);
+        button.addEventListener('touchend',button_reset,false);
+        return button;
     };
 
     canvas.crossed_circle = function(cx,cy,r) {
@@ -716,10 +785,10 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     this._sequence_els = seq_els;
 
-    var container = jQuery('<div class="track"></div>')[0];
-    container.style.height = '100%';
+    // var container = jQuery('<div class="track"></div>')[0];
+    // container.style.height = '100%';
     
-    jQuery(this._container).append(container);
+    // jQuery(this._container).append(container);
     
     
 
@@ -824,9 +893,9 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
        jQuery(this).trigger('svgready');
     } else {
         if (typeof svgweb != 'undefined') {
-            svgweb.appendChild(canvas,container);
+            svgweb.appendChild(canvas,this._container);
         } else {
-            container.appendChild(canvas);
+            this._container.appendChild(canvas);
         }
     }
 };
@@ -1174,14 +1243,9 @@ MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
 MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
     var RS = this._RS;
     if (this._container && this._canvas) {
-        this._canvas.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
-        this._canvas.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';            
-
-//        this._nav_canvas.style.width = '200px';
-//        this._nav_canvas.style.height = this._canvas.style.height;
-
-//        console.log(this._nav_canvas.style.height);
-//        console.log(this._canvas.style.height);
+        this._canvas.setAttribute('width', (this._zoomLevel || 1)*2*this.sequence.length+'px');
+        this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
+        this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
 
         this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
@@ -1277,7 +1341,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];
-
 
     this._resizeContainer();
 

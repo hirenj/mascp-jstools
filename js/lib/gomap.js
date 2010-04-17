@@ -849,6 +849,79 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         jQuery(this.targetElement).append(left_gradient).append(right_gradient);
     }
 
+    var momentum = null;
+
+    if (targetElement.nodeName == 'svg') {
+        targetElement.getPosition = function() {
+            var dX = targetElement.currentTranslate.x;
+            var dY = targetElement.currentTranslate.y;
+
+            return [dX, dY];
+        };
+        targetElement.shiftPosition = function(x,y) {
+            var p = {'x' : x, 'y' : y };
+            var viewBoxScale = 1;
+            var vbox = this.getAttribute('viewBox');
+
+            var min_x,min_y,width,height;
+
+            if (vbox) {
+                var viewBox = this.getAttribute('viewBox').split(' ');
+                viewBoxScale = parseFloat(this.width.baseVal.value) / parseFloat(viewBox[2]);
+                min_x = 0; //parseInt(viewBox[0]);
+                min_y = parseInt(viewBox[1]);
+                width = parseInt(viewBox[2]);
+                height = parseInt(viewBox[3]);
+            }
+
+            p.x = viewBoxScale*(p.x - self.oX);
+            p.y = viewBoxScale*(p.y - self.oY);
+
+            p.x += self.dX;
+            p.y += self.dY;
+
+
+            p.y = 0;
+
+            if (p.x > viewBoxScale * min_x) {
+                p.x = viewBoxScale * min_x;
+            }
+            if (Math.abs(p.x) > 0.90 * viewBoxScale * width ) {
+                p.x = -0.90 * viewBoxScale * width;
+            }
+
+            if (p.y > viewBoxScale * min_y) {
+                p.y = viewBoxScale * min_y;
+            }
+            if (Math.abs(p.y) > 0.50*viewBoxScale * height ) {
+                p.y = -0.50 * viewBoxScale * height;
+            }
+            
+            if (this.setCurrentTranslateXY) {
+                this.setCurrentTranslateXY(p.x,p.y);
+            } else if (this.currentTranslate.setXY) {
+                this.currentTranslate.setXY(p.x,p.y);
+            } else {
+                this.currentTranslate.x = p.x;
+                this.currentTranslate.y = p.y;          
+            }            
+        };
+    } else {
+        targetElement.getPosition = function() {
+            return [this.scrollLeft, this.scrollTop];
+        };
+        targetElement.shiftPosition = function(x,y) {
+            this.scrollLeft = self.dX + (self.oX - x);
+            this.scrollTop = self.dY + (self.oY - y);
+
+            if (this.scrollLeft == 0) {
+                left_gradient.style.display = 'none';
+            } else {
+                left_gradient.style.display = 'block';
+            }
+        }
+    }
+
     var svgMouseDown = function(evt) {
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -873,8 +946,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       
       p = p.matrixTransform(self.matrix);
 
-      self.dX = targetElement.currentTranslate.getX ? targetElement.currentTranslate.getX() : targetElement.currentTranslate.x;
-      self.dY = targetElement.currentTranslate.getY ? targetElement.currentTranslate.getY() : targetElement.currentTranslate.y;
+      self.dX = targetElement.getPosition()[0];
+      self.dY = targetElement.getPosition()[1];
 
       self.oX = p.x;
       self.oY = p.y;
@@ -907,15 +980,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
            return;
         }
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
-//        this.style.cursor = '-moz-grabbing';
-        targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
-        targetElement.scrollTop = self.dY + (self.oY - positions[1]);
-        
-        if (targetElement.scrollLeft == 0) {
-            left_gradient.style.display = 'none';
-        } else {
-            left_gradient.style.display = 'block';
-        }
+
+        targetElement.shiftPosition(positions[0],positions[1]);
         
         evt.preventDefault(true);
     };
@@ -925,8 +991,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         var positions = mousePosition(evt);
         self.oX = positions[0];
         self.oY = positions[1];
-        self.dX = targetElement.scrollLeft;
-        self.dY = targetElement.scrollTop;
+        self.dX = targetElement.getPosition()[0];
+        self.dY = targetElement.getPosition()[1];
         evt.preventDefault(true);
     };
     
@@ -937,17 +1003,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
+
         if (self.targetElement) {
-            self.targetElement.scrollLeft = self.dX + (self.oX - positions[0]);
-            self.targetElement.scrollTop = self.dY + (self.oY - positions[1]);
-
-            if (self.targetElement.scrollLeft == 0) {
-                left_gradient.style.display = 'none';
-            } else {
-                left_gradient.style.display = 'block';
-            }
-
-          return;
+            self.targetElement.shiftPosition(positions[0],positions[1]);
+            return;
         }
 
         var p = targetElement.createSVGPoint();
@@ -956,58 +1015,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         p.x = positions[0];
         p.y = positions[1];
 
-        console.log(p.x);
-
         var rootCTM = targetElement.getScreenCTM();
         p = p.matrixTransform(self.matrix);
         
-        var viewBoxScale = 1;
-        var vbox = targetElement.getAttribute('viewBox');
-
-        var min_x,min_y,width,height;
-
-        if (vbox) {
-            var viewBox = targetElement.getAttribute('viewBox').split(' ');
-            viewBoxScale = parseFloat(targetElement.style.width) / parseFloat(viewBox[2]);
-            min_x = 0; //parseInt(viewBox[0]);
-            min_y = parseInt(viewBox[1]);
-            width = parseInt(viewBox[2]);
-            height = parseInt(viewBox[3]);
-        }
-
+        targetElement.shiftPosition(p.x,p.y);
         
+        momentum = p.x;
         
-        p.x = viewBoxScale*(p.x - self.oX);
-        p.y = viewBoxScale*(p.y - self.oY);
-
-        p.x += self.dX;
-        p.y += self.dY;
-        
-        
-        p.y = 0;
-        
-        if (p.x > viewBoxScale * min_x) {
-            p.x = viewBoxScale * min_x;
-        }
-        if (Math.abs(p.x) > 0.90 * viewBoxScale * width ) {
-            p.x = -0.90 * viewBoxScale * width;
-        }
-        
-        if (p.y > viewBoxScale * min_y) {
-            p.y = viewBoxScale * min_y;
-        }
-        if (Math.abs(p.y) > 0.50*viewBoxScale * height ) {
-            p.y = -0.50 * viewBoxScale * height;
-        }
-
-        if (targetElement.setCurrentTranslateXY) {
-            targetElement.setCurrentTranslateXY(p.x,p.y);
-        } else if (targetElement.currentTranslate.setXY) {
-            targetElement.currentTranslate.setXY(p.x,p.y);
-        } else {
-            targetElement.currentTranslate.x = p.x;
-            targetElement.currentTranslate.y = p.y;          
-        }
     };
 
     var mouseUp = function(evt) { 
@@ -1026,7 +1040,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (this == self.targetElement) {
             mouseUp(e);
         }
-        if ( e.target != this ) {
+        
+        
+        if ( e.target != this && ! e.currentTarget ) {
             return;
         }
         
@@ -1058,24 +1074,51 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         var targ = self.targetElement ? self.targetElement : targetElement;
         if (e.touches.length == 1) {
             var positions = mousePosition(e.touches[0]);
-            self.oX = positions[0];
-            self.oY = positions[1];
+            var p;
+            if (targ.nodeName == 'svg') {
+                p = targ.createSVGPoint();
+                p.x = positions[0];
+                p.y = positions[1];
+                var rootCTM = this.getScreenCTM();
+                self.matrix = rootCTM.inverse();
+                p = p.matrixTransform(self.matrix);
+            } else {
+                p.x = positions[0];
+                p.y = positions[1];
+            }
+            self.oX = p.x;
+            self.oY = p.y;
+            
             self.dragging = true;
-            self.dX = targ.scrollLeft;
-            self.dY = targ.scrollTop;
+            self.dX = targ.getPosition()[0];
+            self.dY = targ.getPosition()[1];
         }
     },false);
 
-    var momentum = 0;
 
     targetElement.addEventListener('touchmove',function(e) {
+
         if (e.touches.length != 1) {
             self.dragging = false;
         }
 
+        var targ = self.targetElement ? self.targetElement : targetElement;
+
         var positions = mousePosition(e.touches[0]);
+
+        var p;
+        if (targ.nodeName == 'svg') {
+            p = targ.createSVGPoint();
+            p.x = positions[0];
+            p.y = positions[1];
+            p = p.matrixTransform(self.matrix);
+        } else {
+            p.x = positions[0];
+            p.y = positions[1];
+        }
+
         
-        if ((6*Math.abs(self.oX - positions[0])) < Math.abs(self.oY - positions[1])) {
+        if ((6*Math.abs(self.oX - p.x)) < Math.abs(self.oY - p.y)) {
             self.dragging = false;
         }
 
@@ -1086,56 +1129,58 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dY = null;
             return;
         }
+                
+        momentum = p.x;
         
-        
-        momentum = self.oX - positions[0];
-        
-        var new_left = self.dX + (self.oX - positions[0]);
-        var new_top = self.dY + (self.oY - positions[1]);
 
-        var targ = self.targetElement ? self.targetElement : targetElement;
-        
-        targ.scrollLeft = new_left;
-        targ.scrollTop = new_top;
-        
-        if (targ.scrollLeft == 0) {
-            left_gradient.style.display = 'none';
-        } else {
-            left_gradient.style.display = 'block';            
-        }
-        
+        targ.shiftPosition(p.x,p.y);
+
         e.preventDefault(true);        
     },false);
     
-    targetElement.addEventListener('touchend',function(e) {
+    var momentum_func = function(e) {
+        if ( ! self.dragging ) {
+            return;
+        }
+        momentum = self.oX - momentum;
+        var old_x = self.oX;
+        mouseUp(e);
+        return;
+
+        var targ = self.targetElement ? self.targetElement : targetElement;
+        self.dX = targ.getPosition()[0];
+        self.dY = targ.getPosition()[1];
+        self.oX = 0;//old_x - momentum;
+        self.oY = 0;
+        self.momentum = true;
         window.setTimeout(function() {
-            if (! self.dragging ) {
+            if (! self.momentum ) {
                 return;
             }
-            var new_left = self.dX + momentum;
-            self.dX = new_left;
-            momentum = momentum / 1.05 ;
+//            var new_left = self.dX + momentum;
+//            self.oX = 0;
+//            self.dX = targ.getPosition()[0];
+            
+            momentum = momentum / 2;
+            targ.shiftPosition(momentum - self.oX,0);
 
-            var targ = self.targetElement ? self.targetElement : targetElement;
 
-            targ.scrollLeft = new_left;
-            if (targ.scrollLeft == 0) {
-                left_gradient.style.display = 'none';
-            } else {
-                left_gradient.style.display = 'block';            
-            }
             if (Math.abs(momentum) > 2) {
-                window.setTimeout(arguments.callee,2);
+                window.setTimeout(arguments.callee,250);
             } else {
-                self.dragging = false;                
+                self.momentum = false;
             }
         },2);
-    },false);
+    };
+    
+    targetElement.addEventListener('touchend',momentum_func,false);
+
 
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
-        targetElement.addEventListener('mouseup', mouseUp, false);
+//        targetElement.addEventListener('mouseup', mouseUp, false);
+        targetElement.addEventListener('mouseup',momentum_func,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);

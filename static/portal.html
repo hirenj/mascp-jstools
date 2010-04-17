@@ -105,7 +105,7 @@
             font-size: 30pt;
             border: 0px;
         }
-        
+        /*
         #controls {
             font-size: 30pt;
             width: 1em;
@@ -116,7 +116,7 @@
         #controls span {
             display: none;
         }
-        
+        */
     </style>
 </head>
 
@@ -125,7 +125,7 @@
 <h1 style="position: absolute; right: 0px; top: 0px; margin: 0px; width: 100%;"><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; right: 0px; position: absolute;" src="gator.png" /></h1>
 </div>
 <div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative;">
-    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><button id="controls"><span>Settings</span></button>
+    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><button id="contols"><span>Settings</span></button>
 </div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -175,7 +175,6 @@
 //            dragger.targetElement = document.getElementById('condensed_container').parentNode;
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
-            console.log("Adding nav");            
 
             jQuery(MASCP.renderer).bind('sequenceChange', function() {
                 var zoomFactor = document.width / (2 * MASCP.renderer.sequence.length);
@@ -261,11 +260,10 @@
                 },
             }).sortable('toArray'));
 
-            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px', zIndex: 5000});
-            
-            jQuery('#controls').unbind('click').bind('click',function() {
+            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px', position:['50%','50%'], zIndex: 5000});
+            jQuery(MASCP.renderer._Navigation).unbind('click').bind('click',function() {
                 if (! a_dialog.dialog('isOpen')) {
-                    a_dialog.dialog( 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
+                    a_dialog.dialog('open');// 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
                 } else {
                     a_dialog.dialog('close');
                 }
