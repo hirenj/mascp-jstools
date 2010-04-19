@@ -98,10 +98,13 @@ GOMap.Diagram = function(image,params) {
             self._container = image.parentNode;
             self.element = image;
             self._svgLoaded();
-            
+            self.loaded = true;
             if (params['load']) {
                 params['load'].apply(self);
-            }            
+            }
+            if ( self.onload ) {
+                self.onload.apply(self);
+            }
         })();
         return;
     }
@@ -122,7 +125,9 @@ GOMap.Diagram = function(image,params) {
         };
     }
 
-    this.element.addEventListener('load',function() {
+    var has_svgweb = typeof svgweb != 'undefined';
+
+    this.element.addEventListener(has_svgweb ? 'SVGLoad' : 'load',function() {
         var object_el = this;
         if (! this.nodeName) {
             console.log("The SVG hasn't been loaded properly");
@@ -150,9 +155,14 @@ GOMap.Diagram = function(image,params) {
 
         self._svgLoaded();
 
+        self.loaded = true;
         if (params['load']) {
             params['load'].apply(self);
-        }        
+        }
+        if ( self.onload ) {
+            self.onload.apply(self);
+        }
+
     },false);
 
     if (image) {

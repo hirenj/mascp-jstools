@@ -298,10 +298,10 @@ MASCP.Service.prototype.retrieve = function()
     url:        this._endpointURL,
     error:      function(response,req,settings) {
                     jQuery(self).trigger("error");
-                    throw "Error occurred retrieving data for service "+self._endpointURL;
+                    //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
-                    if ( ! xhr.status ) {
+                    if ( xhr.status != null && xhr.status == 0 ) {
                         jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
@@ -332,10 +332,7 @@ MASCP.Service.prototype.retrieve = function()
     if (jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
         this._retrieveIE(request_data);
         return this;
-    }
-    
-    console.log(request_data);
-    
+    }    
     jQuery.ajax(request_data);
     return this;
 };
@@ -364,11 +361,19 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
             var dom = new ActiveXObject("Microsoft.XMLDOM");
             dom.async = false;
             dom.loadXML(xdr.responseText);
-            dataHash.success(dom, 'success');
+            dataHash.success(dom, 'success',xdr);
         } else if (dataHash.dataType == 'json') {
-            dataHash.success(JSON.parse(xdr.responseText),'success');
+            var parsed = null;
+            try {
+                parsed = JSON.parse(xdr.responseText);
+            } catch(err) {
+                dataHash.error(xdr,xdr,{});           
+            }
+            if (parsed) {
+                dataHash.success(parsed,'success',xdr);
+            }
         } else {
-            dataHash.success(xdr.responseText, 'success');
+            dataHash.success(xdr.responseText, 'success', xdr);
         }
     };
     

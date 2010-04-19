@@ -11,16 +11,28 @@
     <script type="text/javascript">
     window.svgns = 'http://www.w3.org/2000/svg';
     </script>
-    <!-- <script type="text/javascript" src="../js/svgweb/svg-uncompressed.js" data-path="../js/svgweb/"></script> -->
+    
+    <!--[if IE]>
+    <script type="text/javascript" src="../js/svgweb/svg.js" data-path="../js/svgweb/"></script>
+    <![endif]-->
+    
+    <script type="text/javascript" src="../js/maschup.min.js"></script>
 
-    <!-- <script type="text/javascript" src="../js/maschup.min.js"></script> -->
+    <!-- <script type="text/javascript" src="../js/maschup.services.min.js"></script> -->
 
-    <script type="text/javascript" src="../js/maschup.services.min.js"></script>
+<!--
+    <script type="text/javascript" src="../js/json2.js"></script>
+    <script type="text/javascript" src="../js/lib/MascpService.js"></script>
+    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
+    <script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
+    <script type="text/javascript" src="../js/lib/PromexReader.js"></script>
+    <script type="text/javascript" src="../js/lib/SubaReader.js"></script>
+    <script type="text/javascript" src="../js/lib/TairReader.js"></script>
 
     <script type="text/javascript" src="../js/lib/gomap.js"></script>
     <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>
     <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>
-    
+-->
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
     <script type="text/javascript" src="../js/jquery-ui-1.7.2.min.js"></script>
@@ -57,9 +69,11 @@
 
         div.ui-dialog {
             background: none;
+            background-color: #999999;
             background-color: rgba(0,0,0,0.8);
         }
         div.ui-dialog-titlebar {
+            background: #777777;          
             background: rgba(0,0,0,0.1);
             border: 0px;
         }
@@ -75,6 +89,7 @@
             opacity: 1;
         }
         div.ui-dialog .ui-state-hover {
+            background-color: #000000;
             background-color: rgba(0,0,0,1) !important;
             border-color: #ffffff;
             color: #ffffff !important;
@@ -113,6 +128,7 @@
         #suba_results {
             position: relative;
             width: 100%;
+            height: 100px;
             left: 0px;
             top: 0px;
         }
@@ -133,6 +149,7 @@
         #atproteome_map {
             position: relative;
             width: 100%;
+            height: 200px;
             left: 0px;
             top: 0px;
         }
@@ -163,7 +180,7 @@
 <h1 style="position: absolute; right: 0px; top: 0px; margin: 0px; width: 100%;"><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; right: 0px; position: absolute;" src="gator.png" /></h1>
 </div>
 <div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative;">
-    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><button id="contols"><span>Settings</span></button>
+    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><button id="controls"><span>Settings</span></button>
 </div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -258,11 +275,10 @@
             }
         }
         
-        jQuery(MASCP.renderer).bind('resultsRendered',function(renderer) {
+        jQuery(MASCP.renderer).bind('resultsRendered',function(e,reader) {
 
-            rendering_readers.splice(rendering_readers.indexOf(renderer),1);
-
-            if (rendering_readers.length > 0) {
+            rendering_readers.splice(rendering_readers.indexOf(reader),1);                        
+            if (rendering_readers.length > 0) {                
                 return;
             }
                         
@@ -310,21 +326,31 @@
             }).sortable('toArray'));
 
             var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px', position:['50%','50%'], zIndex: 5000});
-            jQuery(MASCP.renderer._Navigation).unbind('click').bind('click',function() {
-                if (! a_dialog.dialog('isOpen')) {
-                    a_dialog.dialog('open');// 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
-                } else {
-                    a_dialog.dialog('close');
-                }
-            });
-            
+            if (MASCP.renderer._Navigation) {
+                jQuery(MASCP.renderer._Navigation).unbind('click').bind('click',function() {
+                    if (! a_dialog.dialog('isOpen')) {
+                        a_dialog.dialog('open');// 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
+                    } else {
+                        a_dialog.dialog('close');
+                    }
+                });
+                jQuery('#controls').hide();
+            } else {
+                jQuery('#controls').unbind('click').bind('click',function() {
+                    if (! a_dialog.dialog('isOpen')) {
+                        a_dialog.dialog('open');// 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
+                    } else {
+                        a_dialog.dialog('close');
+                    }
+                }).show();
+            }
             
             if (MASCP.renderer.setTrackOrder) {
                 MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
             }
             
             MASCP.renderer.showLayer('atproteome_controller');
-            MASCP.renderer.showGroup('phosphat');
+            MASCP.renderer.showLayer('phosphat_experimental');
             
         });
         
@@ -345,6 +371,7 @@
                 });
             }
             if (layer.name == 'atproteome_controller') {
+                return;
                 var is_highlighted = false;
                 var is_open = false;
                 
@@ -400,7 +427,7 @@
                 jQuery('#suba_results').append(this.result.render());               
                 if (this.result._map) {
                     MASCP.SubaReader.existing_map = this.result._map;
-                    var controller = this.result.mapController(jQuery('#sequence_controllers')[0]);
+//                    var controller = this.result.mapController(jQuery('#sequence_controllers')[0]);
                     if (this.result.getMassSpecLocalisation()) {
                         jQuery('#sequence_control li.ms').show();
                     }
@@ -419,6 +446,9 @@
                 } else if (this.result.getAllPredictedPositions().length > 0) {
                     jQuery('#phosphat_theoretical').show();                 
                 }
+            }).bind('error',function() {
+                console.log("Error on phosphat");
+                jQuery(MASCP.renderer).trigger('resultsRendered',[phosphat]);
             });
             jQuery('#phoshpat_experimental input').attr('checked',false);
             jQuery('#phosphat_theoretical input').attr('checked',false);            
@@ -439,11 +469,14 @@
                 if (this.result.getPeptides().length > 0) {
                     jQuery('#promex_placeholder').show();
                 }
+            }).bind('error',function() {
+                console.log("Error on promex");
+                jQuery(MASCP.renderer).trigger('resultsRendered',[promex]);
             });
             jQuery('#promex_placeholder').hide();
             promex.retrieve();
 
-            var atproteome = new MASCP.AtProteomeReader(agi,'127.0.0.1');
+            var atproteome = new MASCP.AtProteomeReader(agi);
             atproteome.registerSequenceRenderer(MASCP.renderer);
             rendering_readers.push(atproteome);
             atproteome.bind('resultReceived',function() {
@@ -459,7 +492,25 @@
                 });
                 jQuery('#atproteome_placeholder').show();
             }).bind('error',function() {
+                console.log("Error on atproteome");
                 jQuery(MASCP.renderer).trigger('resultsRendered',[atproteome]);
+            });
+            jQuery(MASCP.renderer).bind('resultsRendered',function(e,reader) {
+                if (reader != atproteome) {
+                    return;
+                }
+                var keyword_func = function() {
+                    tissue_map.hideAllKeywords();
+                    MASCP.getGroup('atproteome').eachLayer(function() {
+                        tissue_map.showKeyword(this.data['po']);
+                    });
+                };
+                if ( ! tissue_map.loaded ) {
+                    tissue_map.onload = keyword_func;
+                } else {
+                    keyword_func.apply();
+                }
+                jQuery(MASCP.renderer).unbind('resultsRendered',arguments.callee);
             });
             jQuery('#atproteome_placeholder').hide();
             atproteome.retrieve();
