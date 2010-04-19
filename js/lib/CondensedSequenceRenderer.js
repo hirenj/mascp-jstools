@@ -70,11 +70,11 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     var renderer = this;
 
     if (this._object) {
-        var track_el = this._object.parentNode;
-        if (typeof svgweb == 'undefined') {
+        if (typeof svgweb != 'undefined') {
             svgweb.removeChild(this._object, this._object.parentNode);
+        } else {
+            this._object.parentNode.removeChild(this._object);
         }
-        track_el.parentNode.removeChild(track_el);
         this._canvas = null;
         this._object = null;
         this._layer_containers = null;
@@ -758,6 +758,10 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     var new_sequence = this._cleanSequence(sequence);
     if (new_sequence == this.sequence && new_sequence != null) {
         jQuery(this).trigger('sequenceChange');
+        return;
+    }
+    
+    if (! new_sequence) {
         return;
     }
     

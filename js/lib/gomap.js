@@ -140,7 +140,11 @@ GOMap.Diagram = function(image,params) {
         var svg_object = object_el;
         self.destroy = function() {
             if ( svg_object && svg_object.parentNode) {
-                svgweb.removeChild(svg_object, svg_object.parentNode);
+                if (typeof svgweb != 'undefined') {
+                    svgweb.removeChild(svg_object, svg_object.parentNode);
+                } else {
+                    svg_object.parentNode.removeChild(svg_object);
+                }
             }
         };
 

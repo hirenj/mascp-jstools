@@ -429,7 +429,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
 MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
     var layer = MASCP.getLayer(lay);
 
-    if (layer.disabled) {
+    if (! layer || layer.disabled) {
         return;
     }
     jQuery(this._container).addClass(layer.name+'_active');
@@ -535,7 +535,7 @@ MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
     if (typeof layer != 'string') {
         layerName = layer.name;
     }
-    return jQuery(this._container).hasClass(layerName+'_active');
+    return (! layer.disabled) && jQuery(this._container).hasClass(layerName+'_active');
 };
 
 MASCP.SequenceRenderer.prototype.setHighlight = function(layer,isHighlighted) {

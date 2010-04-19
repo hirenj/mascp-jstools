@@ -300,7 +300,11 @@ MASCP.Service.prototype.retrieve = function()
                     jQuery(self).trigger("error");
                     throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
-    success:    function(data,status) {
+    success:    function(data,status,xhr) {
+                    if ( ! xhr.status ) {
+                        jQuery(self).trigger("error");
+                        throw "Error occurred retrieving data for service "+self._endpointURL;
+                    }
                     self._dataReceived(data,status);
                     jQuery(self).trigger("resultReceived");
                     jQuery(MASCP.Service).trigger("resultReceived");
@@ -329,6 +333,8 @@ MASCP.Service.prototype.retrieve = function()
         this._retrieveIE(request_data);
         return this;
     }
+    
+    console.log(request_data);
     
     jQuery.ajax(request_data);
     return this;
