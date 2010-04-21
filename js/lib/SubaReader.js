@@ -201,7 +201,6 @@ MASCP.SubaReader.Result.prototype.render = function()
     }
     
     if (typeof GOMap != 'undefined') {
-        console.log("Making subcell");
         container.text('');
         var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
         container.append(map_container);

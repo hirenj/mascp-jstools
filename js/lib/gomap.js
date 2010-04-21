@@ -855,15 +855,16 @@ GOMap.Diagram.Dragger = function() {
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
 
-    var left_gradient = jQuery('<div style="background: -moz-linear-gradient(left, rgba(255,255,255,1), rgba(255,255,255,0)); background-image: -webkit-gradient(linear, left top, right top, from(rgba(255,255,255,1)), to(rgba(255,255,255,0))); background-repeat: repeat; width: 50px; height: 100%; position: absolute; top: 0px; left: -1px; z-index: 5000;"></div>')[0];
-    var right_gradient = jQuery('<div style="background: -moz-linear-gradient(left, rgba(255,255,255,0), rgba(255,255,255,1)); background-image: -webkit-gradient(linear, left top, right top, from(rgba(255,255,255,0)), to(rgba(255,255,255,1))); background-repeat: repeat; width: 50px; height: 100%; position: absolute; top: 0px; right: -1px; z-index: 5000;"></div>')[0];
-    left_gradient.style.display = 'none';    
-
-    if (this.targetElement) {    
-        jQuery(this.targetElement).append(left_gradient).append(right_gradient);
-    }
-
     var momentum = null;
+
+    if (targetElement.addEventListener) {
+        var old_zoom = targetElement.zoom;
+        targetElement.addEventListener('zoomChange',function(e) {
+            var curr_offsets = targetElement.getPosition();            
+            targetElement.shiftPosition(curr_offsets[0] * (old_zoom / this.zoom), curr_offsets[1] * (this.zoom / old_zoom));
+            old_zoom = this.zoom;
+        },true);
+    }
 
     if (targetElement.nodeName == 'svg') {
         targetElement.getPosition = function() {
@@ -872,12 +873,15 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
             return [dX, dY];
         };
+        
         targetElement.shiftPosition = function(x,y) {
             var p = {'x' : x, 'y' : y };
             var viewBoxScale = 1;
             var vbox = this.getAttribute('viewBox');
 
             var min_x,min_y,width,height;
+
+
 
             if (vbox) {
                 var viewBox = this.getAttribute('viewBox').split(' ');
@@ -888,20 +892,20 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 height = parseInt(viewBox[3]);
             }
 
-            p.x = viewBoxScale*(p.x - self.oX);
-            p.y = viewBoxScale*(p.y - self.oY);
+            if ( self.dragging ) {
+                p.x = viewBoxScale*(p.x - self.oX);
+                p.y = viewBoxScale*(p.y - self.oY);
 
-            p.x += self.dX;
-            p.y += self.dY;
-
-
-            p.y = 0;
-
+                p.x += self.dX;
+                p.y += self.dY;
+                p.y = 0;
+            }
+            
             if (p.x > viewBoxScale * min_x) {
                 p.x = viewBoxScale * min_x;
             }
-            if (Math.abs(p.x) > 0.90 * viewBoxScale * width ) {
-                p.x = -0.90 * viewBoxScale * width;
+            if (Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
+                p.x = -0.85 * viewBoxScale * width;
             }
 
             if (p.y > viewBoxScale * min_y) {
@@ -910,7 +914,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             if (Math.abs(p.y) > 0.50*viewBoxScale * height ) {
                 p.y = -0.50 * viewBoxScale * height;
             }
-            
+
             if (this.setCurrentTranslateXY) {
                 this.setCurrentTranslateXY(p.x,p.y);
             } else if (this.currentTranslate.setXY) {
@@ -919,6 +923,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 this.currentTranslate.x = p.x;
                 this.currentTranslate.y = p.y;          
             }            
+
+            if (document.createEvent) {
+                var evObj = document.createEvent('Events');
+                evObj.initEvent('pan',false,true);
+                this.dispatchEvent(evObj);
+            }
+
         };
     } else {
         targetElement.getPosition = function() {
@@ -928,10 +939,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.scrollLeft = self.dX + (self.oX - x);
             this.scrollTop = self.dY + (self.oY - y);
 
-            if (this.scrollLeft == 0) {
-                left_gradient.style.display = 'none';
-            } else {
-                left_gradient.style.display = 'block';
+            if (document.createEvent) {
+                var evObj = document.createEvent('Events');
+                evObj.initEvent('pan',false,true);
+                this.dispatchEvent(evObj);
             }
         }
     }

@@ -107,6 +107,39 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         container_canv.appendChild(group);        
         group.appendChild(renderer._canvas);
         
+        var left_fade = document.createElementNS(svgns,'rect');
+        left_fade.setAttribute('x','0');
+        left_fade.setAttribute('y','0');
+        left_fade.setAttribute('width','50');
+        left_fade.setAttribute('height','100%');
+        left_fade.setAttribute('style','fill: url(#left_fade);');
+
+        var right_fade = document.createElementNS(svgns,'rect');
+        right_fade.setAttribute('x','100%');
+        right_fade.setAttribute('y','0');
+        right_fade.setAttribute('width','50');
+        right_fade.setAttribute('height','100%');
+        right_fade.setAttribute('style','fill: url(#right_fade);');
+        right_fade.setAttribute('transform','translate(-50,0)');
+
+        jQuery(renderer._canvas).bind('boundaryHit',function() {
+            if (renderer._canvas.currentTranslate.x == 0) {
+                left_fade.style.display = 'none';
+            }
+        });
+        jQuery(renderer._canvas).bind('pan',function() {
+            if (renderer._canvas.currentTranslate.x == 0) {
+                left_fade.style.display = 'none';
+            } else {
+                left_fade.style.display = 'block';                
+            }
+        });
+        
+        
+        container_canv.appendChild(left_fade);
+        container_canv.appendChild(right_fade);
+        
+        
         container_canv.appendChild(nav_group);
         nav_group.appendChild(renderer._nav_canvas);
 
@@ -405,14 +438,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
 
         if (typeof cx == 'string') {
-            var parts = (/(\d+)(.*)/g).exec(cx);
+            var parts = new RegExp(/(\d+)(.*)/g).exec(cx);
             units = parts[2];
             cx = parseFloat(parts[1]);
             
-            parts = (/(\d+)(.*)/g).exec(cy);
+            parts = new RegExp(/(\d+)(.*)/g).exec(cy);
             cy = parseFloat(parts[1]);
             
-            parts = (/(\d+)(.*)/g).exec(r);
+            parts = new RegExp(/(\d+)(.*)/g).exec(r);
             r = parseFloat(parts[1]);        
 
         }
@@ -508,12 +541,12 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         }
                         if (counter <= 10) {
                             hash['y'] += diff;
-                            window.setTimeout(arguments.callee,10);
+                            window.setTimeout(arguments.callee,50);
                         } else if (target_disp) {
                             an_array.attr({'display' : target_disp});
                             jQuery(an_array).trigger('_anim_end');
                         }
-                    },10);
+                    },50);
                 }
                 return;
             }
@@ -842,6 +875,38 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         stop2.setAttribute('offset','100%');
         stop1.setAttribute('style','stop-color:#aaaaaa;stop-opacity:1');
         stop2.setAttribute('style','stop-color:#888888;stop-opacity:1');
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        
+        gradient = document.createElementNS(svgns,'linearGradient');
+        gradient.setAttribute('id','left_fade');
+        gradient.setAttribute('x1','0%');
+        gradient.setAttribute('x2','100%');
+        gradient.setAttribute('y1','0%');
+        gradient.setAttribute('y2','0%');
+        defs.appendChild(gradient);
+        stop1 = document.createElementNS(svgns,'stop');
+        stop2 = document.createElementNS(svgns,'stop');
+        stop1.setAttribute('offset','0%');
+        stop2.setAttribute('offset','100%');
+        stop1.setAttribute('style','stop-color:#ffffff;stop-opacity:1');
+        stop2.setAttribute('style','stop-color:#ffffff;stop-opacity:0');
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+
+        gradient = document.createElementNS(svgns,'linearGradient');
+        gradient.setAttribute('id','right_fade');
+        gradient.setAttribute('x1','0%');
+        gradient.setAttribute('x2','100%');
+        gradient.setAttribute('y1','0%');
+        gradient.setAttribute('y2','0%');
+        defs.appendChild(gradient);
+        stop1 = document.createElementNS(svgns,'stop');
+        stop2 = document.createElementNS(svgns,'stop');
+        stop1.setAttribute('offset','0%');
+        stop2.setAttribute('offset','100%');
+        stop1.setAttribute('style','stop-color:#ffffff;stop-opacity:0');
+        stop2.setAttribute('style','stop-color:#ffffff;stop-opacity:1');
         gradient.appendChild(stop1);
         gradient.appendChild(stop2);
         
@@ -1250,8 +1315,9 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         this._canvas.setAttribute('width', (this._zoomLevel || 1)*2*this.sequence.length+'px');
         this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
         this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
+        this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length+'px');
 
-        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
+//        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
     }
 };
@@ -1380,11 +1446,16 @@ var accessors = {
         if (zoomLevel > 10) {
             zoomLevel = 10;
         }
-
-        this._zoomLevel = zoomLevel;
+        this._zoomLevel = parseFloat(zoomLevel);
         if (this._canvas) {
-            this._canvas.zoom = zoomLevel;
-            jQuery(this._canvas).trigger('zoomChange');
+            this._canvas.zoom = parseFloat(zoomLevel);
+            if (document.createEvent) {
+                var evObj = document.createEvent('Events');
+                evObj.initEvent('zoomChange',false,true);
+                this._canvas.dispatchEvent(evObj);
+            } else {
+                jQuery(this._canvas).trigger('zoomChange');
+            }
         }
         jQuery(this).trigger('zoomChange');
     },
