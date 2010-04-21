@@ -494,6 +494,22 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             var hash = jQuery.extend({},hsh);
             
             if (animated && typeof hash['y'] != 'undefined') {
+                
+                if ( ! canvas._anim_clock_funcs ) {
+                    canvas._anim_clock_funcs = [];
+                    canvas._anim_clock = setInterval(function() {
+                        if ( ! canvas._anim_clock_funcs ) {
+                            clearInterval(canvas._anim_clock);
+                            canvas._anim_clock = null;
+                            return;
+                        }
+                        for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
+                            canvas._anim_clock_funcs[i].apply();
+                        }
+//                        setTimeout(arguments.callee,10);
+                    },10);
+                }
+                
                 var counter = 0;
                 if (an_array.length == 0) {
                     return;
@@ -530,23 +546,33 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     hash['y'] = curr_y || 0;
                     var orig_func = arguments.callee;
                     jQuery(an_array).trigger('_anim_begin');
-                    window.setTimeout(function() {
-                        orig_func.apply(an_array,[hash]);
-                        counter += 1;
-                        if (target_disp == 'none') {
-                            hash['opacity'] -= 0.1;
+                    
+                    canvas._anim_clock_funcs.push(                    
+                        function() {
+                            orig_func.apply(an_array,[hash]);
+                            counter += 1;
+                            if (target_disp == 'none') {
+                                hash['opacity'] -= 0.1;
+                            }
+                            if (target_disp == 'block') {
+                                hash['opacity'] += 0.1;
+                            }
+                            if (counter <= 10) {
+                                hash['y'] += diff;
+                                return;
+                            }
+                            if (target_disp) {
+                                an_array.attr({'display' : target_disp});
+                                jQuery(an_array).trigger('_anim_end');
+                            }
+                            canvas._anim_clock_funcs.splice(canvas._anim_clock_funcs.indexOf(arguments.callee),1);
+                            if (canvas._anim_clock_funcs.length == 0) {
+                                clearInterval(canvas._anim_clock);
+                                canvas._anim_clock = null;
+                                canvas._anim_clock_funcs = null;
+                            }
                         }
-                        if (target_disp == 'block') {
-                            hash['opacity'] += 0.1;
-                        }
-                        if (counter <= 10) {
-                            hash['y'] += diff;
-                            window.setTimeout(arguments.callee,50);
-                        } else if (target_disp) {
-                            an_array.attr({'display' : target_disp});
-                            jQuery(an_array).trigger('_anim_end');
-                        }
-                    },50);
+                    );
                 }
                 return;
             }
