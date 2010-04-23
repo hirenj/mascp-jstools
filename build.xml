@@ -87,23 +87,24 @@
             <fileset dir="js/lib" includes="**/*.js"/>
             <fileset dir="js" includes="json-2.js" />
         </jsmin>
-        <concat destfile="dist/maschup.services.min.js"
+        <mkdir dir="dist/js" />
+        <concat destfile="dist/js/maschup.services.min.js"
                   force="yes">
             <fileset dir="build" includes="json-2.js"/>            
             <fileset dir="build" includes="MascpService.js"/>
             <fileset dir="build" includes="*Reader.js"/>
         </concat>
-        <concat destfile="dist/maschup.map.min.js"
+        <concat destfile="dist/js/maschup.map.min.js"
                   force="yes">
             <fileset dir="build" includes="gomap.js"/>                  
         </concat>
-        <concat destfile="dist/maschup.renderers.min.js"
+        <concat destfile="dist/js/maschup.renderers.min.js"
                   force="yes">
             <fileset dir="build" includes="SequenceRenderer.js"/>
             <fileset dir="build" includes="CondensedSequenceRenderer.js"/>
         </concat>
         
-        <concat destfile="dist/maschup.min.js" force="yes">
+        <concat destfile="dist/js/maschup.min.js" force="yes">
             <fileset dir="dist" includes="maschup.services.min.js"/>
             <fileset dir="dist" includes="maschup.renderers.min.js"/>
             <fileset dir="dist" includes="maschup.map.min.js"/>
@@ -117,7 +118,11 @@
 			<fileset dir="css"/>
 		</copy>
 		
-		<copy todir="dist/static">
+		<copy todir="dist/js">
+		    <fileset dir="js"/>
+	    </copy>
+		
+		<copy todir="dist/">
 			<fileset dir="static"/>
 		</copy>
 		<copy file="proxy.pl" tofile="dist/proxy.pl"/>

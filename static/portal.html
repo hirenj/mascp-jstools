@@ -7,35 +7,35 @@
 
     <title>GATOR</title>
 
-    <link rel="stylesheet" type="text/css" href="../css/no-theme/jquery-ui-1.7.2.custom.css"/>
+    <link rel="stylesheet" type="text/css" href="css/no-theme/jquery-ui-1.7.2.custom.css"/>
     <script type="text/javascript">
     window.svgns = 'http://www.w3.org/2000/svg';
     </script>
     
     <!--[if IE]>
-    <script type="text/javascript" src="../js/svgweb/svg.js" data-path="../js/svgweb/"></script>
+    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>
     <![endif]-->
     
-    <!-- <script type="text/javascript" src="../js/maschup.min.js"></script> -->
+    <script type="text/javascript" src="js/maschup.min.js"></script>
 
-    <!-- <script type="text/javascript" src="../js/maschup.services.min.js"></script> -->
+    <script type="text/javascript" src="js/maschup.services.min.js"></script>
 
 
-    <script type="text/javascript" src="../js/json2.js"></script>
-    <script type="text/javascript" src="../js/lib/MascpService.js"></script>
-    <script type="text/javascript" src="../js/lib/AtProteomeReader.js"></script>
-    <script type="text/javascript" src="../js/lib/PhosphatReader.js"></script>
-    <script type="text/javascript" src="../js/lib/PromexReader.js"></script>
-    <script type="text/javascript" src="../js/lib/SubaReader.js"></script>
-    <script type="text/javascript" src="../js/lib/TairReader.js"></script>
+<!--     <script type="text/javascript" src="js/json2.js"></script>
+    <script type="text/javascript" src="js/lib/MascpService.js"></script>
+    <script type="text/javascript" src="js/lib/AtProteomeReader.js"></script>
+    <script type="text/javascript" src="js/lib/PhosphatReader.js"></script>
+    <script type="text/javascript" src="js/lib/PromexReader.js"></script>
+    <script type="text/javascript" src="js/lib/SubaReader.js"></script>
+    <script type="text/javascript" src="js/lib/TairReader.js"></script>
 
-    <script type="text/javascript" src="../js/lib/gomap.js"></script>
-    <script type="text/javascript" src="../js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="../js/lib/CondensedSequenceRenderer.js"></script>
+    <script type="text/javascript" src="js/lib/gomap.js"></script>
+    <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
+    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
-    <script type="text/javascript" src="../js/jquery-ui-1.7.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.7.2.min.js"></script>
 
     <style type="text/css">
         body {
@@ -48,6 +48,17 @@
             top: 0px;
             left: 0px;
         }
+        
+        #description {
+            display: block;
+            left: 60%;
+            position: absolute;
+            overflow: auto;
+            top: 10px;
+            margin-right: 10px;
+            height: 65px;
+        }
+        
         .track {
             position: relative;
         }
@@ -120,6 +131,7 @@
             position: relative;
         }
         #suba {
+            font-size: 12px;
             position: absolute;
             width: 30%;
             left: 0px;
@@ -134,6 +146,7 @@
         }
         
         #tissue {
+            font-size: 12px;
             position: absolute;
             width: 30%;
             left: 30%;
@@ -154,12 +167,27 @@
             top: 0px;
         }
         
+        #links_container {
+            position: relative;
+            top: 0px;
+            left: 65%;
+            width: 30%;
+            font-size: 12px;
+        }
+        
+        #links li {
+            list-style-type: none;
+        }
+        
         #agi_input, #agi_input input[type='text'] {
             font-size: 20px;
         }
         #agi_input input[type='text'] {
             border: dotted #999999 1px;
         }
+        
+        
+        
         /*
         #controls {
             font-size: 30pt;
@@ -182,6 +210,7 @@
 <div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 50%; margin-left: -15%; width: 30%;">
     <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
+<div id="description"></div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
     <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
@@ -214,6 +243,10 @@
 <div id="atproteome_map">
 </div>
 </div>
+</div>
+<div id="links_container">
+    <h3>Original data providers</h3>
+<div id="links"></div>
 </div>
 <script type="text/javascript">
 //<[CDATA[ 
@@ -273,7 +306,6 @@
         }
         
         jQuery(MASCP.renderer).bind('resultsRendered',function(e,reader) {
-
             rendering_readers.splice(rendering_readers.indexOf(reader),1);                        
             if (rendering_readers.length > 0) {                
                 return;
@@ -341,7 +373,9 @@
             }
             
             MASCP.renderer.showLayer('atproteome_controller');
-            MASCP.renderer.showLayer('phosphat_experimental');
+            if (! MASCP.getLayer('phosphat_experimental').disabled ) {
+                MASCP.renderer.showLayer('phosphat_experimental');
+            }
             
         });
 
@@ -351,6 +385,7 @@
             }
             
             var agi = jQuery('#agi')[0].value;
+            
             MASCP.renderer.reset();
             if (MASCP.renderer.createHydropathyLayer) {
                 MASCP.renderer.createHydropathyLayer(4);
@@ -363,8 +398,9 @@
                 MASCP.SubaReader.existing_map = null;
             }
     
+            var all_readers = [];
+    
             var suba = new MASCP.SubaReader(agi);
-            suba.retrieve();
             jQuery(suba).bind('resultReceived',function() {
                 jQuery('#suba_results').text('');
                 jQuery('#suba_results').append(this.result.render());               
@@ -373,28 +409,32 @@
                 }
             });
 
-            var phosphat = new MASCP.PhosphatReader(agi,'../proxy.pl');
+            all_readers.push(suba);
+
+            var phosphat = new MASCP.PhosphatReader(agi,'proxy.pl');
             phosphat.registerSequenceRenderer(MASCP.renderer);
+            
             rendering_readers.push(phosphat);
+            all_readers.push(phosphat);
+            
             phosphat.bind('resultReceived',function() {
                 if (this.result.getAllExperimentalPositions().length > 0) {                 
                     jQuery('#phosphat_experimental').show();
                 } else if (this.result.getAllPredictedPositions().length > 0) {
                     jQuery('#phosphat_theoretical').show();                 
                 }
-            }).bind('error',function() {
-                console.log("Error on phosphat");
-                jQuery(MASCP.renderer).trigger('resultsRendered',[phosphat]);
             });
             jQuery('#phoshpat_experimental input').attr('checked',false);
             jQuery('#phosphat_theoretical input').attr('checked',false);            
             jQuery('#phosphat_experimental').hide();
             jQuery('#phosphat_theoretical').hide();
-            phosphat.retrieve();
             
             var promex = new MASCP.PromexReader(agi);
             promex.registerSequenceRenderer(MASCP.renderer);
+            
             rendering_readers.push(promex);
+            all_readers.push(promex);
+            
             promex.bind('resultReceived',function() {
                 jQuery(MASCP.getLayer('promex_controller')).each(function() {
                     if (MASCP.renderer.applyStyle) {
@@ -405,16 +445,15 @@
                 if (this.result.getPeptides().length > 0) {
                     jQuery('#promex_placeholder').show();
                 }
-            }).bind('error',function() {
-                console.log("Error on promex");
-                jQuery(MASCP.renderer).trigger('resultsRendered',[promex]);
             });
             jQuery('#promex_placeholder').hide();
-            promex.retrieve();
 
             var atproteome = new MASCP.AtProteomeReader(agi);
             atproteome.registerSequenceRenderer(MASCP.renderer);
+            
             rendering_readers.push(atproteome);
+            all_readers.push(atproteome);
+            
             atproteome.bind('resultReceived',function() {
 
                 if (this.result == null) {
@@ -427,10 +466,42 @@
                     }
                 });
                 jQuery('#atproteome_placeholder').show();
-            }).bind('error',function() {
-                console.log("Error on atproteome");
-                jQuery(MASCP.renderer).trigger('resultsRendered',[atproteome]);
             });
+
+
+            jQuery('#links').text('');
+            jQuery('#links').append('<ul></ul>');
+
+            jQuery(all_readers).each(function(i) {
+                this.bind('error',function() {
+                    jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
+                    console.log("Error retrieving data");
+                });
+                this.bind('resultReceived',function() {
+                    var an_agi = this.result.agi;
+                    var a_locus = an_agi.replace(/\.\d/,'');
+                    switch(this.__class__) {
+                        case MASCP.SubaReader:
+                        jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">See more at SUBA</a></li>')
+                        console.log("Retrieved data for SUBA");
+                        break;
+                        case MASCP.AtProteomeReader:
+                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">See more at AtProteome</a></li>');
+                        console.log("Retrieved data for AtProteome");
+                        break;
+                        case MASCP.PhosphatReader:
+                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">See more at PhosPhAt</a></li>');
+                        console.log("Retrieved data for Phosphat");
+                        break;
+                        case MASCP.PromexReader:
+                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
+                        console.log("Retrieved data for Promex");                        
+                        break;
+                    }
+                });
+                this.retrieve();
+            });
+
             jQuery(MASCP.renderer).bind('resultsRendered',function(e,reader) {
                 if (reader != atproteome) {
                     return;
@@ -448,8 +519,10 @@
                 }
                 jQuery(MASCP.renderer).unbind('resultsRendered',arguments.callee);
             });
+
             jQuery('#atproteome_placeholder').hide();
-            atproteome.retrieve();
+
+
         });
         
         // Trigger the change event on page load
@@ -458,6 +531,13 @@
 
     jQuery('#agi').bind('change',function() {
         var agi = this.value;
+        
+        if (! agi.match(/\.\d$/)) {
+            agi = agi + '.1';
+        }
+        
+        this.value = agi;
+        
         if (agi.length < 1) {
             return;
         }
@@ -470,11 +550,12 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        var reader = new MASCP.TairReader(agi,'../proxy.pl');
+        var reader = new MASCP.TairReader(agi,'proxy.pl');
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == '') {
                 return;
             }
+            jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         });
         reader.retrieve();

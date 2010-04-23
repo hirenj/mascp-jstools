@@ -90,9 +90,11 @@ if ($tidy->{$service}) {
     $start_content =~ s/<\!DOCTYPE[^>]+>/TEMP_DTYPE/mi;
     $start_content =~ s/<\!DOCTYPE[^>]+>//mi;
     $start_content =~ s/TEMP_DTYPE/$repl_doctype/mi;
-    $start_content =~ s/&nbsp;//mgi;
+    $start_content =~ s/nbsp//mgi;
     my $cleaned = $tidy->clean( $start_content );
     print $cleaned;
+#    $cleaned = 'Foo';
+    $cleaned =~ s/nbsp//mgi;
     open $outfile, ">".$cached;
     print $outfile $cleaned;
     close $outfile;
