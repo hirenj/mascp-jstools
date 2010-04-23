@@ -73,11 +73,15 @@ MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
 {
     this.spectra = {};
     this._tissues = [];
+    this._long_name_map = {};
     if ( ! data || ! data.tissues ) {
         return;
     }
     for (var i = 0; i < data.tissues.length; i++ ) {
         this._tissues[i] = data.tissues[i]['PO:tissue'];
+        this._tissues[i].long_name = data.tissues[i].tissue;
+        this._long_name_map[this._tissues[i]] = data.tissues[i].tissue;
+        
         this.spectra[data.tissues[i]['PO:tissue']] = parseInt(data.tissues[i].qty_spectra);
     }
 };
@@ -134,7 +138,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
         
         var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
-        MASCP.registerLayer(overlay_name,{ 'fullname' : tissue + ' ('+this.result.spectra[tissue]+' spectra)', 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
+        MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
                 
         var positions = this._normalise(this._mergeCounts(peptide_counts));
         var index = 0;
@@ -192,7 +196,7 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
 
     var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtProteome results', 'color' : '#000099', 'css' : css_block });
+    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtProteome MS/MS', 'color' : '#000099', 'css' : css_block });
 
     while (index <= positions.length) {
         if ((! positions[index] || positions[index].tissue() != last_tissue || (index == positions.length) ) && last_start != null) {
