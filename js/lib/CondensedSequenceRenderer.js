@@ -1095,6 +1095,7 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
     rect.setAttribute('display', 'none');
+    rect.style.opacity = fraction;
     rect.setAttribute('fill',MASCP.layers[layerName].color);
 /*
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);

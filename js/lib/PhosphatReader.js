@@ -104,6 +104,24 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
     return positions;
 };
 
+MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = function()
+{
+    var results = {};
+    for ( var site_idx in this._raw_experimental_data.result ) {
+        
+        var site = this._raw_experimental_data.result[site_idx];
+        if (site['modificationType'] != 'phos' && site['modificationType'] != 'phos_amb') {
+            continue;
+        }
+        var site_id = site['prot_sequence'].indexOf(site['pep_sequence']);
+        results[''+site_id+"-"+site['pep_sequence'].length] = [site_id,site['pep_sequence'].length];
+    }
+    var results_arr = [];
+    for (var a_side in results ) {
+        results_arr.push(results[a_side]);
+    }
+    return results_arr;
+};
 
 MASCP.PhosphatReader.Result.prototype.render = function()
 {
@@ -144,6 +162,12 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         	MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
             this.addToLayer('phosphat_theoretical');
         });
+        
+        jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
+            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]])[0];
+        	aa.addBoxOverlay('phosphat_experimental',0.5,this[1]);
+        });
+        
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
         	MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt experimental data', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });

@@ -105,9 +105,9 @@
         </concat>
         
         <concat destfile="dist/js/maschup.min.js" force="yes">
-            <fileset dir="dist" includes="maschup.services.min.js"/>
-            <fileset dir="dist" includes="maschup.renderers.min.js"/>
-            <fileset dir="dist" includes="maschup.map.min.js"/>
+            <fileset dir="dist/js" includes="maschup.services.min.js"/>
+            <fileset dir="dist/js" includes="maschup.renderers.min.js"/>
+            <fileset dir="dist/js" includes="maschup.map.min.js"/>
         </concat>
         
     </target>
