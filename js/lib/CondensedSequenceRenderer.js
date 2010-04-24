@@ -215,7 +215,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     close_group.style.cursor = 'pointer';
     close_group.setAttribute('filter','url(#drop_shadow)');
 
-    var tracks_button = canvas.button('110px','2px','50px','20px','Data');
+    var tracks_button = canvas.button('110px','2px','50px','20px','Options');
     tracks_button.id = 'controls';
     
     tracks_button.addEventListener('click',function() {

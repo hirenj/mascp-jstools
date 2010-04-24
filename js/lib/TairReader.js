@@ -23,7 +23,8 @@ MASCP.TairReader = MASCP.buildService(function(data) {
 MASCP.TairReader.prototype.requestData = function()
 {
     var self = this;
-    if ( ! this._description ) {
+    if ( ! this._desc_retrieved ) {
+        this._desc_retrieved = true;
         return {
             type: "POST",
             dataType: "xml",
@@ -32,7 +33,8 @@ MASCP.TairReader.prototype.requestData = function()
                     'service' : 'tair'
                   },
               success: function(data,status) {
-                  self._description = self._getDescription(data);
+                  self._desc_retrieved = true;
+                  self._description = self._getDescription(data) || '';
                   self.retrieve();
               },
               error: function(resp,req,settings) {
@@ -41,6 +43,8 @@ MASCP.TairReader.prototype.requestData = function()
               }
         };
     };
+    
+    this._desc_retrieved = false;
     
     return {
         type: "POST",

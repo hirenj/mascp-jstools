@@ -923,7 +923,7 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, wi
     jQuery(this).addClass(layerName);
     var new_el = jQuery(this).append(jQuery('<div class="'+layerName+'_overlay" style="top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';"></div>'))[0];
     while (width && width > 0) {
-        this._renderer._sequence_els[this._index + width].addBoxOverlay(layerName,fraction);
+        this._renderer._sequence_els[this._index + width - 1].addBoxOverlay(layerName,fraction);
         width -= 1;
     }
     if (this._z_indexes && this._z_indexes[layerName]) {

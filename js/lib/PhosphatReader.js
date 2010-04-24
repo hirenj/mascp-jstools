@@ -164,7 +164,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         });
         
         jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
-            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]-1])[0];
+            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
         	aa.addBoxOverlay('phosphat_experimental',0.5,this[1]);
         });
         

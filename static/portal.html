@@ -21,7 +21,7 @@
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
 
-<!--     <script type="text/javascript" src="js/json2.js"></script>
+    <!-- <script type="text/javascript" src="js/json2.js"></script>
     <script type="text/javascript" src="js/lib/MascpService.js"></script>
     <script type="text/javascript" src="js/lib/AtProteomeReader.js"></script>
     <script type="text/javascript" src="js/lib/PhosphatReader.js"></script>
@@ -354,7 +354,7 @@
                 },
             }).sortable('toArray'));
 
-            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Data", width: '300px', position:['50%','50%'], zIndex: 5000});
+            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Options", width: '300px', position:['50%','50%'], zIndex: 5000});
             var control_el = MASCP.renderer._Navigation ? MASCP.renderer._Navigation : '#controls';
             jQuery(control_el).unbind('click').bind('click',function() {
                 if (! a_dialog.dialog('isOpen')) {
@@ -557,6 +557,8 @@
             }
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
+        }).bind('error',function() {
+            console.log("errored out");
         });
         reader.retrieve();
     });
