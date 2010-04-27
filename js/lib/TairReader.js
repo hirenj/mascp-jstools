@@ -63,8 +63,11 @@ MASCP.TairReader.prototype._getDescription = function(data)
         if ( ! rows[i].getElementsByTagName('th').length > 0 ) {
             continue;
         }
-        if (rows[i].getElementsByTagName('th')[0].textContent == 'Description') {
-            return rows[i].getElementsByTagName('td')[1].textContent;
+        var el = rows[i].getElementsByTagName('th')[0];
+        var text = (typeof el.textContent != 'undefined') ? el.textContent : el.innerText;
+        if ( text == 'Description') {
+            var t_el = rows[i].getElementsByTagName('td')[1];
+            return (typeof t_el.textContent != 'undefined') ? t_el.textContent : t_el.innerText;
         }
     }
     

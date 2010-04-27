@@ -12,9 +12,7 @@
     window.svgns = 'http://www.w3.org/2000/svg';
     </script>
     
-    <!--[if IE]>
-    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>
-    <![endif]-->
+<!--    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
     <script type="text/javascript" src="js/maschup.min.js"></script>
     <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script> -->
@@ -68,7 +66,7 @@
         
         #description {
             display: block;
-            left: 60%;
+            left: 30%;
             position: absolute;
             overflow: auto;
             top: 10px;
@@ -225,10 +223,10 @@
 </head>
 
 <body>
-<div style="position: absolute; top: 10px; left: 10px; width: 25%;">
+<div style="position: absolute; top: 10px; left: 10px; width: 25%; display: none;">
 <h1 style="position: absolute; left: 0px; top: 0px; margin: 0px; width: 100%; font-size: 10px; "><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; left: -7px; position: absolute;" src="gator.png" /></h1>
 </div>
-<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 50%; margin-left: -15%; width: 30%;">
+<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 20%; margin-left: -15%; width: 30%;">
     <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
 <div id="description"></div>
@@ -254,7 +252,7 @@
 <div style="position: relative;">
 <div id="suba">
     <h3>Subcellular localisation</h3>
-    <p>Localisation data is outlined in <span style="color: #00ff00; font-weight: bolder;">GREEN</span> for GFP data, and <span style="color: #ff0000; font-weight: bolder;">RED</span> for mass spectrometry data.</p>
+    <p>Localisation data is outlined in <span style="color: #00ff00; font-weight: bolder;">GREEN</span> for GFP data, <span style="color: #ff0000; font-weight: bolder;">RED</span> for mass spectrometry data and <span style="color: #999999; font-weight: bolder;">GRAY</span> for predicted localisation. Font size correlates to the amount of data supporting each localisation.</p>
 <div id="suba_results">
 </div>
 </div>
@@ -456,19 +454,23 @@
                     var span = document.createElement('span');
                     var the_tag = tag;
                     var original_tag = tag;
-                    if ((the_tag = the_tag.replace(/MS /,'')) != original_tag) {
+                    if ((the_tag = original_tag.replace(/MS /,'')) != original_tag) {
                         span.style.color = '#ff0000';
+                        span.style.textShadow = '#aa0000 2px 2px 3px';
                         original_tag = the_tag;
                     }
-                    if ((the_tag = the_tag.replace(/GFP /,'')) != original_tag) {
+                    if ((the_tag = original_tag.replace(/GFP /,'')) != original_tag) {
                         span.style.color = '#00ff00';                        
+                        span.style.textShadow = '#00aa00 2px 2px 3px';
                         original_tag = the_tag;
                     }
-                    if ((the_tag = the_tag.replace(/Prediction /,'')) != original_tag) {
+                    if ((the_tag = original_tag.replace(/Prediction /,'')) != original_tag) {
                         span.style.color = '#aaaaaa';                        
+                        span.style.textShadow = '#555555 2px 2px 3px';
                         original_tag = the_tag;                        
                     }                    
-                    span.textContent = the_tag;
+                    span.textContent = original_tag;
+                    span.innerText = original_tag;
                     return span;
                 };                
                 tagvis.visualisations[0].update(1);
@@ -540,7 +542,6 @@
             jQuery(all_readers).each(function(i) {
                 this.bind('error',function() {
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
-                    console.log("Error retrieving data");
                 });
                 this.bind('resultReceived',function() {
                     var an_agi = this.result.agi;
@@ -548,19 +549,15 @@
                     switch(this.__class__) {
                         case MASCP.SubaReader:
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">See more at SUBA</a></li>')
-                        console.log("Retrieved data for SUBA");
                         break;
                         case MASCP.AtProteomeReader:
                         jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">See more at AtProteome</a></li>');
-                        console.log("Retrieved data for AtProteome");
                         break;
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">See more at PhosPhAt</a></li>');
-                        console.log("Retrieved data for Phosphat");
                         break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
-                        console.log("Retrieved data for Promex");                        
                         break;
                     }
                 });
@@ -591,10 +588,11 @@
         });
         
         // Trigger the change event on page load
-        jQuery('#agi').trigger('change');
+        jQuery('#agi').trigger(MASCP.IE ? 'blur' : 'change');
     });
 
-    jQuery('#agi').bind('change',function() {
+
+    var change_func = function() {
         var agi = this.value;
         
         if (! agi.match(/\.\d$/)) {
@@ -631,10 +629,15 @@
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         }).bind('error',function() {
-            console.log("errored out");
         });
         reader.retrieve();
-    });
+    };
+
+    if (MASCP.IE) {
+        jQuery("#agi").bind('blur',change_func);
+    } else {
+        jQuery('#agi').bind('change',change_func);
+    }
 //]]>
 </script>
 <table align="center" style="margin-top: 400px;">
