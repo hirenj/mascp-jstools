@@ -226,7 +226,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
     var reader = this;
 
     this.bind('resultReceived', function() {
-        if ( sequenceRenderer.sequence != this.result.sequence ) {
+        if ( sequenceRenderer.sequence != this.result.sequence && this.result.sequence != '' ) {
             jQuery(sequenceRenderer).bind('sequenceChange',function() {
                 jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
                 reader._rendererRunner(sequenceRenderer);
@@ -234,10 +234,11 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
                 jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
             });
             sequenceRenderer.setSequence(this.result.sequence);
+            return;
         } else {
             reader._rendererRunner(sequenceRenderer);
             reader._groupSummary(sequenceRenderer);
-            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);            
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
         }
     });
 

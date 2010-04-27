@@ -141,6 +141,21 @@ MASCP.SubaReader.Result.prototype.getGfpLocalisation = function()
     return this._getLocalisation('gfp');
 };
 
+/** Retrieve the set of predicted localisations for this AGI
+ *  @returns [ { String : [String] } ]   Predicted localisation and array of methods
+ */
+MASCP.SubaReader.Result.prototype.getPredictedLocalisations = function()
+{
+    var results = {};
+    for (var i = 0; i < this._raw_data.predicted.length; i++) {
+        if ( ! results[this._raw_data.predicted[i][0]]) {
+            results[this._raw_data.predicted[i][0]] = [];
+        }
+        results[this._raw_data.predicted[i][0]].push(this._raw_data.predicted[i][1]);        
+    }
+    return results;    
+};
+
 MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
 {
     if ( ! this._map ) {

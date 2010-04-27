@@ -102,6 +102,7 @@
                   force="yes">
             <fileset dir="build" includes="SequenceRenderer.js"/>
             <fileset dir="build" includes="CondensedSequenceRenderer.js"/>
+            <fileset dir="build" includes="TagVisualisation.js"/>
         </concat>
         
         <concat destfile="dist/js/maschup.min.js" force="yes">

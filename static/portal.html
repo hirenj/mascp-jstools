@@ -17,7 +17,8 @@
     <![endif]-->
     
     <script type="text/javascript" src="js/maschup.min.js"></script>
-
+    <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script> -->
+    
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
 
@@ -38,6 +39,22 @@
     <script type="text/javascript" src="js/jquery-ui-1.7.2.min.js"></script>
 
     <style type="text/css">
+
+    .screen {
+        background:#000000 none repeat scroll 0 0;
+        display:none;
+        height:100%;
+        left:0;
+        filter:alpha(opacity=80);
+        opacity: 0.8;
+        top:0;
+        width:100%;
+        z-index:50;
+        display:none;
+        position:fixed;
+    }
+
+
         body {
             font-family: Verdana, Helvetica, Arial, sans-serif;
             font-size: 10px;
@@ -133,7 +150,7 @@
         #suba {
             font-size: 12px;
             position: absolute;
-            width: 30%;
+            width: 60%;
             left: 0px;
             margin-left: 20px;
         }
@@ -186,6 +203,10 @@
             border: dotted #999999 1px;
         }
         
+        .rich_tagcloud_tag {
+            padding: 10px;
+            float: left;
+        }
         
         
         /*
@@ -237,7 +258,7 @@
 <div id="suba_results">
 </div>
 </div>
-<div id="tissue">
+<div id="tissue" style="display: none;">
     <h3>Tissue evidence</h3>
     <p>Tissues that have proteomic evidence are outlined in <span style="color: #ff0000; font-weight: bolder;">RED</span>.</p>
 <div id="atproteome_map">
@@ -310,6 +331,10 @@
             if (rendering_readers.length > 0) {                
                 return;
             }
+            if (document._screen) {
+                document._screen.hide();
+            }
+
                         
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0],true);
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0],true);      
@@ -402,11 +427,51 @@
     
             var suba = new MASCP.SubaReader(agi);
             jQuery(suba).bind('resultReceived',function() {
-                jQuery('#suba_results').text('');
-                jQuery('#suba_results').append(this.result.render());               
-                if (this.result._map) {
-                    MASCP.SubaReader.existing_map = this.result._map;
-                }
+                jQuery('#suba_results').text('').append('<div><table id="suba_tags"><thead><tr><th>tag</th><th>Publication count</th></tr></thead><tbody></tbody></table></div>');
+                jQuery(this.result.getMassSpecLocalisation()).each(function(i) {
+                    var loc_data = this;
+                    var loc_key = null;
+                    for (loc_key in loc_data) {
+                        jQuery('#suba_results tbody').append("<tr><td>MS "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                    }
+                });
+                jQuery(this.result.getGfpLocalisation()).each(function(i) {
+                    var loc_data = this;
+                    var loc_key = null;
+                    for (loc_key in loc_data) {
+                        jQuery('#suba_results tbody').append("<tr><td>GFP "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                    }
+                });
+                jQuery(this.result.getPredictedLocalisations()).each(function(i) {
+                    var loc_data = this;
+                    var loc_key = null;
+                    for (loc_key in loc_data) {
+                        jQuery('#suba_results tbody').append("<tr><td>Prediction "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");                    
+                    }
+                });                
+                
+                var tagvis = new MASCP.TagVisualisation("suba_tags",[MASCP.TagVisualisation.TagCloud]);
+                tagvis.tagColumn = 0;
+                tagvis.visualisations[0].tagFactory = function(tagId,tag,row) {
+                    var span = document.createElement('span');
+                    var the_tag = tag;
+                    var original_tag = tag;
+                    if ((the_tag = the_tag.replace(/MS /,'')) != original_tag) {
+                        span.style.color = '#ff0000';
+                        original_tag = the_tag;
+                    }
+                    if ((the_tag = the_tag.replace(/GFP /,'')) != original_tag) {
+                        span.style.color = '#00ff00';                        
+                        original_tag = the_tag;
+                    }
+                    if ((the_tag = the_tag.replace(/Prediction /,'')) != original_tag) {
+                        span.style.color = '#aaaaaa';                        
+                        original_tag = the_tag;                        
+                    }                    
+                    span.textContent = the_tag;
+                    return span;
+                };                
+                tagvis.visualisations[0].update(1);
             });
 
             all_readers.push(suba);
@@ -541,6 +606,14 @@
         if (agi.length < 1) {
             return;
         }
+
+        //add modal background
+        if ( ! document._screen ) {
+            document._screen = $('<div />').addClass('screen').appendTo('body');
+        }
+        
+        document._screen.show();
+
 
         for (var groupname in MASCP.groups) {
             MASCP.renderer.hideGroup(groupname);
