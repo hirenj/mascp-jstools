@@ -722,6 +722,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var seq_chars = this.sequence.split('');
     var renderer = this;
     var amino_acids = canvas.set();
+    var amino_acids_shown = false;
     var x = 0;
     
     for (var i = 0; i < seq_chars.length; i++) {
@@ -736,6 +737,16 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         log("Browser does not support addEventListener");
         return;
     }
+    jQuery(canvas).bind('panstart', function() {
+        amino_acids.attr( { 'display' : 'none'});
+        jQuery(canvas).bind('panend', function() {
+            if (amino_acids_shown) {
+                amino_acids.attr( { 'display' : 'block'});                
+            }
+            jQuery(canvas).unbind('panend',arguments.callee);
+        });
+    });
+    
     jQuery(canvas).bind('zoomChange', function() {
        if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
            renderer.zoom = 4;
@@ -748,9 +759,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
        if (canvas.zoom > 3.5) {
            renderer._axis_height = 14;
            amino_acids.attr({'display':'block'});
+           amino_acids_shown = true;
        } else {
            renderer._axis_height = 30;
-           amino_acids.attr({'display':'none'});           
+           amino_acids.attr({'display':'none'});   
+           amino_acids_shown = false;        
        }
        renderer.refresh();
    });

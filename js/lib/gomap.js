@@ -1056,6 +1056,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       self.dY = null;
       self.dragging = false;
       evt.preventDefault(true);
+      
+      var targ = self.targetElement ? self.targetElement : targetElement;      
+      
+      if (document.createEvent) {
+          var evObj = document.createEvent('Events');
+          evObj.initEvent('panend',false,true);
+          targ.dispatchEvent(evObj);
+      }      
     };
 
     var mouseOut = function(e) {
@@ -1070,7 +1078,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if ( e.target != this && ! e.currentTarget ) {
             return;
         }
-        
+
         var toTarget = e.relatedTarget ? e.relatedTarget : e.toElement;
         
         while (toTarget != null) {
@@ -1117,9 +1125,35 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dragging = true;
             self.dX = targ.getPosition()[0];
             self.dY = targ.getPosition()[1];
+            
+            if (document.createEvent) {
+                var evObj = document.createEvent('Events');
+                evObj.initEvent('panstart',false,true);
+                targ.dispatchEvent(evObj);
+            }            
+            
         }
     },false);
 
+
+    document.addEventListener('touchmove',function(e) {
+        if ( ! self.dragging ) {
+            return;
+        }
+        self.oX = 0;
+        self.oY = 0;
+        self.dX = null;
+        self.dY = null;
+        self.dragging = false;
+
+        var targ = self.targetElement ? self.targetElement : targetElement;      
+
+        if (document.createEvent) {
+            var evObj = document.createEvent('Events');
+            evObj.initEvent('panend',false,true);
+            targ.dispatchEvent(evObj);
+        }      
+    },false);
 
     targetElement.addEventListener('touchmove',function(e) {
 
