@@ -292,7 +292,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 if (track.href) {
                     window.open(track.href);
                 }                
-            })
+            },false);
         }
         
 

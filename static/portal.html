@@ -14,11 +14,11 @@
     
 <!--    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
-    <!-- <script type="text/javascript" src="js/maschup.min.js"></script> -->
-    <script type="text/javascript" src="js/lib/TagVisualisation.js"></script>
+    <script type="text/javascript" src="js/maschup.min.js"></script>
     
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
+    <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script>
 
     <script type="text/javascript" src="js/json2.js"></script>
     <script type="text/javascript" src="js/lib/MascpService.js"></script>
@@ -30,7 +30,7 @@
 
     <script type="text/javascript" src="js/lib/gomap.js"></script>
     <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script>
+    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
@@ -614,8 +614,14 @@
     var change_func = function() {
         var agi = this.value;
         
+        
+        
         if (! agi.match(/\.\d$/)) {
             agi = agi + '.1';
+        }
+        
+        if ( ! agi.match(/[aA].*\d+\.\d/)) {
+            return;
         }
         
         this.value = agi;
@@ -642,12 +648,14 @@
         
         var reader = new MASCP.TairReader(agi,'proxy.pl');
         jQuery(reader).bind('resultReceived',function() {
-            if (this.result.getSequence() == '') {
+            if (this.result.getSequence() == null || this.result.getSequence() == '') {
+                document._screen.hide();
                 return;
             }
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         }).bind('error',function() {
+            document._screen.hide();            
         });
         reader.retrieve();
     };

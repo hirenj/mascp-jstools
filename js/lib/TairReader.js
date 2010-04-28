@@ -38,8 +38,9 @@ MASCP.TairReader.prototype.requestData = function()
                   self.retrieve();
               },
               error: function(resp,req,settings) {
-                  console.log(resp);
-                  console.log("Errred");
+                  self._desc_retrieved = true;
+                  self._description = 'None';
+                  self.retrieve();
               }
         };
     };
