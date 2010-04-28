@@ -14,13 +14,13 @@
     
 <!--    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
-    <script type="text/javascript" src="js/maschup.min.js"></script>
-    <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script> -->
+    <!-- <script type="text/javascript" src="js/maschup.min.js"></script> -->
+    <script type="text/javascript" src="js/lib/TagVisualisation.js"></script>
     
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
 
-    <!-- <script type="text/javascript" src="js/json2.js"></script>
+    <script type="text/javascript" src="js/json2.js"></script>
     <script type="text/javascript" src="js/lib/MascpService.js"></script>
     <script type="text/javascript" src="js/lib/AtProteomeReader.js"></script>
     <script type="text/javascript" src="js/lib/PhosphatReader.js"></script>
@@ -30,7 +30,7 @@
 
     <script type="text/javascript" src="js/lib/gomap.js"></script>
     <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
+    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script>
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
@@ -400,6 +400,8 @@
                 MASCP.renderer.showLayer('phosphat_experimental');
             }
             
+            MASCP.renderer.showLayer('promex_controller');
+            
         });
 
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -541,6 +543,20 @@
 
             jQuery(all_readers).each(function(i) {
                 this.bind('error',function() {
+                    switch(this.__class__) {
+                        case MASCP.SubaReader:
+                        jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/">Error retrieving SUBA data</a></li>')
+                        break;
+                        case MASCP.AtProteomeReader:
+                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/">Error retrieving AtProteome data</a></li>');
+                        break;
+                        case MASCP.PhosphatReader:
+                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de">Error retrieving PhosPhAt data</a></li>');
+                        break;
+                        case MASCP.PromexReader:
+                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/">Error retrieving ProMEX data</a></li>');
+                        break;
+                    }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
                 });
                 this.bind('resultReceived',function() {
@@ -551,12 +567,15 @@
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">See more at SUBA</a></li>')
                         break;
                         case MASCP.AtProteomeReader:
+                        MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
                         jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">See more at AtProteome</a></li>');
                         break;
                         case MASCP.PhosphatReader:
+                        MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">See more at PhosPhAt</a></li>');
                         break;
                         case MASCP.PromexReader:
+                        MASCP.getLayer('atproteome_controller').href = 'http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi;
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
                         break;
                     }

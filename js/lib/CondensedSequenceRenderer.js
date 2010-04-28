@@ -281,19 +281,31 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('font-size',2*height);
         a_text.setAttribute('fill','#ffffff');
         a_text.setAttribute('dominant-baseline', 'hanging');
-        
-        label_group.push(a_text);
 
-        label_group.style.cursor = 'pointer';
-        label_group.addEventListener('click',function() {
+
+        label_group.push(a_text);
+        
+        if (track.href) {
+            var a_use = canvas.use('#new_link_icon',21.5*height,y-0.5*height,2.5*height,2.5*height);
+            a_use.style.cursor = 'pointer';
+            a_use.addEventListener('click',function() {
+                if (track.href) {
+                    window.open(track.href);
+                }                
+            })
+        }
+        
+
+//        label_group.style.cursor = 'pointer';
+        
+        label_group.addEventListener('click',function(e) {
             jQuery(track).trigger('click');
             return true;
         },false);
         
-        var label_begin = function() {
-            
+        var label_begin = function() {            
             a_rect.setAttribute('opacity','1');
-           a_text.style.fill = '#eeeeee';
+            a_text.style.fill = '#eeeeee';
             return true;
         };
         
@@ -313,9 +325,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_group.onmouseout = undefined;
             label_end();
         },false);
+        
         label_group.addEventListener('mouseover',label_begin,false);
         label_group.addEventListener('mouseout',label_end,false);
         label_group.addEventListener('mouseup',label_end,false);
+        
 //        label_group.style.zIndex = -10000;
         if (track._group_controller) {
             var group_toggler = canvas.text(height,y+1.5*height, track._isExpanded() ? '▼' : '▶');
@@ -323,7 +337,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             group_toggler.setAttribute('font-size',1.75*height);
             group_toggler.setAttribute('fill','#ffffff');
             group_toggler.style.cursor = 'pointer';
-            group_toggler.addEventListener('click',function() {
+            group_toggler.addEventListener('click',function(e) {
+                e.stopPropagation();
                 jQuery(track).trigger('longclick');
                 if (track._isExpanded()) {
                     group_toggler.textContent = '▼';
@@ -390,6 +405,17 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
       this.appendChild(a_rect);
       return a_rect;
     };
+
+    canvas.use = function(ref,x,y,width,height) {
+        var a_use = document.createElementNS(svgns,'use');
+        a_use.setAttribute('x', typeof x == 'string' ? x : x * RS);
+        a_use.setAttribute('y', typeof y == 'string' ? y : y * RS);
+        a_use.setAttribute('width', typeof width == 'string' ? width : width * RS);
+        a_use.setAttribute('height', typeof height == 'string' ? height : height * RS);
+        a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',ref);
+        this.appendChild(a_use);
+        return a_use;        
+    }
 
     canvas.button = function(x,y,width,height,text) {
         var button = this.group();
@@ -868,75 +894,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         
         var defs = document.createElementNS(svgns,'defs');
         canv.appendChild(defs);
-        var gradient = document.createElementNS(svgns,'linearGradient');
-        gradient.setAttribute('id','track_shine');
-        gradient.setAttribute('x1','0%');
-        gradient.setAttribute('x2','0%');
-        gradient.setAttribute('y1','0%');
-        gradient.setAttribute('y2','100%');
-        defs.appendChild(gradient);
-        var stop1 = document.createElementNS(svgns,'stop');
-        var stop2 = document.createElementNS(svgns,'stop');
-        var stop3 = document.createElementNS(svgns,'stop');
-        stop1.setAttribute('offset','0%');
-        stop2.setAttribute('offset','50%');
-        stop3.setAttribute('offset','100%');
-        stop1.setAttribute('style','stop-color:#111111;stop-opacity:0.5');
-        stop3.setAttribute('style','stop-color:#111111;stop-opacity:0.5');
-        stop2.setAttribute('style','stop-color:#aaaaaa;stop-opacity:0.5');
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
-        gradient.appendChild(stop3);
-        
-        gradient = document.createElementNS(svgns,'linearGradient');
-        gradient.setAttribute('id','simple_gradient');
-        gradient.setAttribute('x1','0%');
-        gradient.setAttribute('x2','0%');
-        gradient.setAttribute('y1','0%');
-        gradient.setAttribute('y2','100%');
-        defs.appendChild(gradient);
-        stop1 = document.createElementNS(svgns,'stop');
-        stop2 = document.createElementNS(svgns,'stop');
-        stop1.setAttribute('offset','0%');
-        stop2.setAttribute('offset','100%');
-        stop1.setAttribute('style','stop-color:#aaaaaa;stop-opacity:1');
-        stop2.setAttribute('style','stop-color:#888888;stop-opacity:1');
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
-        
-        gradient = document.createElementNS(svgns,'linearGradient');
-        gradient.setAttribute('id','left_fade');
-        gradient.setAttribute('x1','0%');
-        gradient.setAttribute('x2','100%');
-        gradient.setAttribute('y1','0%');
-        gradient.setAttribute('y2','0%');
-        defs.appendChild(gradient);
-        stop1 = document.createElementNS(svgns,'stop');
-        stop2 = document.createElementNS(svgns,'stop');
-        stop1.setAttribute('offset','0%');
-        stop2.setAttribute('offset','100%');
-        stop1.setAttribute('style','stop-color:#ffffff;stop-opacity:1');
-        stop2.setAttribute('style','stop-color:#ffffff;stop-opacity:0');
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
 
-        gradient = document.createElementNS(svgns,'linearGradient');
-        gradient.setAttribute('id','right_fade');
-        gradient.setAttribute('x1','0%');
-        gradient.setAttribute('x2','100%');
-        gradient.setAttribute('y1','0%');
-        gradient.setAttribute('y2','0%');
-        defs.appendChild(gradient);
-        stop1 = document.createElementNS(svgns,'stop');
-        stop2 = document.createElementNS(svgns,'stop');
-        stop1.setAttribute('offset','0%');
-        stop2.setAttribute('offset','100%');
-        stop1.setAttribute('style','stop-color:#ffffff;stop-opacity:0');
-        stop2.setAttribute('style','stop-color:#ffffff;stop-opacity:1');
-        gradient.appendChild(stop1);
-        gradient.appendChild(stop2);
-        
-        
         var makeEl = function(name,attributes) {
             var result = document.createElementNS(svgns,name);
             for (var attribute in attributes) {
@@ -945,6 +903,87 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             return result;
         };
 
+        var gradient = makeEl('linearGradient',{
+            'id':'track_shine',
+            'x1':'0%',
+            'x2':'0%',
+            'y1':'0%',
+            'y2':'100%'
+        });
+
+        defs.appendChild(gradient);
+
+        gradient.appendChild(makeEl('stop',{
+            'offset':'0%',
+            'style':'stop-color:#111111;stop-opacity:0.5',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'50%',
+            'style':'stop-color:#aaaaaa;stop-opacity:0.5',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'100%',
+            'style':'stop-color:#111111;stop-opacity:0.5',
+        }));
+        
+        gradient = makeEl('linearGradient',{
+            'id':'simple_gradient',
+            'x1':'0%',
+            'x2':'0%',
+            'y1':'0%',
+            'y2':'100%'
+        });
+
+        defs.appendChild(gradient);
+
+        gradient.appendChild(makeEl('stop',{
+            'offset':'0%',
+            'style':'stop-color:#aaaaaa;stop-opacity:1',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'100%',
+            'style':'stop-color:#888888;stop-opacity:1',
+        }));
+
+        gradient = makeEl('linearGradient',{
+            'id':'left_fade',
+            'x1':'0%',
+            'x2':'100%',
+            'y1':'0%',
+            'y2':'0%'
+        });
+
+        defs.appendChild(gradient);
+
+        gradient.appendChild(makeEl('stop',{
+            'offset':'0%',
+            'style':'stop-color:#ffffff;stop-opacity:1',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'100%',
+            'style':'stop-color:#ffffff;stop-opacity:0',
+        }));        
+
+
+        gradient = makeEl('linearGradient',{
+            'id':'right_fade',
+            'x1':'0%',
+            'x2':'100%',
+            'y1':'0%',
+            'y2':'0%'
+        });
+
+        defs.appendChild(gradient);
+
+        gradient.appendChild(makeEl('stop',{
+            'offset':'0%',
+            'style':'stop-color:#ffffff;stop-opacity:0',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'100%',
+            'style':'stop-color:#ffffff;stop-opacity:1',
+        }));        
+        
         var glow = makeEl('filter',{
             'id':'track_glow',
             'filterUnits':'objectBoundingBox',
@@ -955,13 +994,6 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         });
         glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
         defs.appendChild(glow);
-
-        // 
-        // 'filterUnits':'objectBoundingBox',
-        // 'x':'-2%',
-        // 'y':'-2%',
-        // 'width':'120%',
-        // 'height':'120%'
 
         var shadow = makeEl('filter',{
             'id':'drop_shadow',
@@ -977,6 +1009,56 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         
         defs.appendChild(shadow);
 
+        var link_icon = makeEl('svg',{
+            'width' : '100%',
+            'height': '100%',
+            'id'    : 'new_link_icon',
+            'viewBox': '0 0 100 100',
+            'preserveAspectRatio' : 'xMinYMin meet'
+        });
+
+        defs.appendChild(link_icon);
+
+        link_icon.appendChild(makeEl('rect', {
+            'x' : '5',
+            'y' : '10',
+            'stroke-width' : '1',
+            'width' : '70',
+            'height': '60',
+            'stroke': '#ffffff',
+            'fill'  : 'none'            
+        }));
+        link_icon.appendChild(makeEl('rect', {
+            'x' : '5',
+            'y' : '10',
+            'stroke-width' : '0',
+            'width' : '70',
+            'height': '10',
+            'stroke': '#ffffff',
+            'fill'  : '#ffffff'            
+        }));
+
+
+        link_icon.appendChild(makeEl('rect', {
+            'x' : '30',
+            'y' : '0',
+            'stroke-width' : '1',
+            'width' : '70',
+            'height': '60',
+            'stroke': '#ffffff',
+            'fill'  : '#bbbbbb',
+            'fill-opacity': '1'            
+        }));
+        
+        link_icon.appendChild(makeEl('rect', {
+            'x' : '30',
+            'y' : '0',
+            'stroke-width' : '1',
+            'width' : '70',
+            'height': '10',
+            'stroke': '#ffffff',
+            'fill'  : '#222222'            
+        }));
 
         
         renderer._drawAxis(canv,line_length);
