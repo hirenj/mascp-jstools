@@ -94,13 +94,17 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
     var css_block = '.active .overlay { background: #ff9900; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
     
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'Promex results', 'color' : '#ff9900', 'css' : css_block });
+    MASCP.registerLayer(overlay_name,{ 'fullname' : 'ProMEX MS/MS', 'color' : '#ff9900', 'css' : css_block });
+
 
     this.bind('resultReceived', function() {
+        
+        MASCP.getLayer('promex_controller').href = 'http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi;
+        
         // var css_block = '.active { background: #ff9900; color: #ffffff;} :indeterminate { background: #ff0000; } .active a:hover { background: transparent !important; } .inactive { }';
         var peps = this.result.getPeptides();
         for(var i = 0; i < peps.length; i++) {
-            MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'ProMex spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
+            MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'Spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
             var peptide = peps[i];
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
             var layer_name = 'promex_experimental_spectrum_'+i;

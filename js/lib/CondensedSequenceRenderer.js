@@ -286,13 +286,15 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         label_group.push(a_text);
         
         if (track.href) {
+            a_anchor = canvas.a(track.href);
             var a_use = canvas.use('#new_link_icon',21.5*height,y-0.5*height,2.5*height,2.5*height);
             a_use.style.cursor = 'pointer';
-            a_use.addEventListener('click',function() {
-                if (track.href) {
-                    window.open(track.href);
-                }                
-            },false);
+            a_anchor.appendChild(a_use);
+            // a_use.addEventListener('click',function() {
+            //     if (track.href) {
+            //         window.open(track.href);
+            //     }                
+            // },false);
         }
         
 
@@ -415,7 +417,15 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',ref);
         this.appendChild(a_use);
         return a_use;        
-    }
+    };
+
+    canvas.a = function(href) {
+        var a_anchor = document.createElementNS(svgns,'a');
+        a_anchor.setAttribute('target','_new');        
+        a_anchor.setAttributeNS('http://www.w3.org/1999/xlink','href',href);
+        this.appendChild(a_anchor);
+        return a_anchor;
+    };
 
     canvas.button = function(x,y,width,height,text) {
         var button = this.group();

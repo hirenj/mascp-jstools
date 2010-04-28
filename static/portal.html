@@ -252,7 +252,7 @@
 <div style="position: relative;">
 <div id="suba">
     <h3>Subcellular localisation</h3>
-    <p>Localisation data is outlined in <span style="color: #00ff00; font-weight: bolder;">GREEN</span> for GFP data, <span style="color: #ff0000; font-weight: bolder;">RED</span> for mass spectrometry data and <span style="color: #999999; font-weight: bolder;">GRAY</span> for predicted localisation. Font size correlates to the amount of data supporting each localisation.</p>
+    <p>Localisation data corresponds to text size and colour, where <span style="color: #00ff00; font-weight: bolder;">GREEN</span> shows FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span> shows MS data and <span style="color: #999999; font-weight: bolder;">GRAY</span> shows predicted localisation.</p>
 <div id="suba_results">
 </div>
 </div>
@@ -336,13 +336,13 @@
                         
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0],true);
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0],true);      
-            if (MASCP.getGroup('promex_experimental').size() > 1) {
+            if (MASCP.getGroup('promex_experimental').size() > 0) {
                 MASCP.renderer.createLayerCheckbox('promex_controller',jQuery('#promex_placeholder input')[0],true);      
             } else {
                 MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_placeholder input')[0],true);                
             }
             
-            if (MASCP.getGroup('atproteome').size() > 1) {
+            if (MASCP.getGroup('atproteome').size() > 0) {
                 MASCP.renderer.createLayerCheckbox('atproteome_controller',jQuery('#atproteome_placeholder input')[0],true);
             } else {
                 MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome_placeholder input')[0],true);
@@ -352,12 +352,12 @@
             
             var tweak_track_order = function(array) {
                 if (array.splice && array.indexOf) {
-                    if (MASCP.getGroup('atproteome').size() > 1) {
+                    if (MASCP.getGroup('atproteome').size() > 0) {
                         array.splice(array.indexOf('atproteome_placeholder'),0,'atproteome_controller','atproteome');
                     } else {
                         array.splice(array.indexOf('atproteome_placeholder'),0,'atproteome');                        
                     }
-                    if (MASCP.getGroup('promex_experimental').size() > 1) {
+                    if (MASCP.getGroup('promex_experimental').size() > 0) {
                         array.splice(array.indexOf('promex_placeholder'),0,'promex_controller','promex_experimental');
                     } else {
                         array.splice(array.indexOf('promex_placeholder'),0,'promex_experimental');
@@ -396,7 +396,8 @@
             }
             
             MASCP.renderer.showLayer('atproteome_controller');
-            if (! MASCP.getLayer('phosphat_experimental').disabled ) {
+            
+            if (MASCP.getLayer('phosphat_experimental') && ! MASCP.getLayer('phosphat_experimental').disabled ) {
                 MASCP.renderer.showLayer('phosphat_experimental');
             }
             
@@ -567,15 +568,12 @@
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">See more at SUBA</a></li>')
                         break;
                         case MASCP.AtProteomeReader:
-                        MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
                         jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">See more at AtProteome</a></li>');
                         break;
                         case MASCP.PhosphatReader:
-                        MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">See more at PhosPhAt</a></li>');
                         break;
                         case MASCP.PromexReader:
-                        MASCP.getLayer('atproteome_controller').href = 'http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi;
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
                         break;
                     }
@@ -607,6 +605,11 @@
         });
         
         // Trigger the change event on page load
+        var hash = window.location.hash.replace(/#/g,'');
+        if(hash) {
+            jQuery('#agi')[0].value = hash;
+        }
+                
         jQuery('#agi').trigger(MASCP.IE ? 'blur' : 'change');
     });
 
