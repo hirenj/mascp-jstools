@@ -1578,6 +1578,24 @@ var accessors = {
         if (zoomLevel > 10) {
             zoomLevel = 10;
         }
+        if (this.zoomCenter && this._canvas) {
+
+            var cx = this.zoomCenter.x;
+            var viewBox = this._canvas.getAttribute('viewBox').split(' ');
+            var start_zoom = parseFloat(this._zoomLevel);
+            var end_zoom = parseFloat(zoomLevel);
+
+
+            if ( this.zoomLeft == null ) {
+                this.zoomLeft = 2 * end_zoom * this.sequence.length * parseFloat(cx);
+            }
+            
+
+            var viewBoxScale = -2 * end_zoom * this.sequence.length * parseFloat(cx) / parseFloat(viewBox[2]);
+            
+            this._canvas.shiftPosition( (this.zoomLeft / parseFloat(viewBox[2])) + viewBoxScale,0);
+        }
+
         this._zoomLevel = parseFloat(zoomLevel);
         if (this._canvas) {
             this._canvas.zoom = parseFloat(zoomLevel);

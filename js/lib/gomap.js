@@ -857,15 +857,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
     var momentum = null;
 
-    if (targetElement.addEventListener) {
-        var old_zoom = targetElement.zoom;
-        targetElement.addEventListener('zoomChange',function(e) {
-            var curr_offsets = targetElement.getPosition();            
-            targetElement.shiftPosition(curr_offsets[0] * (old_zoom / this.zoom), curr_offsets[1] * (this.zoom / old_zoom));
-            old_zoom = this.zoom;
-        },true);
-    }
-
     if (targetElement.nodeName == 'svg') {
         targetElement.getPosition = function() {
             var dX = targetElement.currentTranslate.x;
@@ -1097,11 +1088,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.attachEvent(name,func);
         }
     }
-    targetElement.addEventListener('gesturechange',function(e) {
-        if (e.scale < 0.9 || e.scale > 1.1) {
-            self.dragging = false;
-        }
-    },false);
     
     targetElement.addEventListener('touchstart',function(e) {
         var targ = self.targetElement ? self.targetElement : targetElement;
@@ -1191,7 +1177,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 
         momentum = p.x;
         
-
         targ.shiftPosition(p.x,p.y);
 
         e.preventDefault(true);        
@@ -1255,7 +1240,47 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
 
 GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
+
+    var mousePosition = function(evt) {
+        var posx = 0;
+        var posy = 0;
+        if (!evt) var evt = window.event;
+        if (evt.pageX || evt.pageY) 	{
+            posx = evt.pageX;
+            posy = evt.pageY;
+        } else if (evt.clientX || evt.clientY) 	{
+            posx = evt.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+            posy = evt.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+        }
+        if (self.targetElement) {
+            posx = evt.screenX;
+            posy = evt.screenY;
+        }
+        return [ posx, posy ];
+    };
+
+    touchElement.addEventListener('touchstart',function(e) {
+        if (e.touches.length == 2) {
+            var positions = mousePosition(e.touches[0]);
+            var positions2 = mousePosition(e.touches[1]);
+            var p;
+            if (touchElement.nodeName == 'svg') {
+                p = touchElement.createSVGPoint();
+                p.x = 0.5*(positions[0] + positions2[0]);
+                p.y = 0.5*(positions[1] + positions2[1]);
+                var rootCTM = this.getScreenCTM();
+                self.matrix = rootCTM.inverse();
+                p = p.matrixTransform(self.matrix);
+            } else {
+                p.x = 0.5*(positions[0] + positions2[0]);
+                p.y = 0.5*(positions[1] + positions2[1]);
+            }
+            zoomElement.zoomCenter = p;            
+        }
+    },false);
+
     touchElement.addEventListener('gesturestart',function(e) {
+        zoomElement.zoomLeft = null;
         var zoomStart = zoomElement.zoom;
         var zoomscale = function(ev) {
             zoomElement.zoom = zoomStart * ev.scale;
@@ -1264,7 +1289,9 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
         this.addEventListener('gesturechange',zoomscale,false);
         this.addEventListener('gestureend',function(ev) {
             touchElement.removeEventListener('gesturechange',zoomscale);
-            touchElement.removeEventListener('gesturechange',arguments.callee);            
+            touchElement.removeEventListener('gesturechange',arguments.callee);
+            zoomElement.zoomCenter = null;
+            zoomElement.zoomLeft = null;
         },false);        
     },false);
 
