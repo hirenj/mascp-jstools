@@ -1590,10 +1590,9 @@ var accessors = {
                 this.zoomLeft = 2 * end_zoom * this.sequence.length * parseFloat(cx);
                 this._startX = this._canvas.currentTranslate.x;
             }
-            
 
             var viewBoxScale = -2 * end_zoom * this.sequence.length * parseFloat(cx) / parseFloat(viewBox[2]);
-            
+
             this._canvas.shiftPosition( this._startX + (this.zoomLeft / parseFloat(viewBox[2])) + viewBoxScale,0);
         }
 

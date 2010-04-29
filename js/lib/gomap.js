@@ -891,10 +891,24 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 p.y += self.dY;
                 p.y = 0;
             }
+
+            if (targetElement._snapback) {
+                clearTimeout(targetElement._snapback);
+            }
             
             if (p.x > viewBoxScale * min_x) {
-                p.x = viewBoxScale * min_x;
+                targetElement._snapback = setTimeout(function() {
+                    if (targetElement.currentTranslate.x - (viewBoxScale * min_x) > 1 ) {
+                        targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (viewBoxScale * min_x)), 0);
+                        targetElement._snapback = setTimeout(arguments.callee,10);
+                    } else {
+                        targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
+                        targetElement._snapback = null;
+                    }
+                },500);
+//              p.x = viewBoxScale * min_x;
             }
+            
             if (Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
                 p.x = -0.85 * viewBoxScale * width;
             }
@@ -905,7 +919,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             if (Math.abs(p.y) > 0.50*viewBoxScale * height ) {
                 p.y = -0.50 * viewBoxScale * height;
             }
-
             if (this.setCurrentTranslateXY) {
                 this.setCurrentTranslateXY(p.x,p.y);
             } else if (this.currentTranslate.setXY) {
