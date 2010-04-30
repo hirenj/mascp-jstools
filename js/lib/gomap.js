@@ -903,14 +903,32 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                         targetElement._snapback = setTimeout(arguments.callee,10);
                     } else {
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
+                        if (document.createEvent) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('pan',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
                         targetElement._snapback = null;
                     }
-                },500);
+                },300);
 //              p.x = viewBoxScale * min_x;
             }
             
             if (Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
-                p.x = -0.85 * viewBoxScale * width;
+                targetElement._snapback = setTimeout(function() {
+                    if (Math.abs(targetElement.currentTranslate.x - (0.85 * viewBoxScale * width)) > 1 ) {
+                        targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (0.85 * viewBoxScale * min_x)), 0);
+                        targetElement._snapback = setTimeout(arguments.callee,10);
+                    } else {
+                        targetElement.setCurrentTranslateXY( -0.85 * viewBoxScale * width, 0 );
+                        if (document.createEvent) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('pan',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
+                        targetElement._snapback = null;
+                    }
+                },300);
             }
 
             if (p.y > viewBoxScale * min_y) {
@@ -1396,7 +1414,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
         controls_container.appendChild(zoomIn);
     }
 
-    this._scrollZoomControls(controls_container,zoomElement,precision);
+    this.addScrollZoomControls(zoomElement,controls_container,precision);
 
     return controls_container;
 };
@@ -1404,7 +1422,11 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
 /**
  * Connect the scroll wheel to the controls to control zoom
  */
-GOMap.Diagram._scrollZoomControls = function(controlElement,target,precision) {
+GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) {
+    precision = precision || 0.5;
+
+    var self = this;
+
     var hookEvent = function(element, eventName, callback) {
       if (typeof(element) == 'string') {
         element = document.getElementById(element);
@@ -1424,14 +1446,50 @@ GOMap.Diagram._scrollZoomControls = function(controlElement,target,precision) {
       }
     };
 
+
+    var mousePosition = function(evt) {
+          var posx = 0;
+          var posy = 0;
+          if (!evt) var evt = window.event;
+          if (evt.pageX || evt.pageY) 	{
+              posx = evt.pageX;
+              posy = evt.pageY;
+          } else if (evt.clientX || evt.clientY) 	{
+              posx = evt.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+              posy = evt.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+          }
+
+          var p = {};
+
+          if (controlElement.nodeName == 'svg') {
+              p = controlElement.createSVGPoint();
+              p.x = posx;
+              p.y = posy;
+              var rootCTM = controlElement.getScreenCTM();
+              self.matrix = rootCTM.inverse();
+              p = p.matrixTransform(self.matrix);
+          } else {
+              p.x = posx;
+              p.y = posy;
+          }
+
+          return p;
+    };
+
     var mouseWheel = function(e) {
+
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
+
+      target.zoomCenter = mousePosition(e);            
+      
       if (wheelData > 0) {
         target.zoom = target.zoom += precision;
       } else {
         target.zoom = target.zoom -= precision;
       }
+      
+      
       if (e.preventDefault) {
         e.preventDefault();
       }
@@ -1450,5 +1508,12 @@ GOMap.Diagram._scrollZoomControls = function(controlElement,target,precision) {
     } else {
       hookEvent(controlElement, 'mousewheel', mouseWheel);
     }
+
+    hookEvent(controlElement,'mousemove', function(e) {
+        if (target.zoomCenter && Math.abs(target.zoomCenter.x - mousePosition(e).x) > 100) {
+            target.zoomCenter = null;
+            target.zoomLeft = null;
+        }
+    });
 };
 

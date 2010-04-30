@@ -122,11 +122,6 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         right_fade.setAttribute('style','fill: url(#right_fade);');
         right_fade.setAttribute('transform','translate(-50,0)');
 
-        jQuery(renderer._canvas).bind('boundaryHit',function() {
-            if (renderer._canvas.currentTranslate.x == 0) {
-                left_fade.style.display = 'none';
-            }
-        });
         jQuery(renderer._canvas).bind('pan',function() {
             if (renderer._canvas.currentTranslate.x == 0) {
                 left_fade.style.display = 'none';
@@ -1578,8 +1573,7 @@ var accessors = {
         if (zoomLevel > 10) {
             zoomLevel = 10;
         }
-        if (this.zoomCenter && this._canvas) {
-
+        if (this.zoomCenter && this._canvas) {            
             var cx = this.zoomCenter.x;
             var viewBox = this._canvas.getAttribute('viewBox').split(' ');
             var start_zoom = parseFloat(this._zoomLevel);
