@@ -165,21 +165,28 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         
         jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
+            MASCP.registerGroup('phosphat_peptides', { 'fullname' : 'PhosPhAt peptides' });
+            MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
             if (aa) {
-        	    aa.addBoxOverlay('phosphat_experimental',0.5,this[1]);
+        	    aa.addBoxOverlay('phosphat_peptide_'+i,0.5,this[1]);
     	    }
         });
         
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'Phosphorylation', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
             this.addToLayer('phosphat_experimental');
         });
         
         if (MASCP.getLayer('phosphat_experimental')) {
             MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;        
         }
+        
+        if (sequenceRenderer.createGroupController) {
+            sequenceRenderer.createGroupController('phosphat_experimental','phosphat_peptides');
+        }        
+        
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     });
     return this;

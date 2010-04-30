@@ -363,6 +363,10 @@
                     } else {
                         array.splice(array.indexOf('promex_placeholder'),0,'promex_experimental');
                     }
+                    if (MASCP.getGroup('phosphat_peptides').size() > 0) {
+                        array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
+                    }
+                    
                 }
                 return array;
             };

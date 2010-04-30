@@ -914,7 +914,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 //              p.x = viewBoxScale * min_x;
             }
             
-            if (Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
+            if (p.x < 0 && Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
                 targetElement._snapback = setTimeout(function() {
                     if (Math.abs(targetElement.currentTranslate.x - (0.85 * viewBoxScale * width)) > 1 ) {
                         targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (0.85 * viewBoxScale * min_x)), 0);
