@@ -197,6 +197,19 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     // WebKit has problems with clipping paths. Tracking bug: https://bugs.webkit.org/show_bug.cgi?id=15162
 
+    var scroll_controls = document.createElementNS(svgns,'foreignObject');
+    scroll_controls.setAttribute('x','5');
+    scroll_controls.setAttribute('y','5');
+    scroll_controls.setAttribute('width','100');
+    scroll_controls.setAttribute('height','100');
+    var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
+    body.setAttribute('id','sequence_control_con');
+    body.setAttribute('style','width: 100px; height: 100px; margin: 0px; position: relative;');
+    scroll_controls.appendChild(body);
+    canvas.appendChild(scroll_controls);
+
+    this._scroll_control = body;
+
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
     var rect2 = canvas.rect(0,0,'190px','100%');
@@ -228,9 +241,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         if (visible) {
             canvas.setCurrentTranslateXY(0,0);
             close_group.setAttribute('transform','');
+            scroll_controls.style.display = 'block';
         } else {
             canvas.setCurrentTranslateXY(-192,0);
             close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
+            scroll_controls.style.display = 'none';
         }
         return true;
     };

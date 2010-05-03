@@ -283,13 +283,6 @@
         } else {
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
 //            jQuery('#sequence_control_con').append(zoom_controls);
-            // if (zoom_controls.style.height == '100%') {
-            //     jQuery('#sequence_controllers').css('left','3em').css('position','relative');
-            //     zoom_controls.style.position = 'absolute';
-            //     zoom_controls.style.height = '75%';
-            //     zoom_controls.style.top = '0px';
-            // }
-            // zoom_controls.style.zIndex = 2;
             var dragger = new GOMap.Diagram.Dragger();
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
@@ -400,6 +393,14 @@
                 jQuery('#controls').hide();
                 var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
                 zoom_controls.id = 'zoom_controls';
+                if (zoom_controls.style.height == '100%') {
+                    jQuery('#sequence_controllers').css('left','3em').css('position','relative');
+                    zoom_controls.style.position = 'relative';
+                    zoom_controls.style.height = '75%';
+                    zoom_controls.style.width = '50%';
+                    zoom_controls.style.top = '0px';
+                }
+                zoom_controls.style.zIndex = 2;
                 jQuery(MASCP.renderer._Navigation._scroll_control).append(zoom_controls);                
             }
             

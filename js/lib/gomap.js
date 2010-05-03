@@ -1412,6 +1412,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
 
         controls_container.appendChild(zoomOut);
         controls_container.appendChild(zoomIn);
+        controls_container.appendChild(reset);
     }
 
     this.addScrollZoomControls(zoomElement,controls_container,precision);
