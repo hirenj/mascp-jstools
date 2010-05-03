@@ -168,7 +168,8 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
             jQuery(sequenceContainer).text("");
             jQuery(sequenceContainer).append(this._sequence_els);
             jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
-            this.showRowNumbers();            
+            sequenceContainer.style.width = (this._sequence_els.length)+'em';
+//            this.showRowNumbers();            
         });
 
         this.setSequence(jQuery(sequenceContainer).text());
@@ -300,16 +301,16 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
     }
 
     jQuery(sequence_els).each( function(i) {
-        if ( (i % 10) == 0 && i > 0 && ((i % 50) != 0)) {
-            this.style.margin = '0px 0px 0px 1em';
-        }
-        if ( (i % 50) == 0 && i > 0 ) {
-            if (MASCP.IE7) {
-                sequence_els[i-1].style.styleFloat = 'none';
-                sequence_els[i-1].style.width = '1em';
-            }
-            this.style.clear = 'both';
-        }
+        // if ( (i % 10) == 0 && i > 0 && ((i % 50) != 0)) {
+        //     this.style.margin = '0px 0px 0px 1em';
+        // }
+        // if ( (i % 50) == 0 && i > 0 ) {
+        //     if (MASCP.IE7) {
+        //         sequence_els[i-1].style.styleFloat = 'none';
+        //         sequence_els[i-1].style.width = '1em';
+        //     }
+        //     this.style.clear = 'both';
+        // }
         
         this._index = i;
         

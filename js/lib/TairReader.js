@@ -65,10 +65,10 @@ MASCP.TairReader.prototype._getDescription = function(data)
             continue;
         }
         var el = rows[i].getElementsByTagName('th')[0];
-        var text = (typeof el.textContent != 'undefined') ? el.textContent : el.innerText;
+        var text = (typeof el.textContent != 'undefined') ? el.textContent : el.firstChild.data;
         if ( text == 'Description') {
             var t_el = rows[i].getElementsByTagName('td')[1];
-            return (typeof t_el.textContent != 'undefined') ? t_el.textContent : t_el.innerText;
+            return (typeof t_el.textContent != 'undefined') ? t_el.textContent : t_el.firstChild.data;
         }
     }
     

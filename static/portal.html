@@ -12,11 +12,13 @@
     window.svgns = 'http://www.w3.org/2000/svg';
     </script>
     
-<!--    <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
+   <!-- <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script> -->
     
     <script type="text/javascript" src="js/maschup.min.js"></script>
     
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
+
+
 
     <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script>
 
@@ -31,6 +33,8 @@
     <script type="text/javascript" src="js/lib/gomap.js"></script>
     <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
     <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
+
+
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
@@ -247,7 +251,9 @@
 </div>
 </div>
 </div>
+<div style="position: relative; width: 100%; overflow: auto; padding-bottom: 10px;">
 <div id="sequence_container" style="font-family: monospace;">
+</div>
 </div>
 <div style="position: relative;">
 <div id="suba">
@@ -276,16 +282,14 @@
             MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
         } else {
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
-            var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
-            zoom_controls.id = 'zoom_controls';        
-            jQuery('#sequence_control').append(zoom_controls);
-            if (zoom_controls.style.height == '100%') {
-                jQuery('#sequence_controllers').css('left','3em').css('position','relative');
-                zoom_controls.style.position = 'absolute';
-                zoom_controls.style.height = '75%';
-                zoom_controls.style.top = '0px';
-            }
-            zoom_controls.style.zIndex = 2;
+//            jQuery('#sequence_control_con').append(zoom_controls);
+            // if (zoom_controls.style.height == '100%') {
+            //     jQuery('#sequence_controllers').css('left','3em').css('position','relative');
+            //     zoom_controls.style.position = 'absolute';
+            //     zoom_controls.style.height = '75%';
+            //     zoom_controls.style.top = '0px';
+            // }
+            // zoom_controls.style.zIndex = 2;
             var dragger = new GOMap.Diagram.Dragger();
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
@@ -382,8 +386,8 @@
                 },
             }).sortable('toArray'));
 
-            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: false, title: "Options", width: '300px', position:['50%','50%'], zIndex: 5000});
-            var control_el = MASCP.renderer._Navigation ? MASCP.renderer._Navigation : '#controls';
+            var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: true, title: "Options", width: '300px', position:['50%','50%'], zIndex: 5000});
+            var control_el = MASCP.renderer._Navigation ? MASCP.renderer._Navigation : '#controls';            
             jQuery(control_el).unbind('click').bind('click',function() {
                 if (! a_dialog.dialog('isOpen')) {
                     a_dialog.dialog('open');// 'option', 'position', [this.offsetLeft+this.width, this.offsetTop+this.clientHeight] ).dialog('open');
@@ -394,6 +398,9 @@
             
             if ( MASCP.renderer._Navigation ) {
                 jQuery('#controls').hide();
+                var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
+                zoom_controls.id = 'zoom_controls';
+                jQuery(MASCP.renderer._Navigation._scroll_control).append(zoom_controls);                
             }
             
             if (MASCP.renderer.setTrackOrder) {
@@ -407,7 +414,8 @@
             }
             
             MASCP.renderer.showLayer('promex_controller');
-            
+            jQuery('#promex_placeholder input').attr('checked',true);
+                        
         });
 
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -604,7 +612,7 @@
                 jQuery(MASCP.renderer).unbind('resultsRendered',arguments.callee);
             });
 
-            jQuery('#atproteome_placeholder').hide();
+//            jQuery('#atproteome_placeholder').hide();
 
 
         });
