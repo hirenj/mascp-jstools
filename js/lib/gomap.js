@@ -1390,6 +1390,11 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
             range.value = zoomElement.zoom;
         },false]);
         
+
+        reset.style.margin = '0px';
+        reset.style.display = 'block';
+        reset.style.position = 'absolute';
+        reset.style.top = '0px';
         
         controls_container.appendChild(range);
         controls_container.style.height = '100%';
@@ -1408,6 +1413,23 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
         zoomOut.addEventListener('click',function() {
             zoomElement.zoom -= precision;
         },false);
+
+        zoomIn.style.margin = '0px';
+        zoomIn.style.display = 'block';
+        zoomIn.style.position = 'absolute';
+        zoomIn.style.top = '0px';
+        zoomIn.style.left = '29px';
+
+        zoomOut.style.margin = '0px';
+        zoomOut.style.display = 'block';
+        zoomOut.style.position = 'absolute';
+        zoomOut.style.top = '0px';
+
+        reset.style.margin = '0px';
+        reset.style.display = 'block';
+        reset.style.position = 'absolute';
+        reset.style.top = '23px';
+        reset.style.left = '3px';
 
         controls_container.appendChild(zoomOut);
         controls_container.appendChild(zoomIn);

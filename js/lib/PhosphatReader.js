@@ -4,6 +4,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     throw "MASCP.Service is not defined, required class";
 }
 
+/* http://phosphat.mpimp-golm.mpg.de/PhosPhAtHost30/productive/views/Prediction.php?start=0&limit=50&id=IAMINURDBHACKING&method=getRelatives&sort=sequence&dir=ASC&params=%5B%22atcg00480.1%22%5D */
+
+
 /** Default class constructor
  *  @class      Service class that will retrieve data from Phosphat for a given AGI.
  *              Data is transferred using the JSON format.

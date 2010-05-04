@@ -197,19 +197,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     // WebKit has problems with clipping paths. Tracking bug: https://bugs.webkit.org/show_bug.cgi?id=15162
 
-    var scroll_controls = document.createElementNS(svgns,'foreignObject');
-    scroll_controls.setAttribute('x','5');
-    scroll_controls.setAttribute('y','5');
-    scroll_controls.setAttribute('width','100');
-    scroll_controls.setAttribute('height','100');
-    var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
-    body.setAttribute('id','sequence_control_con');
-    body.setAttribute('style','width: 100px; height: 100px; margin: 0px; position: relative;');
-    scroll_controls.appendChild(body);
-    canvas.appendChild(scroll_controls);
-
-    this._scroll_control = body;
-
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
     var rect2 = canvas.rect(0,0,'190px','100%');
@@ -223,8 +210,23 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     close_group.style.cursor = 'pointer';
     close_group.setAttribute('filter','url(#drop_shadow)');
 
-    var tracks_button = canvas.button('110px','2px','50px','20px','Options');
+    var tracks_button = canvas.button(100,5,65,25,'Options');
     tracks_button.id = 'controls';
+    tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
+
+    var scroll_controls = document.createElementNS(svgns,'foreignObject');
+    scroll_controls.setAttribute('x','0');
+    scroll_controls.setAttribute('y','0');
+    scroll_controls.setAttribute('width','100');
+    scroll_controls.setAttribute('height','45');
+    scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
+    var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
+    body.setAttribute('id','sequence_control_con');
+    body.setAttribute('style','width: 100px; height: 100px; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
+    scroll_controls.appendChild(body);
+    canvas.appendChild(scroll_controls);
+    
+    this._scroll_control = body;
     
     tracks_button.addEventListener('click',function() {
         jQuery(self).trigger('click');
@@ -242,10 +244,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             canvas.setCurrentTranslateXY(0,0);
             close_group.setAttribute('transform','');
             scroll_controls.style.display = 'block';
+            tracks_button.parentNode.style.display = 'block';
         } else {
             canvas.setCurrentTranslateXY(-192,0);
             close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
             scroll_controls.style.display = 'none';
+            tracks_button.parentNode.style.display = 'none';
         }
         return true;
     };
@@ -438,6 +442,24 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     };
 
     canvas.button = function(x,y,width,height,text) {
+        var fo = document.createElementNS(svgns,'foreignObject');
+        fo.setAttribute('x',0);
+        fo.setAttribute('y',0);
+        fo.setAttribute('width',x+width);
+        fo.setAttribute('height',y+height);
+        this.appendChild(fo);
+        var button = document.createElement('button');
+        button.style.display = 'block';
+//        button.setAttribute('style','-webkit-appearance: button; -webkit-transform: translate('+x+'px,'+y+'px)');
+        button.style.position = 'relative';
+        button.style.top = y+'px';
+        button.style.left = x+'px';
+        button.textContent = text;
+        fo.appendChild(button);
+        return button;
+    }
+
+    canvas.svgbutton = function(x,y,width,height,text) {
         var button = this.group();
         var back = this.rect(x,y,width,height);
         back.setAttribute('rx','10');
