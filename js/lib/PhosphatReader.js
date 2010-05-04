@@ -21,6 +21,10 @@ MASCP.PhosphatReader =  MASCP.buildService(function(data) {
                             if (data && data.request_method == 'getExperimentsModAa') {
                                 this._raw_experimental_data = data;
                             }
+                            if (data && data.request_method == 'getRelatives') {
+                                this._raw_relative_data = data;
+                            }
+                            
                             return this;
                         });
 
@@ -29,7 +33,9 @@ MASCP.PhosphatReader.prototype.requestData = function()
     var data = [null,this.agi];
     
     var method = this._method ? this._method : 'getPredictedAa';
-
+    if (method == 'getRelatives') {
+        data = [this.agi];
+    }
     var self = this;
     
     return {
@@ -40,10 +46,12 @@ MASCP.PhosphatReader.prototype.requestData = function()
                 'params'    : data.toJSON ? data.toJSON() : JSON.stringify(data),
                 'service'   : 'phosphat' 
         },
+
+        /* http://phosphat.mpimp-golm.mpg.de/PhosPhAtHost30/productive/views/Prediction.php?start=0&limit=50&id=IAMINURDBHACKING&method=getRelatives&sort=sequence&dir=ASC&params=%5B%22atcg00480.1%22%5D */
         success: function(data,status) {
             data.request_method = method;
             self._dataReceived(data,status);
-            if (self.result && self.result._raw_data && self.result._raw_experimental_data) {
+            if (self.result && self.result._raw_data && self.result._raw_experimental_data && self.result._raw_relative_data) {
                jQuery(self).trigger('resultReceived'); 
             }
         }
@@ -56,6 +64,8 @@ MASCP.PhosphatReader.prototype.retrieve = function()
 {
     this._single_retrieve();
     this._method = 'getExperimentsModAa';
+    this._single_retrieve();
+    this._method = 'getRelatives';
     this._single_retrieve();
 };
 
@@ -124,6 +134,23 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = functi
         results_arr.push(results[a_side]);
     }
     return results_arr;
+};
+
+MASCP.PhosphatReader.Result.prototype.getSpectra = function()
+{
+    if (! this._raw_relative_data || ! this._raw_relative_data.result) {
+        return {};
+    }
+    var results = {};
+    var experiments = this._raw_relative_data.result;
+    for (var i = 0; i < experiments.length; i++ ) {
+        var tiss = experiments[i].Tissue;
+        if ( ! results[tiss] ) {
+            results[tiss] = 0;
+        }
+        results[tiss] += 1;
+    }
+    return results;
 };
 
 MASCP.PhosphatReader.Result.prototype.render = function()

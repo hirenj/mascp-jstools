@@ -152,7 +152,7 @@
         #suba {
             font-size: 12px;
             position: absolute;
-            width: 60%;
+            width: 30%;
             left: 0px;
             margin-left: 20px;
         }
@@ -262,11 +262,10 @@
 <div id="suba_results">
 </div>
 </div>
-<div id="tissue" style="display: none;">
+<div id="tissue">
     <h3>Tissue evidence</h3>
-    <p>Tissues that have proteomic evidence are outlined in <span style="color: #ff0000; font-weight: bolder;">RED</span>.</p>
-<div id="atproteome_map">
-</div>
+    <div id="tissue_results">
+    </div>
 </div>
 </div>
 <div id="links_container">
@@ -276,6 +275,14 @@
 <script type="text/javascript">
 //<[CDATA[ 
     window.onload = null;
+    
+    var updateTags = function() {
+        if (! this.tagvis )  {
+            document.tagvis = new MASCP.TagVisualisation("tissue_tags",[MASCP.TagVisualisation.TagCloud]);
+            document.tagvis.tagColumn = 0;
+        }
+        document.tagvis.visualisations[0].update(1);        
+    }
     
     jQuery(document).ready(function() {        
         if (MASCP.IE) {
@@ -327,11 +334,11 @@
             if (rendering_readers.length > 0) {                
                 return;
             }
+
             if (document._screen) {
                 document._screen.hide();
             }
 
-                        
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0],true);
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0],true);      
             if (MASCP.getGroup('promex_experimental').size() > 0) {
@@ -437,6 +444,9 @@
                 MASCP.SubaReader.existing_map.destroy();
                 MASCP.SubaReader.existing_map = null;
             }
+
+            jQuery('#tissue_results').text('').append('<div><table id="tissue_tags"><thead><tr><th>tag</th><th>Experiment count</th></tr></thead><tbody></tbody></table></div>');
+            document.tagvis = null;
     
             var all_readers = [];
     
@@ -507,6 +517,12 @@
                 } else if (this.result.getAllPredictedPositions().length > 0) {
                     jQuery('#phosphat_theoretical').show();                 
                 }
+                var tissues = this.result.getSpectra();
+                var loc_key = null;
+                for (loc_key in tissues) {
+                    jQuery('#tissue_results tbody').append("<tr><td>"+loc_key+"</td><td>"+tissues[loc_key]+"</td></tr>");
+                }
+                updateTags();
             });
             jQuery('#phoshpat_experimental input').attr('checked',false);
             jQuery('#phosphat_theoretical input').attr('checked',false);            
@@ -549,6 +565,12 @@
                         MASCP.renderer.applyStyle(this.name,'cursor: pointer');
                     }
                 });
+                                
+                var loc_key = null;
+                for (loc_key in this.result.spectra) {
+                    jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                }
+                updateTags();
                 jQuery('#atproteome_placeholder').show();
             });
 
