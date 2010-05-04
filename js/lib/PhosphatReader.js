@@ -166,7 +166,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
             MASCP.registerGroup('phosphat_peptides', { 'fullname' : 'PhosPhAt peptides' });
-            MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
             var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
             if (aa) {
         	    aa.addBoxOverlay('phosphat_peptide_'+i,0.5,this[1]);
