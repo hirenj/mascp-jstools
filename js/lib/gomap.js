@@ -916,11 +916,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             
             if (p.x < 0 && Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
                 targetElement._snapback = setTimeout(function() {
-                    if (Math.abs(targetElement.currentTranslate.x - (0.85 * viewBoxScale * width)) > 1 ) {
-                        targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (0.85 * viewBoxScale * min_x)), 0);
+                    if (targetElement.currentTranslate.x < (-0.85 * viewBoxScale * width)) {
+                        targetElement.setCurrentTranslateXY( 0.95*(targetElement.currentTranslate.x), 0);
                         targetElement._snapback = setTimeout(arguments.callee,10);
                     } else {
-                        targetElement.setCurrentTranslateXY( -0.85 * viewBoxScale * width, 0 );
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
