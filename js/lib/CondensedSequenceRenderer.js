@@ -348,21 +348,35 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
 //        label_group.style.zIndex = -10000;
         if (track._group_controller) {
-            var group_toggler = canvas.text(height,y+1.5*height, track._isExpanded() ? '▼' : '▶');
+            var expander = canvas.group();            
+
+            var circ = canvas.circle(1.5*height,y+0.5*height,1.3*height);
+            circ.setAttribute('fill','#ffffff');
+            circ.setAttribute('opacity','0.1');
+            expander.push(circ);
+
+
+            var group_toggler = canvas.text(height,y+1.1*height, '▶');
+            if (track._isExpanded()) {
+                expander.setAttribute('transform','rotate(90,'+(1.5*height)+','+(y+0.5*height)+')');                
+            }
             group_toggler.setAttribute('height', 1.75*height);
-            group_toggler.setAttribute('font-size',1.75*height);
+            group_toggler.setAttribute('font-size',1.5*height);
             group_toggler.setAttribute('fill','#ffffff');
-            group_toggler.style.cursor = 'pointer';
-            group_toggler.addEventListener('click',function(e) {
+            group_toggler.setAttribute('dominant-baseline','central');
+            expander.push(group_toggler);
+
+            expander.style.cursor = 'pointer';
+            expander.addEventListener('click',function(e) {
                 e.stopPropagation();
                 jQuery(track).trigger('longclick');
                 if (track._isExpanded()) {
-                    group_toggler.textContent = '▼';
+                    expander.setAttribute('transform','rotate(90,'+(1.5*height)+','+(y+0.5*height)+')');                
                 } else {
-                    group_toggler.textContent = '▶';                    
+                    expander.setAttribute('transform','');                    
                 }
             },false);
-            label_group.push(group_toggler);
+            label_group.push(expander);
         }
         
     };
@@ -793,7 +807,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
            amino_acids.attr({'display':'block'});
            amino_acids_shown = true;
        } else {
-           renderer._axis_height = 30;
+           renderer._axis_height = 36;
            amino_acids.attr({'display':'none'});   
            amino_acids_shown = false;        
        }

@@ -1345,7 +1345,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     min = min || 0;
     max = max || 10;
     precision = precision || 0.5;
-    value = value || min; 
+    value = value || zoomElement.zoom || min; 
     
     var controls_container = document.createElement('div');
     

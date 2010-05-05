@@ -398,7 +398,7 @@
             
             if ( MASCP.renderer._Navigation ) {
                 jQuery('#controls').hide();
-                var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer);
+                var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer,1.5);
                 zoom_controls.id = 'zoom_controls';
                 if (zoom_controls.style.height == '100%') {
                     jQuery('#sequence_controllers').css('left','3em').css('position','relative');
