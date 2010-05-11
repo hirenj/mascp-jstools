@@ -726,7 +726,7 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        var reader = new MASCP.TairReader(agi,'proxy.pl');
+        var reader = new MASCP.TairReader(agi);
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();

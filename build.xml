@@ -129,6 +129,8 @@
 		<copy file="proxy.pl" tofile="dist/proxy.pl"/>
 		<copy file="atpeptide.pl" tofile="dist/atpeptide.pl"/>
 		<copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
+		<copy file="tair.pl" tofile="dist/tair.pl"/>
+		<copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
 		<zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>		
 	</target>
 
