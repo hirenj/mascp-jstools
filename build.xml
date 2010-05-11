@@ -127,6 +127,8 @@
 			<fileset dir="static"/>
 		</copy>
 		<copy file="proxy.pl" tofile="dist/proxy.pl"/>
+		<copy file="atpeptide.pl" tofile="dist/atpeptide.pl"/>
+		<copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
 		<zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>		
 	</target>
 
