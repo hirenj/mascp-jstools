@@ -15,7 +15,7 @@ MASCP.AtPeptideReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.AtPeptideReader.SERVICE_URL = 'http://172.16.128.128/static/atpeptide.pl';
+MASCP.AtPeptideReader.SERVICE_URL = 'http://jbei-exwebapp.lbl.gov/maschup/atpeptide.pl';
 
 MASCP.AtPeptideReader.prototype.requestData = function()
 {
