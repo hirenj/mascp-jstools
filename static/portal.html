@@ -240,6 +240,7 @@
 <!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
     <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
     <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
+    <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
 </div>
@@ -346,6 +347,12 @@
             } else {
                 MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_placeholder input')[0],true);                
             }
+
+            if (MASCP.getGroup('atpeptide_experimental').size() > 0) {
+                MASCP.renderer.createLayerCheckbox('atpeptide_controller',jQuery('#atpeptide_placeholder input')[0],true);      
+            } else {
+                MASCP.renderer.createGroupCheckbox('atpeptide_experimental',jQuery('#atpeptide_placeholder input')[0],true);                
+            }
             
             if (MASCP.getGroup('atproteome').size() > 0) {
                 MASCP.renderer.createLayerCheckbox('atproteome_controller',jQuery('#atproteome_placeholder input')[0],true);
@@ -367,7 +374,12 @@
                     } else {
                         array.splice(array.indexOf('promex_placeholder'),0,'promex_experimental');
                     }
-                    if (MASCP.getGroup('phosphat_peptides').size() > 0) {
+                    if (MASCP.getGroup('atpeptide_experimental').size() > 0) {
+                        array.splice(array.indexOf('atpeptide_placeholder'),0,'atpeptide_controller','atpeptide_experimental');
+                    } else {
+                        array.splice(array.indexOf('atpeptide_placeholder'),0,'atpeptide_experimental');
+                    }
+                    if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
                         array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
                     }
                     
@@ -423,7 +435,10 @@
             
             MASCP.renderer.showLayer('promex_controller');
             jQuery('#promex_placeholder input').attr('checked',true);
-                        
+
+            MASCP.renderer.showLayer('atpeptide_controller');
+            jQuery('#atpeptide_placeholder input').attr('checked',true);
+
         });
 
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -548,6 +563,26 @@
             });
             jQuery('#promex_placeholder').hide();
 
+            var atpeptide = new MASCP.AtPeptideReader(agi);
+            atpeptide.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(atpeptide);
+            all_readers.push(atpeptide);
+            
+            atpeptide.bind('resultReceived',function() {
+                jQuery(MASCP.getLayer('atpeptide_controller')).each(function() {
+                    if (MASCP.renderer.applyStyle) {
+                        MASCP.renderer.applyStyle(this.name,'cursor: pointer');
+                    }
+                });
+
+                if (this.result.getPeptides().length > 0) {
+                    jQuery('#atpeptide_placeholder').show();
+                }
+            });
+            jQuery('#atpeptide_placeholder').hide();
+
+
             var atproteome = new MASCP.AtProteomeReader(agi);
             atproteome.registerSequenceRenderer(MASCP.renderer);
             
@@ -593,6 +628,9 @@
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/">Error retrieving ProMEX data</a></li>');
                         break;
+                        case MASCP.AtPeptideReader:
+                        jQuery('#links ul').append('<li>Error retrieving AtPeptide data</li>');
+                        break;                        
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
                 });
@@ -611,6 +649,9 @@
                         break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
+                        break;
+                        case MASCP.AtPeptideReader:
+                        jQuery('#links ul').append('<li><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">See more at AtPeptide</a></li>');
                         break;
                     }
                 });
