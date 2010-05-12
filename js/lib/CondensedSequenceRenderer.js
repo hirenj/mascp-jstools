@@ -167,12 +167,22 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
+    var nav = this._Navigation;
+    jQuery(this._canvas).bind('_anim_begin',function() {
+        nav.hideFilters();
+    });
+    jQuery(this._canvas).bind('_anim_end',function() {
+        nav.showFilters();
+    });
+
 };
 
 MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
     this._RS = 1;
     this._extendWithSVGApi(canvas);
 
+    this._canvas = canvas;
+    
     this._buildNavPane(canvas);
 
     track_group = canvas.group();
@@ -185,15 +195,27 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
     
 };
 
+MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
+    this._nav_pane_back.setAttribute('filter','');
+};
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
+    this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
+};
+
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;
-    var rect = canvas.rect(-10,0,'200px','100%');
+    var rect = canvas.rect(-10,0,'200px','90%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
     rect.setAttribute('opacity','0.8');
     rect.style.stroke = '#000000';
     rect.style.strokeWidth = '2px';
     rect.style.fill = '#000000';
+
+    rect.setAttribute('filter','url(#drop_shadow)');
+
+    this._nav_pane_back = rect;
 
     // WebKit has problems with clipping paths. Tracking bug: https://bugs.webkit.org/show_bug.cgi?id=15162
 
@@ -208,7 +230,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var close_group = canvas.crossed_circle('179px','12px','10px');
 
     close_group.style.cursor = 'pointer';
-    close_group.setAttribute('filter','url(#drop_shadow)');
 
     var tracks_button = canvas.button(100,5,65,25,'Options');
     tracks_button.id = 'controls';
@@ -242,11 +263,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         visible = ! visible;
         if (visible) {
             canvas.setCurrentTranslateXY(0,0);
+            rect.setAttribute('filter','url(#drop_shadow)');
+            close_group._button.setAttribute('filter','');
             close_group.setAttribute('transform','');
+
             scroll_controls.style.display = 'block';
             tracks_button.parentNode.style.display = 'block';
         } else {
             canvas.setCurrentTranslateXY(-192,0);
+            rect.setAttribute('filter','');
+            close_group._button.setAttribute('filter','url(#drop_shadow)');            
             close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
             scroll_controls.style.display = 'none';
             tracks_button.parentNode.style.display = 'none';
@@ -552,6 +578,8 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         close_button.setAttribute('stroke', '#ffffff');
         close_button.setAttribute('stroke-width', '2');
 
+        close_group._button = close_button;
+
         close_group.push(close_button);
 
         var a_line = this.line(dim.MID_X1,dim.MID_Y1,dim.MID_X2,dim.MID_Y2);
@@ -579,10 +607,12 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 
                 if ( ! canvas._anim_clock_funcs ) {
                     canvas._anim_clock_funcs = [];
+                    jQuery(canvas).trigger('_anim_begin');
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs ) {
                             clearInterval(canvas._anim_clock);
                             canvas._anim_clock = null;
+                            jQuery(canvas).trigger('_anim_end');
                             return;
                         }
                         for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
@@ -1067,13 +1097,19 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         var shadow = makeEl('filter',{
             'id':'drop_shadow',
             'filterUnits':'objectBoundingBox',
-            'x': '-100%',
-            'y': '-100%',
-            'width': '300%',
-            'height': '300%'
+            'x': '0',
+            'y': '0',
+            'width':'150%',
+            'height':'130%',
         });
-        shadow.appendChild(makeEl('feGaussianBlur',{'in':'SourceAlpha', 'stdDeviation':'50','result':'blur_out'}));        
-        shadow.appendChild(makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'50','dy':'50'}));
+        // 'x': '-100%',
+        // 'y': '-100%',
+        // 'width': '300%',
+        // 'height': '300%'
+//        shadow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
+
+        shadow.appendChild(makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
+        shadow.appendChild(makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'3','dy':'1'}));
         shadow.appendChild(makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
         
         defs.appendChild(shadow);
@@ -1556,7 +1592,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     
     if (this._Navigation)
         this._Navigation.clearTracks();
-    
+
     for (var i = 0; i < this._track_order.length; i++ ) {
         if (! this.isLayerActive(this._track_order[i])) {
             this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height  + (track_heights - this._layer_containers[this._track_order[i]].track_height )/ this.zoom)*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom ,'display' : 'none' },animated);
@@ -1637,8 +1673,9 @@ var accessors = {
             }
 
             var viewBoxScale = -2 * end_zoom * this.sequence.length * parseFloat(cx) / parseFloat(viewBox[2]);
-
-            this._canvas.shiftPosition( this._startX + (this.zoomLeft / parseFloat(viewBox[2])) + viewBoxScale,0);
+            if (this._canvas.shiftPosition) {
+                this._canvas.shiftPosition( this._startX + (this.zoomLeft / parseFloat(viewBox[2])) + viewBoxScale,0);
+            }
         }
 
         this._zoomLevel = parseFloat(zoomLevel);
