@@ -169,9 +169,11 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
     var nav = this._Navigation;
     jQuery(this._canvas).bind('_anim_begin',function() {
+        this._in_anim = true;
         nav.hideFilters();
     });
     jQuery(this._canvas).bind('_anim_end',function() {
+        this._in_anim = false;
         nav.showFilters();
     });
 
@@ -368,9 +370,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_end();
         },false);
         
-        label_group.addEventListener('mouseover',label_begin,false);
-        label_group.addEventListener('mouseout',label_end,false);
-        label_group.addEventListener('mouseup',label_end,false);
+//        label_group.addEventListener('mouseover',label_begin,false);
+//        label_group.addEventListener('mouseout',label_end,false);
+//        label_group.addEventListener('mouseup',label_end,false);
         
 //        label_group.style.zIndex = -10000;
         if (track._group_controller) {
@@ -458,6 +460,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
       a_rect.setAttribute('width', typeof width == 'string' ? width : width * RS);
       a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
       a_rect.setAttribute('stroke','#000000');
+//      a_rect.setAttribute('shape-rendering','optimizeSpeed');
       this.appendChild(a_rect);
       return a_rect;
     };
@@ -609,7 +612,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     canvas._anim_clock_funcs = [];
                     jQuery(canvas).trigger('_anim_begin');
                     canvas._anim_clock = setInterval(function() {
-                        if ( ! canvas._anim_clock_funcs ) {
+                        if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
                             clearInterval(canvas._anim_clock);
                             canvas._anim_clock = null;
                             jQuery(canvas).trigger('_anim_end');
@@ -619,7 +622,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             canvas._anim_clock_funcs[i].apply();
                         }
 //                        setTimeout(arguments.callee,10);
-                    },10);
+                    },25);
                 }
                 
                 var counter = 0;
@@ -635,7 +638,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     return;
                 }
 
-                delete hash['y'];                
+                delete hash['y'];
 
                 if (curr_disp == target_disp && target_disp == 'block' ) {
                     delete hash['display'];
@@ -654,11 +657,11 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
                 an_array.attr(hash);                
                 if (target_y != curr_y) {
-                    var diff = (target_y - curr_y) / 10;
+                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 100))) + 1);
+                    var diff = (target_y - curr_y) / anim_steps;
                     hash['y'] = curr_y || 0;
                     var orig_func = arguments.callee;
-                    jQuery(an_array).trigger('_anim_begin');
-                    
+                    jQuery(an_array).trigger('_t_anim_begin');
                     canvas._anim_clock_funcs.push(                    
                         function() {
                             orig_func.apply(an_array,[hash]);
@@ -669,19 +672,20 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             if (target_disp == 'block') {
                                 hash['opacity'] += 0.1;
                             }
-                            if (counter <= 10) {
+                            if (counter <= anim_steps) {
                                 hash['y'] += diff;
                                 return;
                             }
                             if (target_disp) {
                                 an_array.attr({'display' : target_disp});
-                                jQuery(an_array).trigger('_anim_end');
+                                jQuery(an_array).trigger('_t_anim_end');
                             }
                             canvas._anim_clock_funcs.splice(canvas._anim_clock_funcs.indexOf(arguments.callee),1);
                             if (canvas._anim_clock_funcs.length == 0) {
                                 clearInterval(canvas._anim_clock);
                                 canvas._anim_clock = null;
                                 canvas._anim_clock_funcs = null;
+                                jQuery(canvas).trigger('_anim_end');                                
                             }
                         }
                     );
@@ -740,6 +744,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         
         var event_func = function(ev) {
             var target_el = this;
+            
+            if (canvas._in_anim) {
+                return;
+            }
             
             if ((ev.type != 'mousemove' && ev.type != 'touchmove') && target_el._longclick) {
                 window.clearTimeout(target_el._longclick);
@@ -1455,7 +1463,7 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
     var layer_container = this._layer_containers[layer];
 
     if ( ! layerObj._highlight_event_bound ) {
-        jQuery(layer_container).bind('_anim_begin',function() {
+        jQuery(layer_container).bind('_t_anim_begin',function() {
             if (layerObj._highlight_filter) {
                 return;
             }
@@ -1465,9 +1473,8 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
                 layer_container[i].removeAttribute('filter');
             }
         });
-        //        jQuery(layer_container).unbind('_anim_begin',arguments.callee);
 
-        jQuery(layer_container).bind('_anim_end',function() {
+        jQuery(layer_container).bind('_t_anim_end',function() {
             if ( ! layerObj._highlight_filter ) {
                 return;
             }
@@ -1478,8 +1485,6 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             }
             layerObj._highlight_filter = null;        
         });
-        //        jQuery(layer_container).unbind('_anim_end',arguments.callee);        
-
         layerObj._highlight_event_bound = true;
     }
     var redraw_id = this._canvas.suspendRedraw(5000);
