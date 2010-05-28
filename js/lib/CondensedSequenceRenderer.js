@@ -1542,7 +1542,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
         this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
         this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length+'px');
-
+        this._Navigation._nav_pane_back.setAttribute('height','90%');
 //        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
     }
