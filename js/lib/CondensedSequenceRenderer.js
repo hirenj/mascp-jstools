@@ -384,7 +384,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             expander.push(circ);
 
 
-            var group_toggler = canvas.text(height,y+1.1*height, '▶');
+            var group_toggler = canvas.poly(''+1.1*height+','+(y-0.25*height)+' '+2.25*height+','+(y + 0.5*height)+' '+1.1*height+','+(y+1.25*height));//canvas.text(height,y+1.1*height, '▶');            
             if (track._isExpanded()) {
                 expander.setAttribute('transform','rotate(90,'+(1.5*height)+','+(y+0.5*height)+')');                
             }
@@ -423,6 +423,13 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
       this.appendChild(a_path);
       return a_path;
     };
+
+    canvas.poly = function(points) {
+       var a_poly = document.createElementNS(svgns,'polygon');
+       a_poly.setAttribute('points',points);
+       this.appendChild(a_poly);
+       return a_poly;
+    }
 
     canvas.circle = function(x,y,radius) {
         var a_circle = document.createElementNS(svgns,'circle');
