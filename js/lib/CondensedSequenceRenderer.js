@@ -590,8 +590,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         marker.push(this.circle(0,2*r,r));
         var arrow = this.poly((-0.9*r*RS)+',0 0,'+(-2*r*RS)+' '+(.9)*r*RS+',0');
         marker.push(arrow);
-        marker.setAttribute('transform','translate('+(cx*RS + 2)+','+cy*RS+')');
+        marker.setAttribute('transform','translate('+(cx*RS + 2)+','+cy*RS+') scale(1)');
         arrow.setAttribute('style','fill:#000000;stroke-width: 0;');
+        marker.setAttribute('height', dim.R*RS);
         return marker;
     };
 
@@ -628,19 +629,22 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var marker_group = this.group();
 
-        var back = this.circle(0,0.5*dim.R,dim.R);
+        var back = this.circle(0,0.5*(dim.R - 1),dim.R);
         back.setAttribute('fill','none');
         back.setAttribute('stroke', '#000000');
-        back.setAttribute('stroke-width', '10');
+        back.setAttribute('stroke-width', 1*RS);
 
         marker_group.push(back);
-        var text = this.text(0,1*dim.R,txt);
+        var text = this.text(0,-0.25*(dim.R - 1),txt);
         text.setAttribute('font-size',r*RS);
         text.setAttribute('font-weight','bolder');
-        text.setAttribute('style','font-family: sans-serif; text-anchor: middle; dominant-baseline: central;');
+        text.setAttribute('style','font-family: sans-serif; text-anchor: middle; dominant-baseline: hanging;');
+        text.setAttribute('dominant-baseline','hanging');
+        text.setAttribute('text-anchor','middle');
         marker_group.push(text);
         
-        marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1)');
+        marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1) scale(1)');
+        marker_group.setAttribute('height', (dim.R - 1)*RS );
         return marker_group;
     };
 
@@ -810,6 +814,29 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         curr_style += '; '+hash[key];
                         value = curr_style;
                     }
+                    if (key == 'height' && an_array[i].hasAttribute('transform')) {
+                        var curr_transform = an_array[i].getAttribute('transform');
+
+                        var curr_scale = /scale\((\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                        
+                        var curr_height = parseFloat(an_array[i].getAttribute('height') || 1);
+                        
+                        var new_scale = 1;
+                        if (curr_scale == null) {
+                            curr_transform += ' scale(1) ';
+                            curr_scale = 1;
+                        } else {
+                            curr_scale = parseFloat(curr_scale[1]);
+                        }
+                        
+                        
+                        new_scale = ( parseFloat(hash[key]) / curr_height ) * curr_scale;
+                        
+                        curr_transform = curr_transform.replace(/scale\((\d+\.?\d*)\)/,'scale('+new_scale+')');
+
+                        an_array[i].setAttribute('transform',curr_transform);
+                    }
+
                     an_array[i].setAttribute(key, value);
                     if (key == 'y' && an_array[i].hasAttribute('d')) {
                         var curr_path = an_array[i].getAttribute('d');
@@ -820,6 +847,8 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     if (key == 'y' && an_array[i].hasAttribute('cy')) {
                         an_array[i].setAttribute('cy', hash[key]);
                     }
+                    
+                    
                     if (key == 'y' && an_array[i].hasAttribute('transform')) {
                         var curr_transform = an_array[i].getAttribute('transform');
                         
@@ -1044,12 +1073,14 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     
     for ( var i = 0; i < big_labels.length; i++ ) {
         big_labels[i].style.textAnchor = 'middle';
+        big_labels[i].setAttribute('text-anchor','middle');
         big_labels[i].setAttribute('dominant-baseline','hanging');
         big_labels[i].setAttribute('font-size',7*RS+'pt');
     }
 
     for ( var i = 0; i < little_labels.length; i++ ) {
         little_labels[i].style.textAnchor = 'middle';
+        little_labels[i].setAttribute('text-anchor','middle');
         little_labels[i].setAttribute('dominant-baseline','hanging');
         little_labels[i].setAttribute('font-size',2*RS+'pt');        
         little_labels[i].style.fill = '#000000';
