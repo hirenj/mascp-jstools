@@ -553,7 +553,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         return button;
     };
 
-    canvas.marker = function(cx,cy,r) {
+    canvas.marker = function(cx,cy,r,symbol) {
         var units = 0;
         if (typeof cx == 'string') {
             var parts = new RegExp(/(\d+)(.*)/g).exec(cx);
@@ -583,16 +583,22 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         };
 
         var marker = this.group();
+
         var circle = this.circle(0,0,r);
+
         marker.push(circle);
-        var rect = this.rect(-r,0,2*r,2*r);
-        marker.push(rect);
+        
         marker.push(this.circle(0,2*r,r));
         var arrow = this.poly((-0.9*r*RS)+',0 0,'+(-2*r*RS)+' '+(.9)*r*RS+',0');
+        arrow.setAttribute('style','fill:#000000;stroke-width: 0;');
         marker.push(arrow);
         marker.setAttribute('transform','translate('+(cx*RS + 2)+','+cy*RS+') scale(1)');
-        arrow.setAttribute('style','fill:#000000;stroke-width: 0;');
         marker.setAttribute('height', dim.R*RS);
+        if (symbol) {
+            marker.push(this.text_circle(0,r,1.75*r,symbol));
+        } else {
+            marker.push(this.rect(-r,0,2*r,2*r));            
+        }
         return marker;
     };
 
@@ -629,22 +635,23 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var marker_group = this.group();
 
-        var back = this.circle(0,0.5*(dim.R - 1),dim.R);
-        back.setAttribute('fill','none');
+        var back = this.circle(0,dim.CY,9/10*dim.R);
+        back.setAttribute('fill','url(#simple_gradient)');
         back.setAttribute('stroke', '#000000');
-        back.setAttribute('stroke-width', 1*RS);
+        back.setAttribute('stroke-width', (r/10)*RS);
 
         marker_group.push(back);
-        var text = this.text(0,-0.25*(dim.R - 1),txt);
+        var text = this.text(0,dim.CY-0.5*dim.R,txt);
         text.setAttribute('font-size',r*RS);
         text.setAttribute('font-weight','bolder');
+        text.setAttribute('fill','#ffffff');
         text.setAttribute('style','font-family: sans-serif; text-anchor: middle; dominant-baseline: hanging;');
         text.setAttribute('dominant-baseline','hanging');
         text.setAttribute('text-anchor','middle');
         marker_group.push(text);
         
         marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1) scale(1)');
-        marker_group.setAttribute('height', (dim.R - 1)*RS );
+        marker_group.setAttribute('height', (dim.R/2)*RS );
         return marker_group;
     };
 
@@ -1099,7 +1106,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     jQuery(canvas).bind('zoomChange', function() {
            if (this.zoom > 3.6) {
                little_ticks.hide();
-               big_ticks.hide();
+               big_ticks.show();
+               big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.5)' });
                little_labels.attr({'font-size':2*RS+'pt'});
                big_labels.attr({'font-size': 2*RS+'pt'});
                axis.hide();
@@ -1110,7 +1118,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                axis.show();
                big_ticks.show();
                axis.attr({'stroke-width':0.5*RS+'pt'});
-               big_ticks.attr({'stroke-width':0.5*RS+'pt'});
+               big_ticks.attr({'stroke-width':0.5*RS+'pt', 'stroke' : '#000000', 'transform' : ''});
                big_labels.show();
                big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
                little_labels.attr({'font-size':4*RS+'pt'});
@@ -1437,7 +1445,7 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
 (function() {
 var addElementToLayer = function(layerName) {
     var canvas = this._renderer._canvas;
-    var circ = canvas.text_circle(this._index,0,2.5,layerName.charAt(0).toUpperCase());
+    var circ = canvas.text_circle(this._index+0.5,0.5,2,layerName.charAt(0).toUpperCase());
     this._renderer._layer_containers[layerName].push(circ);
     circ.zoom_level = 'summary';
     circ.style.strokeWidth = '0px';
@@ -1461,9 +1469,10 @@ var addElementToLayer = function(layerName) {
             return renderer._visibleTracers();
         }
     }
-    var tracer_marker = canvas.marker(this._index+0.25,10,0.5);
+    var tracer_marker = canvas.marker(this._index+0.25,10,0.5,layerName.charAt(0).toUpperCase());
     
     tracer_marker.zoom_level = 'text';
+    tracer_marker.setAttribute('display','none');
 
     this._renderer._layer_containers[layerName].tracers.push(tracer);
     this._renderer._layer_containers[layerName].push(tracer_marker);
