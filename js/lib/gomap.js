@@ -32,7 +32,7 @@ if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING =
  *  @function
  *  @param  {Object}    message Message to log
  */
-log = (typeof log == 'undefined') ? function(msg) {
+log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function() {} : function(msg) {    
     if (typeof msg == 'String' && arguments.length == 1) {
         console.log("%s", msg);
     } else {

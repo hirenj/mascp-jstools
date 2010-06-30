@@ -12,7 +12,7 @@ if (typeof jQuery != 'undefined') {
     jQuery.noConflict();
 }
 
-log = (typeof log == 'undefined') ? function(msg) {
+log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function() {} : function(msg) {    
     if (typeof msg == 'String') {
         console.log("%s: %o", msg, this);
     } else {
