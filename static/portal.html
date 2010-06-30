@@ -577,6 +577,12 @@
                     }
                 });
 
+                var loc_key = null;
+                for (loc_key in this.result.spectra) {
+                    jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                }
+                updateTags();
+
                 if (this.result.getPeptides().length > 0) {
                     jQuery('#atpeptide_placeholder').show();
                 }

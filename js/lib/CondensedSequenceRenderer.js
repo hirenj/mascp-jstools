@@ -584,18 +584,15 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var marker = this.group();
 
-        var circle = this.circle(0,0,r);
-
-        marker.push(circle);
-        
-        marker.push(this.circle(0,2*r,r));
-        var arrow = this.poly((-0.9*r*RS)+',0 0,'+(-2*r*RS)+' '+(.9)*r*RS+',0');
+        marker.push(this.circle(0,-0.5*r,r));
+        marker.push(this.circle(0,1.5*r,r));
+        var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(.9)*r*RS+','+(0*r*RS));
         arrow.setAttribute('style','fill:#000000;stroke-width: 0;');
         marker.push(arrow);
         marker.setAttribute('transform','translate('+(cx*RS + 2)+','+cy*RS+') scale(1)');
         marker.setAttribute('height', dim.R*RS);
         if (symbol) {
-            marker.push(this.text_circle(0,r,1.75*r,symbol));
+            marker.push(this.text_circle(0,0.5*r,1.75*r,symbol));
         } else {
             marker.push(this.rect(-r,0,2*r,2*r));            
         }
@@ -1107,7 +1104,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
            if (this.zoom > 3.6) {
                little_ticks.hide();
                big_ticks.show();
-               big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.5)' });
+               big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.1) translate(0,4500)' });
                little_labels.attr({'font-size':2*RS+'pt'});
                big_labels.attr({'font-size': 2*RS+'pt'});
                axis.hide();
@@ -1453,7 +1450,10 @@ var addElementToLayer = function(layerName) {
     circ.setAttribute('display', 'none');
     circ.setAttribute('class',layerName);
 
-    var tracer = canvas.rect(this._index+0.25,10,0.1,0);
+    var bobble = canvas.circle(this._index+0.3,10,0.25);
+    bobble.setAttribute('display','none');
+    bobble.style.opacity = '0.4';
+    var tracer = canvas.rect(this._index+0.3,10,0.1,0);
     tracer.style.strokeWidth = '0px';
     tracer.style.fill = MASCP.layers[layerName].color;
     tracer.setAttribute('display','none');
@@ -1469,12 +1469,13 @@ var addElementToLayer = function(layerName) {
             return renderer._visibleTracers();
         }
     }
-    var tracer_marker = canvas.marker(this._index+0.25,10,0.5,layerName.charAt(0).toUpperCase());
+    var tracer_marker = canvas.marker(this._index+0.3,10,0.5,layerName.charAt(0).toUpperCase());
     
     tracer_marker.zoom_level = 'text';
     tracer_marker.setAttribute('display','none');
 
     this._renderer._layer_containers[layerName].tracers.push(tracer);
+    this._renderer._layer_containers[layerName].tracers.push(bobble);
     this._renderer._layer_containers[layerName].push(tracer_marker);
     canvas.tracers.push(tracer);
     return circ;

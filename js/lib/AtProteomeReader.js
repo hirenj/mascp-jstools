@@ -14,6 +14,25 @@
  * @param   {String} endpointURL    Endpoint URL for this service
  * @extends MASCP.Service
  */
+ 
+/*
++------------+-----------------+
+| poid       | pocv            |
++------------+-----------------+
+| PO:0000005 | cell suspension |
+| PO:0009046 | flower          |
+| PO:0000056 | floral bud      |
+| PO:0020030 | cotyledon       |
+| PO:0006339 | juvenile leaf   |
+| PO:0009010 | seed            |
+| PO:0009005 | root            |
+| PO:0009030 | carpel          |
+| PO:0009001 | silique         |
+| PO:0009006 | shoot           |
+| PO:0020091 | pollen          |
+| PO:0009025 | leaf            |
++------------+-----------------+
+*/ 
 MASCP.AtProteomeReader = MASCP.buildService(function(data) {
                         this._raw_data = data;
                         if (data) {

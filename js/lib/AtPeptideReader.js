@@ -15,7 +15,7 @@ MASCP.AtPeptideReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.AtPeptideReader.SERVICE_URL = 'http://jbei-exwebapp.lbl.gov/maschup/atpeptide.pl';
+MASCP.AtPeptideReader.SERVICE_URL = '../atpeptide.pl';//'http://jbei-exwebapp.lbl.gov/maschup/atpeptide.pl';
 
 MASCP.AtPeptideReader.prototype.requestData = function()
 {
@@ -28,6 +28,15 @@ MASCP.AtPeptideReader.prototype.requestData = function()
                 'service'   : 'atpeptide' 
         }
     };
+};
+
+/**
+ * The list of tissue names that are used by AtProteome for this particular AGI
+ *  @returns {[String]} Tissue names
+ */
+MASCP.AtPeptideReader.Result.prototype.tissues = function()
+{
+    return this._tissues;
 };
 
 /**
@@ -47,11 +56,39 @@ MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
     
     if (! this._raw_data || ! this._raw_data.peptides ) {
         return [];
-    }    
-    var peptides = [];
-    for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
-        peptides.push(this._cleanSequence(this._raw_data.peptides[i].sequence));
     }
+    
+    if (this._peptides) {
+        return this._peptides;
+    }
+    
+    var peptides = [];
+    this.spectra = {};
+    this._tissues = [];
+    this._long_name_map = {};
+
+    for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
+        var a_peptide = this._raw_data.peptides[i];
+        var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence), 'tissues' : [] };
+        peptides.push(the_pep);
+        log(the_pep.tissues);
+        for (var j = 0; j < a_peptide.tissues.length; j++ ) {
+            var a_tissue = a_peptide.tissues[j];
+            if ( this._tissues.indexOf(a_tissue['PO:tissue']) < 0 ) {
+                var some_tiss = a_tissue['PO:tissue'];
+                this._tissues.push(some_tiss);
+                some_tiss.long_name = a_tissue.tissue;
+                this._long_name_map[some_tiss] = a_tissue.tissue;
+            }
+            the_pep.tissues.push(a_tissue['PO:tissue']);
+            if ( ! this.spectra[a_tissue['PO:tissue']]) {
+                this.spectra[a_tissue['PO:tissue']] = 0;
+            }
+            this.spectra[a_tissue['PO:tissue']] += 1;
+        }
+
+    }
+    this._peptides = peptides;
     return peptides;
 };
 
@@ -75,13 +112,19 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
     this.bind('resultReceived', function() {
                 
         var peps = this.result.getPeptides();
-        for(var i = 0; i < peps.length; i++) {
-            MASCP.registerLayer('atpeptide_peptide_'+i, { 'fullname': 'Peptide', 'group' : 'atpeptide_experimental', 'color' : '#ff5533', 'css' : css_block });
-            var peptide = peps[i];
-            var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
-            var layer_name = 'atpeptide_peptide_'+i;
-            peptide_bits[0].addBoxOverlay(layer_name,1,peptide_bits.length);
-            peptide_bits[0].addBoxOverlay(overlay_name,1,peptide_bits.length);
+        for (var j = 0; j < this.result.tissues().length; j++ ) {
+            var a_tissue = this.result.tissues()[j];
+            MASCP.registerLayer('atpeptide_peptide_'+a_tissue, { 'fullname': this.result._long_name_map[a_tissue], 'group' : 'atpeptide_experimental', 'color' : '#ff5533', 'css' : css_block });
+            for(var i = 0; i < peps.length; i++) {
+                var peptide = peps[i].sequence;
+                if ( peps[i].tissues.indexOf(a_tissue+'') < 0 ) {
+                    continue;
+                }
+                var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
+                var layer_name = 'atpeptide_peptide_'+a_tissue;
+                peptide_bits[0].addBoxOverlay(layer_name,1,peptide_bits.length);
+                peptide_bits[0].addBoxOverlay(overlay_name,1,peptide_bits.length);
+            }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
 
