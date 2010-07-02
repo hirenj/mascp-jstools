@@ -734,11 +734,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         canvas.removeEventListener('mousemove', canvas._mouse_moves[i], false );
                     }
                     jQuery(canvas).bind('_anim_end',function() {
-                        console.log(canvas._mouse_moves.length);
                         for (var j = 0; j < canvas._mouse_moves.length; j++ ) {
                             canvas._oldAddEventListener('mousemove', canvas._mouse_moves[j], false );
                         }                        
-                        jQuery(canvas).unbind('_anim_end');
+                        jQuery(canvas).unbind('_anim_end',arguments.callee);
                     });
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
