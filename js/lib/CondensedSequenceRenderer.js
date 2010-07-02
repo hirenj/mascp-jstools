@@ -97,15 +97,34 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         renderer._canvas = document.createElementNS(svgns,'svg');
 
         var canv = renderer._canvas;
-        canv._oldAddEventListener = canv.addEventListener;
-        canv._mouse_moves = [];
+    
+        var oldAddEventListener = canv.addEventListener;
+    
+        var mouse_moves = [];
+    
         canv.addEventListener = function(ev,func,bubbling) {
             if (ev == 'mousemove') {
-                canv._mouse_moves.push(func);
+                if (mouse_moves.indexOf(func) < 0) {
+                    mouse_moves.push(func);
+                } else {
+                    return;
+                }
             }
-            return canv._oldAddEventListener(ev,func,bubbling);
+            return oldAddEventListener.apply(canv,[ev,func,bubbling]);
         };
-
+    
+        jQuery(canv).bind('_anim_begin',function() {
+            for (var i = 0; i < mouse_moves.length; i++ ) {
+                canv.removeEventListener('mousemove', mouse_moves[i], false );
+            }
+            jQuery(canv).bind('_anim_end',function() {
+                for (var j = 0; j < mouse_moves.length; j++ ) {
+                    oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
+                }                        
+                jQuery(canv).unbind('_anim_end',arguments.callee);
+            });
+        });
+        
         var canvas_rect = document.createElementNS(svgns,'rect');
         canvas_rect.setAttribute('x','-10%');
         canvas_rect.setAttribute('y','-10%');
@@ -139,7 +158,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
                 left_fade.style.display = 'block';                
             }
         });
-        
+
         
         container_canv.appendChild(left_fade);
         container_canv.appendChild(right_fade);
@@ -730,15 +749,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     canvas._anim_clock_funcs = [];
                     canvas._in_anim = true;
                     jQuery(canvas).trigger('_anim_begin');
-                    for (var i = 0; i < canvas._mouse_moves.length; i++ ) {
-                        canvas.removeEventListener('mousemove', canvas._mouse_moves[i], false );
-                    }
-                    jQuery(canvas).bind('_anim_end',function() {
-                        for (var j = 0; j < canvas._mouse_moves.length; j++ ) {
-                            canvas._oldAddEventListener('mousemove', canvas._mouse_moves[j], false );
-                        }                        
-                        jQuery(canvas).unbind('_anim_end',arguments.callee);
-                    });
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
                             clearInterval(canvas._anim_clock);
