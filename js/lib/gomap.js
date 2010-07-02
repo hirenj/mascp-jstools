@@ -1044,10 +1044,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     var svgMouseMove = function(evt) {
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
-        var positions = mousePosition(evt);
         if (!self.dragging) {
             return;
         }
+        var positions = mousePosition(evt);
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
 
         if (self.targetElement) {
@@ -1253,7 +1253,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
-//        targetElement.addEventListener('mouseup', mouseUp, false);
         targetElement.addEventListener('mouseup',momentum_func,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
