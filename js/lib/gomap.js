@@ -1370,7 +1370,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     range.setAttribute('step',precision);
     range.setAttribute('value',value); 
     range.setAttribute('type','range');
-    range.setAttribute('style','-webkit-appearance: slider-vertical; width: 1em; position: absolute; top: 0px; bottom: 0px; margin-top: 2em; left: 50%; margin-left: -0.5em;');
+    range.setAttribute('style','-webkit-appearance: slider-horizontal; width: 100%; position: absolute; top: 0px; bottom: 0px; margin-top: 0.5em; left: 100%; margin-left: -0.5em;');
 
     if (range.type == 'range') {
         
