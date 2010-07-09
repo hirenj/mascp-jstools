@@ -234,7 +234,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;
-    var rect = canvas.rect(-10,0,'200px','90%');
+    var rect = canvas.rect(-10,0,'200px','99%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
     rect.setAttribute('opacity','0.8');
@@ -1764,7 +1764,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
         this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
         this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length+'px');
-        this._Navigation._nav_pane_back.setAttribute('height','90%');
+        this._Navigation._nav_pane_back.setAttribute('height','99%');
 //        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
     }

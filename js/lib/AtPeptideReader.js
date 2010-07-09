@@ -71,7 +71,6 @@ MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
         var a_peptide = this._raw_data.peptides[i];
         var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence), 'tissues' : [] };
         peptides.push(the_pep);
-        log(the_pep.tissues);
         for (var j = 0; j < a_peptide.tissues.length; j++ ) {
             var a_tissue = a_peptide.tissues[j];
             if ( this._tissues.indexOf(a_tissue['PO:tissue']) < 0 ) {
