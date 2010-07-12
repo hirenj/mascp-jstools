@@ -158,7 +158,13 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
                 left_fade.style.display = 'block';                
             }
         });
+        jQuery(renderer._canvas).bind('_anim_begin',function() {
+            left_fade.style.display = 'none';
+        });
 
+        jQuery(renderer._canvas).bind('_anim_end',function() {
+            jQuery(renderer._canvas).trigger('pan');
+        });
         
         container_canv.appendChild(left_fade);
         container_canv.appendChild(right_fade);
@@ -225,11 +231,15 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
-    this._nav_pane_back.setAttribute('filter','');
+    this._nav_pane_back.removeAttribute('filter');
+    this._nav_pane_back.setAttribute('opacity',1);
+    this._nav_pane_back.style.fill = '#494949';
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
     this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
+    this._nav_pane_back.setAttribute('opacity',0.8);
+    this._nav_pane_back.style.fill = '#000000';
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
@@ -293,14 +303,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         if (visible) {
             canvas.setCurrentTranslateXY(0,0);
             rect.setAttribute('filter','url(#drop_shadow)');
-            close_group._button.setAttribute('filter','');
+            close_group._button.removeAttribute('filter');
             close_group.setAttribute('transform','');
 
             scroll_controls.style.display = 'block';
             tracks_button.parentNode.style.display = 'block';
         } else {
             canvas.setCurrentTranslateXY(-192,0);
-            rect.setAttribute('filter','');
+            rect.removeAttribute('filter');
             close_group._button.setAttribute('filter','url(#drop_shadow)');            
             close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
             scroll_controls.style.display = 'none';
@@ -445,6 +455,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     // We're going to use a render scale
     
     var RS = this._RS;
+    var renderer = this;
     
     canvas.path = function(pathdesc) {
       var a_path = document.createElementNS(svgns,'path');
@@ -749,6 +760,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     canvas._anim_clock_funcs = [];
                     canvas._in_anim = true;
                     jQuery(canvas).trigger('_anim_begin');
+                    renderer._frame_count = 0;
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
                             clearInterval(canvas._anim_clock);
@@ -757,10 +769,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             jQuery(canvas).trigger('_anim_end');
                             return;
                         }
+                        var susp_id = canvas.suspendRedraw(1000);
                         for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
                             canvas._anim_clock_funcs[i].apply();
                         }
-                    },25);
+                        canvas.unsuspendRedraw(susp_id);
+                        renderer._frame_count += 1;
+                        
+                    },1);
                 }
                 
                 if (an_array.animating) {
@@ -1731,7 +1747,7 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             if (layer_container[i]._is_shine) {
                 continue;
             }
-            layer_container[i].setAttribute('filter','');
+            layer_container[i].removeAttribute('filter');
         }
     }
     
