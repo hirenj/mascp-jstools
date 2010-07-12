@@ -272,7 +272,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
     var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
     body.setAttribute('id','sequence_control_con');
-    body.setAttribute('style','width: 100px; height: 100px; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
+    body.setAttribute('style','width: 100px; height: 1em; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
     scroll_controls.appendChild(body);
     canvas.appendChild(scroll_controls);
     
@@ -808,7 +808,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
                 an_array.attr(hash);
                 if (target_y != curr_y) {
-                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 100))) + 1);
+                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 2000))) + 1);
                     var diff = (target_y - curr_y) / anim_steps;
                     hash['y'] = curr_y || 0;
                     var orig_func = arguments.callee;
