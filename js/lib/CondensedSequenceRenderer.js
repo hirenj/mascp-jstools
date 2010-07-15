@@ -204,10 +204,12 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
     var nav = this._Navigation;
     jQuery(this._canvas).bind('_anim_begin',function() {
-        nav.hideFilters();
+        nav._toggler(false);
+//        nav.hideFilters();
     });
     jQuery(this._canvas).bind('_anim_end',function() {
-        nav.showFilters();
+        nav._toggler(true);
+//        nav.showFilters();
     });
 
 };
@@ -265,10 +267,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     clipping.appendChild(rect2);
 
 //    canvas.setAttribute('width','200px');
-
     var close_group = canvas.crossed_circle('179px','12px','10px');
 
     close_group.style.cursor = 'pointer';
+
 
     var tracks_button = canvas.button(100,5,65,25,'Options');
     tracks_button.id = 'controls';
@@ -298,8 +300,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     <animateTransform begin="startButton.click" attributeName="transform" type="rotate" from="0" to="270" dur="5s" additive="sum" fill="freeze" xlink:href="#snow" />
     */
     
-    var toggler = function() {
-        visible = ! visible;
+    var toggler = function(vis) {
+        visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
             canvas.setCurrentTranslateXY(0,0);
             rect.setAttribute('filter','url(#drop_shadow)');
@@ -318,7 +320,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         }
         return true;
     };
-    
+    this._toggler = toggler;
     close_group.addEventListener('click',toggler,false);
     
 };
