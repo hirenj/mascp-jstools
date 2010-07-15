@@ -203,12 +203,18 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
     var nav = this._Navigation;
+    jQuery(this._canvas).bind('panstart',function() {
+       nav.demote(); 
+    });
+    jQuery(this._canvas).bind('panend',function() {
+       nav.promote(); 
+    });
     jQuery(this._canvas).bind('_anim_begin',function() {
-        nav._toggler(false);
+        nav.demote();
 //        nav.hideFilters();
     });
     jQuery(this._canvas).bind('_anim_end',function() {
-        nav._toggler(true);
+        nav.promote();
 //        nav.showFilters();
     });
 
@@ -243,6 +249,15 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
     this._nav_pane_back.setAttribute('opacity',0.8);
     this._nav_pane_back.style.fill = '#000000';
 };
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype.demote = function() {
+    this._canvas.style.display = 'none';
+};
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
+    this._canvas.style.display = 'block';
+};
+
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;

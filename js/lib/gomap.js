@@ -893,7 +893,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             }
 
             if (targetElement._snapback) {
+                // if (document.createEvent) {
+                //     var evObj = document.createEvent('Events');
+                //     evObj.initEvent('panend',false,true);
+                //     targetElement.dispatchEvent(evObj);
+                // }
                 clearTimeout(targetElement._snapback);
+                targetElement._snapback = null;
             }
             
             if (p.x > viewBoxScale * min_x) {
@@ -901,11 +907,21 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                     if (targetElement.currentTranslate.x - (viewBoxScale * min_x) > 1 ) {
                         targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (viewBoxScale * min_x)), 0);
                         targetElement._snapback = setTimeout(arguments.callee,10);
+                        if (document.createEvent) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('panstart',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
                     } else {
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
+                        if (document.createEvent && ! self.dragging) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('panend',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                         targetElement._snapback = null;
@@ -919,10 +935,20 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                     if (targetElement.currentTranslate.x < (-0.85 * viewBoxScale * width)) {
                         targetElement.setCurrentTranslateXY( 0.95*(targetElement.currentTranslate.x), 0);
                         targetElement._snapback = setTimeout(arguments.callee,10);
+                        if (document.createEvent) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('panstart',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
                     } else {
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
+                            targetElement.dispatchEvent(evObj);
+                        }
+                        if (document.createEvent && ! self.dragging) {
+                            var evObj = document.createEvent('Events');
+                            evObj.initEvent('panend',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                         targetElement._snapback = null;
@@ -969,6 +995,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     }
 
     var svgMouseDown = function(evt) {
+      var targ = self.targetElement ? self.targetElement : targetElement;
       var positions = mousePosition(evt);
       self.dragging = true;
 
@@ -999,6 +1026,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       self.oY = p.y;
 
       evt.preventDefault(true);
+      
+      if (document.createEvent) {
+          var evObj = document.createEvent('Events');
+          evObj.initEvent('panstart',false,true);
+          targ.dispatchEvent(evObj);
+      }      
+      
     };
     
     var mousePosition = function(evt) {
@@ -1040,6 +1074,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         self.dX = targetElement.getPosition()[0];
         self.dY = targetElement.getPosition()[1];
         evt.preventDefault(true);
+        var targ = self.targetElement ? self.targetElement : targetElement;
+        if (document.createEvent) {
+            var evObj = document.createEvent('Events');
+            evObj.initEvent('panstart',false,true);
+            targ.dispatchEvent(evObj);
+        }
     };
     
     var svgMouseMove = function(evt) {
