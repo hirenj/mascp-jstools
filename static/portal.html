@@ -621,7 +621,7 @@
             jQuery('#links').append('<ul></ul>');
 
             jQuery(all_readers).each(function(i) {
-                this.bind('error',function() {
+                this.bind('error',function(resp,req,status) {
                     switch(this.__class__) {
                         case MASCP.SubaReader:
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/">Error retrieving SUBA data</a></li>')
@@ -721,7 +721,6 @@
         if ( ! document._screen ) {
             document._screen = $('<div />').addClass('screen').appendTo('body');
         }
-        
         document._screen.show();
 
 
