@@ -279,9 +279,16 @@
     window.onload = null;
     
     var updateTags = function() {
-        if (! this.tagvis )  {
+        if (! document.tagvis )  {
             document.tagvis = new MASCP.TagVisualisation("tissue_tags",[MASCP.TagVisualisation.TagCloud]);
             document.tagvis.tagColumn = 0;
+            document.tagvis.visualisations[0].tagFactory = function(tagId,tag,row) {
+                var span = document.createElement('span');
+                span.textContent = tag;
+                span.innerText = tag;
+                span.id = MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId;
+                return span;
+            };
         }
         document.tagvis.visualisations[0].update(1);        
     }
@@ -536,7 +543,18 @@
                 var tissues = this.result.getSpectra();
                 var loc_key = null;
                 for (loc_key in tissues) {
-                    jQuery('#tissue_results tbody').append("<tr><td>"+loc_key+"</td><td>"+tissues[loc_key]+"</td></tr>");
+                    var long_name = loc_key;
+                    var count = tissues[loc_key];
+                    jQuery('#tissue_results').find('tr td').each(function() {
+                        if (jQuery(this).html() == long_name) {
+                            var current_val = parseInt(jQuery(this.nextSibling).html());
+                            jQuery(this.nextSibling).html(current_val + count);
+                            loc_key = null;
+                        }
+                    });
+                    if (loc_key != null) {
+                        jQuery('#tissue_results tbody').append("<tr><td>"+loc_key+"</td><td>"+tissues[loc_key]+"</td></tr>");
+                    }
                 }
                 updateTags();
             });
@@ -579,7 +597,19 @@
 
                 var loc_key = null;
                 for (loc_key in this.result.spectra) {
-                    jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                    var long_name = this.result._long_name_map[loc_key];
+                    var count = this.result.spectra[loc_key];
+                    
+                    jQuery('#tissue_results').find('tr td').each(function() {
+                        if (jQuery(this).html() == long_name) {
+                            var current_val = parseInt(jQuery(this.nextSibling).html());
+                            jQuery(this.nextSibling).html(current_val + count);
+                            loc_key = null;
+                        }
+                    });
+                    if (loc_key != null) {
+                        jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                    }
                 }
                 updateTags();
 
@@ -610,7 +640,19 @@
                                 
                 var loc_key = null;
                 for (loc_key in this.result.spectra) {
-                    jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                    var long_name = this.result._long_name_map[loc_key];
+                    var count = this.result.spectra[loc_key];
+                    
+                    jQuery('#tissue_results').find('tr td').each(function() {
+                        if (jQuery(this).html() == long_name) {
+                            var current_val = parseInt(jQuery(this.nextSibling).html());
+                            jQuery(this.nextSibling).html(current_val + count);
+                            loc_key = null;
+                        }
+                    });
+                    if (loc_key != null) {
+                        jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
+                    }
                 }
                 updateTags();
                 jQuery('#atproteome_placeholder').show();
