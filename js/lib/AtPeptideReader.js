@@ -53,19 +53,21 @@ MASCP.AtPeptideReader.Result = MASCP.AtPeptideReader.Result;
 MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
 {
     var content = null;
+
+    if (this._peptides) {
+        return this._peptides;
+    }
+
+    this._tissues = [];
+    this.spectra = {};
+    this._long_name_map = {};
     
     if (! this._raw_data || ! this._raw_data.peptides ) {
         return [];
     }
-    
-    if (this._peptides) {
-        return this._peptides;
-    }
-    
+
+        
     var peptides = [];
-    this.spectra = {};
-    this._tissues = [];
-    this._long_name_map = {};
 
     for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
         var a_peptide = this._raw_data.peptides[i];
