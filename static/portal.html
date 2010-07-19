@@ -153,7 +153,7 @@
         #suba {
             font-size: 12px;
             position: absolute;
-            width: 30%;
+            width: 45%;
             left: 0px;
             margin-left: 20px;
         }
@@ -168,8 +168,8 @@
         #tissue {
             font-size: 12px;
             position: absolute;
-            width: 30%;
-            left: 30%;
+            width: 45%;
+            left: 50%;
             margin-left: 40px;
         }
         
@@ -188,15 +188,41 @@
         }
         
         #links_container {
-            position: relative;
-            top: 0px;
-            left: 65%;
-            width: 30%;
-            font-size: 12px;
+            margin-top: 400px;
+            width: 90%;
+            height: 64px;
         }
-        
         #links li {
             list-style-type: none;
+            display: block;
+            float: left;
+            width: 200px;
+            position: relative;
+            height: 64px;
+            background-image: url(img/green.png);
+            background-repeat: no-repeat;
+            background-position: left center;
+        }
+        
+        #links li a {
+            position: relative;
+            display: block;
+            top: 0px;
+            margin-left: 64px;
+            margin-top: 20px;
+            font-size: 20px;
+            color: #000000 !important;
+            text-decoration: none;
+        }
+        
+        #links li a:hover {
+            text-decoration: underline !important;
+        }
+        
+        #links li.error {
+            background-image: url(img/red.png);
+            background-repeat: no-repeat;
+            background-position: left center;
         }
         
         #agi_input, #agi_input input[type='text'] {
@@ -231,7 +257,8 @@
 <div style="position: absolute; top: 10px; left: 10px; width: 25%; display: none;">
 <h1 style="position: absolute; left: 0px; top: 0px; margin: 0px; width: 100%; font-size: 10px; "><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; left: -7px; position: absolute;" src="gator.png" /></h1>
 </div>
-<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 20%; margin-left: -15%; width: 30%;">
+<a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(http://www.masc-proteomics.org/mascp/skins/common/images/mascp_logo.png);" href="http://www.masc-proteomics.org/" title="MASC Proteomics portal"></a>
+<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 100px; width: 30%;">
     <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
 <div id="description"></div>
@@ -269,10 +296,6 @@
     <div id="tissue_results">
     </div>
 </div>
-</div>
-<div id="links_container">
-    <h3>Original data providers</h3>
-<div id="links"></div>
 </div>
 <script type="text/javascript">
 //<[CDATA[ 
@@ -666,19 +689,19 @@
                 this.bind('error',function(resp,req,status) {
                     switch(this.__class__) {
                         case MASCP.SubaReader:
-                        jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/">Error retrieving SUBA data</a></li>')
+                        jQuery('#links ul').append('<li class="error"><a href="http://www.plantenergy.uwa.edu.au/applications/suba/">Error retrieving SUBA data</a></li>')
                         break;
                         case MASCP.AtProteomeReader:
-                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/">Error retrieving AtProteome data</a></li>');
+                        jQuery('#links ul').append('<li class="error"><a href="http://fgcz-atproteome.unizh.ch/">AtProteome</a></li>');
                         break;
                         case MASCP.PhosphatReader:
-                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de">Error retrieving PhosPhAt data</a></li>');
+                        jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">PhosPhAt</a></li>');
                         break;
                         case MASCP.PromexReader:
-                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/">Error retrieving ProMEX data</a></li>');
+                        jQuery('#links ul').append('<li class="error"><a href="http://promex.pph.univie.ac.at/promex/">ProMEX</a></li>');
                         break;
                         case MASCP.AtPeptideReader:
-                        jQuery('#links ul').append('<li>Error retrieving AtPeptide data</li>');
+                        jQuery('#links ul').append('<li class="error"><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">AtPeptide</a></li>');
                         break;                        
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
@@ -688,19 +711,19 @@
                     var a_locus = an_agi.replace(/\.\d/,'');
                     switch(this.__class__) {
                         case MASCP.SubaReader:
-                        jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">See more at SUBA</a></li>')
+                        jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">SUBA</a></li>')
                         break;
                         case MASCP.AtProteomeReader:
-                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">See more at AtProteome</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">AtProteome</a></li>');
                         break;
                         case MASCP.PhosphatReader:
-                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">See more at PhosPhAt</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">PhosPhAt</a></li>');
                         break;
                         case MASCP.PromexReader:
-                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">See more at ProMEX</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">ProMEX</a></li>');
                         break;
                         case MASCP.AtPeptideReader:
-                        jQuery('#links ul').append('<li><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">See more at AtPeptide</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">AtPeptide</a></li>');
                         break;
                     }
                 });
@@ -795,7 +818,10 @@
     }
 //]]>
 </script>
-<table align="center" style="margin-top: 400px;">
+<div id="links_container">
+<div id="links"></div>
+</div>
+<table align="center" style="margin-top: 400px; display: none;">
 	<tr><td colspan="5">The MASC Proteomics Gator is a resource maintained by the following institutions</td></tr>
 <tr>
     	<td><a href="http://www.jbei.org/" title="Joint BioEnergy Institute"><img src="img/jbei-logo_tonal.png" alt="Joint BioEnergy Institute" width="150" border="0"></a></td>
