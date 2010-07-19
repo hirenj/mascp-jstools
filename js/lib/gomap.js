@@ -1120,7 +1120,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       
       var targ = self.targetElement ? self.targetElement : targetElement;      
       
-      if (document.createEvent) {
+      if (document.createEvent && ! targ._snapback) {
           var evObj = document.createEvent('Events');
           evObj.initEvent('panend',false,true);
           targ.dispatchEvent(evObj);
