@@ -250,7 +250,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
-    this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
+    if (this._is_open) {
+        this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
+    }
 //    this._nav_pane_back.setAttribute('opacity',0.8);
 //    this._nav_pane_back.style.fill = '#000000';
 };
@@ -363,8 +365,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             scroll_controls.style.display = 'none';
             tracks_button.parentNode.style.display = 'none';
         }
+        self._is_open = visible;
         return true;
     };
+    this._is_open = true;
     this._toggler = toggler;
     close_group.addEventListener('click',toggler,false);
     
@@ -1226,7 +1230,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
                axis.show();
                axis.attr({'stroke-width':RS+'pt'});
                big_ticks.show();
-               big_ticks.attr({'stroke-width':RS+'pt'});
+               big_ticks.attr({'stroke-width':RS+'pt', 'transform' : '', 'stroke' : '#000000'});
                big_labels.show();
                big_labels.attr({'font-size':7*RS+'pt','y':5*RS});
                little_ticks.hide();
@@ -1965,23 +1969,7 @@ var accessors = {
         if (zoomLevel > 10) {
             zoomLevel = 10;
         }
-        if (this.zoomCenter && this._canvas) {            
-            var cx = this.zoomCenter.x;
-            var viewBox = this._canvas.getAttribute('viewBox').split(' ');
-            var start_zoom = parseFloat(this._zoomLevel);
-            var end_zoom = parseFloat(zoomLevel);
-
-
-            if ( this.zoomLeft == null ) {
-                this.zoomLeft = 2 * end_zoom * this.sequence.length * parseFloat(cx);
-                this._startX = this._canvas.currentTranslate.x;
-            }
-
-            var viewBoxScale = -2 * end_zoom * this.sequence.length * parseFloat(cx) / parseFloat(viewBox[2]);
-            if (this._canvas.shiftPosition) {
-                this._canvas.shiftPosition( this._startX + (this.zoomLeft / parseFloat(viewBox[2])) + viewBoxScale,0);
-            }
-        }
+        var start_zoom = parseFloat(this._zoomLevel);
 
         this._zoomLevel = parseFloat(zoomLevel);
         if (this._canvas) {
@@ -1995,6 +1983,18 @@ var accessors = {
             }
         }
         jQuery(this).trigger('zoomChange');
+
+        if (this._canvas && this.zoomCenter) {            
+            var cx = this.zoomCenter.x;
+            var viewBox = this._canvas.getAttribute('viewBox').split(' ');
+            var end_zoom = this._zoomLevel;
+
+            if (this._canvas.shiftPosition && (end_zoom - start_zoom) != 0) {
+                var shift_pos = this._canvas.currentTranslate.x - (end_zoom - start_zoom)*2*this.sequence.length*(cx / parseFloat(viewBox[2]) );
+                this._canvas.shiftPosition(shift_pos,0);
+            }
+        }
+        
     },
 
     getZoom: function() {

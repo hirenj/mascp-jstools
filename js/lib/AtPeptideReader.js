@@ -68,7 +68,7 @@ MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
 
         
     var peptides = [];
-
+    
     for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
         var a_peptide = this._raw_data.peptides[i];
         var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence), 'tissues' : [] };
