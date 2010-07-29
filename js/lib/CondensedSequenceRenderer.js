@@ -333,6 +333,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     body.setAttribute('id','sequence_control_con');
     body.setAttribute('style','width: 100px; height: 1em; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
     scroll_controls.appendChild(body);
+
+    var style = document.createElementNS('http://www.w3.org/1999/xhtml','style');
+    style.setAttribute('type','text/css');
+    style.textContent = '@media print { #sequence_control_con { display: none; } #controls { display: none; } }';
+    body.appendChild(style);
+    
     canvas.appendChild(scroll_controls);
     
     this._scroll_control = body;
@@ -1100,10 +1106,13 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var x = 0;
     
     for (var i = 0; i < seq_chars.length; i++) {
-        amino_acids.push(canvas.text(x,12,seq_chars[i]));
+        var a_text = canvas.text(x,12,seq_chars[i]);
+        amino_acids.push(a_text);
+        a_text.class = 'aa';
+        a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
         x += 1;
     }
-    amino_acids.attr( { 'display':'none','width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000', 'font-family':'monospace'});
+    amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000'});
 
     try {
         var noop = canvas.addEventListener;
@@ -1112,10 +1121,10 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         return;
     }
     jQuery(canvas).bind('panstart', function() {
-        amino_acids.attr( { 'display' : 'none'});
+        amino_acids.attr( { 'y' : '-1000'});
         jQuery(canvas).bind('panend', function() {
             if (amino_acids_shown) {
-                amino_acids.attr( { 'display' : 'block'});                
+                amino_acids.attr( { 'y' : 12*RS});                
             }
             jQuery(canvas).unbind('panend',arguments.callee);
         });
@@ -1132,11 +1141,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
        }
        if (canvas.zoom > 3.5) {
            renderer._axis_height = 14;
-           amino_acids.attr({'display':'block'});
+           amino_acids.attr({'y': 12*RS});
            amino_acids_shown = true;
        } else {
            renderer._axis_height = 36;
-           amino_acids.attr({'display':'none'});   
+           amino_acids.attr({'y':-1000});   
            amino_acids_shown = false;        
        }
        renderer.refresh();
@@ -1783,9 +1792,6 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
         });
         layerObj._highlight_event_bound = true;
     }
-    var redraw_id = this._canvas.suspendRedraw(5000);
-
-
     if (doHighlight) {
         for (var i = 0 ; i < layer_container.length; i++ ) {
             if (layer_container[i]._is_shine) {
@@ -1801,8 +1807,6 @@ MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighli
             layer_container[i].removeAttribute('filter');
         }
     }
-    
-    this._canvas.unsuspendRedraw(redraw_id);
     
 }
 

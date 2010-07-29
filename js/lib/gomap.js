@@ -1293,7 +1293,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
-        targetElement.addEventListener('mouseup',momentum_func,false);
+        targetElement.addEventListener('mouseup',mouseUp,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);
