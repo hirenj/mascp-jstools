@@ -69,6 +69,10 @@
             left: 0px;
         }
         
+        h3 {
+            font-size: 32px;
+        }
+        
         #description {
             display: block;
             left: 30%;
@@ -264,11 +268,11 @@
 <div id="description"></div>
 <div id="sequence_control">
 <ul style="margin-bottom: 10px;" id="sequence_controllers">
-    <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
 <!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
     <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
     <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
     <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
+    <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
     <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
 </ul>
 </div>
@@ -287,7 +291,7 @@
 <div style="position: relative;">
 <div id="suba">
     <h3>Subcellular localisation</h3>
-    <p>Localisation data corresponds to text size and colour, where <span style="color: #00ff00; font-weight: bolder;">GREEN</span> shows FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span> shows MS data and <span style="color: #999999; font-weight: bolder;">GRAY</span> shows predicted localisation.</p>
+    <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
 <div id="suba_results">
 </div>
 </div>
