@@ -1108,7 +1108,6 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     for (var i = 0; i < seq_chars.length; i++) {
         var a_text = canvas.text(x,12,seq_chars[i]);
         amino_acids.push(a_text);
-        a_text.class = 'aa';
         a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
         x += 1;
     }
