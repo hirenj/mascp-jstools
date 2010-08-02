@@ -4,7 +4,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    
     <title>GATOR</title>
 
     <link rel="stylesheet" type="text/css" href="css/no-theme/jquery-ui-1.7.2.custom.css"/>
@@ -259,48 +260,55 @@
 
 <body>
 <div style="position: absolute; top: 10px; left: 10px; width: 25%; display: none;">
-<h1 style="position: absolute; left: 0px; top: 0px; margin: 0px; width: 100%; font-size: 10px; "><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; left: -7px; position: absolute;" src="gator.png" /></h1>
+    <h1 style="position: absolute; left: 0px; top: 0px; margin: 0px; width: 100%; font-size: 10px; "><span>MASCP AggreGATOR</span><img style="height: 50px; top: 50%; left: -7px; position: absolute;" src="gator.png" /></h1>
 </div>
+
 <a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(http://www.masc-proteomics.org/mascp/skins/common/images/mascp_logo.png);" href="http://www.masc-proteomics.org/" title="MASC Proteomics portal"></a>
 <div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 100px; width: 30%;">
     <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/>
 </div>
-<div id="description"></div>
+<div id="description">
+</div>
 <div id="sequence_control">
-<ul style="margin-bottom: 10px;" id="sequence_controllers">
-<!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
-    <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
-    <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
-    <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
-    <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
-    <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
-</ul>
+    <ul style="margin-bottom: 10px;" id="sequence_controllers">
+    <!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
+        <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
+        <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
+        <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
+        <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
+        <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
+    </ul>
 </div>
 <button id="controls"><span>Data settings</span></button>
+
 <div style="position: relative;">
-<div style="overflow: hidden; width: auto; height: 100%;">
-<div id="condensed_container"></div>
-<div id="hydropathy_container" style="margin-bottom: 10px;">
-</div>
-</div>
-</div>
-<div style="position: relative; width: 100%; overflow: auto; padding-bottom: 10px;">
-<div id="sequence_container" style="font-family: monospace;">
-</div>
-</div>
-<div style="position: relative;">
-<div id="suba">
-    <h3>Subcellular localisation</h3>
-    <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
-<div id="suba_results">
-</div>
-</div>
-<div id="tissue">
-    <h3>Tissue evidence</h3>
-    <div id="tissue_results">
+    <div style="overflow: hidden; width: auto; height: 100%;">
+        <div id="condensed_container">        
+        </div>
+        <div id="hydropathy_container" style="margin-bottom: 10px;">
+        </div>
     </div>
 </div>
+
+<div style="position: relative; width: 100%; overflow: auto; padding-bottom: 10px;">
+    <div id="sequence_container" style="font-family: monospace;">
+    </div>
 </div>
+
+<div style="position: relative;">
+    <div id="suba">
+        <h3>Subcellular localisation</h3>
+        <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
+        <div id="suba_results">
+        </div>
+    </div>
+    <div id="tissue">
+        <h3>Tissue evidence</h3>
+        <div id="tissue_results">
+        </div>
+    </div>
+</div>
+
 <script type="text/javascript">
 //<[CDATA[ 
     window.onload = null;
@@ -318,11 +326,32 @@
             };
         }
         document.tagvis.visualisations[0].update(1);        
-    }
+    };
+    
+    var showIESplash = function() {
+        var splash = document.getElementById('ie_splash');
+        splash.style.display = 'block';
+        
+        splash.hideForever = function() {
+            var date = new Date();
+            date.setTime(date.getTime()+(365*24*60*60*1000));
+            var expires = "; expires="+date.toGMTString();
+            document.cookie = 'iesplash=true'+expires+'; path=/';
+            splash.style.display = 'none';
+        };
+        
+        splash.hide = function() {
+            splash.style.display = 'none';
+        };
+        
+    };
     
     jQuery(document).ready(function() {        
-        if (MASCP.IE) {
+        if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
             MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
+            if (document.cookie.indexOf('iesplash') < 0) {
+                showIESplash();
+            }
         } else {
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
 //            jQuery('#sequence_control_con').append(zoom_controls);
@@ -473,6 +502,9 @@
 
             MASCP.renderer.showLayer('atpeptide_controller');
             jQuery('#atpeptide_placeholder input').attr('checked',true);
+
+            MASCP.renderer.showLayer('hydropathy');
+            jQuery('#hydropathy input').attr('checked',true);
 
         });
 
@@ -835,5 +867,17 @@
     <td><a href="http://www.cornell.edu/" title="Cornell University"><img src="img/cornell-logo.jpg" alt="Cornell University" border="0" width="150"></a></td>
 	</tr>
 </table>
+
+<div id="ie_splash" style="display: none; background: #ffffff; border: solid black 2px; width: 50%; left: 25%; top: 5%; height: 80%; position: fixed; padding: 20px;">
+    <h3>Browser compatibility</h3>
+    <img src="img/condensed.png" style="width: 90%;"/>
+    <p>Your current web browser cannot display interactive sequence information, and as such, a fallback display
+        technology has been used. It is recommended to use a current browser such as <a href="http://www.getfirefox.net/">Firefox</a>, <a href="http://www.google.com/chrome">Google Chrome</a>, <a href="http://code.google.com/chrome/chromeframe/">Google Chrome frame</a> or <a href="http://apple.com/safari">Safari</a> to
+        use this tool.
+    </p>
+    <button onclick="document.getElementById('ie_splash').hideForever();">Never show again</button>
+    <button onclick="document.getElementById('ie_splash').hide();">Hide</button>
+</div>
+
 </body>
 </html>
