@@ -109,6 +109,9 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
     
     MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtPeptide MS/MS', 'color' : '#ff5533', 'css' : css_block });
 
+    if (sequenceRenderer.createGroupController) {
+        sequenceRenderer.createGroupController('atpeptide_controller','atpeptide_experimental');
+    }
 
     this.bind('resultReceived', function() {
                 
@@ -127,13 +130,7 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
                 peptide_bits[0].addBoxOverlay(overlay_name,1,peptide_bits.length);
             }
         }
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
-
-        if (sequenceRenderer.createGroupController) {
-            sequenceRenderer.createGroupController('atpeptide_controller','atpeptide_experimental');
-        }
-
-
+        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     })
     return this;
 };
