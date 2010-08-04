@@ -34,8 +34,8 @@
 
     <script type="text/javascript" src="js/lib/gomap.js"></script>
     <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script>
- -->
+    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
+
 
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
@@ -346,8 +346,19 @@
         
     };
     
-    jQuery(document).ready(function() {        
-        if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
+    jQuery(document).ready(function() {
+        
+        var supportsXHR = false;
+        if (XMLHttpRequest)
+        {
+            var request = new XMLHttpRequest();
+            if ("withCredentials" in request)
+            {
+                supportsXHR = true;
+            }
+        }
+                
+        if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
             MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
             if (document.cookie.indexOf('iesplash') < 0) {
                 showIESplash();
@@ -871,8 +882,7 @@
 <div id="ie_splash" style="display: none; background: #ffffff; border: solid black 2px; width: 50%; left: 25%; top: 5%; height: 80%; position: fixed; padding: 20px;">
     <h3>Browser compatibility</h3>
     <img src="img/condensed.png" style="width: 90%;"/>
-    <p>Your current web browser cannot display interactive sequence information, and as such, a fallback display
-        technology has been used. It is recommended to use a current browser such as <a href="http://www.getfirefox.net/">Firefox</a>, <a href="http://www.google.com/chrome">Google Chrome</a>, <a href="http://code.google.com/chrome/chromeframe/">Google Chrome frame</a> or <a href="http://apple.com/safari">Safari</a> to
+    <p>Your current web browser cannot display interactive sequence information, and as such, a fallback technology has been used. The behaviour of the site may be sub-optimal. It is recommended to use a current browser such as <a href="http://www.getfirefox.net/">Firefox</a>, <a href="http://www.google.com/chrome">Google Chrome</a>, <a href="http://code.google.com/chrome/chromeframe/">Google Chrome frame</a> or <a href="http://apple.com/safari">Safari</a> to
         use this tool.
     </p>
     <button onclick="document.getElementById('ie_splash').hideForever();">Never show again</button>
