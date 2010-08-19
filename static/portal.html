@@ -273,6 +273,7 @@
     <ul style="margin-bottom: 10px;" id="sequence_controllers">
     <!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
         <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
+        <li id="ppdb_placeholder"><input type="checkbox"/> PPDB</li>
         <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
         <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
@@ -423,6 +424,13 @@
                 MASCP.renderer.createGroupCheckbox('promex_experimental',jQuery('#promex_placeholder input')[0],true);                
             }
 
+            if (MASCP.getGroup('ppdb').size() > 0) {
+                MASCP.renderer.createLayerCheckbox('ppdb_controller',jQuery('#ppdb_placeholder input')[0],true);      
+            } else {
+                MASCP.renderer.createGroupCheckbox('ppdb_experimental',jQuery('#ppdb_placeholder input')[0],true);                
+            }
+
+
             if (MASCP.getGroup('atpeptide_experimental').size() > 0) {
                 MASCP.renderer.createLayerCheckbox('atpeptide_controller',jQuery('#atpeptide_placeholder input')[0],true);      
             } else {
@@ -444,6 +452,12 @@
                     } else {
                         array.splice(array.indexOf('atproteome_placeholder'),0,'atproteome');                        
                     }
+                    if (MASCP.getGroup('ppdb').size() > 0) {
+                        array.splice(array.indexOf('ppdb_placeholder'),0,'ppdb_controller','ppdb');
+                    } else {
+                        array.splice(array.indexOf('ppdb_placeholder'),0,'ppdb');                        
+                    }
+
                     if (MASCP.getGroup('promex_experimental').size() > 0) {
                         array.splice(array.indexOf('promex_placeholder'),0,'promex_controller','promex_experimental');
                     } else {
@@ -513,6 +527,9 @@
 
             MASCP.renderer.showLayer('atpeptide_controller');
             jQuery('#atpeptide_placeholder input').attr('checked',true);
+
+            MASCP.renderer.showLayer('ppdb_controller');
+            jQuery('#ppdb_placeholder input').attr('checked',true);
 
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy input').attr('checked',true);
@@ -651,6 +668,25 @@
                 }
             });
             jQuery('#promex_placeholder').hide();
+
+            var ppdb = new MASCP.PpdbReader(agi,'proxy.pl');
+            ppdb.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(ppdb);
+            all_readers.push(ppdb);
+            
+            ppdb.bind('resultReceived',function() {
+                jQuery(MASCP.getLayer('ppdb_controller')).each(function() {
+                    if (MASCP.renderer.applyStyle) {
+                        MASCP.renderer.applyStyle(this.name,'cursor: pointer');
+                    }
+                });
+
+                if (this.result.getPeptides().length > 0) {
+                    jQuery('#ppdb_placeholder').show();
+                }
+            });
+            jQuery('#ppdb_placeholder').hide();
 
             var atpeptide = new MASCP.AtPeptideReader(agi);
             atpeptide.registerSequenceRenderer(MASCP.renderer);
