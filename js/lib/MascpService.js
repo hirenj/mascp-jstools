@@ -225,7 +225,6 @@ MASCP.Service.prototype = {
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
-
     if ( ! this.result ) {
         result = new clazz(data);
         this.result = result;
@@ -301,7 +300,7 @@ MASCP.Service.prototype.retrieve = function()
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
-                    if ( xhr.status != null && xhr.status == 0 ) {
+                    if ( xhr && xhr.status != null && xhr.status == 0 ) {
                         jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }

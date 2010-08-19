@@ -4,11 +4,7 @@
 
 /**
  * @class   Service class that will retrieve AtProteome data for this entry given an AGI.
- *          To retrieve data from AtProteome, two requests need to be made to the remote
- *          server. The first request ascertains the internal ID used by AtProteome for
- *          the given AGI. A second request then retrieves the data from AtProteome.
- *          Data is received in XML format, and will need to go through a tidying proxy
- *          if retrieving data directly from AtProteome.
+ *          Data is received in JSON format.
  * @description Default class constructor
  * @param   {String} agi            Agi to look up
  * @param   {String} endpointURL    Endpoint URL for this service
