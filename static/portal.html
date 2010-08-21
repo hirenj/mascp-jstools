@@ -74,15 +74,64 @@
             font-size: 32px;
         }
         
-        #description {
+        #description_container {
             display: block;
             left: 30%;
+            width: 60%;
             position: absolute;
             overflow: auto;
-            top: 10px;
             margin-right: 10px;
-            height: 65px;
+            height: 70px;
+            font-size: 12px;
         }
+        
+        .rounded_box {
+            background: #eeeeee;
+            border-radius: 5px;
+            padding-right: 5px;
+            padding-bottom: 5px;
+        }
+
+        .rounded_box * {
+            margin-left: 5px;
+        }
+
+        
+        .rounded_box .inset {
+            border-bottom-right-radius: 5px;
+            border-top-left-radius: 5px;
+            padding: 5px;
+            background: #888888;
+            color: #eeeeee;
+            margin: 0px;
+            overflow: hidden;
+            display: block;
+            width: 150px;
+        }
+        
+        #description_container #description {
+            font-size: 25px;
+            height: 40px;
+            width: 100%;
+        }
+        
+        #agi_input {
+            height: 70px;
+            margin-left: 10px;
+            margin-right: 10px;
+            position: absolute;
+            left: 100px;
+            right: 70%;
+        }
+        
+        #agi_input, #agi_input input[type='text'] {
+            font-size: 12px;
+        }
+        #agi_input input[type='text'] {
+            font-size: 20px;
+            border: dotted #999999 1px;
+        }
+        
         
         .track {
             position: relative;
@@ -229,14 +278,7 @@
             background-repeat: no-repeat;
             background-position: left center;
         }
-        
-        #agi_input, #agi_input input[type='text'] {
-            font-size: 20px;
-        }
-        #agi_input input[type='text'] {
-            border: dotted #999999 1px;
-        }
-        
+                
         .rich_tagcloud_tag {
             padding: 10px;
             float: left;
@@ -264,10 +306,13 @@
 </div>
 
 <a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(http://www.masc-proteomics.org/mascp/skins/common/images/mascp_logo.png);" href="http://www.masc-proteomics.org/" title="MASC Proteomics portal"></a>
-<div id="agi_input" style="height: 70px; margin-bottom: 10px; position: relative; left: 100px; width: 30%;">
-    <label for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/>
+<div id="agi_input" class="rounded_box" style="">
+    <label class="inset" for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><input type="button" value="Retrieve"/>
 </div>
+<div id="description_container" class="rounded_box">
+<div class="inset">Protein description</div>
 <div id="description">
+</div>
 </div>
 <div id="sequence_control">
     <ul style="margin-bottom: 10px;" id="sequence_controllers">
@@ -281,8 +326,8 @@
     </ul>
 </div>
 <button id="controls"><span>Data settings</span></button>
-
-<div style="position: relative;">
+<div style="position: relative; top: 100px;">
+<div>
     <div style="overflow: hidden; width: auto; height: 100%;">
         <div id="condensed_container">        
         </div>
@@ -291,25 +336,25 @@
     </div>
 </div>
 
-<div style="position: relative; width: 100%; overflow: auto; padding-bottom: 10px;">
+<div style="width: 100%; overflow: auto; padding-bottom: 10px;">
     <div id="sequence_container" style="font-family: monospace;">
     </div>
 </div>
 
-<div style="position: relative;">
-    <div id="suba">
-        <h3>Subcellular localisation</h3>
+<div>
+    <div id="suba" class="rounded_box">
+        <div class="inset">Subcellular localisation</div>
         <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
         <div id="suba_results">
         </div>
     </div>
-    <div id="tissue">
-        <h3>Tissue evidence</h3>
+    <div id="tissue" class="rounded_box">
+        <div class="inset">Tissue evidence</div>
         <div id="tissue_results">
         </div>
     </div>
 </div>
-
+</div>
 <script type="text/javascript">
 //<[CDATA[ 
     window.onload = null;
@@ -780,6 +825,9 @@
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">PhosPhAt</a></li>');
                         break;
+                        case MASCP.PpdbReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
+                        break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://promex.pph.univie.ac.at/promex/">ProMEX</a></li>');
                         break;
@@ -801,6 +849,9 @@
                         break;
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">PhosPhAt</a></li>');
+                        break;
+                        case MASCP.PpdbReader:
+                        jQuery('#links ul').append('<li><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
                         break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">ProMEX</a></li>');
