@@ -308,12 +308,14 @@ MASCP.TagVisualisation.TagCloud.prototype.update = function(dataColumn) {
 	for (var i = 0; i < alltags.length; i++ )  {
 		var tag = alltags[i];
 		var tagId = tag.replace(/\s+/,"_");
-		if ( document.getElementById(MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId) == null ) {
-			var tagSpan = this.tagFactory(tagId,tag,all_values[tag]);
-			container.appendChild(tagSpan);
-		} else {
+		if ( document.getElementById(MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId) != null ) {
 			var tagSpan = document.getElementById(MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId);
+			tagSpan.parentNode.removeChild(tagSpan);
 		}
+
+		var tagSpan = this.tagFactory(tagId,tag,all_values[tag]);
+		container.appendChild(tagSpan);
+
 		var fontsize = Math.floor(50 * Math.log(1.5 + (values[tag] / maxValue)));
 		tagSpan.style.fontSize = fontsize+"px";
 		tagSpan.setAttribute('class',  MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_CSS_CLASS );

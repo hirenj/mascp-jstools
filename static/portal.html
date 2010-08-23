@@ -59,6 +59,10 @@
     }
 
 
+        html {
+            min-width: 800px;
+        }
+
         body {
             font-family: Verdana, Helvetica, Arial, sans-serif;
             font-size: 10px;
@@ -76,15 +80,13 @@
         
         #description_container {
             display: block;
-            left: 30%;
-            width: 60%;
+            right: 20px;
+            width: 65%;
             position: absolute;
-            overflow: auto;
-            margin-right: 10px;
             height: 70px;
             font-size: 12px;
         }
-        
+                
         .rounded_box {
             background: #eeeeee;
             border-radius: 5px;
@@ -111,8 +113,9 @@
         
         #description_container #description {
             font-size: 25px;
-            height: 40px;
+            height: 45px;
             width: 100%;
+            overflow: auto;
         }
         
         #agi_input {
@@ -120,6 +123,7 @@
             margin-left: 10px;
             margin-right: 10px;
             position: absolute;
+            overflow: hidden;
             left: 100px;
             right: 70%;
         }
@@ -130,8 +134,17 @@
         #agi_input input[type='text'] {
             font-size: 20px;
             border: dotted #999999 1px;
+            margin-top: 1px;
+            height: 20px;
         }
-        
+
+        #agi_input input[type='button'] {
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            height: 15px;
+            font-size: 8px;
+        }        
         
         .track {
             position: relative;
@@ -206,25 +219,22 @@
         }
         #suba {
             font-size: 12px;
-            position: absolute;
-            width: 45%;
-            left: 0px;
-            margin-left: 20px;
-        }
-        #suba_results {
             position: relative;
-            width: 100%;
-            height: 100px;
-            left: 0px;
-            top: 0px;
+            width: 45%;
+            left: 20px;
+            height: 100%;
+            overflow: auto;
         }
         
         #tissue {
             font-size: 12px;
+            top: 0px;
             position: absolute;
             width: 45%;
-            left: 50%;
+            right: 20px;            
             margin-left: 40px;
+            bottom: 0px;
+            overflow: auto;
         }
         
         #suba_controller {
@@ -242,10 +252,12 @@
         }
         
         #links_container {
-            margin-top: 400px;
-            width: 90%;
-            height: 64px;
+            position: relative;
+            top: 10px;
+            margin-right: 20px;
+            margin-left: 20px;
         }
+        
         #links li {
             list-style-type: none;
             display: block;
@@ -282,6 +294,27 @@
         .rich_tagcloud_tag {
             padding: 10px;
             float: left;
+            position: relative;
+        }
+        
+        .rich_tagcloud_tag span {
+            display: none;
+        }
+        
+        .rich_tagcloud_tag:hover {
+            color: #ff9999;
+        }
+        
+        .rich_tagcloud_tag:hover span {
+            display: block;
+            background: #999999;
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            padding: 20px;
+            font-size: 15px;
+            color: #ffffff;
+            border-radius: 10px;
         }
         
         
@@ -325,7 +358,9 @@
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
+<div style="top: 100px; position: relative;">
 <button id="controls"><span>Data settings</span></button>
+</div>
 <div style="position: relative; top: 100px;">
 <div>
     <div style="overflow: hidden; width: auto; height: 100%;">
@@ -341,7 +376,7 @@
     </div>
 </div>
 
-<div>
+<div style="position: relative;">
     <div id="suba" class="rounded_box">
         <div class="inset">Subcellular localisation</div>
         <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
@@ -349,11 +384,18 @@
         </div>
     </div>
     <div id="tissue" class="rounded_box">
-        <div class="inset">Tissue evidence</div>
+        <div class="inset">Organ evidence</div>
         <div id="tissue_results">
         </div>
     </div>
 </div>
+
+<div id="links_container" class="rounded_box">
+<div class="inset">Data sources</div>
+<div id="links"></div>
+<div style="clear: both; float: none; width: 100%; height: 0px;"></div>
+</div>
+
 </div>
 <script type="text/javascript">
 //<[CDATA[ 
@@ -368,10 +410,30 @@
                 span.textContent = tag;
                 span.innerText = tag;
                 span.id = MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId;
+                var valuespan = document.createElement('span');
+                valuespan.textContent = row[1].textContent || row[1].innerText;
+                valuespan.innerText = row[1].textContent || row[1].innerText;
+                span.appendChild(valuespan);
                 return span;
             };
         }
         document.tagvis.visualisations[0].update(1);        
+    };
+    
+    var updateKey = function(key,val) {
+        var found = false;
+        jQuery('#tissue_results').find('tr td').each(function() {
+            if (jQuery(this).html().toString() == key.toString()) {
+                var current_val = parseInt(jQuery(this.nextSibling).html());
+                jQuery(this.nextSibling).html(current_val + val);
+                found = true;
+            }
+        });
+        if (found) {
+            return true;
+        }
+        jQuery('#tissue_results tbody').append("<tr><td>"+key+"</td><td>"+val+"</td></tr>");        
+        return false;
     };
     
     var showIESplash = function() {
@@ -653,6 +715,13 @@
                     }                    
                     span.textContent = original_tag;
                     span.innerText = original_tag;
+                    
+                    var valuespan = document.createElement('span');
+                    valuespan.textContent = row[1].textContent || row[1].innerText;
+                    valuespan.innerText = row[1].textContent || row[1].innerText;
+                    valuespan.style.textShadow = 'none';
+                    span.appendChild(valuespan);
+                    
                     return span;
                 };                
                 tagvis.visualisations[0].update(1);
@@ -677,16 +746,7 @@
                 for (loc_key in tissues) {
                     var long_name = loc_key;
                     var count = tissues[loc_key];
-                    jQuery('#tissue_results').find('tr td').each(function() {
-                        if (jQuery(this).html() == long_name) {
-                            var current_val = parseInt(jQuery(this.nextSibling).html());
-                            jQuery(this.nextSibling).html(current_val + count);
-                            loc_key = null;
-                        }
-                    });
-                    if (loc_key != null) {
-                        jQuery('#tissue_results tbody').append("<tr><td>"+loc_key+"</td><td>"+tissues[loc_key]+"</td></tr>");
-                    }
+                    updateKey(long_name,count);
                 }
                 updateTags();
             });
@@ -749,18 +809,8 @@
                 var loc_key = null;
                 for (loc_key in this.result.spectra) {
                     var long_name = this.result._long_name_map[loc_key];
-                    var count = this.result.spectra[loc_key];
-                    
-                    jQuery('#tissue_results').find('tr td').each(function() {
-                        if (jQuery(this).html() == long_name) {
-                            var current_val = parseInt(jQuery(this.nextSibling).html());
-                            jQuery(this.nextSibling).html(current_val + count);
-                            loc_key = null;
-                        }
-                    });
-                    if (loc_key != null) {
-                        jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
-                    }
+                    var count = this.result.spectra[loc_key];                    
+                    updateKey(long_name,count);
                 }
                 updateTags();
 
@@ -793,17 +843,7 @@
                 for (loc_key in this.result.spectra) {
                     var long_name = this.result._long_name_map[loc_key];
                     var count = this.result.spectra[loc_key];
-                    
-                    jQuery('#tissue_results').find('tr td').each(function() {
-                        if (jQuery(this).html() == long_name) {
-                            var current_val = parseInt(jQuery(this.nextSibling).html());
-                            jQuery(this.nextSibling).html(current_val + count);
-                            loc_key = null;
-                        }
-                    });
-                    if (loc_key != null) {
-                        jQuery('#tissue_results tbody').append("<tr><td>"+this.result._long_name_map[loc_key]+"</td><td>"+this.result.spectra[loc_key]+"</td></tr>");
-                    }
+                    updateKey(long_name,count);
                 }
                 updateTags();
                 jQuery('#atproteome_placeholder').show();
@@ -952,9 +992,6 @@
     }
 //]]>
 </script>
-<div id="links_container">
-<div id="links"></div>
-</div>
 <table align="center" style="margin-top: 400px; display: none;">
 	<tr><td colspan="5">The MASC Proteomics Gator is a resource maintained by the following institutions</td></tr>
 <tr>
