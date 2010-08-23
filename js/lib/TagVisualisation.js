@@ -316,7 +316,7 @@ MASCP.TagVisualisation.TagCloud.prototype.update = function(dataColumn) {
 		var tagSpan = this.tagFactory(tagId,tag,all_values[tag]);
 		container.appendChild(tagSpan);
 
-		var fontsize = Math.floor(50 * Math.log(1.5 + (values[tag] / maxValue)));
+		var fontsize = Math.floor(30 * Math.log(1.5 + (values[tag] / maxValue)));
 		tagSpan.style.fontSize = fontsize+"px";
 		tagSpan.setAttribute('class',  MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_CSS_CLASS );
 	}
