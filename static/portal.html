@@ -41,6 +41,7 @@
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
 
     <script type="text/javascript" src="js/jquery-ui-1.7.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery.masonry.min.js"></script>
 
     <style type="text/css">
 
@@ -89,6 +90,7 @@
                 
         .rounded_box {
             background: #eeeeee;
+            -moz-border-radius: 5px;
             border-radius: 5px;
             padding-right: 5px;
             padding-bottom: 5px;
@@ -100,6 +102,7 @@
 
         
         .rounded_box .inset {
+            -moz-border-radius: 5px 0px 5px 0px;
             border-bottom-right-radius: 5px;
             border-top-left-radius: 5px;
             padding: 5px;
@@ -111,11 +114,29 @@
             width: 150px;
         }
         
+        ::-webkit-scrollbar {
+        	height: 6px;
+        }
+
+        ::-webkit-scrollbar-track-piece {
+        	background-color: #ffffff;
+        	border-radius: 3px;
+        	margin-left: 10px;        	
+        	margin-right: 10px;
+        }
+        ::-webkit-scrollbar-thumb:horizontal {
+        	height: 50px;
+        	width: 50px;
+        	background-color: #999999;
+        	border-radius: 3px;
+        }
+                
         #description_container #description {
             font-size: 25px;
             height: 45px;
             width: 100%;
             overflow: auto;
+            white-space: nowrap;
         }
         
         #agi_input {
@@ -224,6 +245,8 @@
             left: 20px;
             height: 100%;
             overflow: auto;
+            padding-bottom: 20px;
+            padding-right: 20px;
         }
         
         #tissue {
@@ -235,6 +258,8 @@
             margin-left: 40px;
             bottom: 0px;
             overflow: auto;
+            padding-bottom: 20px;
+            padding-right: 20px;
         }
         
         #suba_controller {
@@ -294,7 +319,7 @@
         .rich_tagcloud_tag {
             padding: 10px;
             float: left;
-            position: relative;
+            position: absolute;
         }
         
         .rich_tagcloud_tag span {
@@ -314,6 +339,7 @@
             padding: 20px;
             font-size: 15px;
             color: #ffffff;
+            -moz-border-radius: 10px;
             border-radius: 10px;
         }
         
@@ -355,6 +381,7 @@
         <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
         <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
+        <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>        
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
@@ -379,7 +406,7 @@
 <div style="position: relative;">
     <div id="suba" class="rounded_box">
         <div class="inset">Subcellular localisation</div>
-        <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: FP data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
+        <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: Fluorescent Protein data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
         <div id="suba_results">
         </div>
     </div>
@@ -417,7 +444,8 @@
                 return span;
             };
         }
-        document.tagvis.visualisations[0].update(1);        
+        document.tagvis.visualisations[0].update(1);
+        jQuery('#tissue .rich_tagcloud').masonry({ 'itemSelector' : '.rich_tagcloud_tag', 'animate': true });
     };
     
     var updateKey = function(key,val) {
@@ -525,6 +553,8 @@
 
             MASCP.renderer.createLayerCheckbox('phosphat_theoretical',jQuery('#phosphat_theoretical input')[0],true);
             MASCP.renderer.createLayerCheckbox('phosphat_experimental',jQuery('#phosphat_experimental input')[0],true);      
+            MASCP.renderer.createLayerCheckbox('prippdb_experimental',jQuery('#prippdb_experimental input')[0],true);      
+            
             if (MASCP.getGroup('promex_experimental').size() > 0) {
                 MASCP.renderer.createLayerCheckbox('promex_controller',jQuery('#promex_placeholder input')[0],true);      
             } else {
@@ -578,6 +608,10 @@
                     if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
                         array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
                     }
+
+                    if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
+                        array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
+                    }
                     
                 }
                 return array;
@@ -627,6 +661,10 @@
             
             if (MASCP.getLayer('phosphat_experimental') && ! MASCP.getLayer('phosphat_experimental').disabled ) {
                 MASCP.renderer.showLayer('phosphat_experimental');
+            }
+
+            if (MASCP.getLayer('prippdb_experimental') && ! MASCP.getLayer('prippdb_experimental').disabled ) {
+                MASCP.renderer.showLayer('prippdb_experimental');
             }
             
             MASCP.renderer.showLayer('promex_controller');
@@ -700,17 +738,17 @@
                     var original_tag = tag;
                     if ((the_tag = original_tag.replace(/MS /,'')) != original_tag) {
                         span.style.color = '#ff0000';
-                        span.style.textShadow = '#aa0000 2px 2px 3px';
+//                        span.style.textShadow = '#aa0000 2px 2px 3px';
                         original_tag = the_tag;
                     }
                     if ((the_tag = original_tag.replace(/GFP /,'')) != original_tag) {
                         span.style.color = '#00ff00';                        
-                        span.style.textShadow = '#00aa00 2px 2px 3px';
+//                        span.style.textShadow = '#00aa00 2px 2px 3px';
                         original_tag = the_tag;
                     }
                     if ((the_tag = original_tag.replace(/Prediction /,'')) != original_tag) {
                         span.style.color = '#aaaaaa';                        
-                        span.style.textShadow = '#555555 2px 2px 3px';
+//                        span.style.textShadow = '#555555 2px 2px 3px';
                         original_tag = the_tag;                        
                     }                    
                     span.textContent = original_tag;
@@ -725,6 +763,7 @@
                     return span;
                 };                
                 tagvis.visualisations[0].update(1);
+                jQuery('#suba .rich_tagcloud').masonry({ 'itemSelector' : '.rich_tagcloud_tag', 'animate': true });
             });
 
             all_readers.push(suba);
@@ -754,6 +793,22 @@
             jQuery('#phosphat_theoretical input').attr('checked',false);            
             jQuery('#phosphat_experimental').hide();
             jQuery('#phosphat_theoretical').hide();
+
+
+            var rippdb = new MASCP.RippdbReader(agi);
+            rippdb.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(rippdb);
+            all_readers.push(rippdb);
+            
+            rippdb.bind('resultReceived',function() {
+                if (this.result.getSpectra().length > 0) {                 
+                    jQuery('#prippdb_experimental').show();
+                }
+            });
+            jQuery('#prippdb_experimental input').attr('checked',false);
+            jQuery('#prippdb_experimental').hide();
+
             
             var promex = new MASCP.PromexReader(agi);
             promex.registerSequenceRenderer(MASCP.renderer);
@@ -865,6 +920,9 @@
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">PhosPhAt</a></li>');
                         break;
+                        case MASCP.RippdbReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">Rippdb</a></li>');
+                        break;
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
                         break;
@@ -889,6 +947,9 @@
                         break;
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">PhosPhAt</a></li>');
+                        break;
+                        case MASCP.RippdbReader:
+                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">Rippdb</a></li>');
                         break;
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');

@@ -98,8 +98,9 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
 
     this.bind('resultReceived', function() {
+        var agi = (this.result.agi+"").replace(/\..*$/,'');
         
-        MASCP.getLayer('promex_controller').href = 'http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi;
+        MASCP.getLayer('promex_controller').href = 'http://promex.pph.univie.ac.at/promex/index.php?subjob=Submit&subtext='+agi;
         
         // var css_block = '.active { background: #ff9900; color: #ffffff;} :indeterminate { background: #ff0000; } .active a:hover { background: transparent !important; } .inactive { }';
         var peps = this.result.getPeptides();

@@ -90,7 +90,7 @@ MASCP.PpdbReader.Result.prototype.getPeptides = function()
     
     this._experiments = [];
     for (var expid in all_experiments) {
-        this._experiments.push(expid);
+        this._experiments.push(parseInt(expid));
     }
     
     return peptides;
