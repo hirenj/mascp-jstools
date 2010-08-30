@@ -67,26 +67,31 @@ MASCP.RippdbReader.Result.prototype._cleanSequence = function(sequence)
 MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
-    MASCP.registerGroup('prippdb_peptides', {'fullname' : 'Phosphorylation Rippdb', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#666666' });
-
-    var overlay_name = 'prippdb_experimental';
 
     var css_block = '.active .overlay { background: #666666; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
     
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'Phosphorylation Rippdb', 'color' : '#666666', 'css' : css_block });
-
-    if (sequenceRenderer.createGroupController) {
-        sequenceRenderer.createGroupController('prippdb_experimental','prippdb_peptides');
-    }
-
     this.bind('resultReceived', function() {
                 
         var specs = this.result.getSpectra();
+
+        var overlay_name = 'prippdb_experimental';
+        if (specs.length > 0) {
+            MASCP.registerLayer(overlay_name,{ 'fullname' : 'Phosphorylation Rippdb', 'color' : '#666666', 'css' : css_block });
+
+            MASCP.registerGroup('prippdb_peptides', {'fullname' : 'Phosphorylation Rippdb', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#666666' });
+            if (sequenceRenderer.createGroupController) {
+                sequenceRenderer.createGroupController('prippdb_experimental','prippdb_peptides');
+            }
+        }
+
         for (var j = 0; j < specs.length; j++ ) {
             var spec = specs[j];
-            MASCP.registerLayer('rippdb_spectrum_'+spec.spectrum_id, { 'fullname': 'Spectrum '+spec.spectrum_id, 'group' : 'prippdb_peptides', 'color' : '#666666', 'css' : css_block });
             
             var peps = spec.peptides;
+            if (peps.length == 0) {
+                continue;
+            }
+            MASCP.registerLayer('rippdb_spectrum_'+spec.spectrum_id, { 'fullname': 'Spectrum '+spec.spectrum_id, 'group' : 'prippdb_peptides', 'color' : '#666666', 'css' : css_block });
             for(var i = 0; i < peps.length; i++) {
                 var peptide = peps[i].sequence;
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);

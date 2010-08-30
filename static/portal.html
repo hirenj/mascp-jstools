@@ -81,13 +81,30 @@
         
         #description_container {
             display: block;
-            right: 20px;
-            width: 65%;
+            right: 140px;
+            left: 280px;
             position: absolute;
             height: 70px;
             font-size: 12px;
+            z-index: -10;
         }
-                
+        
+        #help_container {
+            display: block;
+            right: 20px;
+            width: 100px;
+            position: absolute;
+            height: 70px;
+        }
+        
+        #help_container .inset {
+            width: 30px;
+        }
+        
+        #help_container a {
+            color: #000000 !important;
+        }
+        
         .rounded_box {
             background: #eeeeee;
             -moz-border-radius: 5px;
@@ -146,7 +163,8 @@
             position: absolute;
             overflow: hidden;
             left: 100px;
-            right: 70%;
+            right: 82%;
+            min-width: 150px;
         }
         
         #agi_input, #agi_input input[type='text'] {
@@ -166,6 +184,11 @@
             height: 15px;
             font-size: 8px;
         }        
+
+        #agi_input .inset {
+            width: 30px;
+        }
+
         
         .track {
             position: relative;
@@ -371,6 +394,17 @@
 <div id="description_container" class="rounded_box">
 <div class="inset">Protein description</div>
 <div id="description">
+</div>
+</div>
+<div id="help_container" class="rounded_box">
+<div class="inset">Help</div>
+<div id="help">
+    <p>
+    <a href="http://www.masc-proteomics.org/mascp/index.php/Gator">Help</a>
+    </p>
+    <p>
+    <a href="http://gator.macs-proteomics.org/source">Source</a>
+    </p>
 </div>
 </div>
 <div id="sequence_control">
@@ -608,7 +642,6 @@
                     if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
                         array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
                     }
-
                     if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
                         array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
                     }
@@ -921,7 +954,7 @@
                         jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">PhosPhAt</a></li>');
                         break;
                         case MASCP.RippdbReader:
-                        jQuery('#links ul').append('<li class="error"><a href="http://phosphat.mpimp-golm.mpg.de">Rippdb</a></li>');
+                        jQuery('#links ul').append('<li class="error"><a href="https://database.riken.jp/sw/links/en/ria102i/">Rippdb</a></li>');
                         break;
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
@@ -949,7 +982,7 @@
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">PhosPhAt</a></li>');
                         break;
                         case MASCP.RippdbReader:
-                        jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">Rippdb</a></li>');
+                        jQuery('#links ul').append('<li><a href="https://database.riken.jp/sw/links/en/ria102i/">Rippdb</a></li>');
                         break;
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');

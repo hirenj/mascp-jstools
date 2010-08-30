@@ -877,7 +877,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             if (vbox) {
                 var viewBox = this.getAttribute('viewBox').split(' ');
                 viewBoxScale = parseFloat(this.width.baseVal.value) / parseFloat(viewBox[2]);
-                min_x = 0; //parseInt(viewBox[0]);
+                min_x = targetElement._min_x;
                 min_y = parseInt(viewBox[1]);
                 width = parseInt(viewBox[2]);
                 height = parseInt(viewBox[3]);
@@ -901,11 +901,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 clearTimeout(targetElement._snapback);
                 targetElement._snapback = null;
             }
-            
             if (p.x > viewBoxScale * min_x) {
                 targetElement._snapback = setTimeout(function() {
-                    if (targetElement.currentTranslate.x - (viewBoxScale * min_x) > 1 ) {
-                        targetElement.setCurrentTranslateXY( 0.8*(targetElement.currentTranslate.x - (viewBoxScale * min_x)), 0);
+                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) < 0.05 ) {
+                        var new_pos = 0.8*(targetElement.currentTranslate.x - (viewBoxScale * min_x));
+                        if (new_pos < (viewBoxScale * min_x)) {
+                            new_pos = (viewBoxScale * min_x);
+                        }
+                        targetElement.setCurrentTranslateXY( new_pos, 0);
                         targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
@@ -913,6 +916,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                             targetElement.dispatchEvent(evObj);
                         }
                     } else {
+                        console.log("Pan ending");
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
@@ -930,9 +934,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 //              p.x = viewBoxScale * min_x;
             }
             
-            if (p.x < 0 && Math.abs(p.x) > 0.85 * viewBoxScale * width ) {
+            if (p.x < 0 && Math.abs(p.x) > 0.65 * viewBoxScale * width ) {
                 targetElement._snapback = setTimeout(function() {
-                    if (targetElement.currentTranslate.x < (-0.85 * viewBoxScale * width)) {
+                    if (targetElement.currentTranslate.x < (-0.65 * viewBoxScale * width)) {
                         targetElement.setCurrentTranslateXY( 0.95*(targetElement.currentTranslate.x), 0);
                         targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {

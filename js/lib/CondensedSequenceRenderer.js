@@ -185,7 +185,21 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
                 this.currentTranslate.x = x;
                 this.currentTranslate.y = y;
         };
+        
+        
         renderer._addNav();
+
+        var nav = renderer._Navigation;
+
+        renderer._nav_canvas.show = function() {
+            canv._min_x = nav._width_shift;
+            this.setCurrentTranslateXY(0,0);
+        };
+        
+        renderer._nav_canvas.hide = function() {
+            canv._min_x = 0;
+            this.setCurrentTranslateXY(-192,0);            
+        }
         
         renderer._container_canvas = container_canv;
         container_canv.setAttribute('preserveAspecRatio','xMinYMin slice');
@@ -356,7 +370,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var toggler = function(vis) {
         visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
-            canvas.setCurrentTranslateXY(0,0);
+            canvas.show();
             rect.setAttribute('filter','url(#drop_shadow)');
             close_group._button.removeAttribute('filter');
             close_group.setAttribute('transform','');
@@ -364,7 +378,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             scroll_controls.style.display = 'block';
             tracks_button.parentNode.style.display = 'block';
         } else {
-            canvas.setCurrentTranslateXY(-192,0);
+            canvas.hide();
             rect.removeAttribute('filter');
             close_group._button.setAttribute('filter','url(#drop_shadow)');            
             close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
@@ -1296,7 +1310,6 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     jQuery(this).unbind('svgready').bind('svgready',function(canv) {
         var canv = renderer._canvas;
         renderer._extendWithSVGApi(canv);
-//        canv.setAttribute('viewBox', ''+(-2*RS)+' 0 '+(line_length+(this.padding)+2)*RS+' '+(100+(this.padding))*RS);
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
@@ -1940,6 +1953,13 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     this._resizeContainer();
 
+    if (this._Navigation) {
+        this._Navigation._width_shift = 100 * RS / this.zoom;
+        if (this._Navigation._is_open) {
+            this._canvas._min_x = this._Navigation._width_shift;
+        }
+    }
+
     viewBox[0] = 0;
 //    viewBox[2] = '200';
     if (this._Navigation) {
@@ -1987,8 +2007,8 @@ var accessors = {
         }
         jQuery(this).trigger('zoomChange');
 
-        if (this._canvas && this.zoomCenter) {            
-            var cx = this.zoomCenter.x;
+        if (this._canvas && this._canvas.getAttribute('viewBox')) {            
+            var cx = this.zoomCenter ? this.zoomCenter.x : 0;
             var viewBox = this._canvas.getAttribute('viewBox').split(' ');
             var end_zoom = this._zoomLevel;
 
