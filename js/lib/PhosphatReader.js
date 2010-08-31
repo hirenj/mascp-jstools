@@ -205,7 +205,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         
         jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'Phosphorylation', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
             this.addToLayer('phosphat_experimental');
         });
         
