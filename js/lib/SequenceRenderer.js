@@ -539,7 +539,12 @@ MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
     return (! layer.disabled) && jQuery(this._container).hasClass(layerName+'_active');
 };
 
-MASCP.SequenceRenderer.prototype.setHighlight = function(layer,isHighlighted) {
+/**
+ * Deprecated until there's a better implementation for the CondensedSequenceRenderer
+ * @private
+ */
+
+MASCP.SequenceRenderer.prototype._setHighlight = function(layer,isHighlighted) {
     return;
 };
 

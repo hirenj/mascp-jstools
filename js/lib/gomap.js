@@ -877,12 +877,21 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             if (vbox) {
                 var viewBox = this.getAttribute('viewBox').split(' ');
                 viewBoxScale = parseFloat(this.width.baseVal.value) / parseFloat(viewBox[2]);
-                min_x = targetElement._min_x;
+                min_x = 0;
                 min_y = parseInt(viewBox[1]);
                 width = parseInt(viewBox[2]);
                 height = parseInt(viewBox[3]);
+            } else {
+                min_x = 0;
+                min_y = 0;
+                width = targetElement.width;
+                height = targetElement.height;
             }
 
+            if (targetElement.style.GomapScrollLeftMargin) {
+                min_x += targetElement.style.GomapScrollLeftMargin;
+            }
+            
             if ( self.dragging ) {
                 p.x = viewBoxScale*(p.x - self.oX);
                 p.y = viewBoxScale*(p.y - self.oY);
@@ -893,11 +902,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             }
 
             if (targetElement._snapback) {
-                // if (document.createEvent) {
-                //     var evObj = document.createEvent('Events');
-                //     evObj.initEvent('panend',false,true);
-                //     targetElement.dispatchEvent(evObj);
-                // }
                 clearTimeout(targetElement._snapback);
                 targetElement._snapback = null;
             }
@@ -931,14 +935,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                         targetElement._snapback = null;
                     }
                 },300);
-//              p.x = viewBoxScale * min_x;
             }
             
-            var min_val = 0.75 * viewBoxScale * width;
-            if (targetElement._min_x > 0) {
-                 min_val = viewBoxScale * (width - 2 * min_x);
-            }
+            var min_val = viewBoxScale * ( width - 2 * min_x );
             
+            if (min_x == 0) {
+                min_val *= 0.75;
+            }
+
             if (p.x < 0 && Math.abs(p.x) > min_val) {
                 targetElement._snapback = setTimeout(function() {
                     if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 1 ) {
@@ -1267,6 +1271,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     var momentum_func = function(e) {
         if ( ! self.dragging ) {
+            mouseUp(e);
             return;
         }
         var targ = self.targetElement ? self.targetElement : targetElement;
@@ -1297,7 +1302,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
         targetElement.addEventListener('mouseup',momentum_func,false);
-//        targetElement.addEventListener('mouseup',mouseUp,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);
