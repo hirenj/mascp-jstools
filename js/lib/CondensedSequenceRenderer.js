@@ -8,16 +8,6 @@
  */
 if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
 
-    // var svg_path = 'svgweb/';
-    // if (typeof SVGWEB_PATH != 'undefined') {
-    //     svg_path = SVGWEB_PATH;
-    // }
-    // var scriptTag = document.createElement("script");
-    // scriptTag.src = svg_path + 'svg.js';
-    // scriptTag.type="text/javascript";
-    // scriptTag.setAttribute('data-path',svg_path);
-    // document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
-
     if (typeof SVGWEB_PATH != 'undefined') {
         document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
     } else {
@@ -100,8 +90,12 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     
         var oldAddEventListener = canv.addEventListener;
     
-        var mouse_moves = [];
     
+        // We need to track all the mousemove functions that are bound to this event
+        // so that we can switch off all the mousemove bindings during an animation event
+        
+        var mouse_moves = [];
+
         canv.addEventListener = function(ev,func,bubbling) {
             if (ev == 'mousemove') {
                 if (mouse_moves.indexOf(func) < 0) {
@@ -112,7 +106,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
             }
             return oldAddEventListener.apply(canv,[ev,func,bubbling]);
         };
-    
+
         jQuery(canv).bind('_anim_begin',function() {
             for (var i = 0; i < mouse_moves.length; i++ ) {
                 canv.removeEventListener('mousemove', mouse_moves[i], false );
@@ -151,6 +145,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         right_fade.setAttribute('style','fill: url(#right_fade);');
         right_fade.setAttribute('transform','translate(-50,0)');
 
+
         jQuery(renderer._canvas).bind('pan',function() {
             if (renderer._canvas.currentTranslate.x == 0) {
                 left_fade.style.display = 'none';
@@ -158,6 +153,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
                 left_fade.style.display = 'block';                
             }
         });
+        
         jQuery(renderer._canvas).bind('_anim_begin',function() {
             left_fade.style.display = 'none';
         });
@@ -192,12 +188,12 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         var nav = renderer._Navigation;
 
         renderer._nav_canvas.show = function() {
-            canv._min_x = nav._width_shift;
+            canv.style.GomapScrollLeftMargin = nav._width_shift;
             this.setCurrentTranslateXY(0,0);
         };
         
         renderer._nav_canvas.hide = function() {
-            canv._min_x = 0;
+            canv.style.GomapScrollLeftMargin = 0;
             this.setCurrentTranslateXY(-192,0);            
         }
         
@@ -217,23 +213,22 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
     var nav = this._Navigation;
-    jQuery(this._canvas).bind('panstart',function() {
-       nav.demote(); 
-       nav.hideFilters();
-    });
-    jQuery(this._canvas).bind('panend',function() {
-       nav.promote(); 
-       nav.showFilters();
-    });
-    jQuery(this._canvas).bind('_anim_begin',function() {
-        nav.demote();
-        nav.hideFilters();
-    });
-    jQuery(this._canvas).bind('_anim_end',function() {
-        nav.promote();
-        nav.showFilters();
-    });
-
+    
+    var hide_chrome = function() {
+        nav.demote(); 
+        nav.hideFilters();        
+    };
+    
+    var show_chrome = function() {
+        nav.promote(); 
+        nav.showFilters();        
+    }
+    
+    jQuery(this._canvas).bind('panstart',hide_chrome);
+    jQuery(this._canvas).bind('panend',show_chrome);
+    jQuery(this._canvas).bind('_anim_begin',hide_chrome);
+    jQuery(this._canvas).bind('_anim_end',show_chrome);
+    
 };
 
 MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
@@ -259,16 +254,12 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
     this._nav_pane_back.removeAttribute('filter');
-//    this._nav_pane_back.setAttribute('opacity',1);
-//    this._nav_pane_back.style.fill = '#494949';
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
     if (this._is_open) {
         this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
     }
-//    this._nav_pane_back.setAttribute('opacity',0.8);
-//    this._nav_pane_back.style.fill = '#000000';
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.demote = function() {
@@ -285,29 +276,17 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
     if (canv.fader) {
         window.clearTimeout(canv.fader);
     }
-    // canv.setCurrentTranslateXY(-192,0);
     if (canv.style.display == 'block') {
         canv.style.width = '100%';
-        // canv.setCurrentTranslateXY(0,0);
         return;
     }
     canv.style.display = 'block';
-    var width_counter = -192;
-    // canv.fader = window.setTimeout(function() {
-    //     if (width_counter < 0) {
-    //         canv.setCurrentTranslateXY(width_counter,0);
-    //         width_counter += 10;
-    //         canv.fader = window.setTimeout(arguments.callee,1);
-    //     } else {
-    //         canv.setCurrentTranslateXY(0,0);
-    //     }
-    // },100);
 };
 
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;
-    var rect = canvas.rect(-10,0,'200px','99%');
+    var rect = canvas.rect(-10,0,'200px','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
     rect.setAttribute('opacity','0.8');
@@ -319,15 +298,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     this._nav_pane_back = rect;
 
-    // WebKit has problems with clipping paths. Tracking bug: https://bugs.webkit.org/show_bug.cgi?id=15162
-
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
     var rect2 = canvas.rect(0,0,'190px','100%');
     canvas.appendChild(clipping);
     clipping.appendChild(rect2);
 
-//    canvas.setAttribute('width','200px');
     var close_group = canvas.crossed_circle('179px','12px','10px');
 
     close_group.style.cursor = 'pointer';
@@ -343,6 +319,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('width','100');
     scroll_controls.setAttribute('height','45');
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
+    
     var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
     body.setAttribute('id','sequence_control_con');
     body.setAttribute('style','width: 100px; height: 1em; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
@@ -363,10 +340,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     
     var visible = true;
 
-    /*
-    <animateTransform begin="startButton.click" attributeName="transform" type="rotate" from="0" to="270" dur="5s" additive="sum" fill="freeze" xlink:href="#snow" />
-    */
-    
     var toggler = function(vis) {
         visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
@@ -388,10 +361,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         self._is_open = visible;
         return true;
     };
+    
     this._is_open = true;
     this._toggler = toggler;
-    close_group.addEventListener('click',toggler,false);
-    
+    close_group.addEventListener('click',toggler,false);    
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
@@ -430,7 +403,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('height', 2*height);
         a_text.setAttribute('width', 2*height);
         a_text.setAttribute('font-size',2*height);
-        a_text.setAttribute('font-family','Gill Sans');
         a_text.setAttribute('fill','#ffffff');
         a_text.setAttribute('stroke','#ffffff');
         a_text.setAttribute('stroke-width','1');
@@ -444,15 +416,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             var a_use = canvas.use('#new_link_icon',21.5*height,y-0.5*height,2.5*height,2.5*height);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
-            // a_use.addEventListener('click',function() {
-            //     if (track.href) {
-            //         window.open(track.href);
-            //     }                
-            // },false);
         }
-        
-
-//        label_group.style.cursor = 'pointer';
         
         label_group.addEventListener('click',function(e) {
             jQuery(track).trigger('click');
@@ -482,11 +446,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_end();
         },false);
         
-//        label_group.addEventListener('mouseover',label_begin,false);
-//        label_group.addEventListener('mouseout',label_end,false);
-//        label_group.addEventListener('mouseup',label_end,false);
-        
-//        label_group.style.zIndex = -10000;
         if (track._group_controller) {
             var expander = canvas.group();            
 
@@ -523,7 +482,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
 };
 
 MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
-    // We're going to use a render scale
+    // We're going to use a render scale (RS) so we scale up the dimensions of the
+    // whole widget
     
     var RS = this._RS;
     var renderer = this;
@@ -1296,13 +1256,6 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     this._sequence_els = seq_els;
 
-    // var container = jQuery('<div class="track"></div>')[0];
-    // container.style.height = '100%';
-    
-    // jQuery(this._container).append(container);
-    
-    
-
     var canvas = this._createCanvasObject();
 
     var RS = this._RS;
@@ -1761,7 +1714,12 @@ MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
     }
 };
 
-MASCP.CondensedSequenceRenderer.prototype.setHighlight = function(layer,doHighlight) {
+/**
+ * Deprecate the setHighlight method for the sequence renderer. There has to be a better way
+ * to do this.
+ * @private
+ */
+MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighlight) {
     var self = this;
     if ( ! this._layer_containers ) {
         return;
@@ -1843,12 +1801,13 @@ MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
 MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
     var RS = this._RS;
     if (this._container && this._canvas) {
-        this._canvas.setAttribute('width', (this._zoomLevel || 1)*2*this.sequence.length+'px');
-        this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
-        this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px');
-        this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length+'px');
-        this._Navigation._nav_pane_back.setAttribute('height','99%');
-//        this._container.style.width = (this._zoomLevel || 1)*2*this.sequence.length+'px';
+        this._canvas.setAttribute('width', (this._zoomLevel || 1)*2*this.sequence.length);
+        this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS));
+        this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS));
+        this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length);
+        // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
+        // properly, and the drop shadow gets cut off
+        this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 20);
         this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
     }
 };
@@ -1953,16 +1912,14 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     this._resizeContainer();
 
-    if (this._Navigation) {
-        this._Navigation._width_shift = 100 * RS / this.zoom;
-        if (this._Navigation._is_open) {
-            this._canvas._min_x = this._Navigation._width_shift;
-        }
-    }
-
     viewBox[0] = 0;
-//    viewBox[2] = '200';
     if (this._Navigation) {
+
+        this._Navigation._width_shift = 100 * RS / this.zoom;
+
+        if (this._Navigation._is_open) {
+            this._canvas.style.GomapScrollLeftMargin = this._Navigation._width_shift;
+        }
         this._Navigation.setViewBox(viewBox.join(' '));
         this._Navigation.setDimensions('100%','100%');//this._canvas.width.baseVal.value,'100%');
     }
