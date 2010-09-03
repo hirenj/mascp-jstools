@@ -73,11 +73,22 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     var canvas = document.createElement('object',true);
 
     canvas.setAttribute('data','blank.svg');
+//    canvas.setAttribute('data','data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcNCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB2ZXJzaW9uPSIxLjEiDQogICB3aWR0aD0iMTAwJSINCiAgIGhlaWdodD0iMTAwJSINCj4NCjwvc3ZnPg==');
+
     canvas.setAttribute('type','image/svg+xml');
     canvas.setAttribute('width','100%');
     canvas.setAttribute('height','100%');
     
-    canvas.addEventListener('load',function() {
+    if ( ! canvas.addEventListener ) {    
+        canvas.addEventListener = function(ev,func) {
+            this.attachEvent(ev,func);
+        };
+    }
+    
+
+    var has_svgweb = typeof svgweb != 'undefined';
+
+    canvas.addEventListener(has_svgweb ? 'SVGLoad' : 'load',function() {
         var container_canv = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
         
         var nav_group = document.createElementNS(svgns,'g');
@@ -87,37 +98,47 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         renderer._canvas = document.createElementNS(svgns,'svg');
 
         var canv = renderer._canvas;
-    
-        var oldAddEventListener = canv.addEventListener;
-    
-    
-        // We need to track all the mousemove functions that are bound to this event
-        // so that we can switch off all the mousemove bindings during an animation event
+
+        var supports_events = true;
+
+        try {
+            var noop = canv.addEventListener;
+        } catch (err) {
+            supports_events = false;
+        }
+
+        if (supports_events) {
+            var oldAddEventListener = canv.addEventListener;
         
-        var mouse_moves = [];
+            // We need to track all the mousemove functions that are bound to this event
+            // so that we can switch off all the mousemove bindings during an animation event
+        
+            var mouse_moves = [];
 
-        canv.addEventListener = function(ev,func,bubbling) {
-            if (ev == 'mousemove') {
-                if (mouse_moves.indexOf(func) < 0) {
-                    mouse_moves.push(func);
-                } else {
-                    return;
+            canv.addEventListener = function(ev,func,bubbling) {
+                if (ev == 'mousemove') {
+                    if (mouse_moves.indexOf(func) < 0) {
+                        mouse_moves.push(func);
+                    } else {
+                        return;
+                    }
                 }
-            }
-            return oldAddEventListener.apply(canv,[ev,func,bubbling]);
-        };
+                return oldAddEventListener.apply(canv,[ev,func,bubbling]);
+            };
 
-        jQuery(canv).bind('_anim_begin',function() {
-            for (var i = 0; i < mouse_moves.length; i++ ) {
-                canv.removeEventListener('mousemove', mouse_moves[i], false );
-            }
-            jQuery(canv).bind('_anim_end',function() {
-                for (var j = 0; j < mouse_moves.length; j++ ) {
-                    oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
-                }                        
-                jQuery(canv).unbind('_anim_end',arguments.callee);
+            jQuery(canv).bind('_anim_begin',function() {
+                for (var i = 0; i < mouse_moves.length; i++ ) {
+                    canv.removeEventListener('mousemove', mouse_moves[i], false );
+                }
+                jQuery(canv).bind('_anim_end',function() {
+                    for (var j = 0; j < mouse_moves.length; j++ ) {
+                        oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
+                    }                        
+                    jQuery(canv).unbind('_anim_end',arguments.callee);
+                });
             });
-        });
+        }
+        
         
         var canvas_rect = document.createElementNS(svgns,'rect');
         canvas_rect.setAttribute('x','-10%');
@@ -127,8 +148,11 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         canvas_rect.setAttribute('style','fill: #ffffff;');
         renderer._canvas.appendChild(canvas_rect);
         
+                
         container_canv.appendChild(group);        
+
         group.appendChild(renderer._canvas);
+        
         
         var left_fade = document.createElementNS(svgns,'rect');
         left_fade.setAttribute('x','0');
@@ -145,7 +169,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         right_fade.setAttribute('style','fill: url(#right_fade);');
         right_fade.setAttribute('transform','translate(-50,0)');
 
-
+        if (! MASCP.IE) {
         jQuery(renderer._canvas).bind('pan',function() {
             if (renderer._canvas.currentTranslate.x == 0) {
                 left_fade.style.display = 'none';
@@ -157,10 +181,11 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         jQuery(renderer._canvas).bind('_anim_begin',function() {
             left_fade.style.display = 'none';
         });
-
+        
         jQuery(renderer._canvas).bind('_anim_end',function() {
             jQuery(renderer._canvas).trigger('pan');
         });
+        }
         
         container_canv.appendChild(left_fade);
         container_canv.appendChild(right_fade);
@@ -168,6 +193,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         
         container_canv.appendChild(nav_group);
         nav_group.appendChild(renderer._nav_canvas);
+
 
 
         renderer._canvas.setCurrentTranslateXY = function(x,y) {
@@ -223,12 +249,12 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         nav.promote(); 
         nav.showFilters();        
     }
-    
+    if ( ! MASCP.IE ) {
     jQuery(this._canvas).bind('panstart',hide_chrome);
     jQuery(this._canvas).bind('panend',show_chrome);
     jQuery(this._canvas).bind('_anim_begin',hide_chrome);
     jQuery(this._canvas).bind('_anim_end',show_chrome);
-    
+    }
 };
 
 MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
@@ -241,6 +267,7 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
 
     track_group = canvas.group();
 
+
     var track_canvas = document.createElementNS(svgns,'svg');    
     this._buildTrackPane(track_canvas);
 
@@ -249,7 +276,6 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
     track_group.setAttribute('clip-path','url(#nav_clipping)');
     
     this._track_canvas = track_group;
-    
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
@@ -308,8 +334,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     close_group.style.cursor = 'pointer';
 
-
-    var tracks_button = canvas.button(100,5,65,25,'Options');
+    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Options') : canvas.button(100,5,65,25,'Options');
     tracks_button.id = 'controls';
     tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
 
@@ -323,16 +348,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
     body.setAttribute('id','sequence_control_con');
     body.setAttribute('style','width: 100px; height: 1em; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
-    scroll_controls.appendChild(body);
+//    scroll_controls.appendChild(body);
 
     var style = document.createElementNS('http://www.w3.org/1999/xhtml','style');
     style.setAttribute('type','text/css');
     style.textContent = '@media print { #sequence_control_con { display: none; } #controls { display: none; } }';
     body.appendChild(style);
     
-    canvas.appendChild(scroll_controls);
+//    canvas.appendChild(scroll_controls);
     
-    this._scroll_control = body;
+//    this._scroll_control = body;
     
     tracks_button.addEventListener('click',function() {
         jQuery(self).trigger('click');
@@ -570,6 +595,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         fo.setAttribute('y',0);
         fo.setAttribute('width',x+width);
         fo.setAttribute('height',y+height);
+        fo.style.position = 'absolute';
         this.appendChild(fo);
         var button = document.createElement('button');
         button.style.display = 'block';
@@ -1037,12 +1063,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         
         an_array.push = function(new_el) {
             this._old_push(new_el);
+                        
             if ( ! new_el || typeof new_el == 'undefined' ) {
                 return;
             }
             if (new_el._has_proxy) {
                 return;
             }
+            if ( ! MASCP.IE ) {
             var event_names = ['mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
             for (var i = 0 ; i < event_names.length; i++) {
                jQuery(new_el).bind(event_names[i], event_func);
@@ -1052,6 +1080,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 new_el.addEventListener('touchstart',event_func,false);
                 new_el.addEventListener('touchmove',event_func,false);
                 new_el.addEventListener('touchend',event_func,false);
+            }
             }
             new_el._has_proxy = true;
         };
@@ -1087,13 +1116,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     }
     amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000'});
 
-    try {
-        var noop = canvas.addEventListener;
-    } catch(err) {
-        log("Browser does not support addEventListener");
-        return;
-    }
-    jQuery(canvas).bind('panstart', function() {
+    canvas.addEventListener('panstart', function() {
         amino_acids.attr( { 'y' : '-1000'});
         jQuery(canvas).bind('panend', function() {
             if (amino_acids_shown) {
@@ -1103,7 +1126,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         });
     });
     
-    jQuery(canvas).bind('zoomChange', function() {
+    canvas.addEventListener('zoomChange', function() {
        if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
            renderer.zoom = 4;
            return;
@@ -1128,8 +1151,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
 MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength) {
     var RS = this._RS;
     var x = 0;
+    
+    
     var axis = canvas.set();
     axis.push(canvas.path('M0 '+10*RS+' l0 '+20*RS));
+
     axis.push(canvas.path('M'+(lineLength*RS)+' '+10*RS+' l0 '+20*RS));
 
     this._axis_height = 30;
@@ -1138,6 +1164,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     var little_ticks = canvas.set();
     var big_labels = canvas.set();
     var little_labels = canvas.set();
+    
+    
     for (var i = 0; i < (lineLength/5); i++ ) {
 
         if ( (x % 10) == 0) {
@@ -1154,6 +1182,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
 
         x += 5;
     }
+
     
     for ( var i = 0; i < big_labels.length; i++ ) {
         big_labels[i].style.textAnchor = 'middle';
@@ -1170,17 +1199,13 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
         little_labels[i].style.fill = '#000000';
     }
     
+    
+    
     little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
     little_ticks.hide();
     little_labels.hide();
 
-    try {
-        var noop = canvas.addEventListener;
-    } catch(err) {
-        log("Browser does not support addEventListener");
-        return;
-    }
-    jQuery(canvas).bind('zoomChange', function() {
+    canvas.addEventListener('zoomChange', function() {
            if (this.zoom > 3.6) {
                little_ticks.hide();
                big_ticks.show();
@@ -1440,9 +1465,11 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'fill'  : '#222222'            
         }));
 
-        
+
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
+        
+        
         jQuery(renderer).trigger('sequenceChange');
     });
     
@@ -1801,14 +1828,24 @@ MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
 MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
     var RS = this._RS;
     if (this._container && this._canvas) {
-        this._canvas.setAttribute('width', (this._zoomLevel || 1)*2*this.sequence.length);
-        this._canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS));
-        this._container_canvas.setAttribute('height',(this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS));
-        this._nav_canvas.setAttribute('width',(this._zoomLevel || 1)*2*this.sequence.length);
+        
+        var width = (this._zoomLevel || 1)*2*this.sequence.length;
+        var height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS);
+        this._canvas.setAttribute('width', width);
+        this._canvas.setAttribute('height',height);
+        this._nav_canvas.setAttribute('width',width);
+        this._nav_canvas.setAttribute('height',height);        
         // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
         // properly, and the drop shadow gets cut off
-        this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 20);
-        this._container.style.height = (this._zoomLevel || 1)*2*(this._canvas._canvas_height/this._RS)+'px';        
+        this._Navigation._nav_pane_back.setAttribute('height',this._nav_canvas.height.baseVal.value - 30);
+        
+        if (this.grow_container) {        
+            this._container_canvas.setAttribute('height',height);
+            this._container.style.height = height+'px';        
+            // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
+            // properly, and the drop shadow gets cut off
+            this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 30);
+        }
     }
 };
 
@@ -1857,6 +1894,29 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     });
 };
 
+MASCP.CondensedSequenceRenderer.prototype.getElementDefinedStyle = function(el,pr) {
+    return (function gs(){
+        function R(c){return [].slice.call(c);}
+        var sheets=R(document.styleSheets),
+            sels={},
+            r=[];
+        sheets.map(function(a){
+            r.splice.apply(r, [r.length, 0].concat(R(a.cssRules)));
+        });
+        r.reverse();
+      return function getElementDefinedStyle(elm, prop){
+        var rx=new RegExp( "(#"+elm.id+"(,|$))|(\\."+elm.className+"(,|$))" ,"i"), out="";
+        r.some(function(a){
+           if(a.selectorText && a.selectorText.match(rx) && document.querySelectorAll(a.selectorText)[0]==elm){
+               return out=a.style[prop];
+           }
+        });
+        return out;
+      };
+    }())(el,pr);//end builder wrap    
+};
+
+
 /**
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
@@ -1865,41 +1925,45 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
     }
+    
+    
     var RS = this._RS;
     var track_heights = 0;
-    if ( ! this._track_order ) {
-        return;
-    }
+    var order = this._track_order || [];
     
     if (this._Navigation)
         this._Navigation.clearTracks();
 
-    for (var i = 0; i < this._track_order.length; i++ ) {
-        if (! this.isLayerActive(this._track_order[i])) {
-            this._layer_containers[this._track_order[i]].attr({ 'y' : (this._axis_height  + (track_heights - this._layer_containers[this._track_order[i]].track_height )/ this.zoom)*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom ,'display' : 'none' },animated);
+    for (var i = 0; i < order.length; i++ ) {
+        
+        var name = order[i];
+        var container = this._layer_containers[name];
+        
+        if (! this.isLayerActive(name)) {
+            container.attr({ 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'display' : 'none' },animated);
             continue;
         } else {
-            this._layer_containers[this._track_order[i]].attr({ 'opacity' : '1' });
+            container.attr({ 'opacity' : '1' });
         }
 
-        if (this._layer_containers[this._track_order[i]].tracers) {
-            var disp_style = (this.isLayerActive(this._track_order[i]) && (this.zoom > 3.6)) ? 'block' : 'none';
-            this._layer_containers[this._track_order[i]].tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : (1.5 + track_heights / this.zoom )*RS },animated);
+        if (container.tracers) {
+            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'block' : 'none';
+            container.tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : (1.5 + track_heights / this.zoom )*RS },animated);
         }
 
-        if (this._layer_containers[this._track_order[i]].fixed_track_height) {
-            var track_height = this._layer_containers[this._track_order[i]].fixed_track_height;
-            this._layer_containers[this._track_order[i]].attr({ 'display' : 'block','y' : (this._axis_height + track_heights / this.zoom)*RS },animated);
+        if (container.fixed_track_height) {
+            var track_height = container.fixed_track_height;
+            container.attr({ 'display' : 'block','y' : (this._axis_height + track_heights / this.zoom)*RS },animated);
             track_heights += this.zoom * (track_height) + this.trackGap;
         } else {
-            this._layer_containers[this._track_order[i]].attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * this._layer_containers[this._track_order[i]].track_height / this.zoom },animated);
+            container.attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
             if (this._Navigation) {
-                this._Navigation.renderTrack(MASCP.getLayer(this._track_order[i]), (this._axis_height + track_heights / this.zoom )*RS , RS * this._layer_containers[this._track_order[i]].track_height / this.zoom );
+                this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , RS * container.track_height / this.zoom );
             }
-            track_heights += this._layer_containers[this._track_order[i]].track_height + this.trackGap;
+            track_heights += container.track_height + this.trackGap;
         }
 
-        this._layer_containers[this._track_order[i]].refresh_zoom();
+        container.refresh_zoom();
 
     }
 
@@ -1909,6 +1973,18 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     viewBox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding))*RS;
     this._canvas.setAttribute('viewBox', viewBox.join(' '));
     this._canvas._canvas_height = viewBox[3];
+
+
+    var outer_viewbox = [].concat(viewBox);
+
+    outer_viewbox[0] = 0;
+    outer_viewbox[2] = (2*this.sequence.split('').length)+(this.padding);
+    outer_viewbox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding));
+    if (! this.grow_container && (this.getElementDefinedStyle(this._container,'width') != '100%')) {
+        this._container_canvas.setAttribute('viewBox', outer_viewbox.join(' '));
+    }
+    
+
 
     this._resizeContainer();
 
