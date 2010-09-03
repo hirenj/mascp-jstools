@@ -1292,7 +1292,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
         var defs = document.createElementNS(svgns,'defs');
-        canv.appendChild(defs);
+        renderer._container_canvas.appendChild(defs);
 
         var makeEl = function(name,attributes) {
             var result = document.createElementNS(svgns,name);
@@ -1845,6 +1845,9 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
             // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
             // properly, and the drop shadow gets cut off
             this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 30);
+        } else {
+            this._container_canvas.setAttribute('height',document.defaultView.getComputedStyle(this._container_canvas.parentNode, null)['height']);
+            this._container_canvas.setAttribute('width',document.defaultView.getComputedStyle(this._container_canvas.parentNode, null)['width']);
         }
     }
 };
@@ -1978,9 +1981,9 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     var outer_viewbox = [].concat(viewBox);
 
     outer_viewbox[0] = 0;
-    outer_viewbox[2] = (2*this.sequence.split('').length)+(this.padding);
-    outer_viewbox[3] = (this._axis_height + (track_heights / this.zoom)+ (this.padding));
-    if (! this.grow_container && (this.getElementDefinedStyle(this._container,'width') != '100%')) {
+    outer_viewbox[2] = (this._zoomLevel || 1)*(2*this.sequence.length)+(this.padding);
+    outer_viewbox[3] = (this._zoomLevel || 1)*(this._axis_height + (track_heights / this.zoom)+ (this.padding));
+    if (! this.grow_container ) {//&& (this.getElementDefinedStyle(this._container,'width') != '100%')) {
         this._container_canvas.setAttribute('viewBox', outer_viewbox.join(' '));
     }
     
