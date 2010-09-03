@@ -13,7 +13,7 @@
     window.svgns = 'http://www.w3.org/2000/svg';
     </script>
     
-   <!-- <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script> -->
+<!--   <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
     <script type="text/javascript" src="js/maschup.min.js"></script>
     
@@ -367,6 +367,10 @@
         }
         
         
+        #condensed_container, #sequence_container {
+            width: 100%;
+        }
+        
         /*
         #controls {
             font-size: 30pt;
@@ -535,6 +539,8 @@
             }
         } else {
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
+            MASCP.renderer.grow_container = true;
+            
 //            jQuery('#sequence_control_con').append(zoom_controls);
             var dragger = new GOMap.Diagram.Dragger();
             MASCP.renderer.zoom = 0.81;

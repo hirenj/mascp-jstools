@@ -162,7 +162,7 @@ MASCP.SequenceRenderer = function(sequenceContainer) {
 
         this._container = sequenceContainer;
         this._container.style.position = 'relative';
-        this._container.style.width = '100%';
+//        this._container.style.width = '100%';
 
         jQuery(this).bind('sequenceChange', function(e){
             jQuery(sequenceContainer).text("");
