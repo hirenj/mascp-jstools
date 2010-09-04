@@ -19,8 +19,7 @@
     <script type="text/javascript" src="../json-2.js"></script>
     <style type="text/css">
     #result {
-        width: 75%;
-        height: 100px;
+        width: 80%;
     }
     </style>
 </head>
@@ -31,10 +30,23 @@
     <script type="text/javascript" charset="utf-8">
 
         function testSimpleDisplay() {
+
             var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('result'));
-            renderer.setSequence('MLAIFQKAFAHPPEELNSPASHFSGKTPKLPGETLSDFLSHHQNNAFSMNFGDSAVLAYARQETSLRQRLFCGLDGIYCMFLGRLNNLCTLNRQYGLSGKNSNEAMFVIEAYRTLRDRGPYPADQVLRGLEGSFAFVVYDTQTSSVFSALSSDGGESLYWGISGDGSVVMSDDIQIIKQGCAKSFAPFPNGCMFHSETGLKSFDHPTNMMKAMPRIDSEGVLCGASFKVDACSKINSIPRRGSEANWALANSR');
-            renderer.zoom = 4;
+            var seq ='MLAIFQKAFAHPPEELNSPASHFSGKTPKLPGETLSDFLSHHQNNAFSMNFGDSAVLAYARQETSLRQRLFCGLDGIYCMFLGRLNNLCTLNRQYGLSGKNSNEAMFVIEAYRTLRDRGPYPADQVLRGLEGSFAFVVYDTQTSSVFSALSSDGGESLYWGISGDGSVVMSDDIQIIKQGCAKSFAPFPNGCMFHSETGLKSFDHPTNMMKAMPRIDSEGVLCGASFKVDACSKINSIPRRGSEANWALANSR'; 
+            seq = 'XXXXXXXTQTSXXXXXX';
+            renderer.setSequence(seq).ready(function() {
+                console.log("Here!!");
+            });
+            MASCP.registerLayer('foo',{'fullname' : 'Bleh','color' : '#ff0000'});
+
+            renderer.getAminoAcidsByPeptide('TQTS')[0].addBoxOverlay('foo',1,10);
+
+            renderer.showLayer('foo');
+        
+            renderer.zoom = 10;
             renderer.refresh();
+            
+            
         }
 
         jQuery('#foo').click(function() {

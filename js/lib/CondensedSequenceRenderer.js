@@ -78,6 +78,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     canvas.setAttribute('type','image/svg+xml');
     canvas.setAttribute('width','100%');
     canvas.setAttribute('height','100%');
+    canvas.style.display = 'block';
     
     if ( ! canvas.addEventListener ) {    
         canvas.addEventListener = function(ev,func) {
@@ -87,6 +88,21 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     
 
     var has_svgweb = typeof svgweb != 'undefined';
+
+    if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
+        var native_canvas = document.createElementNS(svgns,'svg');
+        native_canvas.setAttribute('width','100%');
+        native_canvas.setAttribute('height','100%');
+        this._container.appendChild(native_canvas);
+        this._canvas = native_canvas;
+        canvas = {
+            'addEventListener' : function(name,load_func) {
+                console.log("Firing load func");
+                native_canvas.contentDocument = { 'rootElement' : native_canvas };
+                load_func.call(native_canvas);
+            }            
+        };
+    }
 
     canvas.addEventListener(has_svgweb ? 'SVGLoad' : 'load',function() {
         var container_canv = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
@@ -224,7 +240,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         }
         
         renderer._container_canvas = container_canv;
-        container_canv.setAttribute('preserveAspecRatio','xMinYMin slice');
+        container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         container_canv.setAttribute('width','100%');
         container_canv.setAttribute('height','100%');
         
@@ -1482,6 +1498,22 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             this._container.appendChild(canvas);
         }
     }
+    
+    var rend = this;
+    
+    var seq_change_func = function(other_func) {
+        rend.bind('sequenceChange',function() {
+            jQuery(rend).unbind('sequenceChange',arguments.callee);
+            other_func.apply();
+        });
+    };
+    
+    seq_change_func['ready'] = function(other_func) {
+        this.call(this,other_func);
+    };
+    
+    return seq_change_func;
+    
 };
 
 /**
@@ -1846,8 +1878,19 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
             // properly, and the drop shadow gets cut off
             this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 30);
         } else {
-            this._container_canvas.setAttribute('height',document.defaultView.getComputedStyle(this._container_canvas.parentNode, null)['height']);
-            this._container_canvas.setAttribute('width',document.defaultView.getComputedStyle(this._container_canvas.parentNode, null)['width']);
+            // var height,width,curr_style;
+            // if (curr_style = document.defaultView.getComputedStyle(this._container, null)) {
+            //     height = curr_style['height'];
+            //     width = curr_style['width'];
+            // } else if (this._container.style) {
+            //     height = this._container.style.height;
+            //     width = this._container.style.width;
+            // } else {
+            //     height = this._container.clientHeight;
+            //     width = this._container.clientWidth;                
+            // }
+            this._container_canvas.setAttribute('height','100%');
+            this._container_canvas.setAttribute('width','100%');
         }
     }
 };
@@ -1982,7 +2025,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     outer_viewbox[0] = 0;
     outer_viewbox[2] = (this._zoomLevel || 1)*(2*this.sequence.length)+(this.padding);
-    outer_viewbox[3] = (this._zoomLevel || 1)*(this._axis_height + (track_heights / this.zoom)+ (this.padding));
+    outer_viewbox[3] = (this._zoomLevel || 1)*2*(this._axis_height + (track_heights / this.zoom)+ (this.padding));
     if (! this.grow_container ) {//&& (this.getElementDefinedStyle(this._container,'width') != '100%')) {
         this._container_canvas.setAttribute('viewBox', outer_viewbox.join(' '));
     }
