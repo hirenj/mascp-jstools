@@ -110,6 +110,8 @@
             <fileset dir="dist/js" includes="maschup.renderers.min.js"/>
             <fileset dir="dist/js" includes="maschup.map.min.js"/>
         </concat>
+
+		<copy file="js/lib/blank.svg" tofile="dist/js/blank.svg"/>
         
     </target>
 

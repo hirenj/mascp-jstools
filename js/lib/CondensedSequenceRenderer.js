@@ -56,6 +56,14 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
 
 MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
+
+(function() {
+    var scripts = document.getElementsByTagName("script");
+    var src = scripts[scripts.length-1].src;
+    src = src.replace(/[^\/]+$/,'');
+    MASCP.CondensedSequenceRenderer._BASE_PATH = src;
+})();
+
 MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
     var renderer = this;
 
@@ -72,7 +80,8 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
     var canvas = document.createElement('object',true);
 
-    canvas.setAttribute('data','blank.svg');
+
+    canvas.setAttribute('data',MASCP.CondensedSequenceRenderer._BASE_PATH+'blank.svg');
 //    canvas.setAttribute('data','data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcNCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB2ZXJzaW9uPSIxLjEiDQogICB3aWR0aD0iMTAwJSINCiAgIGhlaWdodD0iMTAwJSINCj4NCjwvc3ZnPg==');
 
     canvas.setAttribute('type','image/svg+xml');
@@ -97,7 +106,6 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         this._canvas = native_canvas;
         canvas = {
             'addEventListener' : function(name,load_func) {
-                console.log("Firing load func");
                 native_canvas.contentDocument = { 'rootElement' : native_canvas };
                 load_func.call(native_canvas);
             }            
@@ -187,7 +195,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
         if (! MASCP.IE) {
         jQuery(renderer._canvas).bind('pan',function() {
-            if (renderer._canvas.currentTranslate.x == 0) {
+            if (renderer._canvas.currentTranslate.x >= 0) {
                 left_fade.style.display = 'none';
             } else {
                 left_fade.style.display = 'block';                
@@ -405,6 +413,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     
     this._is_open = true;
     this._toggler = toggler;
+    this.hide = function() {
+        toggler.call(this,false);
+    };
+    this.show = function() {
+        toggler.call(this,true);
+    };
     close_group.addEventListener('click',toggler,false);    
 };
 
@@ -1297,8 +1311,6 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     this._sequence_els = seq_els;
 
-    var canvas = this._createCanvasObject();
-
     var RS = this._RS;
 
     jQuery(this).unbind('svgready').bind('svgready',function(canv) {
@@ -1489,7 +1501,10 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         jQuery(renderer).trigger('sequenceChange');
     });
     
+    var canvas = this._createCanvasObject();
+    
     if (this._canvas) {
+        has_canvas = true;
        jQuery(this).trigger('svgready');
     } else {
         if (typeof svgweb != 'undefined') {
@@ -1502,10 +1517,14 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     var rend = this;
     
     var seq_change_func = function(other_func) {
-        rend.bind('sequenceChange',function() {
-            jQuery(rend).unbind('sequenceChange',arguments.callee);
+        if ( ! rend._canvas ) {
+            rend.bind('sequenceChange',function() {
+                jQuery(rend).unbind('sequenceChange',arguments.callee);
+                other_func.apply();
+            });
+        } else {
             other_func.apply();
-        });
+        }
     };
     
     seq_change_func['ready'] = function(other_func) {
@@ -1524,6 +1543,20 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
  */
 MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windowSize) {
     var RS = this._RS;
+    
+    var canvas = this._canvas;
+    
+    if ( ! canvas ) {        
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);            
+            orig_func.call(self,windowSize);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
     MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
     var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
            'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
@@ -1573,6 +1606,18 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
 (function() {
 var addElementToLayer = function(layerName) {
     var canvas = this._renderer._canvas;
+
+    if ( ! canvas ) {        
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);            
+            orig_func.call(self,layerName);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
     var circ = canvas.text_circle(this._index+0.5,0.5,2,layerName.charAt(0).toUpperCase());
     this._renderer._layer_containers[layerName].push(circ);
     circ.zoom_level = 'summary';
@@ -1612,8 +1657,26 @@ var addElementToLayer = function(layerName) {
     return circ;
 };
 
-var addBoxOverlayToElement = function(layerName,fraction,width) {
+var addBoxOverlayToElement = function(layerName,width,fraction) {
+    
+    if (typeof fraction == 'undefined') {
+        fraction = 1;
+    }
+    
     var canvas = this._renderer._canvas;
+
+    if ( ! canvas ) {
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);            
+            orig_func.call(self,layerName,fraction,width);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
+
     var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.setAttribute('class',layerName);
@@ -1634,6 +1697,19 @@ var addBoxOverlayToElement = function(layerName,fraction,width) {
 
 var addElementToLayerWithLink = function(layerName,url,width) {
     var canvas = this._renderer._canvas;
+
+    if ( ! canvas ) {
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);            
+            orig_func.call(self,layerName,url,width);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
+
     var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';    
@@ -1707,7 +1783,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
   * @param   {Object}    e
   */
 
-
 /**
  * Add a layer to this renderer.
  * @param {Object} layer    Layer object to add. The layer data is used to create a track that can be independently shown/hidden.
@@ -1716,7 +1791,11 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
     var RS = this._RS;
     if ( ! this._canvas ) {
-        throw "No canvas, cannot add track";
+        this.bind('sequencechange',function() {
+            this.addTrack(layer);
+            this.unbind('sequencechange',arguments.callee);
+        });
+        console.log("No canvas, cannot add track, waiting for sequencechange event");
         return;
     }
     if ( ! this._layer_containers ) {

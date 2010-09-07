@@ -109,8 +109,8 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             var peptide = peps[i];
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
             var layer_name = 'promex_experimental_spectrum_'+i;
-            peptide_bits[0].addBoxOverlay(layer_name,1,peptide_bits.length);
-            peptide_bits[0].addBoxOverlay(overlay_name,1,peptide_bits.length);
+            peptide_bits.addToLayer(layer_name);
+            peptide_bits.addToLayer(overlay_name);
             // jQuery(MASCP.getLayer('promex_experimental_spectrum_'+i)).bind('click',function() {
             //     window.open(a_spectra);
             // });

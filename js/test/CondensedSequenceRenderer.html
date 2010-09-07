@@ -26,30 +26,42 @@
 <body>
     <div id="result">
     </div>
-    <input type="button" id="foo" value="Go"/>
     <script type="text/javascript" charset="utf-8">
+
+        var renderer;
+        var delta = 1;
 
         function testSimpleDisplay() {
 
-            var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('result'));
-            var seq ='MLAIFQKAFAHPPEELNSPASHFSGKTPKLPGETLSDFLSHHQNNAFSMNFGDSAVLAYARQETSLRQRLFCGLDGIYCMFLGRLNNLCTLNRQYGLSGKNSNEAMFVIEAYRTLRDRGPYPADQVLRGLEGSFAFVVYDTQTSSVFSALSSDGGESLYWGISGDGSVVMSDDIQIIKQGCAKSFAPFPNGCMFHSETGLKSFDHPTNMMKAMPRIDSEGVLCGASFKVDACSKINSIPRRGSEANWALANSR'; 
-            seq = 'XXXXXXXTQTSXXXXXX';
-            renderer.setSequence(seq).ready(function() {
-                console.log("Here!!");
-            });
-            MASCP.registerLayer('foo',{'fullname' : 'Bleh','color' : '#ff0000'});
-
-            renderer.getAminoAcidsByPeptide('TQTS')[0].addBoxOverlay('foo',1,10);
-
-            renderer.showLayer('foo');
-        
-            renderer.zoom = 10;
-            renderer.refresh();
+            renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('result'));
+            var seq ='SNEAMFVIEAYRTLRDRGPYPADQVLRGLEGSFAFVVYDTQTSSVFSALSSDGGESLYWGISGDGSVVMSDDIQIIKQGCAKSFAPFPNGCMFHSETGLKSFDHPTNMMKAMPRIDSEGVLCGASFKVDACSKINSIPRRGSEANWALANSR'; 
             
+            renderer.setSequence(seq);
+            
+            renderer.registerLayer('test',{'fullname' : 'Test layer','color' : '#ff0000'});
+
+            renderer.getAminoAcidsByPeptide('TQTS').addToLayer('test');
+
+            renderer.showLayer('test');
+        
+            renderer.zoom = 1;
+/*        
+            window.setInterval(function() {
+//                console.log("Here");
+                renderer.zoom = renderer.zoom + delta;
+                if (renderer.zoom >= 10) {
+                    delta = -0.5;
+                }
+                if (renderer.zoom <= 1) {
+                    delta = 0.5;
+                }
+            },10);
+*/            
+            renderer._Navigation.hide();
             
         }
 
-        jQuery('#foo').click(function() {
+        jQuery(document).ready(function() {
            testSimpleDisplay(); 
         });
     </script>

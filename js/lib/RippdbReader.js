@@ -101,7 +101,7 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
                 }
                 
                 var layer_name = 'rippdb_spectrum_'+spec.spectrum_id;
-                peptide_bits[0].addBoxOverlay(layer_name,1,peptide_bits.length);
+                peptide_bits.addToLayer(layer_name);
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);

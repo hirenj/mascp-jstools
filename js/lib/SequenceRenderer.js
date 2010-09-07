@@ -386,6 +386,11 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     for (var i = 0; i < peptideSequence.length; i++) {
         results.push(this._sequence_els[start+i]);
     }
+    
+    results.addToLayer = function(layername, fraction) {
+        return results[0].addBoxOverlay(layername,results.length,fraction);
+    };
+    
     return results;
 };
 
@@ -463,6 +468,14 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     }
     return this;
 };
+
+/**
+ * Register a layer with this renderer. Actually is a proxy on to the global registry method
+ * @see MASCP#registerLayer
+ */
+MASCP.SequenceRenderer.prototype.registerLayer = function(layer,options) {
+    return MASCP.registerLayer(layer,options);
+}
 
 /**
  * Hide or show a group. Fires an event when this method is called.
@@ -924,12 +937,16 @@ MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, widt
  * @returns Itself
  * @type Element
  */
-MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, fraction, width)
+MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fraction)
 {
+    if (typeof fraction == 'undefined') {
+        fraction = 1;
+    }
+    
     jQuery(this).addClass(layerName);
     var new_el = jQuery(this).append(jQuery('<div class="'+layerName+'_overlay" style="top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';"></div>'))[0];
     while (width && width > 0) {
-        this._renderer._sequence_els[this._index + width - 1].addBoxOverlay(layerName,fraction);
+        this._renderer._sequence_els[this._index + width - 1].addBoxOverlay(layerName,1,fraction);
         width -= 1;
     }
     if (this._z_indexes && this._z_indexes[layerName]) {
