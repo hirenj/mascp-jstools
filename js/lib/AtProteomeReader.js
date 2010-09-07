@@ -160,7 +160,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
         var last_start = null;
         while (index <= positions.length) {
             if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
-                sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,index-1-last_start);
+                sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,index-1-last_start);
                 last_start = null;
             }
             if (positions[index] > 0 && last_start == null) {
@@ -225,7 +225,7 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
             if ( ! positions[index] ) {
                 endpoint -= 1;
             }
-            sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,1,endpoint);
+            sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,endpoint);
             last_start = null;
         }
         if (positions[index] && last_start == null) {

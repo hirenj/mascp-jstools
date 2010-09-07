@@ -126,8 +126,8 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
                 }
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
                 var layer_name = 'atpeptide_peptide_'+a_tissue;
-                peptide_bits[0].addBoxOverlay(layer_name,1,peptide_bits.length);
-                peptide_bits[0].addBoxOverlay(overlay_name,1,peptide_bits.length);
+                peptide_bits.addToLayer(layer_name);
+                peptide_bits.addToLayer(overlay_name);
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);

@@ -199,7 +199,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
             MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
             var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
             if (aa) {
-        	    aa.addBoxOverlay('phosphat_peptide_'+i,0.5,this[1]);
+        	    aa.addBoxOverlay('phosphat_peptide_'+i,this[1],0.5);
     	    }
         });
         
