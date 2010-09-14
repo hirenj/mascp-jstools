@@ -336,7 +336,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;
-    var rect = canvas.rect(-10,0,'200px','100%');
+    var rect = canvas.rect(-10,0,'200','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
     rect.setAttribute('opacity','0.8');
@@ -350,11 +350,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
-    var rect2 = canvas.rect(0,0,'190px','100%');
+    var rect2 = canvas.rect(0,0,'190','100%');
     canvas.appendChild(clipping);
     clipping.appendChild(rect2);
 
-    var close_group = canvas.crossed_circle('179px','12px','10px');
+    var close_group = canvas.crossed_circle('179','12','10');
 
     close_group.style.cursor = 'pointer';
 
@@ -629,7 +629,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         this.appendChild(fo);
         var button = document.createElement('button');
         button.style.display = 'block';
-//        button.setAttribute('style','-webkit-appearance: button; -webkit-transform: translate('+x+'px,'+y+'px)');
         button.style.position = 'relative';
         button.style.top = y+'px';
         button.style.left = x+'px';
