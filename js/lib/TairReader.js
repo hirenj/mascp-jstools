@@ -19,7 +19,7 @@ MASCP.TairReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.TairReader.SERVICE_URL = 'http://jbei-exwebapp.lbl.gov/maschup/tair.pl';
+MASCP.TairReader.SERVICE_URL = 'http://gator.masc-proteomics.org/tair.pl';
 
 MASCP.TairReader.prototype.requestData = function()
 {

@@ -15,7 +15,7 @@ MASCP.RippdbReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.RippdbReader.SERVICE_URL = 'http://jbei-exwebapp.lbl.gov/maschup/rippdb.pl';
+MASCP.RippdbReader.SERVICE_URL = 'http://gator.masc-proteomics.org/rippdb.pl';
 
 MASCP.RippdbReader.prototype.requestData = function()
 {

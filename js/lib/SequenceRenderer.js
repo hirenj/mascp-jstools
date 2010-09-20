@@ -371,6 +371,11 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition = function(indexes) {
     });
 };
 
+MASCP.SequenceRenderer.prototype.getAA = function(index) {
+    return this.getAminoAcidsByPosition([index]).shift();
+};
+
+
 /**
  * Retrieve the HTML Elements that contain the amino acids contained in the given peptide sequence.
  * @param {String} peptideSequence Peptide sequence used to look up the amino acids
