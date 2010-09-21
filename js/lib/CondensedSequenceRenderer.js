@@ -244,12 +244,12 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
         renderer._nav_canvas.show = function() {
             canv.style.GomapScrollLeftMargin = nav._width_shift;
-            this.setCurrentTranslateXY(0,0);
+//            this.setCurrentTranslateXY(0,0);
         };
         
         renderer._nav_canvas.hide = function() {
             canv.style.GomapScrollLeftMargin = 0;
-            this.setCurrentTranslateXY(-192,0);            
+//            this.setCurrentTranslateXY(-192,0);            
         }
         
         renderer._container_canvas = container_canv;
@@ -341,6 +341,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
     var self = this;
+    
+    var panel_back = canvas.group();
+    var button_group = canvas.group();
+    
     var rect = canvas.rect(-10,0,'200','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
@@ -353,6 +357,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     this._nav_pane_back = rect;
 
+    panel_back.push(rect);
+
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
     var rect2 = canvas.rect(0,0,'190','100%');
@@ -363,9 +369,13 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     close_group.style.cursor = 'pointer';
 
+    button_group.push(close_group);
+
     var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Options') : canvas.button(100,5,65,25,'Options');
     tracks_button.id = 'controls';
     tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
+
+    panel_back.push(tracks_button);
 
     var scroll_controls = document.createElementNS(svgns,'foreignObject');
     scroll_controls.setAttribute('x','0');
@@ -374,19 +384,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('height','45');
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
     
-    var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
-    body.setAttribute('id','sequence_control_con');
-    body.setAttribute('style','width: 100px; height: 1em; margin: 5px; position: relative; -webkit-transform: translate(0px,5px);');
-//    scroll_controls.appendChild(body);
-
-    var style = document.createElementNS('http://www.w3.org/1999/xhtml','style');
-    style.setAttribute('type','text/css');
-    style.textContent = '@media print { #sequence_control_con { display: none; } #controls { display: none; } }';
-    body.appendChild(style);
-    
-//    canvas.appendChild(scroll_controls);
-    
-//    this._scroll_control = body;
+    panel_back.push(scroll_controls);
     
     tracks_button.addEventListener('click',function() {
         jQuery(self).trigger('click');
@@ -397,20 +395,30 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var toggler = function(vis) {
         visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
+            panel_back.setAttribute('visibility','visible');
+            self._track_canvas.setAttribute('visibility','visible');
             canvas.show();
             rect.setAttribute('filter','url(#drop_shadow)');
             close_group._button.removeAttribute('filter');
-            close_group.setAttribute('transform','');
+            var close_transform = close_group.getAttribute('transform') || ' ';
+            close_transform = close_transform.replace(/translate\(.*\)/,'');
+            close_transform = close_transform.replace(/rotate\(.*\)/,'');
+            
+            close_group.setAttribute('transform',close_transform);
 
             scroll_controls.style.display = 'block';
-            tracks_button.parentNode.style.display = 'block';
+//            tracks_button.parentNode.style.display = 'block';
         } else {
+            self._track_canvas.setAttribute('visibility','hidden');
+            panel_back.setAttribute('visibility','hidden');
             canvas.hide();
             rect.removeAttribute('filter');
             close_group._button.setAttribute('filter','url(#drop_shadow)');            
-            close_group.setAttribute('transform','translate(30,0) rotate(45,179,12) ');
+            var close_transform = close_group.getAttribute('transform') || ' ';
+            close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
+            close_group.setAttribute('transform',close_transform);
             scroll_controls.style.display = 'none';
-            tracks_button.parentNode.style.display = 'none';
+//            tracks_button.parentNode.style.display = 'none';
         }
         self._is_open = visible;
         return true;
@@ -424,6 +432,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     this.show = function() {
         toggler.call(this,true);
     };
+    this.setZoom = function(zoom) {
+        close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
+        rect.setAttribute('transform','scale('+zoom+',1) ');
+        rect2.setAttribute('transform','scale('+zoom+',1) ');
+    }
+    
     close_group.addEventListener('click',toggler,false);    
 };
 
@@ -1844,15 +1858,13 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         all_annotations[layerName] = {};
     }
     
+
+    var blob_exists = typeof all_annotations[layerName][this._index] != 'undefined';
+
     var blob = all_annotations[layerName][this._index] ? all_annotations[layerName][this._index] : canvas.growingMarker(0,0,opts['content'],opts);
     blob.setAttribute('transform','translate('+this._index * this._renderer._RS +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,0)');
     all_annotations[layerName][this._index] = blob;
-
-    if ( ! document._foo ) {
-        document._foo = blob;
-    }
-
-    if ( ! blob._value ) {
+    if ( ! blob_exists ) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
         this._renderer._layer_containers[layerName].fixed_track_height = 20;
@@ -2125,6 +2137,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
             // }
             this._container_canvas.setAttribute('height','100%');
             this._container_canvas.setAttribute('width','100%');
+            this._Navigation.setZoom(this.zoom);
         }
     }
 };
@@ -2218,7 +2231,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         
         var name = order[i];
         var container = this._layer_containers[name];
-        
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'display' : 'none' };
             if (container.fixed_track_height) {
