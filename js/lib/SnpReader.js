@@ -50,7 +50,7 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         var ins = [];
         var outs = [];
 
-        if (diffs.length <= 0) {
+        if (diffs.length <= 1) {
             return;
         }
 
