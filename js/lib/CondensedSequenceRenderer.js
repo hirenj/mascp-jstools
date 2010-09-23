@@ -291,10 +291,13 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
     this._extendWithSVGApi(canvas);
 
     this._canvas = canvas;
-    
-    this._buildNavPane(canvas);
 
+    this._buildNavPane(canvas);
+    
+    var close_group = canvas.lastChild;
     track_group = canvas.group();
+
+    canvas.insertBefore(track_group,close_group);
 
 
     var track_canvas = document.createElementNS(svgns,'svg');    
@@ -362,7 +365,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
     var rect2 = canvas.rect(0,0,'190','100%');
-    canvas.appendChild(clipping);
+    canvas.insertBefore(clipping,canvas.firstChild);
     clipping.appendChild(rect2);
 
     var close_group = canvas.crossed_circle('179','12','10');
@@ -375,7 +378,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     tracks_button.id = 'controls';
     tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
 
-    panel_back.push(tracks_button);
+    panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
 
     var scroll_controls = document.createElementNS(svgns,'foreignObject');
     scroll_controls.setAttribute('x','0');
@@ -433,6 +436,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         toggler.call(this,true);
     };
     this.setZoom = function(zoom) {
+        this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
         rect.setAttribute('transform','scale('+zoom+',1) ');
         rect2.setAttribute('transform','scale('+zoom+',1) ');
@@ -442,6 +446,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
+    var self = this;
     this._extendWithSVGApi(canvas);
 
     canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
@@ -463,8 +468,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     }
     
     this.renderTrack = function(track,y,height,options) {
-        var label_group = canvas.group();
-
+        var label_group = canvas.group();        
         var a_rect = canvas.rect(0,y-height,'100%',3*height);
         a_rect.setAttribute('stroke','#000000');
         a_rect.setAttribute('stroke-width','2');
@@ -473,14 +477,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         label_group.push(a_rect);
         
-        var a_text = canvas.text(3*height,y,track.fullname);
+        var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
+        
+        var a_text = canvas.text(3*height*text_scale,y+text_scale*height,track.fullname);
         a_text.setAttribute('height', 2*height);
         a_text.setAttribute('width', 2*height);
-        a_text.setAttribute('font-size',2*height);
+        a_text.setAttribute('font-size',2*height*text_scale);
         a_text.setAttribute('fill','#ffffff');
         a_text.setAttribute('stroke','#ffffff');
         a_text.setAttribute('stroke-width','1');
-        a_text.setAttribute('dominant-baseline', 'hanging');
+        a_text.setAttribute('dominant-baseline', 'middle');
 
 
         label_group.push(a_text);
@@ -1859,15 +1865,20 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     }
     
 
-    var blob_exists = typeof all_annotations[layerName][this._index] != 'undefined';
+    var blob_id = this._index+'_'+opts['angle'];
 
-    var blob = all_annotations[layerName][this._index] ? all_annotations[layerName][this._index] : canvas.growingMarker(0,0,opts['content'],opts);
-    blob.setAttribute('transform','translate('+this._index * this._renderer._RS +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,0)');
-    all_annotations[layerName][this._index] = blob;
+    var blob_exists = typeof all_annotations[layerName][blob_id] != 'undefined';
+
+    var height = 15;
+    var offset = this._renderer._RS * height / 2;
+
+    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts['content'],opts);
+    blob.setAttribute('transform','translate('+this._index * this._renderer._RS +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,'+offset+')');
+    all_annotations[layerName][blob_id] = blob;
     if ( ! blob_exists ) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
-        this._renderer._layer_containers[layerName].fixed_track_height = 20;
+        this._renderer._layer_containers[layerName].fixed_track_height = height;
     }
     
     blob._value += width;
@@ -1881,12 +1892,12 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     }
     for (var blob_idx in all_annotations[layerName]) {
         var a_blob = all_annotations[layerName][blob_idx];
-        var size_val = (a_blob._value / max_value)*(this._renderer._RS * 20);
+        var size_val = (a_blob._value / max_value)*(this._renderer._RS * height * 0.5);
         var curr_transform = a_blob.getAttribute('transform');
         var transform_shift = ((-315.0/1000.0)*size_val);
         var rotate_shift = (1.0/3.0)*size_val;
         curr_transform = curr_transform.replace(/translate\(\s*(-?\d+\.?\d*)\s*\)/,'translate('+transform_shift+')');
-        curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*0(\.0\d*)?\s*\)/,','+rotate_shift+','+0.01+')');
+        curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*\d+\.?\d*\s*\)/,','+rotate_shift+','+offset+')');
         a_blob.setAttribute('transform', curr_transform);
         a_blob.firstChild.setAttribute('width',size_val);
         a_blob.firstChild.setAttribute('height',size_val);
@@ -2250,9 +2261,10 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
-            container.attr({ 'display' : 'block','y' : (this._axis_height + track_heights / this.zoom)*RS },animated);
+            container.attr({ 'display' : 'block','y' : (this._axis_height + (track_heights / this.zoom))*RS },animated);
             if (this._Navigation) {
-                this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , track_height * this.zoom );
+                var grow_scale = this.grow_container ? 1 / this.zoom : 1;
+                this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + (track_heights / this.zoom) + track_height / 3 )*RS , track_height * RS / 3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
             track_heights += this.zoom * (track_height) + this.trackGap;
         } else {
