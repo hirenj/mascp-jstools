@@ -38,13 +38,9 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     this.bind('resultReceived', function() {
         var old_sequence = renderer.sequence;
-        
-        var new_sequence = reader.result.getSequence();
-        
-//        renderer.registerLayer('deletions',{'fullname' : 'All deletions','color' : '#0000ff'});
-        renderer.registerLayer('insertions',{'fullname' : 'Accession','color' : '#ff0000'});
 
-        
+        var new_sequence = reader.result.getSequence();
+
         var diffs = (new diff_match_patch()).diff_main(old_sequence,new_sequence);
         var last_index = 1;
         var ins = [];
@@ -55,18 +51,16 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         }
 
         var in_layer = 'all_'+reader.accession;
-        var out_layer = 'all_'+reader.accession;
-        
+
         MASCP.registerGroup('all_insertions');
         MASCP.registerGroup('all_deletions');
 
-        
+        renderer.registerLayer('insertions',{'fullname' : 'Accession','color' : '#ff0000'});
+
         renderer.registerLayer(in_layer, {'fullname' : reader.accession, 'group' : 'all_insertions' });
-//        renderer.registerLayer(out_layer, {'fullname' : 'Deletions for '+reader.accession, 'group' : 'all_deletions' });
 
         if (renderer.createGroupController) {
             renderer.createGroupController('insertions','all_insertions');
-//            renderer.createGroupController('deletions','all_deletions');
         }        
 
         for (var i = 0; i < diffs.length; i++ ){
@@ -90,7 +84,7 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         
         for (var i = 0; i < outs.length; i++) {
-            renderer.getAA(outs[i].index).addAnnotation(out_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
+            renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
             renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
         }
         
