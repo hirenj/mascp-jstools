@@ -41,8 +41,8 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         
         var new_sequence = reader.result.getSequence();
         
-        renderer.registerLayer('deletions',{'fullname' : 'All deletions','color' : '#0000ff'});
-        renderer.registerLayer('insertions',{'fullname' : 'All insertions','color' : '#ff0000'});
+//        renderer.registerLayer('deletions',{'fullname' : 'All deletions','color' : '#0000ff'});
+        renderer.registerLayer('insertions',{'fullname' : 'Accession','color' : '#ff0000'});
 
         
         var diffs = (new diff_match_patch()).diff_main(old_sequence,new_sequence);
@@ -54,19 +54,19 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
             return;
         }
 
-        var in_layer = 'in_'+reader.accession;
-        var out_layer = 'out_'+reader.accession;
+        var in_layer = 'all_'+reader.accession;
+        var out_layer = 'all_'+reader.accession;
         
         MASCP.registerGroup('all_insertions');
         MASCP.registerGroup('all_deletions');
 
         
-        renderer.registerLayer(in_layer, {'fullname' : 'Insertions for '+reader.accession, 'group' : 'all_insertions' });
-        renderer.registerLayer(out_layer, {'fullname' : 'Deletions for '+reader.accession, 'group' : 'all_deletions' });
+        renderer.registerLayer(in_layer, {'fullname' : reader.accession, 'group' : 'all_insertions' });
+//        renderer.registerLayer(out_layer, {'fullname' : 'Deletions for '+reader.accession, 'group' : 'all_deletions' });
 
         if (renderer.createGroupController) {
             renderer.createGroupController('insertions','all_insertions');
-            renderer.createGroupController('deletions','all_deletions');
+//            renderer.createGroupController('deletions','all_deletions');
         }        
 
         for (var i = 0; i < diffs.length; i++ ){
@@ -90,8 +90,8 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         
         for (var i = 0; i < outs.length; i++) {
-            renderer.getAA(outs[i].index).addAnnotation(out_layer,1, {'angle' : 30, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
-            renderer.getAA(outs[i].index).addAnnotation('deletions',1, {'angle' : 30, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
+            renderer.getAA(outs[i].index).addAnnotation(out_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
+            renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
         }
         
     });
