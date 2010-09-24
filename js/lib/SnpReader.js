@@ -79,13 +79,13 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         
         for (var i = 0; i < ins.length; i++ ) {
-            renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(255,0,0)', 'content' : ins[i].delta });
-            renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(255,0,0)', 'content' : ins[i].delta });
+            renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
+            renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
         }
         
         for (var i = 0; i < outs.length; i++) {
-            renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
-            renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,255)', 'content' : outs[i].delta });
+            renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
+            renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
         }
         
     });

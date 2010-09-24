@@ -268,6 +268,30 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
     var nav = this._Navigation;
+    var self = this;
+    
+    nav._spliceTrack = function(track,before){
+        if (! (track && before)) {
+            return;
+        }
+        var t_order = self._track_order;
+        t_order.splice(t_order.indexOf(track.name),1);
+        var extra_to_push = [];
+        if (track._group_controller) {
+            var group_layers = track._group_under_control._layers;
+            for (var j = 0; j < group_layers.length; j++ ) {
+                extra_to_push.push(t_order.splice(t_order.indexOf(group_layers[j].name),1)[0]);
+            }
+        }
+        
+        t_order.splice(t_order.indexOf(before.name),1,track.name,before.name);
+        for (var i = 0; i < extra_to_push.length; i++ ) {
+            if (extra_to_push[i]) {
+                t_order.splice(t_order.indexOf(before.name),0,extra_to_push[i]);
+            }
+        }
+        self.trackOrder = t_order;
+    };
     
     var hide_chrome = function() {
         nav.demote(); 
@@ -355,6 +379,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     rect.style.stroke = '#000000';
     rect.style.strokeWidth = '2px';
     rect.style.fill = '#000000';
+    rect.id = 'nav_back';
 
     rect.setAttribute('filter','url(#drop_shadow)');
 
@@ -364,7 +389,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     var clipping = document.createElementNS(svgns,'clipPath');
     clipping.id = 'nav_clipping';
-    var rect2 = canvas.rect(0,0,'190','100%');
+    var rect2 = document.createElementNS(svgns,'use');
+    rect2.setAttributeNS('http://www.w3.org/1999/xlink','href','#nav_back');
+    
+    //canvas.rect(0,0,'190','100%');
     canvas.insertBefore(clipping,canvas.firstChild);
     clipping.appendChild(rect2);
 
@@ -439,11 +467,156 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
         rect.setAttribute('transform','scale('+zoom+',1) ');
-        rect2.setAttribute('transform','scale('+zoom+',1) ');
     }
     
     close_group.addEventListener('click',toggler,false);    
 };
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = function(handle,element,track,canvas) {
+        var nav = this;
+        var self = arguments.callee;
+        self.in_drag = false;
+
+        if ( ! self.targets ) {
+            self.targets = [];
+        }
+        
+        self.targets.push(element);
+
+        self.resetDrag = function() {
+            window.clearTimeout(self._anim);
+            window.clearTimeout(self._hover_timeout);
+            for (var i = 0; i < self.targets.length; i++) {
+                if (self.targets[i] != self.drag_el) {
+                    self.targets[i].removeAttribute('transform');
+                    self.targets[i].setAttribute('pointer-events','all');
+                }
+            }
+        };
+
+        var beginDragging = function(ev,tr,lbl_grp) {
+
+            var target = canvas.nearestViewportElement;
+
+            if (self.in_drag) {
+                return;
+            }
+
+            var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
+
+            p_orig.x = ev.pageX;
+            p_orig.y = ev.pageY;
+
+            var rootCTM = lbl_grp.nearestViewportElement.getScreenCTM();
+            var matrix = rootCTM.inverse();
+
+            p_orig = p_orig.matrixTransform(matrix);
+
+            var oX = p_orig.x;
+            var oY = p_orig.y;
+
+            var dragfn = function(e) {
+                var p = lbl_grp.nearestViewportElement.createSVGPoint();
+                p.x = e.pageX;
+                p.y = e.pageY;
+                p = p.matrixTransform(matrix);
+
+                var dX = (p.x - oX);
+                var dY = (p.y - oY);
+                lbl_grp.setAttribute('transform','translate('+dX+','+dY+')');
+                e.stopPropagation();
+                return false;
+            };
+
+
+            var enddrag = function(e) {
+                if (e.relatedTarget && (e.relatedTarget == lbl_grp || e.relatedTarget.nearestViewportElement == lbl_grp.nearestViewportElement || e.relatedTarget.nearestViewportElement == target)) {
+                    if (self.in_drag && self.targets.indexOf(e.relatedTarget) >= 0) {                        
+                        self.resetDrag();
+                    }
+                    return;
+                }
+
+                if (self.in_drag && e.type == 'mouseup') {
+                    nav._spliceTrack(self.trackToSplice, self.spliceBefore);
+                }
+
+                target.removeEventListener('mousemove',dragfn,false);
+                target.removeEventListener('mouseup',arguments.callee,false);
+                target.removeEventListener('mouseout',arguments.callee,false);
+                if (self.in_drag) {
+                    lbl_grp.setAttributeNS(null, 'pointer-events', 'all');
+                    lbl_grp.removeAttribute('transform');
+                    self.resetDrag();
+                    self.in_drag = false;
+                }
+            };
+
+            lbl_grp.setAttributeNS(null, 'pointer-events', 'none');
+
+            target.addEventListener('mousemove',dragfn,false);
+            target.addEventListener('mouseup',enddrag,false);
+            target.addEventListener('mouseout',enddrag,false);
+            
+            self.in_drag = track;
+            self.drag_el = lbl_grp;
+        };
+
+        handle.addEventListener('mousedown',function(e) {
+            beginDragging(e,track,element);
+        },false);
+
+        element.addEventListener('mousemove',function(e) {
+            if ( self.in_drag && self.in_drag != track ) {
+                if (self._hover_timeout) {
+                    window.clearTimeout(self._hover_timeout);
+                }
+                self._hover_timeout = window.setTimeout(function() {
+                    if ( (self.in_drag.group || track.group) &&                    
+                         (self.in_drag.group ? track.group :  ! track.group ) ) {
+                        if (self.in_drag.group.name != track.group.name) {
+                            return;
+                        }
+                    } else {
+                        if ( self.in_drag.group || track.group ) {
+                            return;
+                        }
+                    }
+
+                    if (self._anim) {
+                        window.clearTimeout(self._anim);
+                    }
+                    
+                    self.resetDrag();
+                    
+                    var current_sibling = element;
+                    var elements_to_shift = [];
+                                        
+                    while (current_sibling) {
+                        if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
+                            elements_to_shift.push(current_sibling);
+                        }
+                        current_sibling = current_sibling.nextSibling;
+                    }
+                    var anim_steps = 1;
+
+                    self._anim = window.setTimeout(function() {
+                        if (anim_steps < 10) {                            
+                            for (var i = 0 ; i < elements_to_shift.length; i++ ) {
+                                elements_to_shift[i].setAttribute('transform','translate(0,'+anim_steps*40+')');
+                            }
+                            anim_steps += 1;
+                            self._anim = window.setTimeout(arguments.callee,1);
+                        } else {
+                            self.spliceBefore = track;
+                            self.trackToSplice = self.in_drag;
+                        }
+                    },1);
+
+                },200);
+            }
+        },false);
+}
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
     var self = this;
@@ -454,6 +627,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     this.clearTracks = function() {
         while (canvas.firstChild) 
             canvas.removeChild(canvas.firstChild);
+        this._enableDragAndDrop.targets = null;
     };
     
     this.setViewBox = function(viewBox) {
@@ -488,8 +662,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('stroke-width','1');
         a_text.setAttribute('dominant-baseline', 'middle');
 
-
         label_group.push(a_text);
+        
+        a_text.setAttribute('pointer-events','none');
+        
         
         if (track.href) {
             a_anchor = canvas.a(track.href);
@@ -502,29 +678,18 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             jQuery(track).trigger('click');
             return true;
         },false);
-        
-        var label_begin = function() {            
-            a_rect.setAttribute('opacity','1');
-            a_text.style.fill = '#eeeeee';
-            return true;
-        };
-        
-        var label_end = function() {
-            a_rect.setAttribute('opacity','0.1');
-            a_text.style.fill = '#ffffff';
-            return true;
-        };
-        
+
         label_group.addEventListener('touchstart',function() {
             label_group.onmouseover = undefined;
             label_group.onmouseout = undefined;
-            label_begin();
         },false);
+
         label_group.addEventListener('touchend',function() {
             label_group.onmouseover = undefined;
             label_group.onmouseout = undefined;
-            label_end();
         },false);
+        
+        this._enableDragAndDrop(a_rect,label_group,track,canvas);
         
         if (track._group_controller) {
             var expander = canvas.group();            
@@ -543,6 +708,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             group_toggler.setAttribute('font-size',1.5*height);
             group_toggler.setAttribute('fill','#ffffff');
             group_toggler.setAttribute('dominant-baseline','central');
+            group_toggler.setAttribute('pointer-events','none');
+            
             expander.push(group_toggler);
 
             expander.style.cursor = 'pointer';
@@ -766,7 +933,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         marker.setAttribute('transform','translate('+((cx)*RS)+','+0.5*cy*RS+') scale(1)');
         marker.setAttribute('height', dim.R*RS);
         if (typeof symbol == 'string') {
-            marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol);
+            marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
             marker.push(marker.contentElement);
         } else {
             marker.contentElement = this.group();
@@ -778,8 +945,12 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         return marker;
     };
 
-    canvas.text_circle = function(cx,cy,r,txt) {
+    canvas.text_circle = function(cx,cy,r,txt,opts) {
         var cx,cy,r;
+
+        if ( ! opts ) {
+            opts = {};
+        }        
 
         var units = 0;
 
@@ -813,7 +984,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var back = this.circle(0,dim.CY,9/10*dim.R);
         back.setAttribute('fill','url(#simple_gradient)');
-        back.setAttribute('stroke', '#000000');
+        back.setAttribute('stroke', opts['border'] || '#000000');
         back.setAttribute('stroke-width', (r/10)*RS);
 
         marker_group.push(back);
@@ -1299,6 +1470,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
 
     this._axis_height = 30;
 
+    axis.attr({'pointer-events' : 'none'});
+
     var big_ticks = canvas.set();
     var little_ticks = canvas.set();
     var big_labels = canvas.set();
@@ -1321,7 +1494,6 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
 
         x += 5;
     }
-
     
     for ( var i = 0; i < big_labels.length; i++ ) {
         big_labels[i].style.textAnchor = 'middle';
@@ -1338,7 +1510,10 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
         little_labels[i].style.fill = '#000000';
     }
     
-    
+    big_ticks.attr({'pointer-events' : 'none'});
+    little_ticks.attr({'pointer-events' : 'none'});
+    big_labels.attr({'pointer-events' : 'none'});
+    little_labels.attr({'pointer-events' : 'none'});
     
     little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
     little_ticks.hide();
@@ -1703,6 +1878,9 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
     var axis = this._canvas.path('M0 0 m0 '+(-1*min_value)+' l'+this._sequence_els.length*RS+' 0');
     axis.setAttribute('stroke-width',0.2*RS);
     axis.setAttribute('display','none');
+    plot.setAttribute('pointer-events','none');
+    axis.setAttribute('pointer-events','none');
+    
     this._layer_containers['hydropathy'].push(plot);    
     this._layer_containers['hydropathy'].push(axis);
     this._layer_containers['hydropathy'].fixed_track_height = (-1*min_value+max_value) / RS;
@@ -1760,6 +1938,8 @@ var addElementToLayer = function(layerName) {
     this._renderer._layer_containers[layerName].tracers.push(bobble);
     this._renderer._layer_containers[layerName].push(tracer_marker);
     canvas.tracers.push(tracer);
+    circ.setAttribute('pointer-events','none');
+    
     return circ;
 };
 
@@ -1790,6 +1970,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     rect.setAttribute('display', 'none');
     rect.style.opacity = fraction;
     rect.setAttribute('fill',MASCP.layers[layerName].color);
+    rect.setAttribute('pointer-events','none');
+    
 /*
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(shine);    
@@ -1822,6 +2004,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
+    rect.setAttribute('pointer-events','none');
+    
 /*
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
     this._renderer._layer_containers[layerName].push(shine);    
@@ -2128,7 +2312,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         // properly, and the drop shadow gets cut off
         this._Navigation._nav_pane_back.setAttribute('height',this._nav_canvas.height.baseVal.value - 30);
         
-        if (this.grow_container) {        
+        if (this.grow_container) {
             this._container_canvas.setAttribute('height',height);
             this._container.style.height = height+'px';        
             // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
@@ -2173,6 +2357,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     }
     
     layer._group_controller = true;
+    layer._group_under_control = group;
     
     var expanded = false;
     var sticky = false;
