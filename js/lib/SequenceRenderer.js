@@ -460,7 +460,7 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
 MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     var layer = MASCP.getLayer(lay);
 
-    if (layer.disabled) {
+    if (! layer || layer.disabled) {
         return;
     }
         

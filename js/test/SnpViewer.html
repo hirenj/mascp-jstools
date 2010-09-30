@@ -15,6 +15,7 @@
     <script type="text/javascript" src="../lib/MascpService.js"></script>
     <script type="text/javascript" src="../lib/SequenceRenderer.js"></script>
     <script type="text/javascript" src="../lib/CondensedSequenceRenderer.js"></script>
+    <script type="text/javascript" src="../lib/PhosphatReader.js"></script>
     <script type="text/javascript" src="../lib/TairReader.js"></script>    
     <script type="text/javascript" src="../lib/SnpReader.js"></script>
     <script type="text/javascript" src="../lib/gomap.js"></script>
@@ -34,7 +35,7 @@
         var renderer;
         var tairreader;
         var delta = 1;
-        var agi = 'AT1g22750.1';
+        var agi = 'At5g24430.1';
 
         function testSimpleDisplay() {
 
@@ -42,15 +43,14 @@
             renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('result'));
 
             renderer.setSequence(tairreader.result.getSequence());
-//            renderer.grow_container = false;
+            renderer.grow_container = true;
 
             var snpreader = new MASCP.AccessionReader(null,'../../../tair.pl');
             
             snpreader.agi = agi;
-            snpreader.async = false;
             
             snpreader.registerSequenceRenderer(renderer);
-            
+
             var accessions = [
                 'Col0',
                 'Agu',
@@ -63,47 +63,57 @@
                 'Don0',
                 'Ey152',
                 'Fei0',
-                // 'Istisu1',
-                // 'Kastel1',
-                // 'Koch1',
-                // 'Kro0',
-                // 'Leo1',
-                // 'Ler1',
-                // 'Lerik13',
-                // 'Mer6',
-                // 'Nemrut1',
-                // 'Nie12',
-                // 'Ped0',
-                // 'Pra6',
-                // 'Qui0',
-                // 'Rue3131',
-                // 'Ri0',
-                // 'Sha'                
+                'Istisu1',
+                'Kastel1',
+                'Koch1',
+                'Kro0',
+                'Leo1',
+                'Ler1',
+                'Lerik13',
+                'Mer6',
+                'Nemrut1',
+                'Nie12',
+                'Ped0',
+                'Pra6',
+                'Qui0',
+                'Rue3131',
+                'Ri0',
+                'Sha',
+                'Star8',
+                'TueSB303',
+                'TueV13',
+                'TueWa12',
+                'Tuescha9',
+                'Vash1',
+                'Vie0',
+                'WalhaesB4',
+                'Xan1'
             ];
-            
-            for (var i = 0 ; i < accessions.length; i++ ) {            
-                snpreader.accession = accessions[i];
+
+            snpreader.bind('resultReceived',function() {
+                snpreader.accession = accessions.shift();
+                if ( ! snpreader.accession ) {
+                    renderer.showLayer('insertions');
+                    return;
+                }
                 snpreader.retrieve();
-            }
-
-            renderer.showLayer('insertions');
-            renderer.showLayer('deletions');
-            renderer.trackOrder = ['insertions','all_insertions','deletions','all_deletions'];
-
-            renderer.zoom = 1;
-        
-//             window.setInterval(function() {
-// //                console.log("Here");
-//                 renderer.zoom = renderer.zoom + delta;
-//                 if (renderer.zoom >= 10) {
-//                     delta = -0.5;
-//                 }
-//                 if (renderer.zoom <= 1) {
-//                     delta = 0.5;
-//                 }
-//             },10);
+            });
+                        
+            snpreader.accession = accessions.shift();
+            snpreader.retrieve();
+            renderer.hideLayer('insertions');
             
-//            renderer._Navigation.hide();
+            var phosphat = new MASCP.PhosphatReader(agi,'../../../proxy.pl');
+            phosphat.registerSequenceRenderer(renderer).bind('resultReceived',function() {
+                renderer.showLayer('phosphat_experimental');
+            });
+            phosphat.retrieve();
+            console.log(phosphat);
+            
+            renderer.zoom = 10;
+            var dragger = (new GOMap.Diagram.Dragger()).applyToElement(renderer._canvas);
+        
+            renderer._Navigation.hide();
             
         }
 
