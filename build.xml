@@ -86,11 +86,13 @@
         <jsmin destdir="build">
             <fileset dir="js/lib" includes="**/*.js"/>
             <fileset dir="js" includes="json-2.js" />
+            <fileset dir="js" includes="diff_match_patch.js"/>
         </jsmin>
         <mkdir dir="dist/js" />
         <concat destfile="dist/js/maschup.services.min.js"
                   force="yes">
-            <fileset dir="build" includes="json-2.js"/>            
+            <fileset dir="build" includes="json-2.js"/> 
+            <fileset dir="build" includes="diff_match_patch.js"/>
             <fileset dir="build" includes="MascpService.js"/>
             <fileset dir="build" includes="*Reader.js"/>
         </concat>

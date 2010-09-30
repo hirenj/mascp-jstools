@@ -270,24 +270,38 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     var nav = this._Navigation;
     var self = this;
     
-    nav._spliceTrack = function(track,before){
-        if (! (track && before)) {
+    nav._spliceTrack = function(track,before,after){
+        if (! (track && (before || after))) {
             return;
         }
+
         var t_order = self._track_order;
-        t_order.splice(t_order.indexOf(track.name),1);
+        
+        t_order.trackIndex = function(tr) {
+            if (! tr ) {
+                return this.length;
+            }
+            return this.indexOf(tr.name);
+        };
+        
+        if (after && ! before) {
+            before = MASCP.getLayer(t_order[t_order.trackIndex(after) + 1]);
+        }
+        
+        
+        t_order.splice(t_order.trackIndex(track),1);
         var extra_to_push = [];
         if (track._group_controller) {
             var group_layers = track._group_under_control._layers;
             for (var j = 0; j < group_layers.length; j++ ) {
-                extra_to_push.push(t_order.splice(t_order.indexOf(group_layers[j].name),1)[0]);
+                extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
             }
         }
         
-        t_order.splice(t_order.indexOf(before.name),1,track.name,before.name);
+        t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
         for (var i = 0; i < extra_to_push.length; i++ ) {
             if (extra_to_push[i]) {
-                t_order.splice(t_order.indexOf(before.name),0,extra_to_push[i]);
+                t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
             }
         }
         self.trackOrder = t_order;
@@ -499,8 +513,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
             var target = canvas.nearestViewportElement;
 
             if (self.in_drag) {
-                return;
+                return;                
             }
+
+
+            self.spliceBefore = null;
+            self.spliceAfter = null;            
 
             var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
 
@@ -538,7 +556,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 }
 
                 if (self.in_drag && e.type == 'mouseup') {
-                    nav._spliceTrack(self.trackToSplice, self.spliceBefore);
+                    nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
                 }
 
                 target.removeEventListener('mousemove',dragfn,false);
@@ -590,30 +608,66 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     self.resetDrag();
                     
                     var current_sibling = element;
+                    
                     var elements_to_shift = [];
-                                        
+
                     while (current_sibling) {
                         if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
                             elements_to_shift.push(current_sibling);
                         }
                         current_sibling = current_sibling.nextSibling;
+                        if (current_sibling == self.drag_el) {
+                            break;
+                        }
                     }
+                    
+                    current_sibling = element;
+                    
+                    if (self.targets.indexOf(element) < self.targets.indexOf(self.drag_el) ) {
+                        current_sibling = element.previousSibling;
+                    }
+                    
+                    var elements_to_shift_up = [];
+                    
+                    while (current_sibling) {
+                        if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
+                            elements_to_shift_up.push(current_sibling);
+                        }
+                        current_sibling = current_sibling.previousSibling;
+                        if (current_sibling == self.drag_el) {
+                            break;
+                        }
+                    }
+
                     var anim_steps = 1;
 
+                    var height = 100;
+
                     self._anim = window.setTimeout(function() {
-                        if (anim_steps < 10) {                            
-                            for (var i = 0 ; i < elements_to_shift.length; i++ ) {
-                                elements_to_shift[i].setAttribute('transform','translate(0,'+anim_steps*40+')');
+                        
+                        if (anim_steps < 5) {
+                            for (var i = 0; i < elements_to_shift.length; i++ ) {
+                                elements_to_shift[i].setAttribute('transform','translate(0,'+anim_steps*height+')');
                             }
+
+                            for (var i = 0; i < elements_to_shift_up.length; i++ ) {
+                                elements_to_shift_up[i].setAttribute('transform','translate(0,'+anim_steps*-1*height+')');
+                            }
+
+
                             anim_steps += 1;
                             self._anim = window.setTimeout(arguments.callee,1);
                         } else {
-                            self.spliceBefore = track;
+                            if (self.targets.indexOf(element) > self.targets.indexOf(self.drag_el)) {
+                                self.spliceAfter = track;
+                            } else {
+                                self.spliceBefore = track;
+                            }
                             self.trackToSplice = self.in_drag;
                         }
                     },1);
 
-                },200);
+                },300);
             }
         },false);
 }

@@ -192,6 +192,12 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         	MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
             this.addToLayer('phosphat_theoretical');
         });
+
+        jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
+            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
+            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+            this.addToLayer('phosphat_experimental');
+        });
         
         jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
             MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
@@ -203,11 +209,6 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
     	    }
         });
         
-        jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
-            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
-            this.addToLayer('phosphat_experimental');
-        });
         
         if (MASCP.getLayer('phosphat_experimental')) {
             MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;        

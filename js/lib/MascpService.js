@@ -225,7 +225,14 @@ MASCP.Service.prototype = {
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
-    if ( ! this.result ) {
+    if (data instanceof Array) {
+        this.result = [];
+        for (var i = 0; i < data.length; i++ ) {
+            var rez = new clazz(data[i]);
+            rez.reader = this;
+            this.result.push(rez);
+        }
+    } else if ( ! this.result ) {
         result = new clazz(data);
         this.result = result;
     } else {

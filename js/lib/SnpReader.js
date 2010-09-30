@@ -34,6 +34,30 @@ MASCP.AccessionReader.prototype.requestData = function()
     };
 };
 
+MASCP.AccessionReader.Result.prototype.getDeletions = function() {
+    var old_sequence = this.reader.reference;
+
+    var new_sequence = this.getSequence();
+
+    var diffs = (new diff_match_patch()).diff_main(old_sequence,new_sequence);
+    var deletions = [];
+    var last_index = 1;
+    for (var i = 0; i < diffs.length; i++ ){
+        if (i > 0 && diffs[i-1][0] <= 0) {
+            last_index += diffs[i-1][1].length;
+        }
+        if (diffs[i][0] == -1) {
+            deletions.push(last_index);
+            var length = diffs[i][1].length - 1;
+            while (length > 0) {
+                deletions.push(last_index + length);
+                length -= 1;
+            }
+        }
+    }
+    return deletions;
+};
+
 MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     this.bind('resultReceived', function() {
