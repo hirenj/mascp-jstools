@@ -141,6 +141,40 @@ MASCP.SubaReader.Result.prototype.getGfpLocalisation = function()
     return this._getLocalisation('gfp');
 };
 
+MASCP.SubaReader.Result.prototype.getWinnerTakesAllGfp = function()
+{
+    var vals = this.getGfpLocalisation();
+    var locs = (this._sortLocalisation(vals));
+    var results = [];
+    var last_val = 0;
+    for (var i = 0; i < locs.length; i++ ) {
+        if (last_val && vals[locs[i]] == last_val) {
+            results.push(locs[i]);
+        } else {
+            last_val = vals[locs[i]];
+            results.push(locs[i]);
+        }
+    }
+    return results;
+};
+
+MASCP.SubaReader.Result.prototype.getWinnerTakesAllMassSpec = function()
+{
+    var vals = this.getMassSpecLocalisation();
+    var locs = (this._sortLocalisation(vals));
+    var results = [];
+    var last_val = 0;
+    for (var i = 0; i < locs.length; i++ ) {
+        if (last_val && vals[locs[i]] == last_val) {
+            results.push(locs[i]);
+        } else {
+            last_val = vals[locs[i]];
+            results.push(locs[i]);
+        }
+    }
+    return results;
+};
+
 /** Retrieve the set of predicted localisations for this AGI
  *  @returns [ { String : [String] } ]   Predicted localisation and array of methods
  */
