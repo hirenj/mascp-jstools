@@ -19,6 +19,7 @@
 
     <script type="text/javascript" src="js/jquery-ui-1.7.2.min.js"></script>
     <script type="text/javascript" src="js/jquery.masonry.min.js"></script>
+    <script type="text/javascript" src="js/table2CSV.js"></script>
 
     <style type="text/css">
 
@@ -193,6 +194,7 @@ At1g73450.1
 </div>
 
 <div style="margin-left: 400px;">
+    <button id="save">Save</button>
     <table id="results">
         <tr><th>AGI</th><th>Phosphorylation</th><th>Phosphomodulation</th><th>MS Localisation</th><th>GFP Localisation</th><th id="organ_span">Organ spectra count</th></tr>
         <tr id="organs"><th colspan="5"></th></tr>
@@ -203,6 +205,18 @@ At1g73450.1
 <script type="text/javascript">
 //<[CDATA[ 
     window.onload = null;
+    
+    var save = function() {
+        var generator = window.open('', 'csv', 'height=400,width=600'); 
+          generator.document.write('<html><head><title>CSV</title>'); 
+          generator.document.write('</head><body >'); 
+          generator.document.write('<textArea cols=70 rows=15 wrap="off" >'); 
+          generator.document.write(jQuery('#results').table2CSV({delivery:'value'})); 
+          generator.document.write('</textArea>'); 
+          generator.document.write('</body></html>'); 
+          generator.document.close();
+          return true;
+    };
     
     var updateKey = function(key,val) {
         var found = false;
@@ -559,6 +573,8 @@ At1g73450.1
         }
         
         bind_agi_events();
+        
+        jQuery('#save').bind('click',save);
         
         if(!Array.indexOf){
             Array.prototype.indexOf = function(obj){
