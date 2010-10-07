@@ -411,6 +411,15 @@ MASCP.Service.prototype.requestData = function()
     
 };
 
+MASCP.Service.prototype.toString = function()
+{
+    for (var clazz in MASCP) {
+        if (this.__class__ == MASCP[clazz]) {
+            return "MASCP."+clazz;
+        }
+    }
+};
+
 /**
  * For this service, register a sequence rendering view so that the results can be marked up directly
  * on to a sequence. This method will do nothing if the service does not know how to render the 
@@ -515,7 +524,7 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
     if ( ! opts ) {
         opts = {};
     }
-    
+
     if (self._in_call) {
         var self_func = arguments.callee;
         jQuery(self).bind('resultReceived', function() {
@@ -524,15 +533,15 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
         });
         return;
     }
-            
+
     // for a single reader, events: single_success
     // bound for all readers, events: error, success
-    
+
     self._in_call = true;
-    
-    
+
+
     var result_count = self._readers.length;
-    
+
     var trigger_done = function() {
         if (result_count == 0) {
             if (opts['success']) {
@@ -555,12 +564,12 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
                     
         if (opts['single_success']) {
             a_reader.bind('resultReceived',function() {
-                opts['single_success'].call();
+                opts['single_success'].call(this);
             });
         }
         if (opts['error']) {
             a_reader.bind('error',function() {
-                opts['error'].call();
+                opts['error'].call(this);
             });
         }
 
@@ -568,14 +577,14 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
             jQuery(this).trigger('_resultReceived');
             jQuery(this).unbind('resultReceived');
             result_count -= 1;
-            trigger_done.call();
+            trigger_done.call(this);
         });
         
         a_reader.bind('error',function() {
             jQuery(this).trigger('_error');
             jQuery(this).unbind('error');
             result_count -= 1;
-            trigger_done.call();
+            trigger_done.call(this);
         });
 
         a_reader.retrieve();
