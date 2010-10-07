@@ -301,11 +301,6 @@ At1g73450.1
     
     var mr = new MASCP.BatchRead();
 
-
-    mr.bind('error',null,function() {
-        console.log("Check it out, error");
-    });
-
     function bind_agi_events() {
         jQuery('#agi_input .inset input').bind('click',function() {
             var button = this;
@@ -336,7 +331,7 @@ At1g73450.1
         var reader = this;
         var result = this.result;
         var agi_id = reader.agi.replace(/\./, '|');
-        jQuery('.modification', document.getElementById(agi_id)).text(result.getAllExperimentalPositions().join(','));
+        jQuery('.modification', document.getElementById(agi_id)).text(result.getAllExperimentalPositions().sort().join(','));
         
 
         var tissues = this.result.getSpectra();
@@ -479,26 +474,27 @@ At1g73450.1
                 results_hash[this.agi] = { 'count' : 0, 'peptides' : [], 'phosphopeptides' : [], 'phos_pos' : {} };
             }
             var results = results_hash[this.agi];
+            var self = this;
             
             var reader = new MASCP.TairReader(this.agi);
-            reader.async = false;
-            reader.retrieve();
-            var seq = reader.result.getSequence();
-            
-            results.count += 1;
-            if (this.result) {
-                results.has_atpeptide = true;
-                var peps = this.result.getPeptides();
-                for (var i = 0; i < peps.length; i++ ) {
-                    var start = seq.indexOf(peps[i].sequence);
-                    var end = start + peps[i].sequence.length;
-                    var key = ''+(start+'-'+end);
-                    results.peptides.push(key);
+            reader.bind('resultReceived',function() {
+                var seq = this.result.getSequence();                
+                results.count += 1;
+                if (self.result) {
+                    results.has_atpeptide = true;
+                    var peps = self.result.getPeptides();
+                    for (var i = 0; i < peps.length; i++ ) {
+                        var start = seq.indexOf(peps[i].sequence);
+                        var end = start + peps[i].sequence.length;
+                        var key = ''+(start+'-'+end);
+                        results.peptides.push(key);
+                    }
+                } else {
+                    results.has_atpeptide = false;
                 }
-            } else {
-                results.has_atpeptide = false;
-            }
-            tryNext(this.agi);
+                tryNext(self.agi);
+            });
+            reader.retrieve();            
         });
 
 })();
@@ -514,7 +510,7 @@ At1g73450.1
         var max_val = vals.length > 50 ? 50 : vals.length;
         for (var i = 0; i < max_val; i++ ) {
             (function() {
-            if (vals[i].trim() == '') {
+            if (vals[i].replace(/\s*/g,'') == '') {
                 return;
             }
             var new_els = jQuery('<div><span>'+vals[i]+'</span><span class="status">Loading..</span><span class="messages"></span></div>')[0];
@@ -536,8 +532,11 @@ At1g73450.1
                 }
             },
             'error' : function() {
+                var classname = this.toString();
+                classname = classname.replace(/MASCP./,'');
+                classname = classname.replace(/Reader/,'');
                 error_count += 1;
-                jQuery('.messages', new_els).text('Error retrieving some data');
+                jQuery('.messages', new_els).append(' '+classname+' ');
                 j += 1;
             },
             'single_success' : function() {
