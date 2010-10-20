@@ -59,14 +59,14 @@ foreach my $acc (@accessions) {
         $filename = $allowed_accessions->{uc($acc || '')} || '';
     }
 
-    if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d/) {
+    if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
         open TAIR, $filename;
         while (<TAIR>) {        
-            if (/\["$agi/) { 
-                print $_;
-                if (scalar @accessions > 1 && $accessions[-1] ne $acc) {
+            if (/\["$agi\s?"/) { 
+                if (scalar @accessions > 1 && $accessions[0] ne $acc) {
                     print ",";
                 }
+                print $_;
             }
         }
     }
