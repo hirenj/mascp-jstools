@@ -100,10 +100,12 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
     var exp_sites = {};
     for ( var site_idx in this._raw_experimental_data.result ) {
         var site = this._raw_experimental_data.result[site_idx];
+        var pep_seq = site['pep_sequence'];
+        pep_seq = pep_seq.replace(/[^A-Z]/,'');
         if (site['modificationType'] != 'phos') {
             continue;
         }
-        var site_id = site['prot_sequence'].indexOf(site['pep_sequence']);
+        var site_id = site['prot_sequence'].indexOf(pep_seq);
         if (site_id < 0) {
             continue;
         }
@@ -121,13 +123,16 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = functi
 {
     var results = {};
     for ( var site_idx in this._raw_experimental_data.result ) {
-        
         var site = this._raw_experimental_data.result[site_idx];
+
+        var pep_seq = site['pep_sequence'];
+        pep_seq = pep_seq.replace(/[^A-Z]/,'');
+        
         if (site['modificationType'] != 'phos') {
             continue;
         }
-        var site_id = site['prot_sequence'].indexOf(site['pep_sequence']);
-        results[''+site_id+"-"+site['pep_sequence'].length] = [site_id,site['pep_sequence'].length];
+        var site_id = site['prot_sequence'].indexOf(pep_seq);
+        results[''+site_id+"-"+pep_seq.length] = [site_id,pep_seq.length];
     }
     var results_arr = [];
     for (var a_side in results ) {

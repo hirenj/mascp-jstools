@@ -65,6 +65,7 @@ print STDERR "Looking for cached file ${cached}";
 
 if ( -e $cached )
 {
+    warn "Using Cached file";
     if ($tidy->{$service}) {
         print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');        
     } else {
@@ -89,18 +90,22 @@ if ($method eq 'GET') {
 
 if ($tidy->{$service} eq 'xml') {
     print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
-    my $start_content = LWP::UserAgent->new->request($request)->content;
+    my $response = LWP::UserAgent->new->request($request);
+    my $start_content = $response->content;
     my $cleaned = $start_content;
     print $cleaned;
     $cleaned =~ s/nbsp//mgi;
     $cleaned =~ s/\&/&amp;/mgi;
-    open $outfile, ">".$cached;
-    print $outfile $cleaned;
-    close $outfile;    
+    if ($response->is_success()) {
+        open $outfile, ">".$cached;
+        print $outfile $cleaned;
+        close $outfile; 
+    }
 } elsif ($tidy->{$service}) {
     print CGI->header(-Content_type => 'application/xml',-Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
     my $tidyer = HTML::Tidy->new( { output_xml => 1, add_xml_decl => 1 });
-    my $start_content = LWP::UserAgent->new->request($request)->content;
+    my $response = LWP::UserAgent->new->request($request);
+    my $start_content = $response->content;
     my $repl_doctype = qq|<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">|;
     $start_content =~ s/<\!DOCTYPE[^>]+>/TEMP_DTYPE/mi;
     $start_content =~ s/<\!DOCTYPE[^>]+>//mi;
@@ -110,15 +115,22 @@ if ($tidy->{$service} eq 'xml') {
     print $cleaned;
 #    $cleaned = 'Foo';
     $cleaned =~ s/nbsp//mgi;
-    open $outfile, ">".$cached;
-    print $outfile $cleaned;
-    close $outfile;
+    if ($response->is_success()) {
+        open $outfile, ">".$cached;
+        print $outfile $cleaned;
+        close $outfile; 
+    }
 } else {
     print CGI->header(-Content_type => 'text/plain', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
-    my $content = LWP::UserAgent->new->request($request)->content;    
-    print $content;
-    open $outfile, ">".$cached;
-    print $outfile $content;
-    close $outfile;
-
+    my $response = LWP::UserAgent->new->request($request);
+    my $start_content = $response->content;
+    if ( ! $start_content || $start_content eq '') {
+        $start_content = '{}';
+    }
+    print $start_content;
+    if ($response->is_success()) {
+        open $outfile, ">".$cached;
+        print $outfile $start_content;
+        close $outfile; 
+    }
 }

@@ -108,6 +108,9 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'Spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
             var peptide = peps[i];
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
+            if ( ! peptide_bits || peptide_bits.length == 0 ) {
+                continue;
+            }
             var layer_name = 'promex_experimental_spectrum_'+i;
             peptide_bits.addToLayer(layer_name);
             peptide_bits.addToLayer(overlay_name);
