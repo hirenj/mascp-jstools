@@ -188,6 +188,14 @@
             font-size: 8px;
         }        
 
+        #agi_input a {
+            position: absolute;
+            left: 5px;
+            bottom: 5px;
+            font-size: 10px;
+            height: 15px;
+        }
+
         #agi_input .inset {
             width: 30px;
         }
@@ -396,7 +404,7 @@
 
 <a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(http://www.masc-proteomics.org/mascp/skins/common/images/mascp_logo.png);" href="http://www.masc-proteomics.org/" title="MASC Proteomics portal"></a>
 <div id="agi_input" class="rounded_box" style="">
-    <label class="inset" for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><input type="button" value="Retrieve"/>
+    <label class="inset" for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><a href="multiple.html" target="_new">Advanced</a><input type="button" value="Retrieve"/>
 </div>
 <div id="description_container" class="rounded_box">
 <div class="inset">Protein description</div>
@@ -447,7 +455,7 @@
 <div style="position: relative;">
     <div id="suba" class="rounded_box">
         <div class="inset">Subcellular localisation</div>
-        <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: Fluorescent Protein data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: MS data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: predicted</p>
+        <p><span style="color: #00ff00; font-weight: bolder;">GREEN</span>: Fluorescent Protein data, <span style="color: #ff0000; font-weight: bolder;">RED</span>: Proteomic data, <span style="color: #999999; font-weight: bolder;">GRAY</span>: Predicted</p>
         <div id="suba_results">
         </div>
     </div>
@@ -490,6 +498,8 @@
     };
     
     var updateKey = function(key,val) {
+        key = key.replace(/ves$/,'f');
+        key = key.replace(/s$/,'');
         var found = false;
         jQuery('#tissue_results').find('tr td').each(function() {
             if (jQuery(this).html().toString() == key.toString()) {
@@ -722,12 +732,10 @@
             jQuery('#hydropathy input').attr('checked',true);
 
         });
-
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
             if (MASCP.renderer.sequence == '') {
                 return;
             }
-            
             var agi = jQuery('#agi')[0].value;
             
             MASCP.renderer.reset();
@@ -949,7 +957,6 @@
 
             jQuery('#links').text('');
             jQuery('#links').append('<ul></ul>');
-
             jQuery(all_readers).each(function(i) {
                 this.bind('error',function(resp,req,status) {
                     switch(this.__class__) {

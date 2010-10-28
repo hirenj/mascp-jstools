@@ -218,8 +218,11 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
     var a_locus = an_agi.replace(/\.\d/,'');
 
     MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
-
     while (index <= positions.length) {
+        if ( ! index > 0 ) {
+            index += 1;
+            continue;
+        }
         if ((! positions[index] || positions[index].tissue() != last_tissue || (index == positions.length) ) && last_start != null) {
             var endpoint = index - last_start;
             if ( ! positions[index] ) {
