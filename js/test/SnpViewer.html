@@ -35,8 +35,8 @@
         var renderer;
         var tairreader;
         var delta = 1;
-        var agi = 'At5g24430.1';
-
+        var agi = 'at3g61130.1';
+//        agi = 'AT3G20810.1';
         function testSimpleDisplay() {
 
 
@@ -51,45 +51,10 @@
             
             snpreader.registerSequenceRenderer(renderer);
 
-            var accessions = [
-                'Col0',
-                'Agu',
-                'Bak2',
-                'Bay',
-                'Bur0',
-                'Cdm0',
-                'Del10',
-                'Dog4',
-                'Don0',
-                'Ey152',
-                'Fei0',
-                'Istisu1',
-                'Kastel1',
-                'Koch1',
-                'Kro0',
-                'Leo1',
-                'Ler1',
-                'Lerik13',
-                'Mer6',
-                'Nemrut1',
-                'Nie12',
-                'Ped0',
-                'Pra6',
-                'Qui0',
-                'Rue3131',
-                'Ri0',
-                'Sha',
-                'Star8',
-                'TueSB303',
-                'TueV13',
-                'TueWa12',
-                'Tuescha9',
-                'Vash1',
-                'Vie0',
-                'WalhaesB4',
-                'Xan1'
-            ];
-
+            var accessions = ["AGU","BAK2","BAY","BUR0","CDM0","COL0","DEL10","DOG4","DON0","EY152","FEI0","HKT24","ICE1","ICE102","ICE104","ICE106","ICE107","ICE111","ICE112","ICE119","ICE120","ICE127","ICE130","ICE134","ICE138","ICE150","ICE152","ICE153","ICE163","ICE169","ICE173","ICE181","ICE21","ICE212","ICE213","ICE216","ICE226","ICE228","ICE29","ICE33","ICE36","ICE49","ICE50","ICE60","ICE61","ICE63","ICE7","ICE70","ICE71","ICE72","ICE73","ICE75","ICE79","ICE91","ICE92","ICE93","ICE97","ICE98","ISTISU1","KASTEL1","KOCH1","KRO0","LAG22","LEO1","LER1","LERIK13","MER6","NEMRUT1","NIE12","PED0","PRA6","QUI0","RI0","RUE3131","SHA","STAR8","TUESB303","TUESCHA9","TUEV13","TUEWA12","VASH1","VIE0","WALHAESB4","XAN1"];
+            
+//            var accessions = [];
+            
             snpreader.bind('resultReceived',function() {
                 snpreader.accession = accessions.shift();
                 if ( ! snpreader.accession ) {
@@ -110,7 +75,7 @@
             phosphat.retrieve();
             console.log(phosphat);
             
-            renderer.zoom = 10;
+            renderer.zoom = 5;
             var dragger = (new GOMap.Diagram.Dragger()).applyToElement(renderer._canvas);
         
             renderer._Navigation.hide();
