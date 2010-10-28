@@ -368,8 +368,10 @@ At1g73450.1
         var reader = this;
         var result = this.result;
         var agi_id = reader.agi.replace(/\./, '|');
-        jQuery('.loc_ms', document.getElementById(agi_id)).text(result.getWinnerTakesAllMassSpec().join(','));
-        jQuery('.loc_gfp', document.getElementById(agi_id)).text(result.getWinnerTakesAllGfp().join(','));
+        var ms_wta = result.getWinnerTakesAllMassSpec();
+        if (ms_wta.length > 0) jQuery('.loc_ms', document.getElementById(agi_id)).text(ms_wta.join(',')+' ('+ms_wta._values[0]+')');
+        var gfp_wta = result.getWinnerTakesAllGfp();
+        if (gfp_wta.length > 0) jQuery('.loc_gfp', document.getElementById(agi_id)).text(gfp_wta.join(',')+' ('+gfp_wta._values[0]+')');
     });
 
     mr.bind('resultReceived',MASCP.AtProteomeReader, function() {
