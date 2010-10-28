@@ -1835,13 +1835,14 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
         
-        
         jQuery(renderer).trigger('sequenceChange');
     });
     
     var canvas = this._createCanvasObject();
     
-    if (! this._canvas) {
+    if (this._canvas) {
+        has_canvas = true;
+    } else {
         if (typeof svgweb != 'undefined') {
             svgweb.appendChild(canvas,this._container);
         } else {

@@ -31,7 +31,7 @@ MASCP.PhosphatReader =  MASCP.buildService(function(data) {
 MASCP.PhosphatReader.prototype.requestData = function()
 {
     var data = [null,this.agi];
-    
+
     var method = this._method ? this._method : 'getPredictedAa';
     if (method == 'getRelatives') {
         data = [this.agi];
@@ -62,6 +62,7 @@ MASCP.PhosphatReader.prototype._single_retrieve = MASCP.PhosphatReader.prototype
 
 MASCP.PhosphatReader.prototype.retrieve = function()
 {
+    this._method = null;
     this._single_retrieve();
     this._method = 'getExperimentsModAa';
     this._single_retrieve();

@@ -418,6 +418,15 @@ MASCP.Service.prototype.requestData = function()
     
 };
 
+MASCP.Service.prototype.toString = function()
+{
+    for (var clazz in MASCP) {
+        if (this.__class__ == MASCP[clazz]) {
+            return "MASCP."+clazz;
+        }
+    }
+};
+
 /**
  * For this service, register a sequence rendering view so that the results can be marked up directly
  * on to a sequence. This method will do nothing if the service does not know how to render the 
@@ -476,4 +485,115 @@ MASCP.Service.Result.prototype = {
 
 MASCP.Service.Result.prototype.render = function() {
     return jQuery('<span>Result received for '+this.agi+'</span>');
+};
+
+
+MASCP.BatchRead = function()
+{
+    this._make_readers();
+};
+
+MASCP.BatchRead.prototype._make_readers = function() {
+    this._readers = [
+        new MASCP.SubaReader(),
+        new MASCP.PhosphatReader(null,'proxy.pl'),
+        new MASCP.RippdbReader(),
+        new MASCP.PromexReader(),
+        new MASCP.PpdbReader(null,'proxy.pl'),
+        new MASCP.AtPeptideReader(),
+        new MASCP.AtProteomeReader()
+    ];
+};
+
+
+// For every event for a particular class (or null for all classes), bind
+// this function to run. e.g. do something whenever a resultReceived for all MASCP.PhosphatReader
+
+MASCP.BatchRead.prototype.bind = function(ev, clazz, func) {
+    if (ev == 'resultReceived') {
+        ev = '_resultReceived';
+    }
+    if (ev == 'error') {
+        ev = '_error';
+    }
+    for (var i = 0; i < this._readers.length; i++ ) {
+        if (! clazz || this._readers[i].__class__ == clazz) {
+            this._readers[i].bind(ev,func);
+        }
+    }
+};
+
+MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
+
+    var self = this;
+
+
+    if ( ! opts ) {
+        opts = {};
+    }
+
+    if (self._in_call) {
+        var self_func = arguments.callee;
+        jQuery(self).bind('resultReceived', function() {
+            jQuery(self).unbind('resultReceived',arguments.callee);
+            self_func.call(self,agi,opts);
+        });
+        return;
+    }
+
+    // for a single reader, events: single_success
+    // bound for all readers, events: error, success
+
+    self._in_call = true;
+
+
+    var result_count = self._readers.length;
+
+    var trigger_done = function() {
+        if (result_count == 0) {
+            if (opts['success']) {
+                opts['success'].call();
+            }
+            self._in_call = false;
+            jQuery(self).trigger('resultReceived');
+        }
+    };
+    
+    for (var i = 0; i < this._readers.length; i++ ) {
+        var a_reader = this._readers[i];
+
+        a_reader.unbind('resultReceived');
+        a_reader.unbind('error');
+
+
+        a_reader.result = null;
+        a_reader.agi = agi;
+                    
+        if (opts['single_success']) {
+            a_reader.bind('resultReceived',function() {
+                opts['single_success'].call(this);
+            });
+        }
+        if (opts['error']) {
+            a_reader.bind('error',function() {
+                opts['error'].call(this);
+            });
+        }
+
+        a_reader.bind('resultReceived',function() {
+            jQuery(this).trigger('_resultReceived');
+            jQuery(this).unbind('resultReceived');
+            result_count -= 1;
+            trigger_done.call(this);
+        });
+        
+        a_reader.bind('error',function() {
+            jQuery(this).trigger('_error');
+            jQuery(this).unbind('error');
+            result_count -= 1;
+            trigger_done.call(this);
+        });
+
+        a_reader.retrieve();
+    }
 };
