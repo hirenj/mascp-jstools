@@ -42,7 +42,7 @@ foreach my $acc (@accessions) {
     }
 
     if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
-        my $command = "grep -m1 '\\[\\\"$agi \\?\\\"' $filename";
+        my $command = "fgrep -m1 '[\"$agi\"' $filename";
         my $grepped = `$command`;
         # 
         # open TAIR, $filename;
