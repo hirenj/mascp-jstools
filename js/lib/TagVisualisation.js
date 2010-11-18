@@ -298,6 +298,9 @@ MASCP.TagVisualisation.TagCloud.prototype.update = function(dataColumn) {
 	for (var i = 0; i < tableRows.length ; i++ ) {
 		var row_values = tableRows[i].getElementsByTagName("td"); 
 		var value = parseFloat(row_values[this._tagVisualiser.tagColumn+dataColumn].childNodes[0].data);
+		if (row_values[this._tagVisualiser.tagColumn].childNodes.length == 0) {
+		    continue;
+	    }
 		var tagname = row_values[this._tagVisualiser.tagColumn].childNodes[0].data;
 		values[tagname]	= value;
 		all_values[tagname] = row_values;
@@ -307,6 +310,9 @@ MASCP.TagVisualisation.TagCloud.prototype.update = function(dataColumn) {
 	alltags.sort();
 	for (var i = 0; i < alltags.length; i++ )  {
 		var tag = alltags[i];
+		if ( ! tag ) {
+		    continue;
+		}
 		var tagId = tag.replace(/\s+/,"_");
 		if ( document.getElementById(MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId) != null ) {
 			var tagSpan = document.getElementById(MASCP.TagVisualisation.TagCloud.TAG_ELEMENT_ID_PREFIX+tagId);

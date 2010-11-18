@@ -15,6 +15,16 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.PhosphatReader =  MASCP.buildService(function(data) {
+                            if (data && data.result && ! this._sequence) {
+                                for (var i = 0; i < data.result.length; i++) {
+                                    if (data.result[i]['prot_sequence'] == 'Imported protein - no info') {
+                                        var agi = data.result[i]['code'];
+                                        agi = agi.replace(/\s+$/,'');
+                                        this._sequence = MASCP.getSequence(agi);
+                                        break;
+                                    }
+                                }
+                            }
                             if (data && data.request_method == 'getPredictedAa') {
                                 this._raw_data = data;
                             }
@@ -102,11 +112,12 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
     for ( var site_idx in this._raw_experimental_data.result ) {
         var site = this._raw_experimental_data.result[site_idx];
         var pep_seq = site['pep_sequence'];
-        pep_seq = pep_seq.replace(/[^A-Z]/,'');
+        pep_seq = pep_seq.replace(/[^A-Z]/g,'');
         if (site['modificationType'] != 'phos') {
             continue;
         }
-        var site_id = site['prot_sequence'].indexOf(pep_seq);
+        var prot_seq = this._sequence || site['prot_sequence'];
+        var site_id = prot_seq.indexOf(pep_seq);
         if (site_id < 0) {
             continue;
         }
@@ -127,17 +138,20 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = functi
         var site = this._raw_experimental_data.result[site_idx];
 
         var pep_seq = site['pep_sequence'];
-        pep_seq = pep_seq.replace(/[^A-Z]/,'');
+        pep_seq = pep_seq.replace(/[^A-Z]/g,'');
         
         if (site['modificationType'] != 'phos') {
             continue;
         }
-        var site_id = site['prot_sequence'].indexOf(pep_seq);
-        results[''+site_id+"-"+pep_seq.length] = [site_id,pep_seq.length];
+        var prot_seq = this._sequence || site['prot_sequence'];
+        var site_id = prot_seq.indexOf(pep_seq);
+        if (site_id >= 0) {
+            results[''+site_id+"-"+pep_seq.length] = [site_id,pep_seq.length];
+        }
     }
     var results_arr = [];
-    for (var a_side in results ) {
-        results_arr.push(results[a_side]);
+    for (var a_site in results ) {
+        results_arr.push(results[a_site]);
     }
     return results_arr;
 };
