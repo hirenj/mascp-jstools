@@ -21,10 +21,11 @@ foreach my $acc (@local_accessions) {
 }
 
 
+
 my @accessions = split /,/, ($cgi->param('accession') || 'COL0');
-
-print $cgi->header(-Content_type => 'application/json', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
-
+if ($cgi->request_method()) {
+    print $cgi->header(-Content_type => 'application/json', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
+}
 if ($cgi->param('agi') eq '' && $cgi->param('accession') eq '') {
     print "[";
     print join ",", map { "\"$_\"" } sort keys %$allowed_accessions;
@@ -41,15 +42,18 @@ foreach my $acc (@accessions) {
     }
 
     if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
-        open TAIR, $filename;
-        while (<TAIR>) {        
-            if (/\["$agi\s?"/) { 
+        my $command = "grep -m1 '\\[\\\"$agi \\?\\\"' $filename";
+        my $grepped = `$command`;
+        # 
+        # open TAIR, $filename;
+        # while (<TAIR>) {        
+        #     if (/\["$agi\s?"/) { 
                 if (scalar @accessions > 1 && $accessions[0] ne $acc) {
                     print ",";
                 }
-                print $_;
-            }
-        }
+                print $grepped;
+        #     }
+        # }
     }
 }
 

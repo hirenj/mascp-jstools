@@ -40,3 +40,18 @@ MASCP.TairReader.Result.prototype.getDescription = function() {
 MASCP.TairReader.Result.prototype.getSequence = function() {
     return this._data.data[2];
 };
+
+MASCP.getSequence = function(agi) {
+    var self = arguments.callee;
+    if (! self._reader ) {
+        self._reader = new MASCP.TairReader();
+        self._reader.async = false;
+    }
+    self._reader.result = null;
+    self._reader.agi = agi;
+    self._reader.retrieve();
+    if ( ! self._reader.result ) {
+        return "";
+    }
+    return self._reader.result.getSequence(); 
+};
