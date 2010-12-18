@@ -430,7 +430,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
     
     panel_back.push(scroll_controls);
-    
+        
     tracks_button.addEventListener('click',function() {
         jQuery(self).trigger('click');
     },false);
@@ -1152,10 +1152,12 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     canvas._in_anim = true;
                     jQuery(canvas).trigger('_anim_begin');
                     renderer._frame_count = 0;
+                    
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
                             clearInterval(canvas._anim_clock);
                             canvas._anim_clock = null;
+                            canvas._anim_clock_funcs = null;
                             canvas._in_anim = false;
                             jQuery(canvas).trigger('_anim_end');
                             return;
@@ -1186,7 +1188,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 var a_y;
                 
-                if (an_array[0].getAttribute('transform')) {
+                if (an_array[0].getAttribute('transform')) {                    
                     a_y = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
                     if (typeof a_y != 'undefined') {
                         a_y = a_y[2];
@@ -1204,7 +1206,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 var target_y = parseInt(hash['y']);
                 var target_disp = hash['display'];
-
                 if (curr_disp == target_disp && target_disp == 'none') {
                     an_array.attr(hsh);
                     return;
@@ -2424,7 +2425,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     }
     
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
-        if (rend == self) {
+        if (rend == self) {            
             self.setGroupVisibility(group, expanded && visible);
             self.refresh();
         }
@@ -2487,7 +2488,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
             if (container.fixed_track_height) {
                 delete attrs['height'];
             }
-            
             container.attr(attrs,animated);
             continue;
         } else {

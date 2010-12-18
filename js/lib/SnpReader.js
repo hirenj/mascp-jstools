@@ -1,5 +1,5 @@
 /**
- * @fileOverview    Classes for reading data from TAIR database
+ * @fileOverview    Classes for reading SNP data
  */
 
 if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
@@ -14,112 +14,117 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-MASCP.AccessionReader = MASCP.buildService(function(data) {
-                        this._data = data || { 'data' : ['',''] };
+MASCP.SnpReader = MASCP.buildService(function(data) {
+                        this._data = data || {};
                         return this;
                     });
 
-MASCP.AccessionReader.SERVICE_URL = 'http://gator.masc-proteomics.org/tair.pl';
+MASCP.SnpReader.SERVICE_URL = 'http://gator.masc-proteomics.org/snps.pl';
 
-MASCP.AccessionReader.prototype.requestData = function()
+MASCP.SnpReader.prototype.requestData = function()
 {
     var self = this;
     return {
         type: "POST",
         dataType: "json",
         data: { 'agi'   : this.agi,
-                'accession' : this.accession,
-                'service' : 'tair' 
+                'service' : 'snps' 
         }
     };
 };
 
-MASCP.AccessionReader.Result.prototype.getDeletions = function() {
-    var old_sequence = this.reader.reference;
+MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
+    var diffs = this.result.getSnp(acc);
 
-    var new_sequence = this.getSequence();
-
-    var diffs = (new diff_match_patch()).diff_main(old_sequence,new_sequence);
-    var deletions = [];
-    var last_index = 1;
-    for (var i = 0; i < diffs.length; i++ ){
-        if (i > 0 && diffs[i-1][0] <= 0) {
-            last_index += diffs[i-1][1].length;
-        }
-        if (diffs[i][0] == -1) {
-            deletions.push(last_index);
-            var length = diffs[i][1].length - 1;
-            while (length > 0) {
-                deletions.push(last_index + length);
-                length -= 1;
-            }
-        }
+    if (diffs.length < 1) {
+        continue;
     }
-    return deletions;
+
+
+    var in_layer = 'all_'+acc;
+
+    var ins = [];
+    var outs = [];
+
+//    renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'all_insertions' });
+
+
+    for (var i = 0; i < diffs.length; i++ ){
+        outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
+        ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
+    }
+
+    for (var i = 0; i < ins.length; i++ ) {
+        renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
+    }
+
+    for (var i = 0; i < outs.length; i++) {
+        renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
+    }
+    
 };
 
-MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
+MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     this.bind('resultReceived', function() {
-        var old_sequence = renderer.sequence;
 
-        var new_sequence = reader.result.getSequence();
-
-        var diffs = (new diff_match_patch()).diff_main(old_sequence,new_sequence);
-        var last_index = 1;
-        var ins = [];
-        var outs = [];
-
-        if (diffs.length <= 1) {
-            return;
-        }
-
-        var in_layer = 'all_'+reader.accession;
+        var accessions = reader.accession.split(',');
+                
+        var a_result = reader.result;
 
         MASCP.registerGroup('all_insertions');
         MASCP.registerGroup('all_deletions');
-
         renderer.registerLayer('insertions',{'fullname' : 'Accession','color' : '#ff0000'});
-
-        renderer.registerLayer(in_layer, {'fullname' : reader.accession, 'group' : 'all_insertions' });
 
         if (renderer.createGroupController) {
             renderer.createGroupController('insertions','all_insertions');
-        }        
+        }
+        while (accessions.length > 0) {
+            var acc = accessions.shift();
 
-        for (var i = 0; i < diffs.length; i++ ){
-            if (i > 0 && diffs[i-1][0] <= 0) {
-                last_index += diffs[i-1][1].length;
-                if (last_index > renderer.sequence.length) {
-                    last_index = renderer.sequence.length;
-                }
+            var diffs = a_result.getSnp(acc);
+
+            if (diffs.length < 1) {
+                continue;
             }
-            if (diffs[i][0] == -1) {
-                outs.push( { 'index' : last_index, 'delta' : diffs[i][1] });
+
+
+            var in_layer = 'all_'+acc;
+            
+            var ins = [];
+            var outs = [];
+
+            renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'all_insertions' });
+
+
+            for (var i = 0; i < diffs.length; i++ ){
+                outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
+                ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
             }
-            if (diffs[i][0] == 1) {
-                ins.push( { 'insertBefore' : last_index, 'delta' : diffs[i][1] });
+
+            for (var i = 0; i < ins.length; i++ ) {
+//                renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
+                renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
             }
-        }
         
-        for (var i = 0; i < ins.length; i++ ) {
-            renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
-            renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
-        }
-        
-        for (var i = 0; i < outs.length; i++) {
-            renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
-            renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
+            for (var i = 0; i < outs.length; i++) {
+//                renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
+                renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
+            }
+            
         }
         
     });
 };
 
-MASCP.AccessionReader.Result.prototype.getDescription = function() {
-    return this._data.data[1];
+MASCP.SnpReader.Result.prototype.getSnp = function(accession) {
+    var snps_data = this._data[accession];
+    var results = [];
+    for (var pos in snps_data) {
+        var position = parseInt(pos);
+        var changes = snps_data[pos];
+        var a_result = [ position, changes.charAt(0), changes.charAt(1)];
+        results.push(a_result);
+    }
+    return results;
 };
-
-MASCP.AccessionReader.Result.prototype.getSequence = function() {
-    return this._data.data[2];
-};
-
