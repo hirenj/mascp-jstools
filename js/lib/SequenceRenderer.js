@@ -502,6 +502,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
     var renderer = this;
     jQuery(group._layers).each(function(i) {
         if (this.disabled && visibility) {
+            renderer.hideLayer(this.name);
             return;
         }
         if (visibility == true) {
