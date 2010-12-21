@@ -723,7 +723,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         if (track.href) {
             a_anchor = canvas.a(track.href);
-            var a_use = canvas.use('#new_link_icon',21.5*height,y-0.5*height,2.5*height,2.5*height);
+            var icon_name = null;
+            var url_type = track.href;
+            if (url_type =~ /^javascript\:/) {
+                icon_name = '#plus_icon';
+            } else {
+                icon_name = '#new_link_icon';
+            }
+            var a_use = canvas.use(icon_name,21.5*height,y-0.5*height,2.5*height,2.5*height);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
         }
@@ -1833,6 +1840,37 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         }));
 
 
+        var plus_icon = makeEl('svg',{
+            'width' : '100%',
+            'height': '100%',
+            'id'    : 'plus_icon',
+            'viewBox': '0 0 100 100',
+            'preserveAspectRatio' : 'xMinYMin meet'
+        });
+
+        defs.appendChild(plus_icon);
+
+        plus_icon.appendChild(makeEl('rect', {
+            'x' : '40',
+            'y' : '10',
+            'stroke-width' : '1',
+            'width' : '20',
+            'height': '80',
+            'stroke': '#ffffff',
+            'fill'  : '#ffffff'            
+        }));
+
+        plus_icon.appendChild(makeEl('rect', {
+            'x' : '10',
+            'y' : '40',
+            'stroke-width' : '1',
+            'width' : '80',
+            'height': '20',
+            'stroke': '#ffffff',
+            'fill'  : '#ffffff'            
+        }));
+
+
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
         
@@ -2074,6 +2112,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
 };
 
 var all_annotations = {};
+var default_annotation_height = 15;
+
 
 var addAnnotationToLayer = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
@@ -2109,7 +2149,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
 
     var blob_exists = typeof all_annotations[layerName][blob_id] != 'undefined';
 
-    var height = 15;
+    var height = default_annotation_height;
     var offset = this._renderer._RS * height / 2;
 
     var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts['content'],opts);
@@ -2123,16 +2163,41 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     
     blob._value += width;
     
+    if ( ! this._renderer._pause_rescale_of_annotations ) {    
+        this._renderer.redrawAnnotations(layerName,height);
+    }
+    
+};
+
+MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
+    el.addToLayer = addElementToLayer;
+    el.addBoxOverlay = addBoxOverlayToElement;
+    el.addToLayerWithLink = addElementToLayerWithLink;
+    el.addAnnotation = addAnnotationToLayer;
+};
+
+MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
+    var canvas = this._canvas;
+    var susp_id = canvas.suspendRedraw(10000);
+
     var max_value = 0;
+    var height = default_annotation_height;
+    var offset = this._RS * height / 2;
     
     for (var blob_idx in all_annotations[layerName]) {
         if ( all_annotations[layerName][blob_idx]._value > max_value ) {
             max_value = all_annotations[layerName][blob_idx]._value;
         }
+        var a_parent = all_annotations[layerName][blob_idx].parentNode;
+        if ( ! a_parent ) {
+            continue;
+        }
+        a_parent.removeChild(all_annotations[layerName][blob_idx]);
+        all_annotations[layerName][blob_idx]._parent = a_parent;
     }
     for (var blob_idx in all_annotations[layerName]) {
         var a_blob = all_annotations[layerName][blob_idx];
-        var size_val = (a_blob._value / max_value)*(this._renderer._RS * height * 0.5);
+        var size_val = (a_blob._value / max_value)*(this._RS * height * 0.5);
         var curr_transform = a_blob.getAttribute('transform');
         var transform_shift = ((-315.0/1000.0)*size_val);
         var rotate_shift = (1.0/3.0)*size_val;
@@ -2142,14 +2207,14 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         a_blob.firstChild.setAttribute('width',size_val);
         a_blob.firstChild.setAttribute('height',size_val);
     }
+    
+    for (var blob_idx in all_annotations[layerName]) {
+        var a_parent = all_annotations[layerName][blob_idx]._parent;
+        a_parent.appendChild(all_annotations[layerName][blob_idx]);        
+    }
+    canvas.unsuspendRedraw(susp_id);
 };
 
-MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
-    el.addToLayer = addElementToLayer;
-    el.addBoxOverlay = addBoxOverlayToElement;
-    el.addToLayerWithLink = addElementToLayerWithLink;
-    el.addAnnotation = addAnnotationToLayer;
-};
 })();
 
 /**
@@ -2234,6 +2299,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
                 return;
             }
             
+            if ( containers[layer.name].length <= 0 ) {
+                return;
+            }
+            
             if (! visibility) {
                 if (containers[layer.name].tracers) {
                     containers[layer.name].tracers.hide();
@@ -2248,7 +2317,12 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             });
         }
     }
-    this.refresh();
+    
+/* BE VERY CAREFUL HERE.. I DISABLED THIS REFRESH TO SPEED UP RENDERING OF LOTS OF TRACKS.. I'M NOT SURE
+   THIS IS THE CORRECT BEHAVIOUR
+ */    
+    
+//    this.refresh();
 };
 /**
  * Describe what this method does
@@ -2425,7 +2499,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     }
     
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
-        if (rend == self) {            
+        if (rend == self && group.length > 0) {            
             self.setGroupVisibility(group, expanded && visible);
             self.refresh();
         }
@@ -2470,7 +2544,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
     }
-    
     
     var RS = this._RS;
     var track_heights = 0;

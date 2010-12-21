@@ -66,6 +66,7 @@ MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
 
 MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
+    
     this.bind('resultReceived', function() {
 
         var accessions = reader.accession.split(',');
@@ -79,6 +80,8 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
         if (renderer.createGroupController) {
             renderer.createGroupController('insertions','all_insertions');
         }
+        renderer._pause_rescale_of_annotations = true;
+        
         while (accessions.length > 0) {
             var acc = accessions.shift();
 
@@ -113,7 +116,8 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
             }
             
         }
-        
+        renderer.redrawAnnotations('insertions');
+        renderer._pause_rescale_of_annotations = false;
     });
 };
 
