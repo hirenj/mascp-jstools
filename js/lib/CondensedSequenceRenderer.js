@@ -725,7 +725,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             a_anchor = canvas.a(track.href);
             var icon_name = null;
             var url_type = track.href;
-            if (url_type =~ /^javascript\:/) {
+            if (url_type.match(/^javascript\:/)) {
                 icon_name = '#plus_icon';
             } else {
                 icon_name = '#new_link_icon';

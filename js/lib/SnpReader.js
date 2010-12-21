@@ -75,7 +75,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
 
         MASCP.registerGroup('all_insertions');
         MASCP.registerGroup('all_deletions');
-        renderer.registerLayer('insertions',{'fullname' : 'Accession','color' : '#ff0000'});
+        renderer.registerLayer('insertions',{'fullname' : ' ','color' : '#ff0000'});
 
         if (renderer.createGroupController) {
             renderer.createGroupController('insertions','all_insertions');
@@ -118,6 +118,8 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         renderer.redrawAnnotations('insertions');
         renderer._pause_rescale_of_annotations = false;
+        jQuery(renderer).trigger('resultsRendered',[reader]);
+        
     });
 };
 
