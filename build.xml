@@ -137,7 +137,15 @@
 		<copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
 
 		<copy file="tair.pl" tofile="dist/tair.pl"/>		
+
+		<copy file="snps.pl" tofile="dist/snps.pl"/>		
+
 		<copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
+
+       <copy todir="dist">
+            <fileset dir="." includes="*-json.txt"/>
+        </copy>
+		
 		
 		<zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>		
 	</target>
