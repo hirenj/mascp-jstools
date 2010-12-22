@@ -2118,6 +2118,8 @@ var default_annotation_height = 15;
 var addAnnotationToLayer = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
     
+    var renderer = this._renderer;
+    
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
@@ -2153,7 +2155,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     var offset = this._renderer._RS * height / 2;
 
     var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts['content'],opts);
-    blob.setAttribute('transform','translate('+this._index * this._renderer._RS +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,'+offset+')');
+    blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,'+offset+')');
     all_annotations[layerName][blob_id] = blob;
     if ( ! blob_exists ) {
         blob._value = 0;
@@ -2162,6 +2164,25 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     }
     
     blob._value += width;
+    if ( ! blob_exists ) {
+        var tracer = canvas.rect(this._index+0.25,10+height,0.05,0);
+        tracer.style.strokeWidth = '0px';
+        tracer.style.fill = '#777777'; //MASCP.layers[layerName].color;
+        tracer.setAttribute('display','none');
+    
+        if ( ! this._renderer._layer_containers[layerName].tracers) {
+            this._renderer._layer_containers[layerName].tracers = canvas.set();
+        }
+        if ( ! canvas.tracers ) {
+            canvas.tracers = canvas.set();
+            canvas._visibleTracers = function() {
+                return renderer._visibleTracers();
+            }
+        }
+
+        this._renderer._layer_containers[layerName].tracers.push(tracer);
+        canvas.tracers.push(tracer);
+    }
     
     if ( ! this._renderer._pause_rescale_of_annotations ) {    
         this._renderer.redrawAnnotations(layerName,height);
@@ -2569,7 +2590,12 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
         if (container.tracers) {
             var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'block' : 'none';
-            container.tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : (1.5 + track_heights / this.zoom )*RS },animated);
+            var height = (1.5 + track_heights / this.zoom )*RS;
+            
+            if (container.fixed_track_height) {
+                height += 0.5*container.fixed_track_height * RS;
+            }
+            container.tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height },animated);
         }
 
         if (container.fixed_track_height) {
