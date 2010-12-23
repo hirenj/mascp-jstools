@@ -980,6 +980,11 @@ MASCP.SequenceRenderer.prototype.reset = function()
         this.hideLayer(layer);
         MASCP.layers[layer].disabled = true;
     }
+    
+    if (this.resetAnnotations) {
+        this.resetAnnotations();
+    }
+    
 };
 
 /**
