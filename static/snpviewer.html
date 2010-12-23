@@ -555,7 +555,14 @@
                     if ( ! layer ) {
                         continue;
                     }
-                    layer.href='javascript:MASCP.get_data("'+acc_name+'")';
+                    (function() {
+                        var tempname = acc_name;
+                        layer.href = function() {
+                            snpreader.showSnp(MASCP.renderer,tempname);
+                            MASCP.renderer.refresh();
+                        };
+                    })();
+                    //'javascript:MASCP.get_data("'+acc_name+'")';
                 }
                 return;
             });

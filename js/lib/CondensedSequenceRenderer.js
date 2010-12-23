@@ -725,8 +725,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             a_anchor = canvas.a(track.href);
             var icon_name = null;
             var url_type = track.href;
-            if (url_type.match(/^javascript\:/)) {
+            if (typeof url_type == 'string' && url_type.match(/^javascript\:/)) {
                 icon_name = '#plus_icon';
+            } else if (typeof url_type == 'function') {
+                icon_name = '#plus_icon';
+                a_anchor.setAttribute('href','#');
+                a_anchor.removeAttribute('target');
+                a_anchor.addEventListener('click',function() {
+                    url_type.call();
+                    return false;
+                },false);
             } else {
                 icon_name = '#new_link_icon';
             }
@@ -2195,6 +2203,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addBoxOverlay = addBoxOverlayToElement;
     el.addToLayerWithLink = addElementToLayerWithLink;
     el.addAnnotation = addAnnotationToLayer;
+};
+
+MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
+    all_annotations = {};
 };
 
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {

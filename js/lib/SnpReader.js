@@ -35,9 +35,8 @@ MASCP.SnpReader.prototype.requestData = function()
 
 MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
     var diffs = this.result.getSnp(acc);
-
     if (diffs.length < 1) {
-        continue;
+        return;
     }
 
 
