@@ -738,7 +738,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             } else {
                 icon_name = '#new_link_icon';
             }
-            var a_use = canvas.use(icon_name,21.5*height,y-0.5*height,2.5*height,2.5*height);
+            if (track.icon) {
+                icon_name = track.icon;
+            }
+            var a_use = canvas.use(icon_name,0.5*height*text_scale,(y-0.5*height*text_scale),2.5*height*text_scale,2.5*height*text_scale);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
         }
@@ -762,16 +765,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         if (track._group_controller) {
             var expander = canvas.group();            
-
-            var circ = canvas.circle(1.5*height,y+0.5*height,1.3*height);
+            var circ = canvas.circle(1.5*height,0.5*height,1.3*height);
             circ.setAttribute('fill','#ffffff');
             circ.setAttribute('opacity','0.1');
             expander.push(circ);
 
-
-            var group_toggler = canvas.poly(''+1.1*height+','+(y-0.25*height)+' '+2.25*height+','+(y + 0.5*height)+' '+1.1*height+','+(y+1.25*height));//canvas.text(height,y+1.1*height, '▶');            
+            var group_toggler = canvas.poly(''+1.1*height+','+(-0.25*height)+' '+2.25*height+','+(0.5*height)+' '+1.1*height+','+(1.25*height));//canvas.text(height,y+1.1*height, '▶');
             if (track._isExpanded()) {
-                expander.setAttribute('transform','rotate(90,'+(1.5*height)+','+(y+0.5*height)+')');                
+                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');
+            } else {
+                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
             }
             group_toggler.setAttribute('height', 1.75*height);
             group_toggler.setAttribute('font-size',1.5*height);
@@ -786,9 +789,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 e.stopPropagation();
                 jQuery(track).trigger('longclick');
                 if (track._isExpanded()) {
-                    expander.setAttribute('transform','rotate(90,'+(1.5*height)+','+(y+0.5*height)+')');                
+                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');                
                 } else {
-                    expander.setAttribute('transform','');                    
+                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
                 }
             },false);
             label_group.push(expander);
@@ -1275,6 +1278,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             }
             for (var key in hash) {
                 for (var i = 0; i < an_array.length; i++) {
+                    if ( ! an_array[i]) {
+                        continue;
+                    }
                     var value = hash[key];
                     if (key == 'style' && an_array[i].hasAttribute('style')) {
                         var curr_style = an_array[i].getAttribute('style');
@@ -1878,6 +1884,25 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'fill'  : '#ffffff'            
         }));
 
+        var minus_icon = makeEl('svg',{
+            'width' : '100%',
+            'height': '100%',
+            'id'    : 'minus_icon',
+            'viewBox': '0 0 100 100',
+            'preserveAspectRatio' : 'xMinYMin meet'
+        });
+
+        defs.appendChild(minus_icon);
+
+        minus_icon.appendChild(makeEl('rect', {
+            'x' : '10',
+            'y' : '40',
+            'stroke-width' : '1',
+            'width' : '80',
+            'height': '20',
+            'stroke': '#ffffff',
+            'fill'  : '#ffffff'            
+        }));
 
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
@@ -2122,7 +2147,6 @@ var addElementToLayerWithLink = function(layerName,url,width) {
 var all_annotations = {};
 var default_annotation_height = 15;
 
-
 var addAnnotationToLayer = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
     
@@ -2209,6 +2233,31 @@ MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
     all_annotations = {};
 };
 
+MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(layerName) {
+    var canvas = this._canvas;
+    if ( ! canvas || typeof layerName == 'undefined') {
+        return;
+    }
+
+    for (var blob_id in all_annotations[layerName]) {
+        var blob = all_annotations[layerName][blob_id];
+        var container = this._layer_containers[layerName];
+        delete container[blob_id];
+        if (canvas.tracers && container.tracers) {
+            for (var i = 0; i < container.tracers.length; i++ ) {
+                var tracer = container.tracers[i];
+                tracer.parentNode.removeChild(tracer);
+                delete canvas.tracers[canvas.tracers.indexOf(tracer)];
+            }
+            container.tracers = canvas.set();
+        }
+        
+        blob.parentNode.removeChild(blob);
+        
+    }
+    all_annotations[layerName] = {};    
+};
+
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
     var canvas = this._canvas;
     var susp_id = canvas.suspendRedraw(10000);
@@ -2230,7 +2279,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     }
     for (var blob_idx in all_annotations[layerName]) {
         var a_blob = all_annotations[layerName][blob_idx];
-        var size_val = (a_blob._value / max_value)*(this._RS * height * 0.5);
+        var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 0.5);
         var curr_transform = a_blob.getAttribute('transform');
         var transform_shift = ((-315.0/1000.0)*size_val);
         var rotate_shift = (1.0/3.0)*size_val;
@@ -2515,17 +2564,23 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
         return;
     }
     
+
     if (layer && layer._group_controller) {
+        layer._setunexpanded();
         return;
     }
     
     layer._group_controller = true;
     layer._group_under_control = group;
     
-    var expanded = false;
     var sticky = false;
+    var expanded = false;
     
     var self = this;
+    
+    layer._setunexpanded = function() {
+        expanded = false;
+    }
     
     layer._isExpanded = function() {
         return expanded;
