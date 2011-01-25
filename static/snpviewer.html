@@ -33,12 +33,13 @@
     <script type="text/javascript" src="js/lib/RippdbReader.js"></script>
     <script type="text/javascript" src="js/lib/PpdbReader.js"></script>
     <script type="text/javascript" src="js/lib/TairReader.js"></script>
+    <script type="text/javascript" src="js/lib/SnpReader.js"></script>    
     
 
     <script type="text/javascript" src="js/lib/gomap.js"></script>
     <script type="text/javascript" src="js/lib/SequenceRenderer.js"></script>
-    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script>
- -->
+    <script type="text/javascript" src="js/lib/CondensedSequenceRenderer.js"></script> -->
+
 
 
     <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/jquery-1.4.1.js"></script>
@@ -134,11 +135,11 @@
             width: 150px;
         }
         
-        ::-webkit-scrollbar {
+        ::-webkit-scrollbar:horizontal {
         	height: 6px;
         }
 
-        ::-webkit-scrollbar-track-piece {
+        ::-webkit-scrollbar-track-piece:horizontal {
         	background-color: #ffffff;
         	border-radius: 3px;
         	margin-left: 10px;        	
@@ -401,8 +402,8 @@
 <div style="position: absolute; top: 10px; left: 10px; width: 25%; display: none;">
     <h1 style="position: absolute; left: 0px; top: 0px; margin: 0px; width: 100%; font-size: 10px; "><span>MASCP AggreGATOR SNP viewer</span><img style="height: 50px; top: 50%; left: -7px; position: absolute;" src="gator.png" /></h1>
 </div>
+<a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(img/snplogo.png); background-repeat: no-repeat;" href="http://snp.jbei.org/" title="SNP viewer"></a>
 
-<a style="display: block; position: absolute; top: 10px; left: 10px; width: 90px; height: 68px; background-image: url(http://www.masc-proteomics.org/mascp/skins/common/images/mascp_logo.png);" href="http://www.masc-proteomics.org/" title="MASC Proteomics portal"></a>
 <div id="agi_input" class="rounded_box" style="">
     <label class="inset" for="agi">AGI </label><input size="12" id="agi" type="text" name="agi" value="at3g15450.1"/><input type="button" value="Retrieve"/>
 </div>
@@ -557,8 +558,17 @@
                     }
                     (function() {
                         var tempname = acc_name;
+                        var visible = false;
                         layer.href = function() {
-                            snpreader.showSnp(MASCP.renderer,tempname);
+                            visible = ! visible;
+                            if (visible) {
+                                MASCP.getLayer('all_'+tempname).icon = '#minus_icon';
+                                snpreader.showSnp(MASCP.renderer,tempname);
+                            } else {
+                                MASCP.getLayer('all_'+tempname).icon = '#plus_icon';
+                                MASCP.renderer.removeAnnotations('all_'+tempname);
+                                MASCP.renderer.redrawAnnotations();
+                            }
                             MASCP.renderer.refresh();
                         };
                     })();
@@ -616,7 +626,7 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        var reader = new MASCP.TairReader(agi);
+        var reader = new MASCP.TairReader(agi,'../tair.pl');
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();

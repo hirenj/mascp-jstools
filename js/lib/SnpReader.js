@@ -97,7 +97,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
             var outs = [];
 
             renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'all_insertions' });
-
+            MASCP.getLayer(in_layer).icon = null;
 
             for (var i = 0; i < diffs.length; i++ ){
                 outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
@@ -106,7 +106,11 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
 
             for (var i = 0; i < ins.length; i++ ) {
 //                renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
-                renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
+                var pos = ins[i].insertBefore - 1;
+                if (pos > renderer.sequence.length) {
+                    pos = renderer.sequence.length;
+                }
+                renderer.getAA(pos).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
             }
         
 //             for (var i = 0; i < outs.length; i++) {
