@@ -535,7 +535,7 @@
             
             MASCP.renderer.reset();
 
-            snpreader = new MASCP.SnpReader(null,'../snps.pl');
+            snpreader = new MASCP.SnpReader(null,'./snps.pl');
             
             snpreader.agi = agi;
             
@@ -626,7 +626,7 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        var reader = new MASCP.TairReader(agi,'../tair.pl');
+        var reader = new MASCP.TairReader(agi,'./tair.pl');
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();
