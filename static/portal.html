@@ -554,7 +554,6 @@
             MASCP.renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('condensed_container'));
             MASCP.renderer.grow_container = true;
             
-//            jQuery('#sequence_control_con').append(zoom_controls);
             var dragger = new GOMap.Diagram.Dragger();
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
@@ -1029,6 +1028,16 @@
                 } else {
                     keyword_func.apply();
                 }
+                
+                // Do the selection just for atproteome at the moment
+                // while bugs are ironed out
+                MASCP.getGroup('atproteome').eachLayer(function() {
+                    jQuery(this).bind('click',function(e,oe,start,finish) {
+                        MASCP.renderer.select(start,finish);
+                        e.stopPropagation();
+                    });
+                });
+                
                 jQuery(MASCP.renderer).unbind('resultsRendered',arguments.callee);
             });
 

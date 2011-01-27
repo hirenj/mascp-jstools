@@ -752,11 +752,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             a_anchor.appendChild(a_use);
         }
         
-        label_group.addEventListener('click',function(e) {
-            jQuery(track).trigger('click');
-            return true;
-        },false);
-
         label_group.addEventListener('touchstart',function() {
             label_group.onmouseover = undefined;
             label_group.onmouseout = undefined;
@@ -793,7 +788,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             expander.style.cursor = 'pointer';
             expander.addEventListener('click',function(e) {
                 e.stopPropagation();
-                jQuery(track).trigger('longclick');
+                jQuery(track).trigger('_expandevent');
                 if (track._isExpanded()) {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');                
                 } else {
@@ -1385,56 +1380,18 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         
         an_array._old_push = an_array.push;
         an_array._event_proxy = new Object();
-        
-        var click_func = function(ev) {
-            var target_el = this;
-            
-            if (target_el._consume_click) {
-                target_el._consume_click = false;
-                return;
-            }
-            
-            if (target_el._first_click) {
-                window.clearTimeout(target_el._first_click);
-                target_el._first_click = null;
-                jQuery(an_array._event_proxy).trigger('dblclick',[ev]);
-                return;
-            }
-            
-            target_el._first_click = window.setTimeout(function() {
-                target_el._first_click = null;
-                jQuery(an_array._event_proxy).trigger('click',[ev]);
-            },250);
-            
-            return;            
-        };
-        
+
         var event_func = function(ev) {
             var target_el = this;
-            
             if (canvas._in_anim) {
                 return;
             }
-            
-            if ((ev.type != 'mousemove' && ev.type != 'touchmove') && target_el._longclick) {
-                window.clearTimeout(target_el._longclick);
-                target_el._longclick = null;
-            }
-
-            if (ev.type == 'mousedown' || (ev.type == 'touchstart' && ev.touches.length == 1)) {
-                target_el._longclick = window.setTimeout(function() {
-                    target_el._longclick = null;
-                    jQuery(an_array._event_proxy).trigger('longclick',[ev]);
-                    target_el._consume_click = true;
-                },500);
-            }
-
-            jQuery(an_array._event_proxy).trigger(ev.type,[ev]);
+            jQuery(an_array._event_proxy).trigger(ev.type,[ev,target_el]);
         };
         
         an_array.push = function(new_el) {
             this._old_push(new_el);
-                        
+
             if ( ! new_el || typeof new_el == 'undefined' ) {
                 return;
             }
@@ -1442,16 +1399,15 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 return;
             }
             if ( ! MASCP.IE ) {
-            var event_names = ['mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
-            for (var i = 0 ; i < event_names.length; i++) {
-               jQuery(new_el).bind(event_names[i], event_func);
-            }
-            jQuery(new_el).bind('click',click_func,false);
-            if (new_el.addEventListener) {
-                new_el.addEventListener('touchstart',event_func,false);
-                new_el.addEventListener('touchmove',event_func,false);
-                new_el.addEventListener('touchend',event_func,false);
-            }
+                var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
+                for (var i = 0 ; i < event_names.length; i++) {
+                    jQuery(new_el).bind(event_names[i], event_func);
+                }
+                if (new_el.addEventListener) {
+                    new_el.addEventListener('touchstart',event_func,false);
+                    new_el.addEventListener('touchmove',event_func,false);
+                    new_el.addEventListener('touchend',event_func,false);
+                }
             }
             new_el._has_proxy = true;
         };
@@ -1460,7 +1416,11 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     
     canvas.text = function(x,y,text) {
         var a_text = document.createElementNS(svgns,'text');
-        a_text.textContent = text;
+        if (typeof text != 'string') {
+            a_text.appendChild(text);
+        } else {
+            a_text.textContent = text;
+        }
         a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
         a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
         a_text.setAttribute('y',typeof y == 'string' ? y : y * RS);        
@@ -1475,6 +1435,14 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var RS = this._RS;
     var seq_chars = this.sequence.split('');
     var renderer = this;
+    var aa_selection = document.createElement('div');
+    // We need to prepend an extra > to the sequence since there is a bug with Safari failing
+    // to select reliably when you set the start offset for the range to 0
+    aa_selection.appendChild(document.createTextNode(">"+this.sequence));
+    renderer._container.appendChild(aa_temp);
+    aa_selection.style.height = '0px';
+    aa_selection.style.overflow = 'hidden';
+    
     var amino_acids = canvas.set();
     var amino_acids_shown = false;
     var x = 0;
@@ -1489,8 +1457,20 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         has_textLength = false;
     }
     
+    renderer.select = function(from,to) {
+        var sel = window.getSelection();
+        if(sel.rangeCount > 0) sel.removeAllRanges();
+        var range = document.createRange();
+        range.selectNodeContents(aa_temp.childNodes[0]);
+        sel.addRange(range);
+        sel.removeAllRanges();
+        range.setStart(aa_selection.childNodes[0],from+1);
+        range.setEnd(aa_selection.childNodes[0],to+1);
+        sel.addRange(range);
+    };
+
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-        var a_text = canvas.text(0,12,this.sequence);
+        var a_text = canvas.text(0,12,document.createTextNode(this.sequence));
         a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('textLength',RS*this.sequence.length);
@@ -2103,6 +2083,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     rect.setAttribute('display', 'none');
     rect.style.opacity = fraction;
     rect.setAttribute('fill',MASCP.layers[layerName].color);
+    rect.position_start = this._index;
+    rect.position_end = this._index + width;
     rect.setAttribute('pointer-events','none');
     
 /*
@@ -2398,10 +2380,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
             }
             renderer.refresh();
         });
-        var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','longclick','mouseup','mouseenter','mouseleave'];
+        var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
-            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event) {
-                jQuery(layer).trigger(ev.type,[original_event]);
+            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event,element) {
+                jQuery(layer).trigger(ev.type,[original_event,element.position_start,element.position_end]);
             });
         }
     }
@@ -2598,7 +2580,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
             self.refresh();
         }
     });
-    jQuery(layer).bind('longclick',function(ev) {
+    jQuery(layer).bind('_expandevent',function(ev) {
         expanded = ! expanded;
         self.withoutRefresh(function() {
             self.setGroupVisibility(group,expanded);            
