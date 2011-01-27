@@ -1087,6 +1087,7 @@
                 document._screen.hide();
                 return;
             }
+            window.location.hash = agi;
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         }).bind('error',function() {
