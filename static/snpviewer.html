@@ -535,7 +535,7 @@
             
             MASCP.renderer.reset();
 
-            snpreader = new MASCP.SnpReader(null,'../snps.pl');
+            snpreader = new MASCP.SnpReader(null,'./snps.pl');
             
             snpreader.agi = agi;
             
@@ -570,6 +570,7 @@
                                 MASCP.renderer.redrawAnnotations();
                             }
                             MASCP.renderer.refresh();
+                            return false;
                         };
                     })();
                     //'javascript:MASCP.get_data("'+acc_name+'")';
@@ -626,7 +627,7 @@
             MASCP.renderer.hideLayer(layername);
         }
         
-        var reader = new MASCP.TairReader(agi,'../tair.pl');
+        var reader = new MASCP.TairReader(agi,'./tair.pl');
         jQuery(reader).bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();
@@ -634,6 +635,7 @@
             }
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
+            window.location.hash = agi;            
         }).bind('error',function() {
             document._screen.hide();            
         });
