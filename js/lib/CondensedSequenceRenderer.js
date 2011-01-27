@@ -731,8 +731,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 icon_name = '#plus_icon';
                 a_anchor.setAttribute('href','#');
                 a_anchor.removeAttribute('target');
-                a_anchor.addEventListener('click',function() {
+                a_anchor.addEventListener('click',function(e) {
                     url_type.call();
+
+                    if (e.preventDefault) e.preventDefault();
+                    else e.returnResult = false;
+                    if (e.stopPropagation) e.stopPropagation();
+                    else e.cancelBubble = true;
+
                     return false;
                 },false);
             } else {

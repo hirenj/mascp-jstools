@@ -570,6 +570,7 @@
                                 MASCP.renderer.redrawAnnotations();
                             }
                             MASCP.renderer.refresh();
+                            return false;
                         };
                     })();
                     //'javascript:MASCP.get_data("'+acc_name+'")';
@@ -634,6 +635,7 @@
             }
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
+            window.location.hash = agi;            
         }).bind('error',function() {
             document._screen.hide();            
         });
