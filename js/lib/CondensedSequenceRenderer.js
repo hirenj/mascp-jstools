@@ -1439,7 +1439,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     // We need to prepend an extra > to the sequence since there is a bug with Safari failing
     // to select reliably when you set the start offset for the range to 0
     aa_selection.appendChild(document.createTextNode(">"+this.sequence));
-    renderer._container.appendChild(aa_temp);
+    renderer._container.appendChild(aa_selection);
     aa_selection.style.height = '0px';
     aa_selection.style.overflow = 'hidden';
     
@@ -1512,7 +1512,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
            amino_acids.attr({'y': 12*RS});
            amino_acids_shown = true;
        } else {
-           renderer._axis_height = 36;
+           renderer._axis_height = 30;
            amino_acids.attr({'y':-1000});   
            amino_acids_shown = false;        
        }
@@ -1526,11 +1526,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     
     
     var axis = canvas.set();
-    axis.push(canvas.path('M0 '+10*RS+' l0 '+20*RS));
+    axis.push(canvas.path('M0 '+15*RS+' l0 '+10*RS));
 
-    axis.push(canvas.path('M'+(lineLength*RS)+' '+10*RS+' l0 '+20*RS));
+    axis.push(canvas.path('M'+(lineLength*RS)+' '+14*RS+' l0 '+10*RS));
 
-    this._axis_height = 30;
+    this._axis_height = 20;
 
     axis.attr({'pointer-events' : 'none'});
 
@@ -1543,9 +1543,9 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     for (var i = 0; i < (lineLength/5); i++ ) {
 
         if ( (x % 10) == 0) {
-            big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+12*RS));
+            big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
         } else {
-            little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+8*RS));
+            little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
         }
 
         if ( (x % 20) == 0 && x != 0) {
