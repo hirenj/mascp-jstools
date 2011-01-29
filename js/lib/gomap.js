@@ -82,6 +82,8 @@ GOMap.Diagram = function(image,params) {
     }
     this._highlighted = {};
     this._styles_cache = {};
+    this.enabled = true;
+    
     var url = null;
     if (typeof image == 'string') {
         url = image;
@@ -854,7 +856,8 @@ GOMap.Diagram.Dragger = function() {
  */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
-
+    self.enabled = true;
+    
     var momentum = null;
 
     if (targetElement.nodeName == 'svg') {
@@ -1013,6 +1016,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     }
 
     var svgMouseDown = function(evt) {
+      if ( ! self.enabled ) {
+          return true;
+      }
+
       var targ = self.targetElement ? self.targetElement : targetElement;
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -1050,7 +1057,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
           evObj.initEvent('panstart',false,true);
           targ.dispatchEvent(evObj);
       }      
-      
+
     };
     
     var mousePosition = function(evt) {
@@ -1101,10 +1108,18 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
     
     var svgMouseMove = function(evt) {
+        if (!self.enabled) {
+            this.style.cursor = 'pointer';
+            return true;
+        }
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
         if (!self.dragging) {
             return;
         }
+        doMouseMove.call(this,evt);
+    };
+
+    var doMouseMove = function(evt) {        
         var positions = mousePosition(evt);
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
 
@@ -1113,21 +1128,27 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
 
-        var p = targetElement.createSVGPoint();
+        
+        var p = targetElement._cachedpoint || targetElement.createSVGPoint();
+        targetElement._cachedpoint = p;
+        
         var positions = mousePosition(evt);
 
         p.x = positions[0];
         p.y = positions[1];
 
-        var rootCTM = targetElement.getScreenCTM();
+        var rootCTM = targetElement._cachedrctm || targetElement.getScreenCTM();
+        targetElement._cachedrctm = rootCTM;
+        
         p = p.matrixTransform(self.matrix);
-        
         targetElement.shiftPosition(p.x,p.y);
-        momentum = p.x;
-        
+        momentum = p.x;        
     };
 
     var mouseUp = function(evt) { 
+      if ( ! self.enabled ) {
+          return true;
+      }
       self.oX = 0;
       self.oY = 0;
       self.dX = null;
@@ -1145,8 +1166,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
 
     var mouseOut = function(e) {
-        if (!self.dragging) {
-            return;
+        if (!self.dragging || ! self.enabled) {
+            return true;
         }
         if (this == self.targetElement) {
             mouseUp(e);
@@ -1270,6 +1291,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     },false);
     
     var momentum_func = function(e) {
+        if ( ! self.enabled ) {
+            return true;
+        }
         if ( ! self.dragging ) {
             mouseUp(e);
             return;
