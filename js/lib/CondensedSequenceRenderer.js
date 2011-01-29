@@ -226,7 +226,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
 
         renderer._canvas.setCurrentTranslateXY = function(x,y) {
-                group.setAttribute('transform','translate('+x+', '+y+')');            
+                group.setAttribute('transform','translate('+x+', '+y+')');
                 this.currentTranslate.x = x;
                 this.currentTranslate.y = y;
         };
@@ -1440,7 +1440,8 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     // to select reliably when you set the start offset for the range to 0
     aa_selection.appendChild(document.createTextNode(">"+this.sequence));
     renderer._container.appendChild(aa_selection);
-    aa_selection.style.height = '0px';
+    aa_selection.style.top = '110%';
+    aa_selection.style.height = '1px';
     aa_selection.style.overflow = 'hidden';
     
     var amino_acids = canvas.set();
@@ -1461,12 +1462,13 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         var sel = window.getSelection();
         if(sel.rangeCount > 0) sel.removeAllRanges();
         var range = document.createRange();
-        range.selectNodeContents(aa_temp.childNodes[0]);
+        range.selectNodeContents(aa_selection.childNodes[0]);
         sel.addRange(range);
         sel.removeAllRanges();
         range.setStart(aa_selection.childNodes[0],from+1);
         range.setEnd(aa_selection.childNodes[0],to+1);
         sel.addRange(range);
+        this.moveHighlight(from,to);
     };
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
@@ -1889,7 +1891,10 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'stroke': '#ffffff',
             'fill'  : '#ffffff'            
         }));
-
+        var highlight = canv.rect(0,0,0,'100%');
+        highlight.setAttribute('fill','#eeeeee');
+        renderer._highlight = highlight;
+        
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
         
@@ -2085,7 +2090,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.position_start = this._index;
     rect.position_end = this._index + width;
-    rect.setAttribute('pointer-events','none');
+//    rect.setAttribute('pointer-events','none');
     
 /*
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
@@ -2119,7 +2124,9 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.setAttribute('display', 'none');
     rect.setAttribute('class',layerName);
-    rect.setAttribute('pointer-events','none');
+
+    // BIG POTENTIAL PERFORMANCE HIT HERE?
+//    rect.setAttribute('pointer-events','none');
     
 /*
     var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
@@ -2412,6 +2419,15 @@ MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
         var layer_container = this._layer_containers[layer];
         layer_container.attr({'style' : style});
     }
+};
+
+
+MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function(from,to) {
+    var RS = this._RS;
+    var highlight = this._highlight;
+    highlight.setAttribute('x',from * RS );
+    highlight.setAttribute('width',(to - from) * RS );
+    
 };
 
 /**

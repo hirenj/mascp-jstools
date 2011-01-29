@@ -382,6 +382,15 @@
             width: 100%;
         }
         
+        #condensed_container *::selection {
+            color: #ffffff;
+            background: #ffffff;
+        }
+        #condensed_container *::-moz-selection {
+            color: #ffffff;
+            background: #ffffff;            
+        }
+        
         /*
         #controls {
             font-size: 30pt;
@@ -451,6 +460,8 @@
     <div id="sequence_container" style="font-family: monospace;">
     </div>
 </div>
+
+<input type="button" value="Panning" id="clicker"/>
 
 <div style="position: relative;">
     <div id="suba" class="rounded_box">
@@ -555,6 +566,14 @@
             MASCP.renderer.grow_container = true;
             
             var dragger = new GOMap.Diagram.Dragger();
+            jQuery("#clicker").bind('click',function() {
+                dragger.enabled = ! dragger.enabled;
+                if (dragger.enabled) {
+                    this.value = "Panning";
+                } else {
+                    this.value = "Selecting";
+                }
+            })
             MASCP.renderer.zoom = 0.81;
             MASCP.renderer.padding = 10;
 
