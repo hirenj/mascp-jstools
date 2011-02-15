@@ -300,7 +300,7 @@ MASCP.Service.prototype.retrieve = function()
     }
     request_data = jQuery.extend({
     async:      this.async,
-    url:        this._endpointURL,
+    url:        request_data['url'] || this._endpointURL,
     timeout:    5000,
     error:      function(response,req,settings) {
                     jQuery(self).trigger("error");
