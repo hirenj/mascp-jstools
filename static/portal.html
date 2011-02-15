@@ -428,6 +428,7 @@
         <li id="ppdb_placeholder"><input type="checkbox"/> PPDB</li>
         <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
         <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
+        <li id="atchloro_experimental"><input type="checkbox"> AtChloro</li>
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
         <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>        
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
@@ -632,6 +633,8 @@
                 MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome_placeholder input')[0],true);
             }
             
+            MASCP.renderer.createLayerCheckbox('atchloro_experimental', jQuery('#atchloro_experimental input')[0],true);
+            
             MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0],true);            
             
             var tweak_track_order = function(array) {
@@ -717,6 +720,9 @@
             if (MASCP.getLayer('prippdb_experimental') && ! MASCP.getLayer('prippdb_experimental').disabled ) {
                 MASCP.renderer.showLayer('prippdb_experimental');
             }
+
+            MASCP.renderer.showLayer('atchloro_experimental');
+            jQuery('#atchloro_experimental input').attr('checked',true);
             
             MASCP.renderer.showLayer('promex_controller');
             jQuery('#promex_placeholder input').attr('checked',true);
@@ -729,6 +735,8 @@
 
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy input').attr('checked',true);
+            
+            
 
         });
         jQuery(MASCP.renderer).bind('sequenceChange',function() {
@@ -954,6 +962,20 @@
             });
 
 
+            var atchloro = new MASCP.AtChloroReader(agi);
+            atchloro.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(atchloro);
+            all_readers.push(atchloro);
+            
+            atchloro.bind('resultReceived',function() {
+                if (this.result.getPeptides().length > 0) {
+                    jQuery('#atchloro_experimental').show();
+                }
+            });
+            jQuery('#atchloro_experimental').hide();
+
+
             jQuery('#links').text('');
             jQuery('#links').append('<ul></ul>');
             jQuery(all_readers).each(function(i) {
@@ -979,7 +1001,10 @@
                         break;
                         case MASCP.AtPeptideReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">AtPeptide</a></li>');
-                        break;                        
+                        break;
+                        case MASCP.AtChloroReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://www.grenoble.prabi.fr/at_chloro/">AT_CHLORO</a></li>');
+                        break;
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
                 });
@@ -1007,6 +1032,9 @@
                         break;
                         case MASCP.AtPeptideReader:
                         jQuery('#links ul').append('<li><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">AtPeptide</a></li>');
+                        break;
+                        case MASCP.AtChloroReader:
+                        jQuery('#links ul').append('<li><a href="http://www.grenoble.prabi.fr/at_chloro/">AT_CHLORO</a></li>');
                         break;
                     }
                 });
