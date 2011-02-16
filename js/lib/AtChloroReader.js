@@ -11,7 +11,6 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.AtChloroReader = MASCP.buildService(function(data) {
-                        console.log(data);
                         this._raw_data = data;                        
                         return this;
                     });
