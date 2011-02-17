@@ -85,6 +85,7 @@ MASCP.AtChloroReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var peps = this.result.getPeptides();
         if (peps.length > 0) {
             MASCP.registerLayer('atchloro_experimental',{ 'fullname' : 'AT_CHLORO MS/MS', 'color' : '#55ff33', 'css' : css_block });
+            MASCP.getLayer('atchloro_experimental').href = 'http://prabi2.inrialpes.fr/test_at_chloro/protein/'+reader.agi;
         }
         for(var i = 0; i < peps.length; i++) {
             var peptide = peps[i].sequence;
