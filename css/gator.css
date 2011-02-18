@@ -172,14 +172,45 @@ h1, h2 {
     }
 
     #agi_input {
+        -moz-transition: all 0.5s ease-in;
         -webkit-transition: all 0.5s ease-in;
-        -webkit-transform: none;
     }
 
     #agi_input.first_run {
         position: absolute;
         top: 50%;
         left: 50%;
+        z-index: 6000;
+        width: 500px;
+        height: 300px;
+        margin-left: -250px;
+        margin-top: -150px;
+        border: solid #888888 10px;
+    }
+    
+    #agi_input.first_run .inset {
+        width: 80px;
+        height: 60px;
+        font-size: 45px;
+        -moz-border-radius: 0px 0px 5px 0px;
+        border-bottom-right-radius: 5px;
+        border-top-left-radius: 0px;
+    }
+    
+    #agi_input.first_run a {
+        display: none;
+    }
+    
+    #agi_input.first_run input[type='text'] {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -250px;
+        margin-top: -75px;
+        width: 496px;
+        height: 150px;
+        font-size: 75px;
+        z-index: -1;
     }
     
     .track {
