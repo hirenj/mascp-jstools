@@ -381,6 +381,7 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     var start = this.sequence.indexOf(peptideSequence);
     var results = [];
     if (start < 0) {
+        results.addToLayer = function() {};        
         return results;
     }
     for (var i = 0; i < peptideSequence.length; i++) {
