@@ -679,9 +679,11 @@ MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
  */
 MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement,exclusive) {
     var renderer = this;
+
     if (! MASCP.layers[layer]) {
         return;
     }
+
 
     var layerObj = null;
     
@@ -694,6 +696,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     if ( ! layerObj ) {
         return;
     }
+    
     
     
     var the_input = inputElement || jQuery('<input type="checkbox" value="true"/>')[0];
