@@ -70,6 +70,15 @@ MASCP.buildService = function(dataExtractor)
     });
 
     clazz.Result.prototype = MASCP.extend(clazz.Result.prototype,dataExtractor.apply({},[]));
+    
+    clazz.toString = function() {
+        for (var serv in MASCP) {
+            if (this == MASCP[serv]) {
+                return "MASCP."+serv;
+            }
+        }
+    };
+    
     return clazz;
 };
 

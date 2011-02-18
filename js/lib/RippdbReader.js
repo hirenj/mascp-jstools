@@ -71,7 +71,6 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     var css_block = '.active .overlay { background: #666666; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
     
     this.bind('resultReceived', function() {
-                
         var specs = this.result.getSpectra();
 
         var overlay_name = 'prippdb_experimental';
