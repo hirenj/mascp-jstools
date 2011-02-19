@@ -16,7 +16,7 @@ MASCP.AtChloroReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.AtChloroReader.SERVICE_URL = 'http://prabi2.inrialpes.fr/test_at_chloro/annotation/';
+MASCP.AtChloroReader.SERVICE_URL = 'http://prabi2.inrialpes.fr/at_chloro/annotation/';
 
 MASCP.AtChloroReader.prototype.requestData = function()
 {
@@ -86,6 +86,7 @@ MASCP.AtChloroReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var peps = this.result.getPeptides();
         if (peps.length > 0) {
             MASCP.registerLayer('atchloro_experimental',{ 'fullname' : 'AT_CHLORO MS/MS', 'color' : '#55ff33', 'css' : css_block });
+            MASCP.getLayer('atchloro_experimental').href = 'http://prabi2.inrialpes.fr/at_chloro/protein/'+reader.agi.toUpperCase();
         }
         for(var i = 0; i < peps.length; i++) {
             var peptide = peps[i].sequence;
