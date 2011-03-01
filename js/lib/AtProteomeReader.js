@@ -52,7 +52,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
 };
 
 
-MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-atproteome.unizh.ch/mascpv3.php';
+MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-pep2pro.uzh.ch/mascp_gator.php';
 
 /**
  * @class   Container class for results from the AtProteome service
@@ -211,13 +211,13 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
 
     var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtProteome MS/MS', 'color' : '#000099', 'css' : css_block });
+    MASCP.registerLayer(overlay_name,{ 'fullname' : 'Pep2Pro MS/MS', 'color' : '#000099', 'css' : css_block });
 
 
     var an_agi = this.result.agi;
     var a_locus = an_agi.replace(/\.\d/,'');
 
-    MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
+    MASCP.getLayer('atproteome_controller').href = 'http://fgcz-pep2pro.uzh.ch/locus.php?'+a_locus;
     while (index <= positions.length) {
         if ( ! index > 0 ) {
             index += 1;
