@@ -427,7 +427,7 @@
     <!--    <li id="phosphat_theoretical"><input type="checkbox"/> PhosPhAT theoretical</li>-->
         <li id="promex_placeholder"><input type="checkbox"/> ProMeX</li>
         <li id="ppdb_placeholder"><input type="checkbox"/> PPDB</li>
-        <li id="atproteome_placeholder"><input type="checkbox"/> ATProteome</li>
+        <li id="atproteome_placeholder"><input type="checkbox"/> Pep2Pro</li>
         <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
         <li id="atchloro_experimental"><input type="checkbox"> AtChloro</li>
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
@@ -1017,7 +1017,7 @@
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">SUBA</a></li>')
                         break;
                         case MASCP.AtProteomeReader:
-                        jQuery('#links ul').append('<li><a href="http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus+'">AtProteome</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://fgcz-pep2pro.uzh.ch/locus.php?'+a_locus+'">Pep2Pro</a></li>');
                         break;
                         case MASCP.PhosphatReader:
                         jQuery('#links ul').append('<li><a href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi+'">PhosPhAt</a></li>');
