@@ -63,12 +63,15 @@ MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
     
 };
 
+MASCP.SnpReader.ALL_ACCESSIONS = ["AGU","BAK2","BAY","BUR0","CDM0","COL0","DEL10","DOG4","DON0","EY152","FEI0","HKT24","ICE1","ICE102","ICE104","ICE106","ICE107","ICE111","ICE112","ICE119","ICE120","ICE127","ICE130","ICE134","ICE138","ICE150","ICE152","ICE153","ICE163","ICE169","ICE173","ICE181","ICE21","ICE212","ICE213","ICE216","ICE226","ICE228","ICE29","ICE33","ICE36","ICE49","ICE50","ICE60","ICE61","ICE63","ICE7","ICE70","ICE71","ICE72","ICE73","ICE75","ICE79","ICE91","ICE92","ICE93","ICE97","ICE98","ISTISU1","KASTEL1","KOCH1","KRO0","LAG22","LEO1","LER1","LERIK13","MER6","NEMRUT1","NIE12","PED0","PRA6","QUI0","RI0","RUE3131","SHA","STAR8","TUESB303","TUESCHA9","TUEV13","TUEWA12","VASH1","VIE0","WALHAESB4","XAN1"];
+
+
 MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     
     this.bind('resultReceived', function() {
 
-        var accessions = reader.accession.split(',');
+        var accessions = reader.accession ? reader.accession.split(',') : MASCP.SnpReader.ALL_ACCESSIONS;
                 
         var a_result = reader.result;
 

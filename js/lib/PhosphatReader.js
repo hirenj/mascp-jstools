@@ -111,7 +111,7 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
     var exp_sites = {};
     for ( var site_idx in this._raw_experimental_data.result ) {
         var site = this._raw_experimental_data.result[site_idx];
-        var pep_seq = site['pep_sequence'];
+        var pep_seq = site['pep_sequence'] || '';
         pep_seq = pep_seq.replace(/[^A-Z]/g,'');
         if (site['modificationType'] != 'phos') {
             continue;
@@ -137,7 +137,7 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = functi
     for ( var site_idx in this._raw_experimental_data.result ) {
         var site = this._raw_experimental_data.result[site_idx];
 
-        var pep_seq = site['pep_sequence'];
+        var pep_seq = site['pep_sequence'] || '';
         pep_seq = pep_seq.replace(/[^A-Z]/g,'');
         
         if (site['modificationType'] != 'phos') {
