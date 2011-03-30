@@ -910,7 +910,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             }
             if (p.x > viewBoxScale * min_x) {
                 targetElement._snapback = setTimeout(function() {
-                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 1 ) {
+                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 35 ) {
                         var new_pos = 0.95*(targetElement.currentTranslate.x - (viewBoxScale * min_x));
                         if (new_pos < (viewBoxScale * min_x)) {
                             new_pos = (viewBoxScale * min_x);
@@ -948,7 +948,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
             if (p.x < 0 && Math.abs(p.x) > min_val) {
                 targetElement._snapback = setTimeout(function() {
-                    if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 1 ) {
+                    if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 35 ) {
                         var new_pos = 0.95*(targetElement.currentTranslate.x);
                         if (new_pos > (-1*min_val)) {
                             new_pos = -1*min_val;
@@ -1230,27 +1230,29 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     },false);
 
 
-    document.addEventListener('touchmove',function(e) {
-        if ( ! self.dragging ) {
-            return;
-        }
-        self.oX = 0;
-        self.oY = 0;
-        self.dX = null;
-        self.dY = null;
-        self.dragging = false;
-
-        var targ = self.targetElement ? self.targetElement : targetElement;      
-
-        if (document.createEvent) {
-            var evObj = document.createEvent('Events');
-            evObj.initEvent('panend',false,true);
-            targ.dispatchEvent(evObj);
-        }      
-    },false);
+    // document.addEventListener('touchmove',function(e) {
+    //     console.log('touchmove for the document');
+    //     console.log(self.dragging);
+    //     if ( ! self.dragging ) {
+    //         return;
+    //     }
+    //     console.log("Ending the drag for document move");
+    //     self.oX = 0;
+    //     self.oY = 0;
+    //     self.dX = null;
+    //     self.dY = null;
+    //     self.dragging = false;
+    // 
+    //     var targ = self.targetElement ? self.targetElement : targetElement;      
+    // 
+    //     if (document.createEvent) {
+    //         var evObj = document.createEvent('Events');
+    //         evObj.initEvent('panend',false,true);
+    //         targ.dispatchEvent(evObj);
+    //     }      
+    // },false);
 
     targetElement.addEventListener('touchmove',function(e) {
-
         if (e.touches.length != 1) {
             self.dragging = false;
         }
