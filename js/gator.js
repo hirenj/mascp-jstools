@@ -179,7 +179,7 @@ jQuery(document).ready(function() {
                     array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
                     MASCP.renderer.showLayer('prippdb_experimental');
                 }
-            
+                MASCP.renderer.showLayer('insertions');
             }
             return array;
         };

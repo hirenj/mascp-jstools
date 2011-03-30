@@ -199,5 +199,14 @@ var READER_CONF = (function() {
                             },
         'layers'        : ['atproteome'],
         'placeholder'   : true
+    },
+    MASCP.SnpReader, {
+        'definition'    : MASCP.SnpReader,
+        'nicename'      : 'Snps',
+        'url'           : './snps.pl',
+        'result'        : function() {
+            MASCP.renderer.showLayer('insertions');
+        },
+        'layers'        : ['insertions']
     }
 );

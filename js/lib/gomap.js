@@ -42,6 +42,19 @@ log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function()
 } : log ;
 
 
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+return  window.requestAnimationFrame       || 
+        window.webkitRequestAnimationFrame || 
+        window.mozRequestAnimationFrame    || 
+        window.oRequestAnimationFrame      || 
+        window.msRequestAnimationFrame     || 
+        function(/* function */ callback, /* DOMElement */ element){
+          window.setTimeout(callback, 1000 / 60);
+        };
+})();
+
+
 if ( typeof GOMap == 'undefined' ) {
     /**
      *  @namespace GOMap namespace
@@ -917,7 +930,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                         }
                         
                         targetElement.setCurrentTranslateXY( new_pos, 0);
-                        targetElement._snapback = setTimeout(arguments.callee,10);
+                        window.requestAnimFrame(arguments.callee, targetElement);
+//                        targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
                             evObj.initEvent('panstart',false,true);
@@ -954,7 +968,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                             new_pos = -1*min_val;
                         }
                         targetElement.setCurrentTranslateXY( new_pos, 0);
-                        targetElement._snapback = setTimeout(arguments.callee,10);
+                        window.requestAnimFrame(arguments.callee, targetElement);
+//                        targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
                             var evObj = document.createEvent('Events');
                             evObj.initEvent('panstart',false,true);
@@ -1313,7 +1328,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             delta = delta * 0.5;
             
             if (Math.abs(start_delta / delta) < 10) {
-                window.setTimeout(arguments.callee,50);
+                window.requestAnimFrame(arguments.callee, targ);
+//                window.setTimeout(arguments.callee,50);
             } else {
                 self.momentum = null;
                 mouseUp(e);

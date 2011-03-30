@@ -1458,7 +1458,10 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         has_textLength = false;
     }
     
-    renderer.select = function(from,to) {
+    renderer.select = function() {
+        var vals = Array.prototype.slice.call(arguments);
+        var from = vals[0];
+        var to = vals[1];
         var sel = window.getSelection();
         if(sel.rangeCount > 0) sel.removeAllRanges();
         var range = document.createRange();
@@ -1468,7 +1471,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         range.setStart(aa_selection.childNodes[0],from+1);
         range.setEnd(aa_selection.childNodes[0],to+1);
         sel.addRange(range);
-        this.moveHighlight(from,to);
+        this.moveHighlight.apply(this,vals);
     };
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
@@ -1891,9 +1894,13 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'stroke': '#ffffff',
             'fill'  : '#ffffff'            
         }));
-        var highlight = canv.rect(0,0,0,'100%');
-        highlight.setAttribute('fill','#eeeeee');
-        renderer._highlight = highlight;
+        renderer._highlight = [];
+        renderer._createNewHighlight = function() {
+            var highlight = canv.rect(0,0,0,'100%');
+            highlight.setAttribute('fill','#eeeeee');
+            this._highlight.push(highlight);
+        };
+        renderer._createNewHighlight();
         
         renderer._drawAxis(canv,line_length);
         renderer._drawAminoAcids(canv);
@@ -2422,11 +2429,28 @@ MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
 };
 
 
-MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function(from,to) {
+MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
+    var vals = Array.prototype.slice.call(arguments);
     var RS = this._RS;
-    var highlight = this._highlight;
-    highlight.setAttribute('x',from * RS );
-    highlight.setAttribute('width',(to - from) * RS );
+    var idx = 0;
+    for (var i = 0; i < vals.length; i+= 2) {
+        var from = vals[i];
+        var to = vals[i+1];
+        var highlight = this._highlight[idx];
+        if ( ! highlight ) {
+            this._createNewHighlight();
+            highlight = this._highlight[idx];
+        }
+        
+        highlight.setAttribute('x',(from) * RS );
+        highlight.setAttribute('width',(to - from) * RS );
+        highlight.style.display = 'block';
+        idx += 1;
+    }
+    for (var i = idx; i < this._highlight.length; i++){
+        this._highlight[i].style.display = 'none';        
+    }
+
     
 };
 
