@@ -1030,6 +1030,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         }
     }
 
+    var stationary;
+
     var svgMouseDown = function(evt) {
       if ( ! self.enabled ) {
           return true;
@@ -1131,6 +1133,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (!self.dragging) {
             return;
         }
+
+        if (stationary) {
+            clearTimeout(stationary);
+            stationary = null;
+        }
+        
+        stationary = window.setTimeout(function() {
+            self.dragging = false;
+        },200);        
+        
         doMouseMove.call(this,evt);
     };
 
@@ -1271,6 +1283,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (e.touches.length != 1) {
             self.dragging = false;
         }
+
+        if (stationary) {
+            clearTimeout(stationary);
+            stationary = null;
+        }
+        
+        stationary = window.setTimeout(function() {
+            self.dragging = false;
+        },450);
+
 
         var targ = self.targetElement ? self.targetElement : targetElement;
 
