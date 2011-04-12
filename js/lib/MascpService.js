@@ -28,6 +28,8 @@ if ( typeof MASCP == 'undefined' ) {
     MASCP = {};
 }
 
+window.MASCP = MASCP;
+
 if (document.write) {
     document.write('<!--[if IE 7]><script type="text/javascript">MASCP.IE = true; MASCP.IE7 = true; MASCP.IELTE7 = true;</script><![endif]-->');
     document.write('<!--[if IE 8]><script type="text/javascript">MASCP.IE = true; MASCP.IE8 = true; MASCP.IELTE8 = true;</script><![endif]-->');
@@ -312,7 +314,7 @@ MASCP.Service.prototype.retrieve = function()
     url:        request_data['url'] || this._endpointURL,
     timeout:    5000,
     error:      function(response,req,settings) {
-                    jQuery(self).trigger("error");
+                    jQuery(self).trigger("error",[response,req,settings]);
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
@@ -347,7 +349,7 @@ MASCP.Service.prototype.retrieve = function()
     if (jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
         this._retrieveIE(request_data);
         return this;
-    }    
+    }
     jQuery.ajax(request_data);
     return this;
 };
