@@ -35,6 +35,9 @@ MASCP.AccessionReader.prototype.requestData = function()
 };
 
 MASCP.AccessionReader.Result.prototype.getDeletions = function() {
+    /* This doesn't work any more */
+    return [];
+    
     var old_sequence = this.reader.reference;
 
     var new_sequence = this.getSequence();
