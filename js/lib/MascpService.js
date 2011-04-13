@@ -32,6 +32,8 @@ if ( typeof MASCP == 'undefined' ) {
 }
 
 if (typeof module != 'undefined' && module.exports){
+    var events = require('events');
+    MASCP.events = new events.EventEmitter();
     module.exports = MASCP;
     var jsdom = require('jsdom').jsdom,
         sys = require('sys'),
@@ -44,6 +46,7 @@ if (typeof module != 'undefined' && module.exports){
     var jQuery = null;
     jsdom.jQueryify(window, 'http://code.jquery.com/jquery-1.4.2.js', function (window, jquery) {
         window.jQuery = jquery;
+        MASCP.events.emit('ready');
     });
 } else {
     window.MASCP = MASCP;
