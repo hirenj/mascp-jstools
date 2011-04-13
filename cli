@@ -1,0 +1,8 @@
+#!/usr/bin/env node
+
+repl = require('repl');
+
+MASCP = require('./dist/js/maschup.services.min.js');
+MASCP.events.once('ready',function() {
+    repl.start("MASCP tools> ");
+});
