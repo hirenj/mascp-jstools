@@ -8,8 +8,8 @@
  *  @param  {Object}    message Message to log
  */
 
-if (typeof jQuery != 'undefined') {
-    jQuery.noConflict();
+if (typeof jQuery != 'undefined' && jQuery) {
+    window.jQuery.noConflict();
 }
 
 log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function() {} : function(msg) {    
@@ -21,19 +21,38 @@ log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function()
     return this;
 } : log ;
 
+
+
+
 if ( typeof MASCP == 'undefined' ) {
     /**
      *  @namespace MASCP namespace
      */
-    MASCP = {};
+    var MASCP = {};
 }
 
-window.MASCP = MASCP;
-
-if (document.write) {
-    document.write('<!--[if IE 7]><script type="text/javascript">MASCP.IE = true; MASCP.IE7 = true; MASCP.IELTE7 = true;</script><![endif]-->');
-    document.write('<!--[if IE 8]><script type="text/javascript">MASCP.IE = true; MASCP.IE8 = true; MASCP.IELTE8 = true;</script><![endif]-->');
+if (typeof module != 'undefined' && module.exports){
+    module.exports = MASCP;
+    var jsdom = require('jsdom').jsdom,
+        sys = require('sys'),
+        window = jsdom().createWindow(),
+        document = window.document;
+    window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+    
+    var svgns = 'http://ns';
+    var globals = this;
+    var jQuery = null;
+    jsdom.jQueryify(window, 'http://code.jquery.com/jquery-1.4.2.js', function (window, jquery) {
+        window.jQuery = jquery;
+    });
+} else {
+    window.MASCP = MASCP;
+    if (document.write) {
+        document.write('<!--[if IE 7]><script type="text/javascript">MASCP.IE = true; MASCP.IE7 = true; MASCP.IELTE7 = true;</script><![endif]-->');
+        document.write('<!--[if IE 8]><script type="text/javascript">MASCP.IE = true; MASCP.IE8 = true; MASCP.IELTE8 = true;</script><![endif]-->');
+    }
 }
+
 
 /** Build a data retrieval class that uses the given function to extract result data.
  *  @static
@@ -57,7 +76,7 @@ MASCP.buildService = function(dataExtractor)
 
     clazz.Result = function(data)
     {
-        jQuery.extend(this,dataExtractor.apply(this,[data]));
+        window.jQuery.extend(this,dataExtractor.apply(this,[data]));
     };
     
     
@@ -104,7 +123,7 @@ MASCP.lazyDataFetch = function(element,proxy)
     var an_agi = element.getAttribute("data-agi");
     
     /* There's nothing uglier than sticking HTML into JS */
-    var result_container = jQuery('\
+    var result_container = window.jQuery('\
         <div style="width: 100%; position: relative;">\
             <input type="button" value="Fetch" style="position: relative; top: 0px; height: 1.1em;" class="toggle"/>\
             <div style="width: 100%;" class="results">\
@@ -129,68 +148,68 @@ MASCP.lazyDataFetch = function(element,proxy)
         </div>\
         ');
     
-    var readers = jQuery([MASCP.SubaReader, MASCP.PromexReader, MASCP.PhosphatReader, MASCP.AtProteomeReader]).map(function(){
+    var readers = window.jQuery([MASCP.SubaReader, MASCP.PromexReader, MASCP.PhosphatReader, MASCP.AtProteomeReader]).map(function(){
         var clazz = this;
         var a_reader = new clazz(an_agi,proxy);
         return a_reader;
     });
 
-    jQuery('.results',result_container).each(function(i) {
-        jQuery(this).hide();
+    window.jQuery('.results',result_container).each(function(i) {
+        window.jQuery(this).hide();
     });
 
-    jQuery(element).append(result_container);
+    window.jQuery(element).append(result_container);
     
     
     var result_count = 0;
     
     
-    jQuery(readers).each(function(i) {
+    window.jQuery(readers).each(function(i) {
         var a_reader = this;
-       jQuery(this).bind('resultReceived',function() {
+       window.jQuery(this).bind('resultReceived',function() {
            result_count++;
-           jQuery('.results',result_container).each(function(i) {
+           window.jQuery('.results',result_container).each(function(i) {
                if (a_reader.result) {
                    if (a_reader instanceof MASCP.PromexReader || a_reader instanceof MASCP.AtProteomeReader) {
-                       jQuery('.mass_spec', this).css({'display': 'block'}).append(a_reader.result.render());
+                       window.jQuery('.mass_spec', this).css({'display': 'block'}).append(a_reader.result.render());
                    } else if (a_reader instanceof MASCP.PhosphatReader ) {
-                       jQuery('.ptm', this).css({'display': 'block'}).append(a_reader.result.render());
+                       window.jQuery('.ptm', this).css({'display': 'block'}).append(a_reader.result.render());
                    } else if (a_reader instanceof MASCP.SubaReader ) {
-                       jQuery('.localisation', this).css({'display':'block'}).append(a_reader.result.render());
+                       window.jQuery('.localisation', this).css({'display':'block'}).append(a_reader.result.render());
                    } else {
-                       jQuery(this).append(a_reader.result.render());
+                       window.jQuery(this).append(a_reader.result.render());
                    }
                }
            })
            if (result_count == readers.length) {
-               jQuery('.toggle',result_container).each(function(i) {                   
-                   jQuery(this).hide();
-                   jQuery('.results',result_container).each(function(i) {
-                       jQuery(this).slideDown();
-                       jQuery('#footer').css({'display':'none'});
+               window.jQuery('.toggle',result_container).each(function(i) {                   
+                   window.jQuery(this).hide();
+                   window.jQuery('.results',result_container).each(function(i) {
+                       window.jQuery(this).slideDown();
+                       window.jQuery('#footer').css({'display':'none'});
                    });
                });
            }
        });
        
-       jQuery(this).bind('error',function() {
+       window.jQuery(this).bind('error',function() {
            result_count++;
-           jQuery('.results', result_container).each(function(i) {
-               jQuery(this).append("<div>An error occurred retrieving the data for a service</div>");
+           window.jQuery('.results', result_container).each(function(i) {
+               window.jQuery(this).append("<div>An error occurred retrieving the data for a service</div>");
            });
        });       
     });
     
-    jQuery('.toggle',result_container).each(function(i) {
+    window.jQuery('.toggle',result_container).each(function(i) {
         var toggler = this;
-        jQuery(this).bind('click',function() {
+        window.jQuery(this).bind('click',function() {
             if (this.fetching) {
                 return;
             }
             result_count = 0;
             this.fetching = true;       
             this.value = "Fetching..";
-            jQuery(readers).each(function() {
+            window.jQuery(readers).each(function() {
                 this.retrieve();
             });
         });
@@ -248,7 +267,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         this.result = result;
     } else {
         var new_result = new clazz(data);
-        jQuery.extend( this.result, new_result );        
+        window.jQuery.extend( this.result, new_result );        
     }
     this.result.reader = this;
     this.result.agi = this.agi;
@@ -265,7 +284,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
 
 MASCP.Service.prototype.bind = function(type,func)
 {
-    jQuery(this).bind(type,func);
+    window.jQuery(this).bind(type,func);
     return this;
 };
 
@@ -279,7 +298,7 @@ MASCP.Service.prototype.bind = function(type,func)
  */
 MASCP.Service.prototype.unbind = function(type,func)
 {
-    jQuery(this).unbind(type,func);
+    window.jQuery(this).unbind(type,func);
     return this;    
 };
 
@@ -301,30 +320,48 @@ MASCP.Service.prototype.unbind = function(type,func)
  *  event is triggered when an error occurs. This method returns a reference to self
  *  so it can be chained.
  */
-MASCP.Service.prototype.retrieve = function()
+MASCP.Service.prototype.retrieve = function(agi,callback,err)
 {
     var self = this;
-
+    if (agi && callback) {
+        this.agi = agi;
+        self.removeEventListener = function() {};
+        var err_func = err ? (function() {
+            self.unbind("error");
+            err.call(self);
+            
+        }) : null;
+        var result_func = function() {
+            if (err_func) {
+                self.unbind("error");
+            }
+            callback.call(self);
+        };
+        window.jQuery(self).one("resultReceived",result_func);
+        if (err) {
+            window.jQuery(self).one("error",err_func);
+        }
+    }
     var request_data = this.requestData();
     if (! request_data ) {
         return this;
     }
-    request_data = jQuery.extend({
+    request_data = window.jQuery.extend({
     async:      this.async,
     url:        request_data['url'] || this._endpointURL,
     timeout:    5000,
     error:      function(response,req,settings) {
-                    jQuery(self).trigger("error",[response,req,settings]);
+                    window.jQuery(self).trigger("error",[response,req,settings]);
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
                     if ( xhr && xhr.status != null && xhr.status == 0 ) {
-                        jQuery(self).trigger("error");
+                        window.jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
                     self._dataReceived(data,status);
-                    jQuery(self).trigger("resultReceived");
-                    jQuery(MASCP.Service).trigger("resultReceived");
+                    window.jQuery(self).trigger("resultReceived");
+                    window.jQuery(MASCP.Service).trigger("resultReceived");
                 },
     /*  There is a really strange WebKit bug, where when you make a XDR request
         with the X-Requested-With header set, it caused the body to be returned
@@ -333,7 +370,7 @@ MASCP.Service.prototype.retrieve = function()
         Submitted a bug to the webkit people https://bugs.webkit.org/show_bug.cgi?id=36854
     */
     xhr:        function() {
-                    var xhr = jQuery.ajaxSettings.xhr();
+                    var xhr = window.jQuery.ajaxSettings.xhr();
                     if ( ! MASCP.IE ) {
                         var oldSetRequestHeader = xhr.setRequestHeader;
                         xhr.setRequestHeader = function(key,val) {
@@ -346,11 +383,11 @@ MASCP.Service.prototype.retrieve = function()
                 }, 
     },request_data);
     
-    if (jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
+    if (window.jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
         this._retrieveIE(request_data);
         return this;
     }
-    jQuery.ajax(request_data);
+    window.jQuery.ajax(request_data);
     return this;
 };
 
@@ -371,7 +408,7 @@ MASCP.Service.prototype._retrieveIE = function(dataHash)
     var loaded = false;
     var counter = 0;
     xdr.onerror = dataHash['error'];
-    xdr.open("GET",dataHash['url']+"?"+jQuery.param(dataHash['data']));
+    xdr.open("GET",dataHash['url']+"?"+window.jQuery.param(dataHash['data']));
     xdr.onload = function() {
         loaded = true;
         if (dataHash.dataType == 'xml') {
@@ -475,7 +512,7 @@ MASCP.Service.importNode = function(external_node)
     if ( document.importNode ) {
         return document.importNode(external_node,true);
     } else {
-        var new_data = jQuery('<div></div>');
+        var new_data = window.jQuery('<div></div>');
         new_data.innerHTML = external_node.xml;
         return new_data.firstChild;
     }    
@@ -495,7 +532,7 @@ MASCP.Service.Result.prototype = {
 
 
 MASCP.Service.Result.prototype.render = function() {
-    return jQuery('<span>Result received for '+this.agi+'</span>');
+    return window.jQuery('<span>Result received for '+this.agi+'</span>');
 };
 
 
@@ -545,8 +582,8 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
 
     if (self._in_call) {
         var self_func = arguments.callee;
-        jQuery(self).bind('resultReceived', function() {
-            jQuery(self).unbind('resultReceived',arguments.callee);
+        window.jQuery(self).bind('resultReceived', function() {
+            window.jQuery(self).unbind('resultReceived',arguments.callee);
             self_func.call(self,agi,opts);
         });
         return;
@@ -566,7 +603,7 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
                 opts['success'].call();
             }
             self._in_call = false;
-            jQuery(self).trigger('resultReceived');
+            window.jQuery(self).trigger('resultReceived');
         }
     };
     
@@ -592,15 +629,15 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
         }
 
         a_reader.bind('resultReceived',function() {
-            jQuery(this).trigger('_resultReceived');
-            jQuery(this).unbind('resultReceived');
+            window.jQuery(this).trigger('_resultReceived');
+            window.jQuery(this).unbind('resultReceived');
             result_count -= 1;
             trigger_done.call(this);
         });
         
         a_reader.bind('error',function() {
-            jQuery(this).trigger('_error');
-            jQuery(this).unbind('error');
+            window.jQuery(this).trigger('_error');
+            window.jQuery(this).unbind('error');
             result_count -= 1;
             trigger_done.call(this);
         });
