@@ -323,41 +323,50 @@ MASCP.Service.prototype.unbind = function(type,func)
  *  event is triggered when an error occurs. This method returns a reference to self
  *  so it can be chained.
  */
-MASCP.Service.prototype.retrieve = function(agi,callback,err)
+MASCP.Service.prototype.retrieve = function(agi,callback)
 {
     var self = this;
+
+    MASCP.Service._current_reqs = MASCP.Service._current_reqs || 0;
+    
+    if (MASCP.Service.MAX_REQUESTS) {
+        var my_func = arguments.callee;
+        if (MASCP.Service._current_reqs > MASCP.Service.MAX_REQUESTS) {
+            window.jQuery(MASCP.Service).one('resultReceived',function() {
+                my_func.call(self,agi,callback);
+            });
+            return this;
+        } else {
+        }
+    }
+
     if (agi && callback) {
         this.agi = agi;
         self.removeEventListener = function() {};
-        var err_func = err ? (function() {
-            self.unbind("error");
-            err.call(self);
-            
-        }) : null;
         var result_func = function() {
-            if (err_func) {
-                self.unbind("error");
-            }
             callback.call(self);
         };
         window.jQuery(self).one("resultReceived",result_func);
-        if (err) {
-            window.jQuery(self).one("error",err_func);
-        }
+        window.jQuery(self).one("error",function(resp,req,status) {
+            callback.call(self,status);
+        });
     }
     var request_data = this.requestData();
     if (! request_data ) {
         return this;
     }
+    
     request_data = window.jQuery.extend({
     async:      this.async,
     url:        request_data['url'] || this._endpointURL,
     timeout:    5000,
-    error:      function(response,req,settings) {
-                    window.jQuery(self).trigger("error",[response,req,settings]);
+    error:      function(response,req,status) {
+                    MASCP.Service._current_reqs -= 1;
+                    window.jQuery(self).trigger("error",[response,req,status]);
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
+                    MASCP.Service._current_reqs -= 1;
                     if ( xhr && xhr.status != null && xhr.status == 0 ) {
                         window.jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
@@ -386,6 +395,8 @@ MASCP.Service.prototype.retrieve = function(agi,callback,err)
                 }, 
     },request_data);
     
+    MASCP.Service._current_reqs += 1;
+
     if (window.jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
         this._retrieveIE(request_data);
         return this;
@@ -394,6 +405,102 @@ MASCP.Service.prototype.retrieve = function(agi,callback,err)
     return this;
 };
 
+(function() {
+
+    var get_db_data;
+    var store_db_data;
+
+    MASCP.Service.BeginCaching = function() {
+        var _oldRetrieve = MASCP.Service.prototype.retrieve;
+        MASCP.Service.prototype.retrieve = function(agi,cback) {
+            var self = this;
+            var id = agi ? agi : self.agi;
+            get_db_data(id,self.toString(),function(err,data) {
+                if (data) {
+                    console.log("Retrieved from DB");
+                    self._dataReceived(data,"db");
+                    window.jQuery(self).trigger("resultReceived");
+                    window.jQuery(MASCP.Service).trigger("resultReceived");
+                } else {
+                    console.log("Fresh retrieve");
+                    var old_received = self._dataReceived;
+                    self._dataReceived = function(data) {
+                        store_db_data(id,self.toString(),data || {});
+                        old_received.call(self,data);
+                    }
+                    _oldRetrieve.call(self,id,cback);                    
+                }             
+            });
+        }
+    };
+
+    var db;
+
+    if (typeof module != 'undefined' && module.exports) {
+        console.log("Starting sqlite");
+        var sqlite = require('sqlite');
+        db = new sqlite.Database();
+        db.open("cached.db",function() {});
+        console.log("Opened db");
+    } else {
+        try {
+            db = openDatabase("cached","0.1","Description",1000000);
+        } catch (err) {
+            console.log(err);
+            return;
+        }
+        db.execute = function(sql,args,callback) {
+            var self = this;
+            self.transaction(function(tx) {
+                tx.executeSql(sql,args,function(tx,result) {
+                    var res = [];
+                    for (var i = 0; i < result.rows.length; i++) {
+                        res.push(result.rows.item(i).data);
+                    }
+                    callback.call(db,null,res);
+                },function(tx,err) {
+                    callback.call(db,err);
+                });
+            });
+        };
+    }
+
+    db.execute("SELECT * from datacache",[],function(err,records) {
+        if (err && err.message != 'not an error') {
+            db.execute("CREATE TABLE datacache (agi,service,data)",[],function(error,rec) {
+                console.log("Creating table");
+            });
+        }
+    });
+    
+    
+    get_db_data = function(agi,service,cback) {
+        db.execute("SELECT data from datacache where agi=? and service=?",[agi,service],function(err,records) {
+            if (records && records.length > 0 && typeof records[0] != 'undefined') {
+                cback.call(null,null,typeof records[0] === 'string' ? JSON.parse(records[0]) : records[0]);
+            } else {
+                cback.call(null,null,null);
+            }
+        });
+    };
+
+    store_db_data = function(agi,service,data) {
+        if (typeof data != 'object') {
+            return;
+        }
+        var str_rep;
+        try {
+            str_rep = JSON.stringify(data);
+        } catch (err) {
+            return;
+        }
+        db.execute("INSERT INTO datacache(agi,service,data) VALUES(?,?,?)",[agi,service,str_rep],function(err,rows) {
+            if ( ! err ) {
+                console.log("Insertion");
+            }
+        });
+    };
+})();
 /**
  * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
  * parameters passed to the jQuery method, and builds an XDR object. There is no support for a locking
