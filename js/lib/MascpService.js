@@ -415,8 +415,17 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         MASCP.Service.prototype.retrieve = function(agi,cback) {
             var self = this;
             var id = agi ? agi : self.agi;
+            self.agi = id;
+            
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
+                    if (cback) {
+                        self.removeEventListener = function() {};
+                        var result_func = function() {
+                            cback.call(self);
+                        };
+                        window.jQuery(self).one("resultReceived",result_func);
+                    }
                     console.log("Retrieved from DB");
                     self._dataReceived(data,"db");
                     window.jQuery(self).trigger("resultReceived");
