@@ -8,7 +8,9 @@ jQuery(document).ready(function() {
             supportsXHR = true;
         }
     }
-            
+    
+    MASCP.Service.BeginCaching();
+    
     if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
         MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
         if (document.cookie.indexOf('iesplash') < 0) {
