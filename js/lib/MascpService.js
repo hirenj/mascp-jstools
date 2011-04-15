@@ -426,12 +426,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                         };
                         window.jQuery(self).one("resultReceived",result_func);
                     }
-                    console.log("Retrieved from DB");
                     self._dataReceived(data,"db");
                     window.jQuery(self).trigger("resultReceived");
                     window.jQuery(MASCP.Service).trigger("resultReceived");
                 } else {
-                    console.log("Fresh retrieve");
                     var old_received = self._dataReceived;
                     self._dataReceived = function(data) {
                         store_db_data(id,self.toString(),data || {});
@@ -464,7 +462,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 tx.executeSql(sql,args,function(tx,result) {
                     var res = [];
                     for (var i = 0; i < result.rows.length; i++) {
-                        res.push(result.rows.item(i).data);
+                        res.push(result.rows.item(i));
                     }
                     callback.call(db,null,res);
                 },function(tx,err) {
@@ -486,7 +484,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     get_db_data = function(agi,service,cback) {
         db.execute("SELECT data from datacache where agi=? and service=?",[agi,service],function(err,records) {
             if (records && records.length > 0 && typeof records[0] != 'undefined') {
-                cback.call(null,null,typeof records[0] === 'string' ? JSON.parse(records[0]) : records[0]);
+                cback.call(null,null,typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data);
             } else {
                 cback.call(null,null,null);
             }
