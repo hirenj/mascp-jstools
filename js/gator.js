@@ -267,9 +267,10 @@ jQuery(document).ready(function() {
 
             this.bind('resultReceived',function() {
                 var an_agi = this.result.agi;
-                var a_locus = an_agi.replace(/\.\d/,'');
+                var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
-                jQuery('#links ul').append('<li><a href="'+rdr.success_url+an_agi+'">'+rdr.nicename+'</a></li>');
+                var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
+                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a></li>');
             });
         
             this.retrieve();

@@ -111,7 +111,7 @@ var READER_CONF = (function() {
         'definition'    : MASCP.PromexReader,
         'nicename'      : 'ProMEX',
         'error_url'     : 'http://promex.pph.univie.ac.at/promex/',
-        'success_url'   : 'http://promex.pph.univie.ac.at/promex/index.php?subtext=',
+        'success_url'   : 'http://promex.pph.univie.ac.at/promex/?locus=true&ac=',
         'result'        : function() {
                             if (this.result.getPeptides().length > 0) {
                                 jQuery('#promex_placeholder').show();
