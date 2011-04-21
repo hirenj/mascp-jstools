@@ -1011,7 +1011,7 @@
                 });
                 this.bind('resultReceived',function() {
                     var an_agi = this.result.agi;
-                    var a_locus = an_agi.replace(/\.\d/,'');
+                    var a_locus = an_agi.replace(/\.\d+/,'');
                     switch(this.__class__) {
                         case MASCP.SubaReader:
                         jQuery('#links ul').append('<li><a href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.result.agi+'">SUBA</a></li>')
@@ -1029,7 +1029,7 @@
                         jQuery('#links ul').append('<li><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
                         break;
                         case MASCP.PromexReader:
-                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/index.php?subtext='+this.result.agi+'">ProMEX</a></li>');
+                        jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/?ac='+a_locus+'">ProMEX</a></li>');
                         break;
                         case MASCP.AtPeptideReader:
                         jQuery('#links ul').append('<li><a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html">AtPeptide</a></li>');
