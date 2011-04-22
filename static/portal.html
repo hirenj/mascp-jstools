@@ -431,7 +431,8 @@
         <li id="atpeptide_placeholder"><input type="checkbox"/> AtPeptide</li>
         <li id="atchloro_experimental"><input type="checkbox"> AtChloro</li>
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
-        <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>        
+        <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>
+        <li id="interpro_placeholder"><input type="checkbox"/> Interpro domains</li>
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
@@ -636,7 +637,15 @@
             
             MASCP.renderer.createLayerCheckbox('atchloro_experimental', jQuery('#atchloro_experimental input')[0],true);
             
+            if (MASCP.getGroup('interpro_domains').size() > 0) {
+                MASCP.renderer.createLayerCheckbox('interpro_controller',jQuery('#interpro_placeholder input')[0],true);      
+            } else {
+                MASCP.renderer.createGroupCheckbox('interpro_domains',jQuery('#interpro_placeholder input')[0],true);                
+            }
+            
+            
             MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0],true);            
+            
             
             var tweak_track_order = function(array) {
                 if (array.splice && array.indexOf) {
@@ -666,6 +675,11 @@
                     }
                     if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
                         array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
+                    }
+                    if (MASCP.getGroup('interpro_domains').size() > 0) {
+                        array.splice(array.indexOf('interpro_placeholder'),0,'interpro_controller','interpro_domains');
+                    } else {
+                        array.splice(array.indexOf('interpro_placeholder'),0,'interpro_domains');
                     }
                     
                 }
@@ -733,6 +747,9 @@
 
             MASCP.renderer.showLayer('ppdb_controller');
             jQuery('#ppdb_placeholder input').attr('checked',true);
+
+            MASCP.renderer.showLayer('interpro_controller');
+            jQuery('#interpro_placeholder input').attr('checked',true);
 
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy input').attr('checked',true);
@@ -976,6 +993,20 @@
             });
             jQuery('#atchloro_experimental').hide();
 
+            var interpro = new MASCP.InterproReader(agi);
+            interpro.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(interpro);
+            all_readers.push(interpro);
+            
+            interpro.bind('resultReceived',function() {
+
+                if (this.result.getDomains().length > 0) {
+                    jQuery('#interpro_placeholder').show();
+                }
+            });
+            jQuery('#interpro_placeholder').hide();
+
 
             jQuery('#links').text('');
             jQuery('#links').append('<ul></ul>');
@@ -1005,6 +1036,9 @@
                         break;
                         case MASCP.AtChloroReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://www.grenoble.prabi.fr/at_chloro/">AT_CHLORO</a></li>');
+                        break;
+                        case MASCP.InterproReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
                         break;
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
@@ -1036,6 +1070,9 @@
                         break;
                         case MASCP.AtChloroReader:
                         jQuery('#links ul').append('<li><a href="http://prabi2.inrialpes.fr/at_chloro/protein/'+this.result.agi.toUpperCase()+'">AT_CHLORO</a></li>');
+                        break;
+                        case MASCP.InterproReader:
+                        jQuery('#links ul').append('<li><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
                         break;
                     }
                 });
