@@ -120,6 +120,19 @@ var READER_CONF = (function() {
         'layers'        : ['promex_experimental'],
         'placeholder'   : true
     },
+    MASCP.InterproReader, { 
+        'definition'    : MASCP.InterpoReader,
+        'nicename'      : 'Interpro',
+        'error_url'     : 'http://www.ebi.ac.uk/interpro/',
+        'success_url'   : 'http://www.ebi.ac.uk/interpro/ISearch?mode=protein&query=',
+        'result'        : function() {
+                            if (this.result.getDomains().length > 0) {
+                                jQuery('#interpro_placeholder').show();
+                            }
+                        },
+        'layers'        : ['interpro_domains'],
+        'placeholder'   : true
+    },
     MASCP.PpdbReader, {
         'definition'    : MASCP.PpdbReader,
         'nicename'      : 'PPDB',
