@@ -59,7 +59,7 @@ foreach my $acc (@accessions) {
         $filename = $allowed_accessions->{uc($acc || '')} || '';
     }
 
-    if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d/) {
+    if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
         open TAIR, $filename;
         while (<TAIR>) {        
             if (/\["$agi/) { 
