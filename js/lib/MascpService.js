@@ -333,10 +333,11 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         var my_func = arguments.callee;
         if (MASCP.Service._current_reqs > MASCP.Service.MAX_REQUESTS) {
             window.jQuery(MASCP.Service).one('resultReceived',function() {
-                my_func.call(self,agi,callback);
+                setTimeout(function() {
+                    my_func.call(self,agi,callback);
+                },0);
             });
             return this;
-        } else {
         }
     }
 

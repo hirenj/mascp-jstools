@@ -2,6 +2,15 @@
 
 repl = require('repl');
 
+find_peptide = function(agi,seq) {
+    (new MASCP.TairReader()).retrieve(agi,function(err) {
+        if (err) {
+            return;
+        }
+        console.log(this.result.getSequence().indexOf(seq));
+    })
+}
+
 MASCP = require('./dist/js/maschup.services.min.js');
 MASCP.events.once('ready',function() {
     repl.start("MASCP tools> ");
