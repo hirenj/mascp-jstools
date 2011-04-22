@@ -1044,8 +1044,12 @@ var accessors = {
         return this._track_order;
     },
 
-    setTrackOrder: function(order) {
+    setTrackOrder: function(in_order) {
         var track_order = [];
+        var order = in_order;
+        if ( ! order instanceof Array ) {
+            order = [ in_order ];
+        }
         for (var i = 0; i < order.length; i++) {
             if (MASCP.getLayer(order[i])) {
                 track_order.push(order[i]);
@@ -1056,6 +1060,7 @@ var accessors = {
                 }
             }
         }
+
         this._track_order = track_order;
         if (this.refresh) {
             this.refresh();
