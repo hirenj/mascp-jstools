@@ -265,6 +265,14 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             rez.reader = this;
             this.result.push(rez);
         }
+        this.result.collect = function(callback) {
+            var results = this;
+            var result = [];
+            for (var i = 0; i < results.length; i++ ) {
+                result.push(callback.call(this,results[i]));
+            }
+            return result;
+        };
     } else if ( ! this.result ) {
         result = new clazz(data);
         this.result = result;

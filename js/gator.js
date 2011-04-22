@@ -152,22 +152,38 @@ jQuery(document).ready(function() {
             }
         }
 
-        var tweak_track_order = function(array) {
+        var tweak_track_order = function(array) {            
             if (array.splice && array.indexOf) {
+                if (array.indexOf('hydropathy') === -1) {
+                    array.push('hydropathy');
+                }
                 for (var rdr_id in READER_CONF) {
                     var rdr = READER_CONF[rdr_id];
                     if (! rdr.placeholder) {
+                        if (rdr.layers.length > 0) {
+                            if (array.indexOf(rdr.layers[0]) == -1) {
+                                for (var i = 0 ; i < rdr.layers.length; i++) {
+                                    MASCP.renderer.showLayer(rdr.layers[i]);
+                                    array.push(rdr.layers[i]);
+                                }
+                            }                            
+                        }
                         continue;
                     }
                     for (var i = 0; i < rdr.layers.length; i++) {
                         var lay = rdr.layers[i];
-                        var placeholder = lay.replace(/_experimental/,'') + '_placeholder';
-                        var controller = lay.replace(/_experimental/,'') + '_controller';
+                        var placeholder = lay.replace(/_.*$/,'') + '_placeholder';
+                        var controller = lay.replace(/_.*$/,'') + '_controller';
+                        
+                        if (array.indexOf(placeholder) === -1) {
+                            array.push(placeholder);
+                        }
+                        
                         if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
-                            array.splice(array.indexOf(placeholder),0,controller,lay);
+                            array.splice(array.indexOf(placeholder),1,controller,lay);
                             MASCP.renderer.showLayer(controller);
                         } else {
-                            array.splice(array.indexOf(placeholder),0,lay);                        
+                            array.splice(array.indexOf(placeholder),1,lay);                        
                             MASCP.renderer.showLayer(lay);
                         }
                     }
@@ -181,11 +197,10 @@ jQuery(document).ready(function() {
                     array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
                     MASCP.renderer.showLayer('prippdb_experimental');
                 }
-                MASCP.renderer.showLayer('insertions');
             }
             return array;
         };
-    
+        
         MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable({
             update: function(event, ui) {
                 if (MASCP.renderer.trackOrder) {
@@ -196,7 +211,6 @@ jQuery(document).ready(function() {
                 }
             },
         }).sortable('toArray'));
-
         if (MASCP.renderer.setTrackOrder) {
             MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
         }
@@ -243,7 +257,7 @@ jQuery(document).ready(function() {
                 for (var i = 0; i < rdr.layers.length; i++ ) {
                     var lay = rdr.layers[i];
                     var placeholder = lay+'';
-                    placeholder = placeholder.replace(/_experimental/,'') + '_placeholder';
+                    placeholder = placeholder.replace(/_(.*)$/,'') + '_placeholder';
                     jQuery('#'+placeholder).hide();
                 }
             } else {
