@@ -133,6 +133,8 @@
 		<copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
 		<copy file="rippdb.pl" tofile="dist/rippdb.pl"/>
 		<copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
+		<copy file="interpro.pl" tofile="dist/interpro.pl"/>
+		<copy file="interpro.json" tofile="dist/interpro.json"/>
 
 		<copy file="tair.pl" tofile="dist/tair.pl"/>		
 		<copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
