@@ -349,6 +349,8 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         }
     }
 
+    this.agi = agi;
+
     if (agi && callback) {
         this.agi = agi;
         self.removeEventListener = function() {};
@@ -420,10 +422,16 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     var store_db_data;
 
     MASCP.Service.BeginCaching = function() {
-        var _oldRetrieve = MASCP.Service.prototype.retrieve;
-        MASCP.Service.prototype.retrieve = function(agi,cback) {
+        MASCP.Service.CacheService(MASCP.Service.prototype);
+    };
+
+    MASCP.Service.CacheService = function(reader) {
+        var _oldRetrieve = reader.retrieve;
+        
+        reader.retrieve = function(agi,cback) {
             var self = this;
             var id = agi ? agi : self.agi;
+            id = id.toLowerCase();
             self.agi = id;
             
             get_db_data(id,self.toString(),function(err,data) {
@@ -443,11 +451,12 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                     self._dataReceived = function(data) {
                         store_db_data(id,self.toString(),data || {});
                         old_received.call(self,data);
+                        self._dataReceived = old_received;
                     }
                     _oldRetrieve.call(self,id,cback);                    
                 }             
             });
-        }
+        };
     };
 
     var db;
@@ -512,7 +521,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         }
         db.execute("INSERT INTO datacache(agi,service,data) VALUES(?,?,?)",[agi,service,str_rep],function(err,rows) {
             if ( ! err ) {
-                console.log("Insertion");
+                console.log("Caching result");
             }
         });
     };
