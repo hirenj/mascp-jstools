@@ -11,8 +11,6 @@ if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
     open RIPPDB, 'rippdb.txt';
     while (<RIPPDB>) {    
         if (/$agi/) {            
-            warn $_;
-            warn $agi;
             print $_;
         }
     }
