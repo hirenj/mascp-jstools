@@ -33,8 +33,11 @@ MASCP.InterproReader.prototype.requestData = function()
 
 (function() {
 var old_retrieve = MASCP.InterproReader.prototype.retrieve;
-MASCP.InterproReader.prototype.retrieve = function() {
+MASCP.InterproReader.prototype.retrieve = function(agi,func) {
     var self = this;
+    if ( ! this.agi ) {
+        this.agi = agi;
+    }
     var self_func = arguments.callee;
     var old_args = arguments;
     if ( ! this.sequence ) {
@@ -42,9 +45,10 @@ MASCP.InterproReader.prototype.retrieve = function() {
             self.sequence = this.result.getSequence();
             self_func.apply(self,old_args);
         }).retrieve();
-        return;
+        return this;
     }
     old_retrieve.apply(self,arguments);
+    return this;
 }
 })();
 
