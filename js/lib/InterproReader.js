@@ -114,8 +114,8 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
             for(var i = 0; i < peptides.length; i++ ) {
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptides[i]);
                 var layer_name = 'interpro_domain_'+domain;
-                peptide_bits.addToLayer(layer_name,peptide_bits.length);
-                peptide_bits.addToLayer(overlay_name,peptide_bits.length);
+                peptide_bits.addToLayer(layer_name);
+                peptide_bits.addToLayer(overlay_name);
             }
         }
         if (sequenceRenderer.createGroupController) {
