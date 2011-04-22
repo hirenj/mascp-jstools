@@ -12,7 +12,8 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.InterproReader = MASCP.buildService(function(data) {
-                        this._raw_data = data;                        
+                        
+                        this._raw_data = data instanceof Array ? data : [ data ];
                         return this;
                     });
 
@@ -78,7 +79,6 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
     
     var peptides_by_domain = {};
     var domain_descriptions = {};
-    
     for (var i = 0; i < this._raw_data.length; i++ ) {
         var peptides = peptides_by_domain[this._raw_data[i].interpro] || [];
         peptides.push(this.reader.sequence.substring(this._raw_data[i].start, this._raw_data[i].end));
@@ -105,19 +105,22 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var agi = this.agi;
         
         MASCP.getLayer('interpro_controller').href = '';
-        
-        var domains = this.result.getDomains();
-        for(domain in domains) {
+        var domains = this.result instanceof Array ? this.result.collect(function(res) { return res.getDomains(); }) : [ this.result.getDomains() ];
+        domains.forEach(function(dom) {
+            var domain = null;            
+            for (name in dom) {
+                domain = name;
+            }
             var lay = MASCP.registerLayer('interpro_domain_'+domain, { 'fullname': domain, 'group' : 'interpro_domains', 'color' : '#000000', 'css' : css_block });
             lay.href = "http://www.ebi.ac.uk/interpro/IEntry?ac="+domain;
-            var peptides = domains[domain];
+            var peptides = dom[domain];
             for(var i = 0; i < peptides.length; i++ ) {
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptides[i]);
                 var layer_name = 'interpro_domain_'+domain;
                 peptide_bits.addToLayer(layer_name);
                 peptide_bits.addToLayer(overlay_name);
             }
-        }
+        });
         if (sequenceRenderer.createGroupController) {
             sequenceRenderer.createGroupController('interpro_controller','interpro_domains');
         }

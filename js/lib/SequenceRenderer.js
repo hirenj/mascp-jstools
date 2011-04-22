@@ -101,7 +101,7 @@ MASCP.registerLayer = function(layerName, options)
     }
     if (this.layers[layerName]) {
         this.layers[layerName].disabled = false;
-        return;
+        return this.layers[layerName];
     }
     
     var layer = new MASCP.Layer();

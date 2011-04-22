@@ -2180,10 +2180,9 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         all_annotations[layerName] = {};
     }
     
-
     var blob_id = this._index+'_'+opts['angle'];
 
-    var blob_exists = typeof all_annotations[layerName][blob_id] != 'undefined';
+    var blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
 
     var height = default_annotation_height;
     var offset = this._renderer._RS * height / 2;
@@ -2263,11 +2262,10 @@ MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(layerName
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
     var canvas = this._canvas;
     var susp_id = canvas.suspendRedraw(10000);
-
+    
     var max_value = 0;
     var height = default_annotation_height;
     var offset = this._RS * height / 2;
-    
     for (var blob_idx in all_annotations[layerName]) {
         if ( all_annotations[layerName][blob_idx]._value > max_value ) {
             max_value = all_annotations[layerName][blob_idx]._value;
@@ -2692,7 +2690,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
             }
             container.tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height },animated);
         }
-
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
             container.attr({ 'display' : 'block','y' : (this._axis_height + (track_heights / this.zoom))*RS },animated);

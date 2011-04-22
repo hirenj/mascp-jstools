@@ -40,7 +40,7 @@ MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
     }
 
 
-    var in_layer = 'all_'+acc;
+    var in_layer = 'all'+acc;
 
     var ins = [];
     var outs = [];
@@ -70,19 +70,15 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     
     this.bind('resultReceived', function() {
-
-        var accessions = reader.accession ? reader.accession.split(',') : MASCP.SnpReader.ALL_ACCESSIONS;
-                
+        var accessions = (typeof reader.accession !== 'undefined') ? reader.accession.split(',') : [].concat(MASCP.SnpReader.ALL_ACCESSIONS);
         var a_result = reader.result;
 
-        MASCP.registerGroup('all_insertions');
-        MASCP.registerGroup('all_deletions');
-        renderer.registerLayer('insertions',{'fullname' : ' ','color' : '#ff0000'});
+        MASCP.registerGroup('insertions');
+        MASCP.registerGroup('deletions');
 
-        if (renderer.createGroupController) {
-            renderer.createGroupController('insertions','all_insertions');
-        }
         renderer._pause_rescale_of_annotations = true;
+        
+        var insertions_layer;
         
         while (accessions.length > 0) {
             var acc = accessions.shift();
@@ -93,36 +89,58 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
                 continue;
             }
 
-
-            var in_layer = 'all_'+acc;
+            var in_layer = 'all'+acc;
             
             var ins = [];
             var outs = [];
 
-            renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'all_insertions' });
+            var acc_layer = renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'insertions' });
+            (function() {
+                var visible = false;
+                var tempname = in_layer;
+                var this_acc = acc;
+                acc_layer.href = function() {
+                    visible = ! visible;
+                    if (visible) {
+                        MASCP.getLayer(tempname).icon = '#minus_icon';
+                        reader.showSnp(MASCP.renderer,this_acc);
+                    } else {
+                        MASCP.getLayer(tempname).icon = '#plus_icon';
+                        MASCP.renderer.removeAnnotations(tempname);
+                        MASCP.renderer.redrawAnnotations();
+                    }
+                    MASCP.renderer.refresh();
+                    return false;
+                };
+            })();
             MASCP.getLayer(in_layer).icon = null;
 
             for (var i = 0; i < diffs.length; i++ ){
                 outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
                 ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
             }
+            if ( ! insertions_layer ) {
+                insertions_layer = renderer.registerLayer('insertions_controller',{'fullname' : 'nsSNPs','color' : '#ff0000'});                
+            }
 
             for (var i = 0; i < ins.length; i++ ) {
-//                renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
                 var pos = ins[i].insertBefore - 1;
                 if (pos > renderer.sequence.length) {
                     pos = renderer.sequence.length;
                 }
-                renderer.getAA(pos).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
+                renderer.getAA(pos).addAnnotation('insertions_controller',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
             }
         
-//             for (var i = 0; i < outs.length; i++) {
-// //                renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
-//                 renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
-//             }
-            
         }
-        renderer.redrawAnnotations('insertions');
+        
+        if (MASCP.getGroup('insertions').size() > 0) {
+        
+            if (renderer.createGroupController) {
+                renderer.createGroupController('insertions_controller','insertions');
+            }
+        }
+        
+        renderer.redrawAnnotations('insertions_controller');
         renderer._pause_rescale_of_annotations = false;
         jQuery(renderer).trigger('resultsRendered',[reader]);
         

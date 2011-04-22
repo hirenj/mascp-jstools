@@ -121,14 +121,12 @@ var READER_CONF = (function() {
         'placeholder'   : true
     },
     MASCP.InterproReader, { 
-        'definition'    : MASCP.InterpoReader,
+        'definition'    : MASCP.InterproReader,
         'nicename'      : 'Interpro',
         'error_url'     : 'http://www.ebi.ac.uk/interpro/',
         'success_url'   : 'http://www.ebi.ac.uk/interpro/ISearch?mode=protein&query=',
         'result'        : function() {
-                            if (this.result.getDomains().length > 0) {
-                                jQuery('#interpro_placeholder').show();
-                            }
+                            jQuery('#interpro_placeholder').show();
                         },
         'layers'        : ['interpro_domains'],
         'placeholder'   : true
@@ -217,9 +215,8 @@ var READER_CONF = (function() {
         'definition'    : MASCP.SnpReader,
         'nicename'      : 'Snps',
         'url'           : './snps.pl',
-        'result'        : function() {
-            MASCP.renderer.showLayer('insertions');
+        'result'        : function() {            
         },
-        'layers'        : ['insertions']
+        'layers'        : ['insertions_controller','insertions']
     }
 );
