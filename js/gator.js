@@ -11,6 +11,19 @@ jQuery(document).ready(function() {
     
     MASCP.Service.BeginCaching();
     
+    filetojson('userdata','filetojson.rb', function(t) {
+    return true; },function(data) { 
+
+        var reader = new MASCP.UserdataReader();
+        MASCP.Service.CacheService(reader);
+        reader.setData('user',data);
+
+        var agi = jQuery('#agi')[0].value;
+        reader.registerSequenceRenderer(MASCP.renderer);
+        reader.retrieve(agi);
+        MASCP.renderer.showLayer('user');
+    });
+    
     if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
         MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
         if (document.cookie.indexOf('iesplash') < 0) {
@@ -280,7 +293,7 @@ jQuery(document).ready(function() {
             });
 
             this.bind('resultReceived',function() {
-                var an_agi = this.result.agi;
+                var an_agi = this.agi;
                 var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
                 var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;

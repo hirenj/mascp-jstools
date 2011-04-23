@@ -34,7 +34,6 @@ MASCP.PhosphatReader =  MASCP.buildService(function(data) {
                             if (data && data.request_method == 'getRelatives') {
                                 this._raw_relative_data = data;
                             }
-                            
                             return this;
                         });
 
@@ -62,6 +61,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
             data.request_method = method;
             self._dataReceived(data,status);
             if (self.result && self.result._raw_data && self.result._raw_experimental_data && self.result._raw_relative_data) {
+               self.result.agi = self.agi;
                jQuery(self).trigger('resultReceived'); 
             }
         }
@@ -70,14 +70,17 @@ MASCP.PhosphatReader.prototype.requestData = function()
 
 MASCP.PhosphatReader.prototype._single_retrieve = MASCP.PhosphatReader.prototype.retrieve;
 
-MASCP.PhosphatReader.prototype.retrieve = function()
+MASCP.PhosphatReader.prototype.retrieve = function(agi,cback)
 {
+    if (! this.agi ) {
+        this.agi = agi;
+    }
     this._method = null;
-    this._single_retrieve();
+    this._single_retrieve(agi,cback);
     this._method = 'getExperimentsModAa';
-    this._single_retrieve();
+    this._single_retrieve(agi);
     this._method = 'getRelatives';
-    this._single_retrieve();
+    this._single_retrieve(agi);
 };
 
 /**

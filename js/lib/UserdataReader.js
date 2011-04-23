@@ -42,25 +42,23 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
             var my_data = results.shift().data;
             MASCP.registerLayer(reader.datasetname,{'fullname' : reader.datasetname,'color' : '#00ff00'});
             var data_func = function(row) {
-                renderer.getAminoAcidsByPeptide(row).addToLayer('userdata');
+                renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
             };
-            if (my_data[0] && my_data[0] instanceof Array) {
+            if (my_data instanceof Array) {
                 data_func = function(row) {
                     var start = parseInt(row[0]);
                     var end = parseInt(row[1]);
                     renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);
                 };
-            } else if (my_data[0] === parseInt(my_data[0])) {
+            } else if (my_data === parseInt(my_data[0])) {
                 data_func = function(row) {
                     var pos = row;
                     renderer.getAA(pos).addAnnotation(reader.datasetname,1);
                 };
             }
-            for (var i = 0; i < my_data.length; i++ ) {
-                data_func.call(this,my_data[i]);
-            }
+            data_func.call(this,my_data);
         }
-        renderer.trackOrder = renderer.trackOrder;
+        renderer.trackOrder = renderer.trackOrder.concat([reader.datasetname]);
         renderer.showLayer(reader.datasetname);
         jQuery(renderer).trigger('resultsRendered',[reader]);        
         
@@ -87,7 +85,7 @@ var filter_agis = function(data_matrix,agi) {
         if ( ! agi ) {
             results.push(data_matrix[i][id_col].toLowerCase());
         }
-        if (agi && data_matrix[i][id_col].toLowerCase() === agi.toLowerCase()) {
+        if (agi && (data_matrix[i][id_col].toLowerCase() === agi.toLowerCase())) {
             results.push(data_matrix[i]);
         }
     }
@@ -142,6 +140,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     }
     this.data = data;
     var agis = filter_agis(data);
+    
     this._has_data = false;
     for (var i = 0; i < agis.length; i++ ) {
         this.retrieve(agis[i]);
@@ -154,7 +153,7 @@ MASCP.UserdataReader.prototype.retrieve = function(agi,cback) {
         this.agi = agi;
     }
     this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
-
+    
     if (this._has_data) {
         window.jQuery(this).trigger("resultReceived");
         window.jQuery(MASCP.Service).trigger("resultReceived");
