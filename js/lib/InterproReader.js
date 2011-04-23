@@ -40,15 +40,15 @@ MASCP.InterproReader.prototype.retrieve = function(agi,func) {
         this.agi = agi;
     }
     var self_func = arguments.callee;
-    var old_args = arguments;
+    var cback = func;
     if ( ! this.sequence ) {
         (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
             self.sequence = this.result.getSequence();
-            self_func.apply(self,old_args);
+            self_func.call(self,self.agi,cback);
         }).retrieve();
         return this;
     }
-    old_retrieve.apply(self,arguments);
+    old_retrieve.call(self,self.agi,cback);
     return this;
 }
 })();

@@ -348,8 +348,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             return this;
         }
     }
-
-    this.agi = agi;
+    if (agi) {
+        this.agi = agi;
+    }
 
     if (agi && callback) {
         this.agi = agi;
@@ -433,7 +434,6 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             var id = agi ? agi : self.agi;
             id = id.toLowerCase();
             self.agi = id;
-            
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
