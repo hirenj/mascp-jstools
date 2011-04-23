@@ -282,6 +282,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
     }
     this.result.reader = this;
     this.result.agi = this.agi;
+    return true;
 };
 
 /**
@@ -383,9 +384,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                         window.jQuery(self).trigger("error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
-                    self._dataReceived(data,status);
-                    window.jQuery(self).trigger("resultReceived");
-                    window.jQuery(MASCP.Service).trigger("resultReceived");
+                    if (self._dataReceived(data,status)) {
+                        window.jQuery(self).trigger("resultReceived");
+                        window.jQuery(MASCP.Service).trigger("resultReceived");
+                    }
                 },
     /*  There is a really strange WebKit bug, where when you make a XDR request
         with the X-Requested-With header set, it caused the body to be returned
@@ -443,19 +445,22 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                         };
                         window.jQuery(self).one("resultReceived",result_func);
                     }
-                    self._dataReceived(data,"db");
-                    window.jQuery(self).trigger("resultReceived");
-                    window.jQuery(MASCP.Service).trigger("resultReceived");
+                    if (self._dataReceived(data,"db")) {
+                        window.jQuery(self).trigger("resultReceived");
+                        window.jQuery(MASCP.Service).trigger("resultReceived");
+                    }
                 } else {
                     var old_received = self._dataReceived;
                     self._dataReceived = function(data) {
                         store_db_data(id,self.toString(),data || {});
-                        old_received.call(self,data);
+                        var res = old_received.call(self,data);
                         self._dataReceived = old_received;
+                        return res;
                     }
                     _oldRetrieve.call(self,id,cback);                    
                 }             
             });
+            return self;
         };
     };
 
