@@ -32,6 +32,13 @@ MASCP.UserdataReader.prototype.toString = function() {
 MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     reader.bind('resultReceived',function() {
+        if (this._has_data > 0) {
+            if ( ! this._waiting_results) {
+                this._waiting_results = [];
+            }
+            this._waiting_results.push(arguments.callee);
+            return;
+        }
         var results;
         if (! this.result instanceof Array) {
             results = [this.result];
@@ -40,6 +47,10 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         while(results.length > 0) {
             var my_data = results.shift().data;
+            console.log(my_data);
+            if ( ! my_data ) {
+                continue;
+            }
             MASCP.registerLayer(reader.datasetname,{'fullname' : reader.datasetname,'color' : '#00ff00'});
             var data_func = function(row) {
                 renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
@@ -133,6 +144,15 @@ var find_peptide_cols = function(data_matrix) {
     return results;
 };
 
+MASCP.UserdataReader.prototype._fire_waiting_results = function() {
+    if (this._waiting_results && this._waiting_results instanceof Array) {
+        this._waiting_results.forEach(function(res) {
+            res.call(this);
+        });
+        this._waiting_results = [];
+    }
+};
+
 MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.datasetname = name;
     if ( ! data ) {
@@ -140,20 +160,39 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     }
     this.data = data;
     var agis = filter_agis(data);
-    
-    this._has_data = false;
+    var self = this;
+    this._has_data = agis.length;
+    console.log("Setting data");
     for (var i = 0; i < agis.length; i++ ) {
-        this.retrieve(agis[i]);
+        this.retrieve(agis[i],function() {
+            self._has_data -= 1;
+            if (self._has_data == 0) {
+                self._fire_waiting_results();
+            }
+        });
     }
-    this._has_data = true;
+    console.log("Set data");
+    this.result = null;
 };
+
+// MASCP.UserdataReader.prototype._oldDataReceived = MASCP.UserdataReader.prototype._dataReceived;
+// 
+// MASCP.UserdataReader.prototype._dataReceived = function(data,status) {
+//     var res = this._oldDataReceived(data,status);
+//     console.log(res && this._has_data);
+//     return (res && (this._has_data == 0));
+// };
 
 MASCP.UserdataReader.prototype.retrieve = function(agi,cback) {
     if (agi) {
         this.agi = agi;
     }
-    this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
+    console.log("Real retrieve");
     
+    this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
+
+    console.log(this.result);
+
     if (this._has_data) {
         window.jQuery(this).trigger("resultReceived");
         window.jQuery(MASCP.Service).trigger("resultReceived");
