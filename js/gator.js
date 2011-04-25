@@ -16,12 +16,22 @@ jQuery(document).ready(function() {
 
         var reader = new MASCP.UserdataReader();
         MASCP.Service.CacheService(reader);
+        
+        var agi = jQuery('#agi')[0].value;
+
+        reader.bind('ready',function() {
+            reader.retrieve(agi);            
+        });
+        
         reader.setData('user',data);
 
-        var agi = jQuery('#agi')[0].value;
         reader.registerSequenceRenderer(MASCP.renderer);
-        reader.retrieve(agi);
-        MASCP.renderer.showLayer('user');
+        reader.bind('resultReceived',function() {
+            MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat(['user']);
+            MASCP.renderer.showLayer('user');
+        });
+        
+        
     });
     
     if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
