@@ -341,6 +341,14 @@ h1, h2 {
         background-position: left center;
     }
     
+    #links li span.timestamp {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        font-size: 8px;
+        color: #777777;
+    }
+    
     #links li a {
         position: relative;
         display: block;
