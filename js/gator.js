@@ -28,8 +28,6 @@ jQuery(document).ready(function() {
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
-            console.log("Setting track order");
-            console.log(this.result);
             MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
             MASCP.renderer.showLayer(datasetname);
         });
