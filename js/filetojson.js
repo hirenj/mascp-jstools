@@ -308,26 +308,26 @@ function filetojson(place, server, data_matcher,complete) {
     }
     
     // The inclusion of the event listeners (DragOver and drop)
-
-    this.uploadPlace =  document.getElementById(place);
-    if ( ! this.uploadPlace.addEventListener ) {        
-        this.uploadPlace.addEventListener = function(ev,fn) {
-            this.attachEvent("on"+ev,fn);
+    if (place && document.getElementById(place)) {
+        this.uploadPlace =  document.getElementById(place);
+        if ( ! this.uploadPlace.addEventListener ) {        
+            this.uploadPlace.addEventListener = function(ev,fn) {
+                this.attachEvent("on"+ev,fn);
+            }
         }
+        this.uploadPlace.addEventListener("dragover", function(event) {
+            if (event.stopPropagation) event.stopPropagation(); 
+            if (event.preventDefault) event.preventDefault();
+            return false;
+        }, true);
+        this.uploadPlace.addEventListener("dragenter", function(event) {
+            if (event.stopPropagation) event.stopPropagation(); 
+            if (event.preventDefault) event.preventDefault();
+            return false;
+        }, true);
+
+        this.uploadPlace.addEventListener("drop", this.drop, false); 
     }
-    this.uploadPlace.addEventListener("dragover", function(event) {
-        if (event.stopPropagation) event.stopPropagation(); 
-        if (event.preventDefault) event.preventDefault();
-        return false;
-    }, true);
-    this.uploadPlace.addEventListener("dragenter", function(event) {
-        if (event.stopPropagation) event.stopPropagation(); 
-        if (event.preventDefault) event.preventDefault();
-        return false;
-    }, true);
-
-    this.uploadPlace.addEventListener("drop", this.drop, false); 
-
 }
 
     
