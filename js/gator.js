@@ -312,7 +312,8 @@ jQuery(document).ready(function() {
                 var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
                 var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
-                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp">'+(this.result.retrieved || '')+'</span></li>');
+                var datestring = this.result.retrieved ? this.result.retrieved.toDateString() : 'Just now';
+                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp">'+datestring+'</span></li>');
             });
         
             this.retrieve();
