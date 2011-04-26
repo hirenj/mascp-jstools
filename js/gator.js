@@ -11,25 +11,30 @@ jQuery(document).ready(function() {
     
     MASCP.Service.BeginCaching();
     
-    filetojson('userdata','filetojson.rb', function(t) {
+    filetojson('user_data','filetojson.rb', function(t) {
     return true; },function(data) { 
 
         var reader = new MASCP.UserdataReader();
-        MASCP.Service.CacheService(reader);
+//        MASCP.Service.CacheService(reader);
         
         var agi = jQuery('#agi')[0].value;
 
         reader.bind('ready',function() {
-            reader.retrieve(agi);            
+            this.retrieve(agi);
         });
         
-        reader.setData('user',data);
+        var datasetname = document.getElementById('user_name').value || document.getElementById('user_name').getAttribute('placeholder');
+        
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
-            MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat(['user']);
-            MASCP.renderer.showLayer('user');
+            console.log("Setting track order");
+            console.log(this.result);
+            MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
+            MASCP.renderer.showLayer(datasetname);
         });
+
+        reader.setData(datasetname,data);
         
         
     });
@@ -114,7 +119,9 @@ jQuery(document).ready(function() {
             };
         }
         this.tagvis.visualisations[0].update(1);
-        jQuery('#tissue .rich_tagcloud').masonry({ 'itemSelector' : '.rich_tagcloud_tag', 'animate': true });
+        if (jQuery('#tissue .rich_tagcloud')[0]) {
+            jQuery('#tissue .rich_tagcloud').masonry({ 'itemSelector' : '.rich_tagcloud_tag', 'animate': true });
+        }
     };
 
     document.getElementById('tissue_results').updateKey = function(key,val) {
@@ -307,7 +314,7 @@ jQuery(document).ready(function() {
                 var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
                 var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
-                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a></li>');
+                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp">'+(this.result.retrieved || '')+'</span></li>');
             });
         
             this.retrieve();
