@@ -546,7 +546,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         get_db_data = function(agi,service,cback) {
             var data = localStorage[service.toString()+"."+(agi || '').toLowerCase()];
             if (data && typeof data === 'string') {
-                cback.call(null,null,JSON.parse(data));
+                var datablock = JSON.parse(data);
+                datablock.retrieved = new Date(datablock.retrieved);
+                cback.call(null,null,datablock);
             } else {
                 cback.call(null,null,null);
             }
@@ -554,7 +556,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         };
         
         store_db_data = function(agi,service,data) {
-            if (typeof data !== 'object' || data instanceof Document){
+            if (data && typeof data !== 'object' || data instanceof Document){
                 return;
             }
             data.retrieved = (new Date()).getTime();
