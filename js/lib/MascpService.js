@@ -263,6 +263,8 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         for (var i = 0; i < data.length; i++ ) {
             var rez = new clazz(data[i]);
             rez.reader = this;
+            rez.retrieved = data[i].retrieved;
+
             this.result.push(rez);
         }
         this.result.collect = function(callback) {
@@ -280,6 +282,11 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         var new_result = new clazz(data);
         window.jQuery.extend( this.result, new_result );        
     }
+
+    if (data.retrieved) {
+        this.result.retrieved = data.retrieved;
+    }
+
     this.result.reader = this;
     this.result.agi = this.agi;
     return true;
@@ -472,13 +479,14 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         db = new sqlite.Database();
         db.open("cached.db",function() {});
         console.log("Opened db");
-    } else {
+    } else if ("openDatabase" in window) {
         try {
-            db = openDatabase("cached","0.1","Description",1000000);
+            db = openDatabase("cached","","MASCP Gator cache",1024*1024);
         } catch (err) {
-            console.log(err);
+            throw err;
             return;
         }
+
         db.execute = function(sql,args,callback) {
             var self = this;
             self.transaction(function(tx) {
@@ -487,49 +495,76 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                     for (var i = 0; i < result.rows.length; i++) {
                         res.push(result.rows.item(i));
                     }
-                    callback.call(db,null,res);
+                    if (callback) {
+                        callback.call(db,null,res);
+                    }
                 },function(tx,err) {
-                    callback.call(db,err);
+                    if (callback) {
+                        callback.call(db,err);
+                    }
                 });
             });
         };
-    }
 
-    db.execute("SELECT * from datacache",[],function(err,records) {
-        if (err && err.message != 'not an error') {
-            db.execute("CREATE TABLE datacache (agi,service,data)",[],function(error,rec) {
-                console.log("Creating table");
+        if (db.version == "") {
+            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)");
+        }                
+    }
+        
+    if (typeof db != 'undefined') {
+        get_db_data = function(agi,service,cback) {
+            db.execute("SELECT * from datacache where agi=? and service=?",[agi,service],function(err,records) {
+                if (records && records.length > 0 && typeof records[0] != 'undefined') {
+                    var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
+                    if (data) {
+                        data.retrieved = new Date(records[0].retrieved);
+                    }
+                    cback.call(null,null,data);
+                } else {
+                    cback.call(null,null,null);
+                }
             });
-        }
-    });
-    
-    
-    get_db_data = function(agi,service,cback) {
-        db.execute("SELECT data from datacache where agi=? and service=?",[agi,service],function(err,records) {
-            if (records && records.length > 0 && typeof records[0] != 'undefined') {
-                cback.call(null,null,typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data);
+        };
+
+        store_db_data = function(agi,service,data) {
+            if (typeof data != 'object' || data instanceof Document) {
+                return;
+            }
+            var str_rep;
+            try {
+                str_rep = JSON.stringify(data);
+            } catch (err) {
+                return;
+            }
+            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,(new Date()).getTime(),str_rep],function(err,rows) {
+                if ( ! err ) {
+                    console.log("Caching result");
+                }
+            });
+        };
+    } else if ("localStorage" in window) {
+        get_db_data = function(agi,service,cback) {
+            var data = localStorage[service.toString()+"."+(agi || '').toLowerCase()];
+            if (data && typeof data === 'string') {
+                cback.call(null,null,JSON.parse(data));
             } else {
                 cback.call(null,null,null);
             }
-        });
-    };
-
-    store_db_data = function(agi,service,data) {
-        if (typeof data != 'object') {
-            return;
-        }
-        var str_rep;
-        try {
-            str_rep = JSON.stringify(data);
-        } catch (err) {
-            return;
-        }
-        db.execute("INSERT INTO datacache(agi,service,data) VALUES(?,?,?)",[agi,service,str_rep],function(err,rows) {
-            if ( ! err ) {
-                console.log("Caching result");
+            
+        };
+        
+        store_db_data = function(agi,service,data) {
+            if (typeof data !== 'object' || data instanceof Document){
+                return;
             }
-        });
-    };
+            data.retrieved = (new Date()).getTime();
+            localStorage[service.toString()+"."+(agi || '').toLowerCase()] = JSON.stringify(data);
+        };
+    }
+    
+    
+    
+
 })();
 /**
  * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
