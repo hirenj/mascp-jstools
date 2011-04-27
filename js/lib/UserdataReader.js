@@ -32,13 +32,6 @@ MASCP.UserdataReader.prototype.toString = function() {
 MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     reader.bind('resultReceived',function() {
-        if (this._has_data > 0) {
-            if ( ! this._waiting_results) {
-                this._waiting_results = [];
-            }
-            this._waiting_results.push(arguments.callee);
-            return;
-        }
         var results;
         if (! this.result instanceof Array) {
             results = [this.result];

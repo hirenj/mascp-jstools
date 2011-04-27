@@ -107,7 +107,7 @@ jQuery(document).ready(function() {
             refreshSets();
         });
         
-        var datasetname = document.getElementById('user_name').value || 'Dataset_'+(new Date()).toLocaleTimeString().replace(/ /g,'_');
+        var datasetname = document.getElementById('user_name').value || 'Dataset_'+(new Date()).toLocaleTimeString().replace(/[ :]/g,'_');
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
@@ -154,10 +154,14 @@ jQuery(document).ready(function() {
                 reader.registerSequenceRenderer(MASCP.renderer);
                 reader.datasetname = set;
                 reader.bind('resultReceived',function() {
+                    if (! this.result || this.result.length == 0 ) {
+                        return;
+                    }
                     if ( ! jQuery('#'+datasetname).length > 0) {
                         jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
                         jQuery('#'+datasetname).show();
                     }
+                    console.log(jQuery('#sequence_controllers'));
                     jQuery('#sequence_controllers').trigger('sortupdate');
                     MASCP.renderer.showLayer(datasetname);
                 });
@@ -455,7 +459,7 @@ jQuery(document).ready(function() {
                 var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
                 var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
-                var datestring = this.result.retrieved ? this.result.retrieved.toDateString() : 'Just now';
+                var datestring = (this.result.retrieved instanceof Date) ? this.result.retrieved.toDateString() : 'Just now';
                 jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp">'+datestring+'</span></li>');
             });
         
