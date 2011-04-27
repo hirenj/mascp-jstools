@@ -113,118 +113,6 @@ MASCP.extend = function(in_hsh,hsh) {
     return in_hsh;        
 };
 
-/**
- * Create a set of data readers that will populate data into the given element, using the given proxy as a
- * proxy URL
- * @static
- * @param {Element} element Element to place results in. Marked up with a data-agi attribute that contains the AGI to look up.
- * @returns Array of reader objects that will be used to read the data from the remote sources
- * @type Array
- */
-MASCP.lazyDataFetch = function(element,proxy)
-{
-    var an_agi = element.getAttribute("data-agi");
-    
-    /* There's nothing uglier than sticking HTML into JS */
-    var result_container = window.jQuery('\
-        <div style="width: 100%; position: relative;">\
-            <input type="button" value="Fetch" style="position: relative; top: 0px; height: 1.1em;" class="toggle"/>\
-            <div style="width: 100%;" class="results">\
-                <h3>Data Provided by the MASC Proteomics Subcommittee <a href="#"><img src="tair-at5g50600_files/questionmark.gif" alt="(?)" border="0" height="12" width="10"></a></h3>\
-                <div style="display: none;" class="mass_spec">\
-                    <h3>Spectral Data <a href="#"><img src="tair-at5g50600_files/questionmark.gif" alt="(?)" border="0" height="12" width="10"></a></h3>\
-                </div>\
-                <div style="display:none" class="ptm">\
-                    <h3>Post Translational Modifications <a href="#"><img src="tair-at5g50600_files/questionmark.gif" alt="(?)" border="0" height="12" width="10"></a></h3>\
-                    <div>Deamidation (NQ) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Hydroxylation (P) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Propionylation (C) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Formylation (N-term, STK) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Amino Acid substitution <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Acetylation (N-term) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">PPDB</a></div>\
-                    <div>Processing (N-term) <input type="checkbox" disabled="true"/> <a style="display: block; float: right;" href="#">mito/cpt</a></div>\
-                </div>\
-                <div style="display:none" class="localisation">\
-                    <h3>Subcellular Localization <a href="#"><img src="tair-at5g50600_files/questionmark.gif" alt="(?)" border="0" height="12" width="10"></a></h3>\
-                </div>\
-            </div>\
-        </div>\
-        ');
-    
-    var readers = window.jQuery([MASCP.SubaReader, MASCP.PromexReader, MASCP.PhosphatReader, MASCP.AtProteomeReader]).map(function(){
-        var clazz = this;
-        var a_reader = new clazz(an_agi,proxy);
-        return a_reader;
-    });
-
-    window.jQuery('.results',result_container).each(function(i) {
-        window.jQuery(this).hide();
-    });
-
-    window.jQuery(element).append(result_container);
-    
-    
-    var result_count = 0;
-    
-    
-    window.jQuery(readers).each(function(i) {
-        var a_reader = this;
-       window.jQuery(this).bind('resultReceived',function() {
-           result_count++;
-           window.jQuery('.results',result_container).each(function(i) {
-               if (a_reader.result) {
-                   if (a_reader instanceof MASCP.PromexReader || a_reader instanceof MASCP.AtProteomeReader) {
-                       window.jQuery('.mass_spec', this).css({'display': 'block'}).append(a_reader.result.render());
-                   } else if (a_reader instanceof MASCP.PhosphatReader ) {
-                       window.jQuery('.ptm', this).css({'display': 'block'}).append(a_reader.result.render());
-                   } else if (a_reader instanceof MASCP.SubaReader ) {
-                       window.jQuery('.localisation', this).css({'display':'block'}).append(a_reader.result.render());
-                   } else {
-                       window.jQuery(this).append(a_reader.result.render());
-                   }
-               }
-           })
-           if (result_count == readers.length) {
-               window.jQuery('.toggle',result_container).each(function(i) {                   
-                   window.jQuery(this).hide();
-                   window.jQuery('.results',result_container).each(function(i) {
-                       window.jQuery(this).slideDown();
-                       window.jQuery('#footer').css({'display':'none'});
-                   });
-               });
-           }
-       });
-       
-       window.jQuery(this).bind('error',function() {
-           result_count++;
-           window.jQuery('.results', result_container).each(function(i) {
-               window.jQuery(this).append("<div>An error occurred retrieving the data for a service</div>");
-           });
-       });       
-    });
-    
-    window.jQuery('.toggle',result_container).each(function(i) {
-        var toggler = this;
-        window.jQuery(this).bind('click',function() {
-            if (this.fetching) {
-                return;
-            }
-            result_count = 0;
-            this.fetching = true;       
-            this.value = "Fetching..";
-            window.jQuery(readers).each(function() {
-                this.retrieve();
-            });
-        });
-    });
-    
-    
-    return readers;
-    
-};
-
-
-
 /** Default constructor for Services
  *  @class      Super-class for all MASCP services to retrieve data from
  *              proteomic databases. Sub-classes of this class override methods
@@ -283,7 +171,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         window.jQuery.extend( this.result, new_result );        
     }
 
-    if (data.retrieved) {
+    if (data && data.retrieved) {
         this.result.retrieved = data.retrieved;
     }
 
@@ -428,8 +316,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
 
 (function() {
 
-    var get_db_data;
-    var store_db_data;
+    var get_db_data, store_db_data, search_service, clear_service;
 
     MASCP.Service.BeginCaching = function() {
         MASCP.Service.CacheService(MASCP.Service.prototype);
@@ -470,6 +357,18 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             return self;
         };
     };
+
+    MASCP.Service.FindCachedService = function(service,cback) {
+        var serviceString = service.toString();
+        search_service(serviceString,cback);
+        return true;
+    }
+
+    MASCP.Service.ClearCache = function(service) {
+        var serviceString = service.toString();
+        clear_service(serviceString);
+        return true;
+    }
 
     var db;
 
@@ -512,6 +411,28 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     }
         
     if (typeof db != 'undefined') {
+        
+        clear_service = function(service) {
+            db.execute("DELETE from datacache where service = ? ",[service],function() {});
+        };
+        
+        search_service = function(service,cback) {
+            db.execute("SELECT distinct service from datacache where service like ? ",[service+"%"],function(err,records) {
+                var results = {};
+                if (records && records.length > 0) {
+                    records.forEach(function(record) {
+                        results[record.service] = true;
+                    });
+                }
+                var uniques = [];
+                for (key in results) {
+                    uniques.push(key);
+                }
+                cback.call(MASCP.Service,uniques);
+                return uniques;
+            });
+        };
+        
         get_db_data = function(agi,service,cback) {
             db.execute("SELECT * from datacache where agi=? and service=?",[agi,service],function(err,records) {
                 if (records && records.length > 0 && typeof records[0] != 'undefined') {
@@ -543,6 +464,41 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             });
         };
     } else if ("localStorage" in window) {
+        
+        clear_service = function(service) {
+            if ("localStorage" in window) {
+                var key;
+                for (var i = 0, len = localStorage.length; i < len; i++){
+                    key = localStorage.key(i);
+                    if ((new RegExp("^"+service+".*")).test(key)) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            }            
+        };
+        
+        search_service = function(service,cback) {
+            var results = {};
+            if ("localStorage" in window) {
+                var key;
+                for (var i = 0, len = localStorage.length; i < len; i++){
+                    key = localStorage.key(i);
+                    if ((new RegExp("^"+service+".*")).test(key)) {
+                        results[key] = true;
+                    }
+                }
+            }
+
+            var uniques = [];
+            for (key in results) {
+                uniques.push(key);
+            }
+
+            cback.call(MASCP.service,uniques);
+
+            return uniques;
+        };
+
         get_db_data = function(agi,service,cback) {
             var data = localStorage[service.toString()+"."+(agi || '').toLowerCase()];
             if (data && typeof data === 'string') {
