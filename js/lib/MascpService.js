@@ -37,8 +37,11 @@ if (typeof module != 'undefined' && module.exports){
     module.exports = MASCP;
     var jsdom = require('jsdom').jsdom,
         sys = require('sys'),
-        window = jsdom().createWindow(),
+        window = jsdom().createWindow();
+
+    if (typeof document == 'undefined') {
         document = window.document;
+    }
     window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
     
     var svgns = 'http://ns';
