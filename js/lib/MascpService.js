@@ -471,7 +471,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 for (var i = 0, len = localStorage.length; i < len; i++){
                     key = localStorage.key(i);
                     if ((new RegExp("^"+service+".*")).test(key)) {
-                        localStorage.removeItem(key);
+                        localStorage.removeItem(i);
                     }
                 }
             }            
