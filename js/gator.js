@@ -107,7 +107,7 @@ jQuery(document).ready(function() {
             refreshSets();
         });
         
-        var datasetname = document.getElementById('user_name').value || document.getElementById('user_name').getAttribute('placeholder');
+        var datasetname = document.getElementById('user_name').value || 'Dataset_'+(new Date()).toLocaleTimeString().replace(' ','_');
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {

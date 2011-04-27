@@ -369,7 +369,54 @@ h1, h2 {
         background-repeat: no-repeat;
         background-position: left center;
     }
-            
+    
+    #user_container {
+        height: 128px;
+        position: relative;
+        -moz-transition: height 0.5s linear;
+        -webkit-transition: height 0.5s linear;
+    }
+    
+    #user_container.disabled {
+        height: 0px;
+        overflow: hidden;
+        -moz-transition: height 0.25s linear;
+        -webkit-transition: height 0.25s linear;
+    }
+    
+    #user_existingsets {
+        width: 20%;
+        height: 100%;
+        position: absolute;
+        left: 60%;
+    }
+    
+    #user_data_container {
+        left: 0px;
+        margin-left: 10px;
+        width: 20%;
+        height: 100%;
+        position: absolute;
+    }
+    #user_data {
+        width: 90%;
+        height: 100%;
+    }
+
+    #user_name {
+        left: 20%;
+        margin-left: 20px;
+        height: 20px;
+        position: absolute;
+    }
+    #user_loaddata {
+        left: 20%;
+        top: 40px;
+        margin-left: 20px;
+        position: absolute;
+    }
+
+    
     .rich_tagcloud_tag {
         padding: 10px;
         float: left;
