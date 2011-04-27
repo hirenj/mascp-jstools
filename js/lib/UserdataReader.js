@@ -47,7 +47,6 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         while(results.length > 0) {
             var my_data = results.shift().data;
-            console.log(my_data);
             if ( ! my_data ) {
                 continue;
             }
@@ -69,16 +68,13 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
             }
             data_func.call(this,my_data);
         }
-        renderer.trackOrder = renderer.trackOrder.concat([reader.datasetname]);
-        renderer.showLayer(reader.datasetname);
         jQuery(renderer).trigger('resultsRendered',[reader]);        
-        
     });
 };
 
 (function() {
 var filter_agis = function(data_matrix,agi) {
-    if (data_matrix.length < 1) {
+    if (! data_matrix || data_matrix.length < 1) {
         return [];
     }
     var id_col = -1;
@@ -154,7 +150,6 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     
     this.datasetname = name;
     this.data = data;
-
     
     var inserter = new MASCP.UserdataReader();
     inserter.datasetname = name;
@@ -198,6 +193,16 @@ MASCP.UserdataReader.prototype.retrieve = function(agi,cback) {
         cback.call(this);
     }
     
+};
+
+MASCP.UserdataReader.datasets = function(cback) {
+    MASCP.Service.FindCachedService(this,function(services) {
+        var result = [];
+        for (var i = 0, len = services.length; i < len; i++){
+            result.push(services[i].replace(/MASCP.UserdataReader./,''));
+        }
+        result.forEach(cback);
+    });
 };
 
 })();
