@@ -483,8 +483,8 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 var key;
                 for (var i = 0, len = localStorage.length; i < len; i++){
                     key = localStorage.key(i);
-                    if ((new RegExp("^"+service+".*")).test(key)) {
-                        results[key] = true;
+                    if ((new RegExp("^"+service+".*")).test(key)) {                        
+                        results[key.replace(/\.at[\dcm].*$/g,'')] = true;
                     }
                 }
             }
