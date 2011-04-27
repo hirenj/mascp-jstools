@@ -107,7 +107,7 @@ jQuery(document).ready(function() {
             refreshSets();
         });
         
-        var datasetname = document.getElementById('user_name').value || 'Dataset_'+(new Date()).toLocaleTimeString().replace(' ','_');
+        var datasetname = document.getElementById('user_name').value || 'Dataset_'+(new Date()).toLocaleTimeString().replace(/ /g,'_');
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
@@ -128,7 +128,7 @@ jQuery(document).ready(function() {
     });
 
     
-    filetojson('user_data','./static.json', function(t) {
+    filetojson('user_data','filetojson.rb', function(t) {
     return true; },function(data) { 
         loadData(data);
         document.getElementById('user_data').value = '';
