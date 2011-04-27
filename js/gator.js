@@ -10,32 +10,173 @@ jQuery(document).ready(function() {
     }
     
     MASCP.Service.BeginCaching();
-    
-    filetojson('user_data','filetojson.rb', function(t) {
-    return true; },function(data) { 
 
+    // This will parse a delimited string into an array of
+    // arrays. The default delimiter is the comma, but this
+    // can be overriden in the second argument.
+    function CSVToArray( strData, strDelimiter ){
+        // Check to see if the delimiter is defined. If not,
+        // then default to comma.
+        strDelimiter = (strDelimiter || ",");
+
+        // Create a regular expression to parse the CSV values.
+        var objPattern = new RegExp(
+        (
+        // Delimiters.
+        "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+
+        // Quoted fields.
+        "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+
+        // Standard fields.
+        "([^\"\\" + strDelimiter + "\\r\\n]*))"
+        ),
+        "gi"
+        );
+
+
+        // Create an array to hold our data. Give the array
+        // a default empty first row.
+        var arrData = [[]];
+
+        // Create an array to hold our individual pattern
+        // matching groups.
+        var arrMatches = null;
+
+
+        // Keep looping over the regular expression matches
+        // until we can no longer find a match.
+        while (arrMatches = objPattern.exec( strData )){
+
+        // Get the delimiter that was found.
+        var strMatchedDelimiter = arrMatches[ 1 ];
+
+        // Check to see if the given delimiter has a length
+        // (is not the start of string) and if it matches
+        // field delimiter. If id does not, then we know
+        // that this delimiter is a row delimiter.
+        if (
+        strMatchedDelimiter.length &&
+        (strMatchedDelimiter != strDelimiter)
+        ){
+
+        // Since we have reached a new row of data,
+        // add an empty row to our data array.
+        arrData.push( [] );
+
+        }
+
+
+        // Now that we have our delimiter out of the way,
+        // let's check to see which kind of value we
+        // captured (quoted or unquoted).
+        if (arrMatches[ 2 ]){
+
+        // We found a quoted value. When we capture
+        // this value, unescape any double quotes.
+        var strMatchedValue = arrMatches[ 2 ].replace(
+        new RegExp( "\"\"", "g" ),
+        "\""
+        );
+
+        } else {
+
+        // We found a non-quoted value.
+        var strMatchedValue = arrMatches[ 3 ];
+
+        }
+
+
+        // Now that we have our value string, let's add
+        // it to the data array.
+        arrData[ arrData.length - 1 ].push( strMatchedValue );
+        }
+
+        // Return the parsed data.
+        return( arrData );
+    };
+
+    var loadData = function(data) {
         var reader = new MASCP.UserdataReader();
-//        MASCP.Service.CacheService(reader);
+        MASCP.Service.CacheService(reader);
         
         var agi = jQuery('#agi')[0].value;
 
         reader.bind('ready',function() {
             this.retrieve(agi);
+            refreshSets();
         });
         
         var datasetname = document.getElementById('user_name').value || document.getElementById('user_name').getAttribute('placeholder');
-        
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
-            MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
+            if ( ! jQuery('#'+datasetname).length > 0) {
+                jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
+                jQuery('#'+datasetname).show();
+            }
+            jQuery('#sequence_controllers').trigger('sortupdate');
             MASCP.renderer.showLayer(datasetname);
         });
 
-        reader.setData(datasetname,data);
-        
-        
+        reader.setData(datasetname,data);        
+    };
+    
+    jQuery('#user_loaddata').bind('click',function() {
+        var data = CSVToArray(document.getElementById('user_data').value);
+        loadData(data);
     });
+
+    
+    filetojson('user_data','./static.json', function(t) {
+    return true; },function(data) { 
+        loadData(data);
+        document.getElementById('user_data').value = '';
+    });
+    
+    var refreshSets = function() {
+        var existing = document.getElementById('user_existingsets');
+
+        while (existing.childNodes.length > 0) {
+            existing.removeChild(existing.firstChild);
+        }
+        
+        MASCP.UserdataReader.datasets(function(set) {
+            var set_link = document.createElement('button');
+            set_link.textContent = set;
+            set_link.onclick = function() {
+                var reader = new MASCP.UserdataReader();
+                MASCP.Service.CacheService(reader);
+
+                var agi = jQuery('#agi')[0].value;
+                var datasetname = set;
+            
+                reader.registerSequenceRenderer(MASCP.renderer);
+                reader.datasetname = set;
+                reader.bind('resultReceived',function() {
+                    if ( ! jQuery('#'+datasetname).length > 0) {
+                        jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
+                        jQuery('#'+datasetname).show();
+                    }
+                    jQuery('#sequence_controllers').trigger('sortupdate');
+                    MASCP.renderer.showLayer(datasetname);
+                });
+                reader.retrieve(agi);
+            };
+            var clear_link = document.createElement('button');
+            clear_link.textContent = 'Delete';
+            clear_link.onclick = function() {
+                MASCP.Service.ClearCache('MASCP.UserdataReader.'+set);
+                this.parentNode.parentNode.removeChild(this.parentNode);
+            };
+            var li = document.createElement('li');
+            li.appendChild(set_link);
+            li.appendChild(clear_link);
+            existing.appendChild(li);
+        });
+    };
+    
+    refreshSets();
     
     if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
         MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
@@ -140,6 +281,70 @@ jQuery(document).ready(function() {
         return false;
     };
 
+    var tweak_track_order = function(array) {            
+        if (array.splice && array.indexOf) {
+            if (array.indexOf('hydropathy') === -1) {
+                array.push('hydropathy');
+            }
+            for (var rdr_id in READER_CONF) {
+                var rdr = READER_CONF[rdr_id];
+                if (! rdr.placeholder) {
+                    if (rdr.layers.length > 0) {
+                        if (array.indexOf(rdr.layers[0]) == -1) {
+                            for (var i = 0 ; i < rdr.layers.length; i++) {
+                                MASCP.renderer.showLayer(rdr.layers[i]);
+                                array.push(rdr.layers[i]);
+                            }
+                        }                            
+                    }
+                    continue;
+                }
+                for (var i = 0; i < rdr.layers.length; i++) {
+                    var lay = rdr.layers[i];
+                    var placeholder = lay.replace(/_.*$/,'') + '_placeholder';
+                    var controller = lay.replace(/_.*$/,'') + '_controller';
+                    
+                    if (array.indexOf(placeholder) === -1) {
+                        array.push(placeholder);
+                    }
+                    
+                    if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
+                        array.splice(array.indexOf(placeholder),1,controller,lay);
+                        MASCP.renderer.showLayer(controller);
+                    } else {
+                        array.splice(array.indexOf(placeholder),1,lay);                        
+                        MASCP.renderer.showLayer(lay);
+                    }
+                }
+            }
+            if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
+                array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
+                MASCP.renderer.showLayer('phosphat_experimental');
+            }
+        
+            if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
+                array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
+                MASCP.renderer.showLayer('prippdb_experimental');
+            }
+        }
+        return array;
+    };
+            
+    MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable().sortable('toArray'));
+
+    jQuery('#sequence_controllers').bind('sortupdate',function(event, ui) {
+            if (MASCP.renderer.trackOrder) {
+                MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable('toArray'));
+            }
+            if (MASCP.renderer.setTrackOrder) {
+                MASCP.renderer.setTrackOrder(tweak_track_order(jQuery('#sequence_controllers').sortable('toArray')));
+            }
+    });
+    
+    if (MASCP.renderer.setTrackOrder) {
+        MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
+    }
+
     var rrend = function(e,reader) {
         rendering_readers.splice(rendering_readers.indexOf(reader),1);
         if (rendering_readers.length > 0) {                
@@ -179,69 +384,7 @@ jQuery(document).ready(function() {
                 }            
             }
         }
-
-        var tweak_track_order = function(array) {            
-            if (array.splice && array.indexOf) {
-                if (array.indexOf('hydropathy') === -1) {
-                    array.push('hydropathy');
-                }
-                for (var rdr_id in READER_CONF) {
-                    var rdr = READER_CONF[rdr_id];
-                    if (! rdr.placeholder) {
-                        if (rdr.layers.length > 0) {
-                            if (array.indexOf(rdr.layers[0]) == -1) {
-                                for (var i = 0 ; i < rdr.layers.length; i++) {
-                                    MASCP.renderer.showLayer(rdr.layers[i]);
-                                    array.push(rdr.layers[i]);
-                                }
-                            }                            
-                        }
-                        continue;
-                    }
-                    for (var i = 0; i < rdr.layers.length; i++) {
-                        var lay = rdr.layers[i];
-                        var placeholder = lay.replace(/_.*$/,'') + '_placeholder';
-                        var controller = lay.replace(/_.*$/,'') + '_controller';
-                        
-                        if (array.indexOf(placeholder) === -1) {
-                            array.push(placeholder);
-                        }
-                        
-                        if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
-                            array.splice(array.indexOf(placeholder),1,controller,lay);
-                            MASCP.renderer.showLayer(controller);
-                        } else {
-                            array.splice(array.indexOf(placeholder),1,lay);                        
-                            MASCP.renderer.showLayer(lay);
-                        }
-                    }
-                }
-                if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
-                    array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
-                    MASCP.renderer.showLayer('phosphat_experimental');
-                }
-            
-                if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
-                    array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
-                    MASCP.renderer.showLayer('prippdb_experimental');
-                }
-            }
-            return array;
-        };
-        
-        MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable({
-            update: function(event, ui) {
-                if (MASCP.renderer.trackOrder) {
-                    MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable('toArray'));
-                }
-                if (MASCP.renderer.setTrackOrder) {
-                    MASCP.renderer.setTrackOrder(tweak_track_order(jQuery('#sequence_controllers').sortable('toArray')));
-                }
-            },
-        }).sortable('toArray'));
-        if (MASCP.renderer.setTrackOrder) {
-            MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
-        }
+        jQuery('#sequence_controllers').trigger('sortupdate');
 
     };
 
