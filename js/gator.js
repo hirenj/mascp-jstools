@@ -123,8 +123,19 @@ jQuery(document).ready(function() {
     };
     
     jQuery('#user_loaddata').bind('click',function() {
-        var data = CSVToArray(document.getElementById('user_data').value);
-        loadData(data);
+        var regexp = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+        console.log(regexp.test(document.getElementById('user_data').value));
+        if (regexp.test(document.getElementById('user_data').value)) {
+            var uri = document.getElementById('user_data').value;
+            var score = 30;
+            jQuery.get('mascottojson.njs?score='+score+'&uri='+uri, null, function(data) {
+                console.log(data);
+                loadData(data);
+            });
+        } else {
+            var data = CSVToArray(document.getElementById('user_data').value);
+            loadData(data);
+        }
     });
 
     
