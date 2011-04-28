@@ -140,8 +140,6 @@
 		<copy file="snps.pl" tofile="dist/snps.pl"/>
 		
 		<copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
-		<copy file="mascottojson.js" tofile="dist/mascottojson.njs"/>
-
 
 		<copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
 
