@@ -696,18 +696,34 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     }
     
     this.renderTrack = function(track,y,height,options) {
-        var label_group = canvas.group();        
-        var a_rect = canvas.rect(0,y-height,'100%',3*height);
+        var label_group = canvas.group();
+        var a_rect = canvas.rect(0,y-1*height,'100%',3*height);
         a_rect.setAttribute('stroke','#000000');
         a_rect.setAttribute('stroke-width','2');
         a_rect.setAttribute('fill','url(#simple_gradient)');
         a_rect.setAttribute('opacity','0.1');
         
+        
         label_group.push(a_rect);
+
+        // Use these for debugging positioning
+        
+        // var r = canvas.rect(0,y-height,height,height);
+        // r.setAttribute('fill','#ff0000');
+        // label_group.push(r);
+        // 
+        // r = canvas.rect(0,y+height,height,height);
+        // r.setAttribute('fill','#ff0000');
+        // label_group.push(r);
+        
         
         var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
-        
-        var a_text = canvas.text(3*height*text_scale,y+text_scale*height,track.fullname);
+        if ("ontouchend" in document) {
+            var text_left = 7*height*text_scale;
+        } else {
+            var text_left = 3*height*text_scale;            
+        }
+        var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
         a_text.setAttribute('height', 2*height);
         a_text.setAttribute('width', 2*height);
         a_text.setAttribute('font-size',2*height*text_scale);
@@ -715,6 +731,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('stroke','#ffffff');
         a_text.setAttribute('stroke-width','1');
         a_text.setAttribute('dominant-baseline', 'middle');
+
+        // r = canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
+        // r.setAttribute('fill','#00ff00');
+        // label_group.push(r);
 
         label_group.push(a_text);
         
@@ -725,9 +745,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             a_anchor = canvas.a(track.href);
             var icon_name = null;
             var url_type = track.href;
-            if (typeof url_type == 'string' && url_type.match(/^javascript\:/)) {
+            if (typeof url_type === 'string' && url_type.match(/^javascript\:/)) {
                 icon_name = '#plus_icon';
-            } else if (typeof url_type == 'function') {
+            } else if (typeof url_type === 'function') {
                 icon_name = '#plus_icon';
                 a_anchor.setAttribute('href','#');
                 a_anchor.removeAttribute('target');
@@ -747,7 +767,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             if (track.icon) {
                 icon_name = track.icon;
             }
-            var a_use = canvas.use(icon_name,0.5*height*text_scale,(y-0.5*height*text_scale),2.5*height*text_scale,2.5*height*text_scale);
+            var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
+            if ("ontouchend" in document) {
+                icon_metrics[2] = icon_metrics[2] * 2;
+            }
+            icon_metrics[1] = y - 0.5*(icon_metrics[2] - height);
+            var a_use = canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
         }
@@ -765,20 +790,31 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         this._enableDragAndDrop(a_rect,label_group,track,canvas);
         
         if (track._group_controller) {
-            var expander = canvas.group();            
-            var circ = canvas.circle(1.5*height,0.5*height,1.3*height);
+            var t_height = 1.5*height;            
+            if ("ontouchend" in document) {
+                t_height = 3*height;
+            }
+            var expander = canvas.group();
+            var circ = canvas.circle(1.5*t_height,0,t_height);
             circ.setAttribute('fill','#ffffff');
             circ.setAttribute('opacity','0.1');
             expander.push(circ);
 
-            var group_toggler = canvas.poly(''+1.1*height+','+(-0.25*height)+' '+2.25*height+','+(0.5*height)+' '+1.1*height+','+(1.25*height));//canvas.text(height,y+1.1*height, '▶');
+            var t_metrics = [1.1*t_height,-1.25*t_height,2.25*t_height,(-0.5*t_height),1.1*t_height,0.25*t_height];
+            
+            t_metrics[1] += 0.5*(t_height - 0*height);
+            t_metrics[3] += 0.5*(t_height - 0*height);
+            t_metrics[5] += 0.5*(t_height - 0*height);
+
+            
+            var group_toggler = canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
             if (track._isExpanded()) {
-                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');
+                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');
             } else {
                 expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
             }
-            group_toggler.setAttribute('height', 1.75*height);
-            group_toggler.setAttribute('font-size',1.5*height);
+            group_toggler.setAttribute('height', 1.75*t_height);
+            group_toggler.setAttribute('font-size',1.5*t_height);
             group_toggler.setAttribute('fill','#ffffff');
             group_toggler.setAttribute('dominant-baseline','central');
             group_toggler.setAttribute('pointer-events','none');
@@ -790,7 +826,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 e.stopPropagation();
                 jQuery(track).trigger('_expandevent');
                 if (track._isExpanded()) {
-                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');                
+                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');                
                 } else {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
                 }
@@ -2658,7 +2694,6 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
     }
-    
     var RS = this._RS;
     var track_heights = 0;
     var order = this._track_order || [];
@@ -2692,12 +2727,13 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         }
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
-            container.attr({ 'display' : 'block','y' : (this._axis_height + (track_heights / this.zoom))*RS },animated);
+            var y_val = this._axis_height + (track_heights / this.zoom);
+            container.attr({ 'display' : 'block','y' : (y_val)*RS },animated);
             if (this._Navigation) {
                 var grow_scale = this.grow_container ? 1 / this.zoom : 1;
-                this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + (track_heights / this.zoom) + track_height / 3 )*RS , track_height * RS / 3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
+                this._Navigation.renderTrack(MASCP.getLayer(name), (y_val+track_height/3)*RS , RS * track_height/3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
-            track_heights += this.zoom * (track_height) + this.trackGap;
+            track_heights += (this.zoom * track_height) + this.trackGap;
         } else {
             container.attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
             if (this._Navigation) {
@@ -2818,7 +2854,12 @@ var accessors = {
     },
 
     getTrackGap: function() {
-        return this._track_gap || 10;
+        if (! this._track_gap){
+            var default_value = ("ontouchend" in document) ? 20 : 10;
+            this._track_gap = this._track_gap || default_value;
+        }
+        
+        return this._track_gap;
     },
 
     setTrackGap: function(trackGap) {
