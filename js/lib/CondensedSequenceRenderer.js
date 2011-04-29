@@ -306,8 +306,10 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
                 }
             }
         } else {
+            if (track._group_controller) {
+                self.hideGroup(track._group_under_control);                
+            }
             self.hideLayer(track);            
-            self.hideGroup(track);
             track.disabled = true;
         }
         self.trackOrder = t_order;
