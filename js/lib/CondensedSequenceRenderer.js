@@ -199,7 +199,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
             if (renderer._canvas.currentTranslate.x >= 0) {
                 left_fade.style.display = 'none';
             } else {
-                left_fade.style.display = 'block';                
+                left_fade.style.display = 'inline';                
             }
         });
         
@@ -379,11 +379,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
     if (canv.fader) {
         window.clearTimeout(canv.fader);
     }
-    if (canv.style.display == 'block') {
+    if (canv.style.display == 'inline') {
         canv.style.width = '100%';
         return;
     }
-    canv.style.display = 'block';
+    canv.style.display = 'inline';
 };
 
 
@@ -442,10 +442,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
         self.drag_disabled = ! self.edit_enabled;
         self._close_buttons.forEach(function(button) {
-            button.style.display = self.edit_enabled ? 'block' : 'none';
+            button.style.display = self.edit_enabled ? 'inline' : 'none';
         });
         self._controller_buttons.forEach(function(button) {
-            button.style.display = self.edit_enabled ? 'none' : 'block';
+            button.style.display = self.edit_enabled ? 'none' : 'inline';
         });
 
     });
@@ -471,7 +471,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             
             close_group.setAttribute('transform',close_transform);
 
-            scroll_controls.style.display = 'block';
+            scroll_controls.style.display = 'inline';
 //            tracks_button.parentNode.style.display = 'block';
         } else {
             self._track_canvas.setAttribute('visibility','hidden');
@@ -845,7 +845,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             });
             label_group.push(closer);
             self._close_buttons.push(closer);
-            closer.style.display = self.edit_enabled ? 'block' : 'none';
+            closer.style.display = self.edit_enabled ? 'inline' : 'none';
             
         })();
         
@@ -899,7 +899,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_group.push(expander);
 
             self._controller_buttons.push(expander);
-            expander.style.display = self.edit_enabled ? 'none' : 'block';
+            expander.style.display = self.edit_enabled ? 'none' : 'inline';
         }
         
     };
@@ -1336,10 +1336,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
                 delete hash['y'];
 
-                if (curr_disp == target_disp && target_disp == 'block' ) {
+                if (curr_disp == target_disp && target_disp == 'inline' ) {
                     delete hash['display'];
                     target_disp = null;                    
-                    an_array.attr({'display' : 'block'});
+                    an_array.attr({'display' : 'inline'});
                 }
 
                 if (hash['display'] == 'none') {
@@ -1457,14 +1457,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             this.attr({ 'display' : 'none'});
         };
         an_array.show = function() {
-            this.attr({ 'display' : 'block'});
+            this.attr({ 'display' : 'inline'});
         };
 
         an_array.refresh_zoom = function() {
             for (var i = 0; i < an_array.length; i++ ) {
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
                     if (canvas.zoom > 3.5) {
-                        an_array[i].setAttribute('display', 'block');
+                        an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
                         an_array[i].setAttribute('display', 'none');                            
@@ -1473,7 +1473,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
                     if (canvas.zoom <= 3.5) {
-                        an_array[i].setAttribute('display', 'block');
+                        an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
                         an_array[i].setAttribute('display', 'none');                            
@@ -2547,7 +2547,7 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
         
         highlight.setAttribute('x',(from) * RS );
         highlight.setAttribute('width',(to - from) * RS );
-        highlight.style.display = 'block';
+        highlight.style.display = 'inline';
         idx += 1;
     }
     for (var i = idx; i < this._highlight.length; i++){
@@ -2786,7 +2786,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         }
 
         if (container.tracers) {
-            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'block' : 'none';
+            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'inline' : 'none';
             var height = (1.5 + track_heights / this.zoom )*RS;
             
             if (container.fixed_track_height) {
@@ -2797,14 +2797,14 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
             var y_val = this._axis_height + (track_heights / this.zoom);
-            container.attr({ 'display' : 'block','y' : (y_val)*RS },animated);
+            container.attr({ 'display' : 'inline','y' : (y_val)*RS },animated);
             if (this._Navigation) {
                 var grow_scale = this.grow_container ? 1 / this.zoom : 1;
                 this._Navigation.renderTrack(MASCP.getLayer(name), (y_val+track_height/3)*RS , RS * track_height/3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
             track_heights += (this.zoom * track_height) + this.trackGap;
         } else {
-            container.attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
+            container.attr({ 'display': 'inline', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
             if (this._Navigation) {
                 this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , RS * container.track_height / this.zoom );
             }
