@@ -271,9 +271,9 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     var self = this;
     
     nav._spliceTrack = function(track,before,after){
-        if (! (track && (before || after))) {
-            return;
-        }
+        // if (! (track && (before || after))) {
+        //     return;
+        // }
 
         var t_order = self._track_order;
         
@@ -290,6 +290,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         
         
         t_order.splice(t_order.trackIndex(track),1);
+        
         var extra_to_push = [];
         if (track._group_controller) {
             var group_layers = track._group_under_control._layers;
@@ -297,14 +298,20 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
                 extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
             }
         }
-        
-        t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
-        for (var i = 0; i < extra_to_push.length; i++ ) {
-            if (extra_to_push[i]) {
-                t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
+        if (before) {
+            t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
+            for (var i = 0; i < extra_to_push.length; i++ ) {
+                if (extra_to_push[i]) {
+                    t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
+                }
             }
+        } else {
+            self.hideLayer(track);            
+            self.hideGroup(track);
+            track.disabled = true;
         }
         self.trackOrder = t_order;
+        
     };
     
     var hide_chrome = function() {
@@ -416,7 +423,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     button_group.push(close_group);
 
-    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Options') : canvas.button(100,5,65,25,'Options');
+    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Edit') : canvas.button(100,5,65,25,'Edit');
     tracks_button.id = 'controls';
     tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
 
@@ -430,8 +437,21 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
     
     panel_back.push(scroll_controls);
-        
+    
+    jQuery(self).bind('toggleEdit',function() {
+        self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
+        self.drag_disabled = ! self.edit_enabled;
+        self._close_buttons.forEach(function(button) {
+            button.style.display = self.edit_enabled ? 'block' : 'none';
+        });
+        self._controller_buttons.forEach(function(button) {
+            button.style.display = self.edit_enabled ? 'none' : 'block';
+        });
+
+    });
+    
     tracks_button.addEventListener('click',function() {
+        jQuery(self).trigger('toggleEdit');
         jQuery(self).trigger('click');
     },false);
     
@@ -488,6 +508,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = function(handle,element,track,canvas) {
         var nav = this;
+
+        if ( typeof nav.drag_disabled == 'undefined') {
+            nav.drag_disabled = true;
+        }
+
         var self = arguments.callee;
         self.in_drag = false;
 
@@ -509,6 +534,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         };
 
         var beginDragging = function(ev,tr,lbl_grp) {
+            
+            if (nav.drag_disabled) {
+                return;
+            }
 
             var target = canvas.nearestViewportElement;
 
@@ -789,7 +818,41 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         this._enableDragAndDrop(a_rect,label_group,track,canvas);
         
+        (function() {
+            
+            if (track.group) {
+                return;
+            }
+            
+            var t_height = 1.5*height;            
+            if ("ontouchend" in document) {
+                t_height = 3*height;
+            }
+            if ( ! self._close_buttons) {
+                self._close_buttons = [];
+            }
+            
+            var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
+            closer.setAttribute('transform','translate(0,'+(y+0.5*height)+')');
+            closer.firstChild.setAttribute('fill','#ff0000');
+            for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
+                nodes[i].setAttribute('stroke-width',(t_height/4).toString());
+            };
+            closer.addEventListener('click',function() {
+                self._spliceTrack(track);
+            });
+            label_group.push(closer);
+            self._close_buttons.push(closer);
+            closer.style.display = self.edit_enabled ? 'block' : 'none';
+            
+        })();
+        
+        
         if (track._group_controller) {
+            if ( ! self._controller_buttons) {
+                self._controller_buttons = [];
+            }
+
             var t_height = 1.5*height;            
             if ("ontouchend" in document) {
                 t_height = 3*height;
@@ -832,6 +895,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 }
             },false);
             label_group.push(expander);
+
+            self._controller_buttons.push(expander);
+            expander.style.display = self.edit_enabled ? 'none' : 'block';
         }
         
     };
@@ -2425,6 +2491,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
                 if (containers[layer.name].tracers) {
                     containers[layer.name].tracers.hide();
                 }
+                containers[layer.name].attr({ 'y': -1000 });
             }
             renderer.refresh();
         });
