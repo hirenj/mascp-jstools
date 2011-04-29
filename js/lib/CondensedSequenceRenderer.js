@@ -719,9 +719,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
         if ("ontouchend" in document) {
-            var text_left = 7*height*text_scale;
+            var text_left = 8*height*text_scale;
         } else {
-            var text_left = 3*height*text_scale;            
+            var text_left = 4*height*text_scale;            
         }
         var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
         a_text.setAttribute('height', 2*height);
@@ -741,7 +741,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('pointer-events','none');
         
         
-        if (track.href) {
+        if (track.href && ! track._group_controller) {
             a_anchor = canvas.a(track.href);
             var icon_name = null;
             var url_type = track.href;
