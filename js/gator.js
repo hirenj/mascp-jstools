@@ -79,15 +79,12 @@ jQuery(document).ready(function() {
             var uri = document.getElementById('user_data').value;
             var score = 30;
 
-            (new MascotToJSON()).convertReport(uri,score,function(data,error) {
+            (new MascotToJSON()).convertReport(uri,function(data,error) {
                 if (! error) {
                     loadData(data);
                 }
             });
 
-            // jQuery.get('mascottojson.njs?score='+score+'&uri='+uri, null, function(data) {
-            //     loadData(data);
-            // });
         } else {
             var data = CSVToArray(document.getElementById('user_data').value);
             loadData(data);
