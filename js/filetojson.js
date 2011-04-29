@@ -149,13 +149,13 @@ function filetojson(place, server, data_matcher,complete) {
                     }
                 }
                 
-                this.uploadPlace.parentNode.insertBefore(selector,this.uploadPlace);
                                 
                 selector.style.position = 'relative';
                 selector.style.width = this.uploadPlace.clientWidth+'px';
                 selector.style.height = this.uploadPlace.clientHeight+'px';
                 selector.style.overflow = 'auto';
                 this.uploadPlace.style.display = 'none';
+                this.uploadPlace.parentNode.insertBefore(selector,this.uploadPlace);
             } else {
                 this.uploadPlace.value = columns[selected_column].join("\n");
                 complete();

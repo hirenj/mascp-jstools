@@ -79,9 +79,12 @@ jQuery(document).ready(function() {
             var uri = document.getElementById('user_data').value;
             var score = 30;
 
-            (new MascotToJSON()).convertReport(uri,score,function(data,error) {
+            (new MascotToJSON()).convertReport(uri,function(data,error) {
                 if (! error) {
                     loadData(data);
+                } else {
+                    document.getElementById('user_data').value = 'Could not load MASCOT result';
+                    throw "FSDF";
                 }
             });
 
