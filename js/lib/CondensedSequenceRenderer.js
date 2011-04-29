@@ -585,7 +585,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 }
 
                 if (self.in_drag && e.type == 'mouseup') {
-                    nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
+                    if (self.spliceBefore || self.spliceAfter) {
+                        nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
+                    }
                 }
 
                 target.removeEventListener('mousemove',dragfn,false);
@@ -833,7 +835,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             }
             
             var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
-            closer.setAttribute('transform','translate(0,'+(y+0.5*height)+')');
+            closer.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
             closer.firstChild.setAttribute('fill','#ff0000');
             for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
                 nodes[i].setAttribute('stroke-width',(t_height/4).toString());
