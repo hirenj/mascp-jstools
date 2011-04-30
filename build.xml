@@ -83,36 +83,41 @@
                 </classpath>                
         </taskdef>
 		<mkdir dir="build"/>
-        <jsmin destdir="build">
-            <fileset dir="js/lib" includes="**/*.js"/>
-            <fileset dir="js" includes="json-2.js" />
-            <fileset dir="js" includes="MascotToJSON.js"/>
-        </jsmin>
         <mkdir dir="dist/js" />
-        <concat destfile="dist/js/maschup.services.min.js"
-                  force="yes">
-            <fileset dir="build" includes="json-2.js"/> 
-            <fileset dir="build" includes="diff_match_patch.js"/>
-            <fileset dir="build" includes="MascpService.js"/>
-            <fileset dir="build" includes="*Reader.js"/>
-            <fileset dir="build" includes="MascotToJSON.js"/>
-        </concat>
-        <concat destfile="dist/js/maschup.map.min.js"
-                  force="yes">
-            <fileset dir="build" includes="gomap.js"/>                  
-        </concat>
-        <concat destfile="dist/js/maschup.renderers.min.js"
-                  force="yes">
-            <fileset dir="build" includes="SequenceRenderer.js"/>
-            <fileset dir="build" includes="CondensedSequenceRenderer.js"/>
-            <fileset dir="build" includes="TagVisualisation.js"/>
-        </concat>
         
-        <concat destfile="dist/js/maschup.min.js" force="yes">
-            <fileset dir="dist/js" includes="maschup.services.min.js"/>
-            <fileset dir="dist/js" includes="maschup.renderers.min.js"/>
-            <fileset dir="dist/js" includes="maschup.map.min.js"/>
+        <concat destfile="build/maschup.services.js"
+                  force="yes">
+            <fileset dir="js" includes="json-2.js"/> 
+            <fileset dir="js" includes="diff_match_patch.js"/>
+            <fileset dir="js/lib" includes="MascpService.js"/>
+            <fileset dir="js/lib" includes="*Reader.js"/>
+            <fileset dir="js/lib" includes="MascotToJSON.js"/>
         </concat>
+        <concat destfile="build/maschup.map.js"
+                  force="yes">
+            <fileset dir="js/lib" includes="gomap.js"/>                  
+        </concat>
+        <concat destfile="build/maschup.renderers.js"
+                  force="yes">
+            <fileset dir="js/lib" includes="SequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="CondensedSequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="TagVisualisation.js"/>
+        </concat>
+
+        <concat destfile="build/maschup.js" force="yes">
+            <fileset dir="build" includes="maschup.services.js"/>
+            <fileset dir="build" includes="maschup.renderers.js"/>
+            <fileset dir="build" includes="maschup.map.js"/>
+        </concat>
+
+        <jsmin destdir="dist/js">
+            <fileset dir="build" includes="macschup*.js"/>
+        </jsmin>
+
+        <copy todir="dist/js">
+            <fileset dir="build" includes="maschup*.js"/>
+        </copy>
+        
 
 		<copy file="js/lib/blank.svg" tofile="dist/js/blank.svg"/>
         
