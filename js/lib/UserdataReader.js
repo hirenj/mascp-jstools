@@ -47,7 +47,7 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
             var data_func = function(row) {
                 renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
             };
-            if (my_data instanceof Array && (! my_data[0] instanceof Array)) {
+            if (my_data instanceof Array && (! (my_data[0] instanceof Array))) {
                 data_func = function(row) {
                     var start = parseInt(row[0]);
                     var end = parseInt(row[1]);
