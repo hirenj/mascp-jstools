@@ -131,7 +131,6 @@ jQuery(document).ready(function() {
                         jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
                         jQuery('#'+datasetname).show();
                     }
-                    console.log(jQuery('#sequence_controllers'));
                     jQuery('#sequence_controllers').trigger('sortupdate');
                     MASCP.renderer.showLayer(datasetname);
                 });
