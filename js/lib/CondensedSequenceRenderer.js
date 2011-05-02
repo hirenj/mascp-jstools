@@ -239,6 +239,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         
 
         renderer._nav_canvas.show = function() {
+
             if (nav) {
                 canv.style.GomapScrollLeftMargin = nav._width_shift;
             }
@@ -386,11 +387,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
     if (canv.fader) {
         window.clearTimeout(canv.fader);
     }
-    if (! canv.hasAttribute('display') || (canv.getAttribute('display') === 'inline')) {
-        canv.style.width = '100%';
-        return;
-    }
-    canv.setAttribute('display','inline');
+    canv.setAttribute('display',this.visible() ? 'inline' : 'none');
 };
 
 
@@ -467,10 +464,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var toggler = function(vis) {
         visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
-            self.promote();
-            panel_back.setAttribute('visibility','visible');
             self._track_canvas.setAttribute('display','inline');
+            panel_back.setAttribute('visibility','visible');
             canvas.show();
+
             rect.setAttribute('filter','url(#drop_shadow)');
             close_group._button.removeAttribute('filter');
             var close_transform = close_group.getAttribute('transform') || ' ';
@@ -481,7 +478,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
             scroll_controls.setAttribute('display','inline');
         } else {
-            self.demote();
             self._track_canvas.setAttribute('display','none');
             panel_back.setAttribute('visibility','hidden');
             canvas.hide();
@@ -504,6 +500,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     this.show = function() {
         toggler.call(this,true);
     };
+    this.visible = function() {
+        return this._is_open;
+    }
+    
     this.setZoom = function(zoom) {
         this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
