@@ -319,11 +319,25 @@ jQuery(document).ready(function() {
     }
 
     var rrend = function(e,reader) {
-        rendering_readers.splice(rendering_readers.indexOf(reader),1);
-        if (rendering_readers.length > 0) {                
-            return;
+        if (rendering_readers) {
+            rendering_readers.splice(rendering_readers.indexOf(reader),1);
+            if (rendering_readers.length > 0) {                
+                return;
+            }
         }
 
+        if (! rendering_readers) {
+            return;
+            
+        }
+
+        setTimeout(function() {
+            jQuery('#agi').focus();            
+        },1000);
+
+
+        rendering_readers = null;
+        
         if (document._screen) {
             document._screen.hide();
         }
