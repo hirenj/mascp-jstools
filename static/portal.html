@@ -16,7 +16,7 @@
     
 <!--   <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
-    <script type="text/javascript" src="js/maschup.min.js"></script>
+    <script type="text/javascript" src="js/maschup.js"></script>
     
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
@@ -182,8 +182,8 @@
             }
         }
         
-        // Trigger the change event on page load
-        var hash = window.location.hash.replace(/#/g,'');
+        //Trigger the change event on page load
+        var hash = (window.location.hash + ""), hash = hash.replace(/#/g,'');
         if(hash) {
             jQuery('#agi')[0].value = hash;
         } else {
@@ -194,7 +194,7 @@
                 if (! forced) {
                     jQuery('#agi_input').removeClass('first_run');
                 }
-            }).focus();
+            });
         }
                 
         jQuery('#agi').trigger(MASCP.IE ? 'blur' : 'change',[true]);
