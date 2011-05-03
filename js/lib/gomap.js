@@ -1012,7 +1012,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 evObj.initEvent('pan',false,true);
                 this.dispatchEvent(evObj);
             }
-
         };
     } else {
         targetElement.getPosition = function() {
@@ -1134,14 +1133,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
 
-        if (stationary) {
-            clearTimeout(stationary);
-            stationary = null;
-        }
-        
-        stationary = window.setTimeout(function() {
-            self.dragging = false;
-        },200);        
+        // if (stationary) {
+        //     clearTimeout(stationary);
+        //     stationary = null;
+        // }
+        // 
+        // stationary = window.setTimeout(function() {
+        //     self.dragging = false;
+        // },200);        
         
         doMouseMove.call(this,evt);
     };
@@ -1365,7 +1364,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
-        targetElement.addEventListener('mouseup',momentum_func,false);
+        targetElement.addEventListener('mouseup',mouseUp,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);

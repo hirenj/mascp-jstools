@@ -197,14 +197,14 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
         jQuery(renderer._canvas).bind('pan',function() {
             if (renderer._canvas.currentTranslate.x >= 0) {
-                left_fade.style.display = 'none';
+                left_fade.setAttribute('visibility','hidden');
             } else {
-                left_fade.style.display = 'block';                
+                left_fade.setAttribute('visibility','visible');
             }
         });
         
         jQuery(renderer._canvas).bind('_anim_begin',function() {
-            left_fade.style.display = 'none';
+            left_fade.setAttribute('visibility','hidden');
         });
         
         jQuery(renderer._canvas).bind('_anim_end',function() {
@@ -213,7 +213,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         }
 
         if (renderer._canvas.currentTranslate.x >= 0) {
-            left_fade.style.display = 'none';
+            left_fade.setAttribute('visibility','hidden');
         }
         
         container_canv.appendChild(left_fade);
@@ -237,20 +237,24 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
                 this.currentTranslate.y = y;
         };
         
+
+        renderer._nav_canvas.show = function() {
+
+            if (nav) {
+                canv.style.GomapScrollLeftMargin = nav._width_shift;
+            }
+            renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);            
+        };
+        
+        renderer._nav_canvas.hide = function() {
+            renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);
+            canv.style.GomapScrollLeftMargin = 0;
+        }
         
         renderer._addNav();
 
         var nav = renderer._Navigation;
 
-        renderer._nav_canvas.show = function() {
-            canv.style.GomapScrollLeftMargin = nav._width_shift;
-//            this.setCurrentTranslateXY(0,0);
-        };
-        
-        renderer._nav_canvas.hide = function() {
-            canv.style.GomapScrollLeftMargin = 0;
-//            this.setCurrentTranslateXY(-192,0);            
-        }
         
         renderer._container_canvas = container_canv;
         container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
@@ -271,9 +275,9 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     var self = this;
     
     nav._spliceTrack = function(track,before,after){
-        if (! (track && (before || after))) {
-            return;
-        }
+        // if (! (track && (before || after))) {
+        //     return;
+        // }
 
         var t_order = self._track_order;
         
@@ -290,6 +294,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         
         
         t_order.splice(t_order.trackIndex(track),1);
+        
         var extra_to_push = [];
         if (track._group_controller) {
             var group_layers = track._group_under_control._layers;
@@ -297,14 +302,22 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
                 extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
             }
         }
-        
-        t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
-        for (var i = 0; i < extra_to_push.length; i++ ) {
-            if (extra_to_push[i]) {
-                t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
+        if (before) {
+            t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
+            for (var i = 0; i < extra_to_push.length; i++ ) {
+                if (extra_to_push[i]) {
+                    t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
+                }
             }
+        } else {
+            if (track._group_controller) {
+                self.hideGroup(track._group_under_control);                
+            }
+            self.hideLayer(track);            
+            track.disabled = true;
         }
         self.trackOrder = t_order;
+        
     };
     
     var hide_chrome = function() {
@@ -316,6 +329,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         nav.promote(); 
         nav.showFilters();        
     }
+
     if ( ! MASCP.IE ) {
     jQuery(this._canvas).bind('panstart',hide_chrome);
     jQuery(this._canvas).bind('panend',show_chrome);
@@ -346,6 +360,7 @@ MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
     track_group.setAttribute('clip-path','url(#nav_clipping)');
     
     this._track_canvas = track_group;
+    
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
@@ -363,7 +378,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.demote = function() {
     if (canv.fader) {
         window.clearTimeout(canv.fader);
     }
-    canv.style.display = 'none';
+    canv.setAttribute('display','none');
     return;
 };
 
@@ -372,11 +387,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
     if (canv.fader) {
         window.clearTimeout(canv.fader);
     }
-    if (canv.style.display == 'block') {
-        canv.style.width = '100%';
-        return;
-    }
-    canv.style.display = 'block';
+    canv.setAttribute('display',this.visible() ? 'inline' : 'none');
 };
 
 
@@ -416,7 +427,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
     button_group.push(close_group);
 
-    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Options') : canvas.button(100,5,65,25,'Options');
+    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Edit') : canvas.button(100,5,65,25,'Edit');
     tracks_button.id = 'controls';
     tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
 
@@ -430,8 +441,21 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
     
     panel_back.push(scroll_controls);
-        
+    
+    jQuery(self).bind('toggleEdit',function() {
+        self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
+        self.drag_disabled = ! self.edit_enabled;
+        self._close_buttons.forEach(function(button) {
+            button.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
+        });
+        self._controller_buttons.forEach(function(button) {
+            button.setAttribute('visibility', self.edit_enabled ? 'hidden' : 'visible');
+        });
+
+    });
+    
     tracks_button.addEventListener('click',function() {
+        jQuery(self).trigger('toggleEdit');
         jQuery(self).trigger('click');
     },false);
     
@@ -440,9 +464,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var toggler = function(vis) {
         visible = ( vis == false || vis == true ) ? vis : ! visible;
         if (visible) {
+            self._track_canvas.setAttribute('display','inline');
             panel_back.setAttribute('visibility','visible');
-            self._track_canvas.setAttribute('visibility','visible');
             canvas.show();
+
             rect.setAttribute('filter','url(#drop_shadow)');
             close_group._button.removeAttribute('filter');
             var close_transform = close_group.getAttribute('transform') || ' ';
@@ -451,10 +476,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             
             close_group.setAttribute('transform',close_transform);
 
-            scroll_controls.style.display = 'block';
-//            tracks_button.parentNode.style.display = 'block';
+            scroll_controls.setAttribute('display','inline');
         } else {
-            self._track_canvas.setAttribute('visibility','hidden');
+            self._track_canvas.setAttribute('display','none');
             panel_back.setAttribute('visibility','hidden');
             canvas.hide();
             rect.removeAttribute('filter');
@@ -462,8 +486,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             var close_transform = close_group.getAttribute('transform') || ' ';
             close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
             close_group.setAttribute('transform',close_transform);
-            scroll_controls.style.display = 'none';
-//            tracks_button.parentNode.style.display = 'none';
+            scroll_controls.setAttribute('display','none');
         }
         self._is_open = visible;
         return true;
@@ -477,6 +500,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     this.show = function() {
         toggler.call(this,true);
     };
+    this.visible = function() {
+        return this._is_open;
+    }
+    
     this.setZoom = function(zoom) {
         this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
@@ -488,6 +515,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = function(handle,element,track,canvas) {
         var nav = this;
+
+        if ( typeof nav.drag_disabled == 'undefined') {
+            nav.drag_disabled = true;
+        }
+
         var self = arguments.callee;
         self.in_drag = false;
 
@@ -509,6 +541,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         };
 
         var beginDragging = function(ev,tr,lbl_grp) {
+            
+            if (nav.drag_disabled) {
+                return;
+            }
 
             var target = canvas.nearestViewportElement;
 
@@ -556,7 +592,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 }
 
                 if (self.in_drag && e.type == 'mouseup') {
-                    nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
+                    if (self.spliceBefore || self.spliceAfter) {
+                        nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
+                    }
                 }
 
                 target.removeEventListener('mousemove',dragfn,false);
@@ -696,18 +734,34 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     }
     
     this.renderTrack = function(track,y,height,options) {
-        var label_group = canvas.group();        
-        var a_rect = canvas.rect(0,y-height,'100%',3*height);
+        var label_group = canvas.group();
+        var a_rect = canvas.rect(0,y-1*height,'100%',3*height);
         a_rect.setAttribute('stroke','#000000');
         a_rect.setAttribute('stroke-width','2');
         a_rect.setAttribute('fill','url(#simple_gradient)');
         a_rect.setAttribute('opacity','0.1');
         
+        
         label_group.push(a_rect);
+
+        // Use these for debugging positioning
+        
+        // var r = canvas.rect(0,y-height,height,height);
+        // r.setAttribute('fill','#ff0000');
+        // label_group.push(r);
+        // 
+        // r = canvas.rect(0,y+height,height,height);
+        // r.setAttribute('fill','#ff0000');
+        // label_group.push(r);
+        
         
         var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
-        
-        var a_text = canvas.text(3*height*text_scale,y+text_scale*height,track.fullname);
+        if ("ontouchend" in document) {
+            var text_left = 8*height*text_scale;
+        } else {
+            var text_left = 4*height*text_scale;            
+        }
+        var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
         a_text.setAttribute('height', 2*height);
         a_text.setAttribute('width', 2*height);
         a_text.setAttribute('font-size',2*height*text_scale);
@@ -716,18 +770,22 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_text.setAttribute('stroke-width','1');
         a_text.setAttribute('dominant-baseline', 'middle');
 
+        // r = canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
+        // r.setAttribute('fill','#00ff00');
+        // label_group.push(r);
+
         label_group.push(a_text);
         
         a_text.setAttribute('pointer-events','none');
         
         
-        if (track.href) {
+        if (track.href && ! track._group_controller) {
             a_anchor = canvas.a(track.href);
             var icon_name = null;
             var url_type = track.href;
-            if (typeof url_type == 'string' && url_type.match(/^javascript\:/)) {
+            if (typeof url_type === 'string' && url_type.match(/^javascript\:/)) {
                 icon_name = '#plus_icon';
-            } else if (typeof url_type == 'function') {
+            } else if (typeof url_type === 'function') {
                 icon_name = '#plus_icon';
                 a_anchor.setAttribute('href','#');
                 a_anchor.removeAttribute('target');
@@ -747,7 +805,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             if (track.icon) {
                 icon_name = track.icon;
             }
-            var a_use = canvas.use(icon_name,0.5*height*text_scale,(y-0.5*height*text_scale),2.5*height*text_scale,2.5*height*text_scale);
+            var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
+            if ("ontouchend" in document) {
+                icon_metrics[2] = icon_metrics[2] * 2;
+            }
+            icon_metrics[1] = y - 0.5*(icon_metrics[2] - height);
+            var a_use = canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
         }
@@ -764,21 +827,66 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         this._enableDragAndDrop(a_rect,label_group,track,canvas);
         
+        (function() {
+            
+            if (track.group) {
+                return;
+            }
+            
+            var t_height = 1.5*height;            
+            if ("ontouchend" in document) {
+                t_height = 3*height;
+            }
+            if ( ! self._close_buttons) {
+                self._close_buttons = [];
+            }
+            
+            var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
+            closer.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
+            closer.firstChild.setAttribute('fill','#ff0000');
+            for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
+                nodes[i].setAttribute('stroke-width',(t_height/4).toString());
+            };
+            closer.addEventListener('click',function() {
+                self._spliceTrack(track);
+            },false);
+            label_group.push(closer);
+            self._close_buttons.push(closer);
+            closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
+            
+        })();
+        
+        
         if (track._group_controller) {
-            var expander = canvas.group();            
-            var circ = canvas.circle(1.5*height,0.5*height,1.3*height);
+            if ( ! self._controller_buttons) {
+                self._controller_buttons = [];
+            }
+
+            var t_height = 1.5*height;            
+            if ("ontouchend" in document) {
+                t_height = 3*height;
+            }
+            var expander = canvas.group();
+            var circ = canvas.circle(1.5*t_height,0,t_height);
             circ.setAttribute('fill','#ffffff');
             circ.setAttribute('opacity','0.1');
             expander.push(circ);
 
-            var group_toggler = canvas.poly(''+1.1*height+','+(-0.25*height)+' '+2.25*height+','+(0.5*height)+' '+1.1*height+','+(1.25*height));//canvas.text(height,y+1.1*height, '▶');
+            var t_metrics = [1.1*t_height,-1.25*t_height,2.25*t_height,(-0.5*t_height),1.1*t_height,0.25*t_height];
+            
+            t_metrics[1] += 0.5*(t_height - 0*height);
+            t_metrics[3] += 0.5*(t_height - 0*height);
+            t_metrics[5] += 0.5*(t_height - 0*height);
+
+            
+            var group_toggler = canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
             if (track._isExpanded()) {
-                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');
+                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');
             } else {
                 expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
             }
-            group_toggler.setAttribute('height', 1.75*height);
-            group_toggler.setAttribute('font-size',1.5*height);
+            group_toggler.setAttribute('height', 1.75*t_height);
+            group_toggler.setAttribute('font-size',1.5*t_height);
             group_toggler.setAttribute('fill','#ffffff');
             group_toggler.setAttribute('dominant-baseline','central');
             group_toggler.setAttribute('pointer-events','none');
@@ -790,14 +898,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 e.stopPropagation();
                 jQuery(track).trigger('_expandevent');
                 if (track._isExpanded()) {
-                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*height)+','+(0.5*height)+')');                
+                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');                
                 } else {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
                 }
             },false);
             label_group.push(expander);
+
+            self._controller_buttons.push(expander);
+            expander.setAttribute('visibility', self.edit_enabled ? 'hidden' : 'visible');            
         }
-        
     };
 };
 
@@ -1217,29 +1327,29 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 var curr_y = an_array[0] ? parseInt(a_y || an_array[0].getAttribute('y')) : 0;
                 var curr_disp = 'none';
                 for (var i = 0 ; i < an_array.length; i++ ) {
-                    var a_disp = an_array[i].getAttribute('display');
-                    if (a_disp && a_disp != 'none') {
+                    var a_disp = an_array[i].getAttribute('visibility');
+                    if (a_disp && a_disp != 'hidden') {
                         curr_disp = a_disp;
                         break;
                     }
                 }
                 var target_y = parseInt(hash['y']);
-                var target_disp = hash['display'];
-                if (curr_disp == target_disp && target_disp == 'none') {
+                var target_disp = hash['visibility'];
+                if (curr_disp == target_disp && target_disp == 'hidden') {
                     an_array.attr(hsh);
                     return;
                 }
 
                 delete hash['y'];
 
-                if (curr_disp == target_disp && target_disp == 'block' ) {
-                    delete hash['display'];
+                if (curr_disp == target_disp && target_disp == 'visible' ) {
+                    delete hash['visibility'];
                     target_disp = null;                    
-                    an_array.attr({'display' : 'block'});
+                    an_array.attr({'visibility' : 'visible'});
                 }
 
-                if (hash['display'] == 'none') {
-                    delete hash['display'];
+                if (hash['visibility'] == 'hidden') {
+                    delete hash['visibility'];
                 }
 
                 an_array.attr(hash);
@@ -1260,7 +1370,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             }
                             an_array.animating = false;
                             if (target_disp) {
-                                an_array.attr({'display' : target_disp});
+                                an_array.attr({'visibility' : target_disp});
                                 jQuery(an_array).trigger('_t_anim_end');
                             }
                             canvas._anim_clock_funcs.splice(canvas._anim_clock_funcs.indexOf(arguments.callee),1);
@@ -1350,29 +1460,29 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             }
         };
         an_array.hide = function() {
-            this.attr({ 'display' : 'none'});
+            this.attr({ 'visibility' : 'hidden'});
         };
         an_array.show = function() {
-            this.attr({ 'display' : 'block'});
+            this.attr({ 'visibility' : 'visible'});
         };
 
         an_array.refresh_zoom = function() {
             for (var i = 0; i < an_array.length; i++ ) {
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
                     if (canvas.zoom > 3.5) {
-                        an_array[i].setAttribute('display', 'block');
+                        an_array[i].setAttribute('visibility', 'visible');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
-                        an_array[i].setAttribute('display', 'none');                            
+                        an_array[i].setAttribute('visibility', 'hidden');                            
                     }                        
                 }
             
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
                     if (canvas.zoom <= 3.5) {
-                        an_array[i].setAttribute('display', 'block');
+                        an_array[i].setAttribute('visibility', 'visible');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
-                        an_array[i].setAttribute('display', 'none');                            
+                        an_array[i].setAttribute('visibility', 'hidden');                            
                     }
                 }
             }
@@ -1999,10 +2109,10 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
     plot.setAttribute('stroke','#ff0000');
     plot.setAttribute('stroke-width', 0.35*RS);
     plot.setAttribute('fill', 'none');
-    plot.setAttribute('display','none');
+    plot.setAttribute('visibility','hidden');
     var axis = this._canvas.path('M0 0 m0 '+(-1*min_value)+' l'+this._sequence_els.length*RS+' 0');
     axis.setAttribute('stroke-width',0.2*RS);
-    axis.setAttribute('display','none');
+    axis.setAttribute('visibility','hidden');
     plot.setAttribute('pointer-events','none');
     axis.setAttribute('pointer-events','none');
     
@@ -2032,16 +2142,16 @@ var addElementToLayer = function(layerName) {
     circ.zoom_level = 'summary';
     circ.style.strokeWidth = '0px';
     circ.setAttribute('fill',MASCP.layers[layerName].color);
-    circ.setAttribute('display', 'none');
+    circ.setAttribute('visibility', 'hidden');
     circ.setAttribute('class',layerName);
 
     var bobble = canvas.circle(this._index+0.3,10,0.25);
-    bobble.setAttribute('display','none');
+    bobble.setAttribute('visibility','hidden');
     bobble.style.opacity = '0.4';
     var tracer = canvas.rect(this._index+0.3,10,0.1,0);
     tracer.style.strokeWidth = '0px';
     tracer.style.fill = MASCP.layers[layerName].color;
-    tracer.setAttribute('display','none');
+    tracer.setAttribute('visibility','hidden');
     
     var renderer = this._renderer;
     
@@ -2057,7 +2167,7 @@ var addElementToLayer = function(layerName) {
     var tracer_marker = canvas.marker(this._index+0.3,10,0.5,layerName.charAt(0).toUpperCase());
     
     tracer_marker.zoom_level = 'text';
-    tracer_marker.setAttribute('display','none');
+    tracer_marker.setAttribute('visibility','hidden');
 
     this._renderer._layer_containers[layerName].tracers.push(tracer);
     this._renderer._layer_containers[layerName].tracers.push(bobble);
@@ -2092,7 +2202,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     this._renderer._layer_containers[layerName].push(rect);
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
-    rect.setAttribute('display', 'none');
+    rect.setAttribute('visibility', 'hidden');
     rect.style.opacity = fraction;
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.position_start = this._index;
@@ -2129,7 +2239,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     this._renderer._layer_containers[layerName].push(rect);
     rect.style.strokeWidth = '0px';    
     rect.setAttribute('fill',MASCP.layers[layerName].color);
-    rect.setAttribute('display', 'none');
+    rect.setAttribute('visibility', 'hidden');
     rect.setAttribute('class',layerName);
 
     // BIG POTENTIAL PERFORMANCE HIT HERE?
@@ -2201,7 +2311,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         var tracer = canvas.rect(this._index+0.25,10+height,0.05,0);
         tracer.style.strokeWidth = '0px';
         tracer.style.fill = '#777777'; //MASCP.layers[layerName].color;
-        tracer.setAttribute('display','none');
+        tracer.setAttribute('visibility','hidden');
     
         if ( ! this._renderer._layer_containers[layerName].tracers) {
             this._renderer._layer_containers[layerName].tracers = canvas.set();
@@ -2389,6 +2499,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
                 if (containers[layer.name].tracers) {
                     containers[layer.name].tracers.hide();
                 }
+                containers[layer.name].attr({ 'y': -1000 });
             }
             renderer.refresh();
         });
@@ -2442,11 +2553,11 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
         
         highlight.setAttribute('x',(from) * RS );
         highlight.setAttribute('width',(to - from) * RS );
-        highlight.style.display = 'block';
+        highlight.setAttribute('visibiilty','visible');
         idx += 1;
     }
     for (var i = idx; i < this._highlight.length; i++){
-        this._highlight[i].style.display = 'none';        
+        this._highlight[i].setAttribute('visibility','hidden');
     }
 
     
@@ -2671,7 +2782,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         var name = order[i];
         var container = this._layer_containers[name];
         if (! this.isLayerActive(name)) {
-            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'display' : 'none' };
+            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
             if (container.fixed_track_height) {
                 delete attrs['height'];
             }
@@ -2682,24 +2793,25 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         }
 
         if (container.tracers) {
-            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'block' : 'none';
+            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'visible' : 'hidden';
             var height = (1.5 + track_heights / this.zoom )*RS;
             
             if (container.fixed_track_height) {
                 height += 0.5*container.fixed_track_height * RS;
             }
-            container.tracers.attr({'display' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height },animated);
+            container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height },animated);
         }
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
-            container.attr({ 'display' : 'block','y' : (this._axis_height + (track_heights / this.zoom))*RS },animated);
+            var y_val = this._axis_height + (track_heights / this.zoom);
+            container.attr({ 'visibility' : 'visible','y' : (y_val)*RS },animated);
             if (this._Navigation) {
                 var grow_scale = this.grow_container ? 1 / this.zoom : 1;
-                this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + (track_heights / this.zoom) + track_height / 3 )*RS , track_height * RS / 3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
+                this._Navigation.renderTrack(MASCP.getLayer(name), (y_val+track_height/3)*RS , RS * track_height/3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
-            track_heights += this.zoom * (track_height) + this.trackGap;
+            track_heights += (this.zoom * track_height) + this.trackGap;
         } else {
-            container.attr({ 'display': 'block', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
+            container.attr({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
             if (this._Navigation) {
                 this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , RS * container.track_height / this.zoom );
             }
@@ -2818,7 +2930,12 @@ var accessors = {
     },
 
     getTrackGap: function() {
-        return this._track_gap || 10;
+        if (! this._track_gap){
+            var default_value = ("ontouchend" in document) ? 20 : 10;
+            this._track_gap = this._track_gap || default_value;
+        }
+        
+        return this._track_gap;
     },
 
     setTrackGap: function(trackGap) {
