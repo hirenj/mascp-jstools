@@ -134,13 +134,16 @@ MascotToJSON.prototype.convertReport = function(report,callback) {
                 var response = xhr.responseText;
                 // Remove the header lines from the mascot response
                 response = response.replace(/(.+\n)+\n.*\n/m,'');
-                callback.call(self,data_matrix_to_summary(CSVToArray(response)));
-            } else {
-                callback.call(self,[],"Error loading MASCOT page");
+                if (callback) {
+                    callback.call(self,data_matrix_to_summary(CSVToArray(response)));
+                }
+            } else if (xhr.status == 0) {
+                if (callback) {
+                    callback.call(self,[],new Error("Could not load page"));
+                }
             }
         }        
     };
-    console.log(report_base+'?'+params_to_url(params));
     xhr.open("GET", report_base+'?'+params_to_url(params), true);
     xhr.send(null);
 };

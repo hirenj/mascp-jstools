@@ -82,6 +82,9 @@ jQuery(document).ready(function() {
             (new MascotToJSON()).convertReport(uri,function(data,error) {
                 if (! error) {
                     loadData(data);
+                } else {
+                    document.getElementById('user_data').value = 'Could not load MASCOT result';
+                    throw "FSDF";
                 }
             });
 
@@ -125,7 +128,6 @@ jQuery(document).ready(function() {
                         jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
                         jQuery('#'+datasetname).show();
                     }
-                    console.log(jQuery('#sequence_controllers'));
                     jQuery('#sequence_controllers').trigger('sortupdate');
                     MASCP.renderer.showLayer(datasetname);
                 });
@@ -314,11 +316,25 @@ jQuery(document).ready(function() {
     }
 
     var rrend = function(e,reader) {
-        rendering_readers.splice(rendering_readers.indexOf(reader),1);
-        if (rendering_readers.length > 0) {                
-            return;
+        if (rendering_readers) {
+            rendering_readers.splice(rendering_readers.indexOf(reader),1);
+            if (rendering_readers.length > 0) {                
+                return;
+            }
         }
 
+        if (! rendering_readers) {
+            return;
+            
+        }
+
+        setTimeout(function() {
+            jQuery('#agi').focus();            
+        },1000);
+
+
+        rendering_readers = null;
+        
         if (document._screen) {
             document._screen.hide();
         }

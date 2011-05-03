@@ -1,79 +1,78 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" >
 
-	<property name="project.java.extlib.dir" value="${basedir}/extlib/java"/>
-	
-	<property name="project.temp.dir" value="temp"/>
-	
-	<property name="apidoc.dir" value="${basedir}/doc"/>
-	
-	<property name="javascript.dir" value="js"/>
+    <property name="project.java.extlib.dir" value="${basedir}/extlib/java"/>
+    
+    <property name="project.temp.dir" value="temp"/>
+    
+    <property name="apidoc.dir" value="${basedir}/doc"/>
+    
+    <property name="javascript.dir" value="js"/>
 
-	<property name="jsdoc.version" value="2.3.2" />
+    <property name="jsdoc.version" value="2.3.2" />
 
     <property name="ivy.install.version" value="2.1.0-rc1" />
-	
-	<property name="ivy.jar.filename" value="ivy-${ivy.install.version}.jar"/>
+    
+    <property name="ivy.jar.filename" value="ivy-${ivy.install.version}.jar"/>
 
     <property name="ivy.jar.file" value="${project.java.extlib.dir}/${ivy.jar.filename}" />
-	
-	
-	<!-- TARGET: resolve-external-dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Uses Ivy to resolve and download dependant library jars for the project.
-	-->
-	<target name="resolve-external-dependencies" depends="install-ivy" description="Check and update 3rd party project dependencies">
-	    <echo>Deleting old jars from ${project.java.extlib.dir}</echo>
-	    <delete>
-	        <fileset dir="${project.java.extlib.dir}" includes="*.jar" excludes="${ivy.jar.filename}"/>
-	    </delete>
-	    <ivy:settings file="ivysettings.xml" />
-	    <ivy:retrieve pattern="${project.java.extlib.dir}/[artifact]-[revision].[ext]" type="jar" />
-
-	    <ivy:retrieve pattern="js/[artifact]-[revision].[ext]" type="js"/>
-
-	</target>
-
-
-	<!-- TARGET: install-ivy ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Installs ivy after downloading.
-	-->
-	<target name="install-ivy" depends="" description="Installs ivy">
-
-		<mkdir dir="${project.java.extlib.dir}"/>
-		
-	    <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
-	         dest="${ivy.jar.file}" 
-	         usetimestamp="true" 
-	     />
     
-	     <path id="ivy.lib.path">
-	        <fileset dir="${project.java.extlib.dir}" includes="*.jar"/>
-	    </path>
-	    <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-	</target>
+    
+    <!-- TARGET: resolve-external-dependencies ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Uses Ivy to resolve and download dependant library jars for the project.
+    -->
+    <target name="resolve-external-dependencies" depends="install-ivy" description="Check and update 3rd party project dependencies">
+        <echo>Deleting old jars from ${project.java.extlib.dir}</echo>
+        <delete>
+            <fileset dir="${project.java.extlib.dir}" includes="*.jar" excludes="${ivy.jar.filename}"/>
+        </delete>
+        <ivy:settings file="ivysettings.xml" />
+        <ivy:retrieve pattern="${project.java.extlib.dir}/[artifact]-[revision].[ext]" type="jar" />
+
+        <ivy:retrieve pattern="js/[artifact]-[revision].[ext]" type="js"/>
+
+    </target>
+
+
+    <!-- TARGET: install-ivy ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Installs ivy after downloading.
+    -->
+    <target name="install-ivy" depends="" description="Installs ivy">
+
+        <mkdir dir="${project.java.extlib.dir}"/>
+        
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${ivy.jar.file}" 
+             usetimestamp="true" 
+         />
+    
+         <path id="ivy.lib.path">
+            <fileset dir="${project.java.extlib.dir}" includes="*.jar"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>
 
     <!-- TARGET: update ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     -->
     <target name="update" depends="resolve-external-dependencies" description="Gets libraries" />
 
-	<target name="build-jsdocs" description="Creates javadoc from sources in src/js">
-		
-		<mkdir dir="${project.temp.dir}"/>
-		<mkdir dir="${apidoc.dir}/js"/>
-		
-	    <unzip src="${project.java.extlib.dir}/jsdoc-dist-${jsdoc.version}.zip" dest="${project.temp.dir}/jsdoc-toolkit"/>
-		<taskdef name="jsdoctoolkit" classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit" >
-	        <classpath>
-<!--	            <fileset dir="${project.temp.dir}/jsdoc-toolkit" includes="**/*.jar"/>-->
-	            <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
-	        </classpath>
-	    </taskdef>
-		<echo>Making jsdoc in ${apidoc.dir}/js from ${javascript.dir}</echo>
-	    <jsdoctoolkit jsdochome="${project.temp.dir}/jsdoc-toolkit/jsdoc_toolkit-${jsdoc.version}/jsdoc-toolkit/" template="jsdoc" outputdir="${apidoc.dir}/js">
-	    	<fileset dir="${javascript.dir}">
-	        	<include name="lib/*.js"/>
-	        </fileset>
-	    </jsdoctoolkit>
-	</target>
+    <target name="build-jsdocs" description="Creates javadoc from sources in src/js">
+        
+        <mkdir dir="${project.temp.dir}"/>
+        <mkdir dir="${apidoc.dir}/js"/>
+        
+        <unzip src="${project.java.extlib.dir}/jsdoc-dist-${jsdoc.version}.zip" dest="${project.temp.dir}/jsdoc-toolkit"/>
+        <taskdef name="jsdoctoolkit" classname="uk.co.darrenhurley.ant.tasks.JsDocToolkit" >
+            <classpath>
+                <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
+            </classpath>
+        </taskdef>
+        <echo>Making jsdoc in ${apidoc.dir}/js from ${javascript.dir}</echo>
+        <jsdoctoolkit jsdochome="${project.temp.dir}/jsdoc-toolkit/jsdoc_toolkit-${jsdoc.version}/jsdoc-toolkit/" template="jsdoc" outputdir="${apidoc.dir}/js">
+            <fileset dir="${javascript.dir}">
+                <include name="lib/*.js"/>
+            </fileset>
+        </jsdoctoolkit>
+    </target>
 
     <target name="build" description="Build the minified js files">
         <taskdef name="jsmin"
@@ -83,72 +82,93 @@
                 </classpath>                
         </taskdef>
 		<mkdir dir="build"/>
-        <jsmin destdir="build">
-            <fileset dir="js/lib" includes="**/*.js"/>
-            <fileset dir="js" includes="json-2.js" />
-        </jsmin>
-        <mkdir dir="dist/js" />
-        <concat destfile="dist/js/maschup.services.min.js"
-                  force="yes">
-            <fileset dir="build" includes="json-2.js"/> 
-            <fileset dir="build" includes="diff_match_patch.js"/>
-            <fileset dir="build" includes="MascpService.js"/>
-            <fileset dir="build" includes="*Reader.js"/>
-        </concat>
-        <concat destfile="dist/js/maschup.map.min.js"
-                  force="yes">
-            <fileset dir="build" includes="gomap.js"/>                  
-        </concat>
-        <concat destfile="dist/js/maschup.renderers.min.js"
-                  force="yes">
-            <fileset dir="build" includes="SequenceRenderer.js"/>
-            <fileset dir="build" includes="CondensedSequenceRenderer.js"/>
-            <fileset dir="build" includes="TagVisualisation.js"/>
-        </concat>
         
-        <concat destfile="dist/js/maschup.min.js" force="yes">
-            <fileset dir="dist/js" includes="maschup.services.min.js"/>
-            <fileset dir="dist/js" includes="maschup.renderers.min.js"/>
-            <fileset dir="dist/js" includes="maschup.map.min.js"/>
+        <concat destfile="build/maschup.services.js"
+                  force="yes">
+            <fileset dir="js" includes="json-2.js"/> 
+            <fileset dir="js" includes="diff_match_patch.js"/>
+            <fileset dir="js/lib" includes="MascpService.js"/>
+            <fileset dir="js/lib" includes="*Reader.js"/>
+            <fileset dir="js/lib" includes="MascotToJSON.js"/>
+        </concat>
+        <concat destfile="build/maschup.map.js"
+                  force="yes">
+            <fileset dir="js/lib" includes="gomap.js"/>                  
+        </concat>
+        <concat destfile="build/maschup.renderers.js"
+                  force="yes">
+            <fileset dir="js/lib" includes="SequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="CondensedSequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="TagVisualisation.js"/>
         </concat>
 
-		<copy file="js/lib/blank.svg" tofile="dist/js/blank.svg"/>
-        
+        <concat destfile="build/maschup.js" force="yes">
+            <fileset dir="build" includes="maschup.services.js"/>
+            <fileset dir="build" includes="maschup.renderers.js"/>
+            <fileset dir="build" includes="maschup.map.js"/>
+        </concat>
+
     </target>
 
-	<target name="dist" description="Generate a distribution directory for the demo app">
-		
-		<copy todir="dist/css">
-			<fileset dir="css"/>
-		</copy>
-		
-		<copy todir="dist/js">
-		    <fileset dir="js"/>
-	    </copy>
-		
-		<copy todir="dist/">
-			<fileset dir="static"/>
-		</copy>
-		<copy file="proxy.pl" tofile="dist/proxy.pl"/>
-		<copy file="atpeptide.pl" tofile="dist/atpeptide.pl"/>
-		<copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
-		<copy file="rippdb.pl" tofile="dist/rippdb.pl"/>
-		<copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
+	<target depends="build" name="dist" description="Generate a distribution directory for the app">
 
-		<copy file="tair.pl" tofile="dist/tair.pl"/>		
+        <taskdef name="jsmin"
+                classname="net.matthaynes.jsmin.JSMin_Task">
+                <classpath>
+                    <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
+                </classpath>                
+        </taskdef>
 
-		<copy file="snps.pl" tofile="dist/snps.pl"/>
-		
-		<copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
+        <mkdir dir="dist/js" />
 
-		<copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
+        <jsmin destdir="dist/js" suffix="true">
+            <fileset dir="build" includes="maschup*.js"/>
+        </jsmin>
+
+        <copy todir="dist/js">
+            <fileset dir="build" includes="maschup*.js"/>
+        </copy>
+        
+        <copy file="js/lib/blank.svg" tofile="dist/js/blank.svg"/>
+
+        <copy todir="dist/js">
+            <fileset dir="build" includes="maschup*.js"/>
+        </copy>
+
+        <copy todir="dist/">
+            <fileset dir="static"/>
+        </copy>
+        
+        <copy todir="dist/css">
+            <fileset dir="css"/>
+        </copy>
+        
+        <copy todir="dist/js">
+            <fileset dir="js"/>
+        </copy>
+                
+        <copy file="proxy.pl" tofile="dist/proxy.pl"/>
+        <copy file="atpeptide.pl" tofile="dist/atpeptide.pl"/>
+        <copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
+        <copy file="rippdb.pl" tofile="dist/rippdb.pl"/>
+        <copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
+
+        <copy file="tair.pl" tofile="dist/tair.pl"/>        
+
+        <copy file="snps.pl" tofile="dist/snps.pl"/>
+        
+        <copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
+
+        <copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
 
        <copy todir="dist">
             <fileset dir="." includes="*-json.txt"/>
         </copy>
-		
-		
-		<zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>		
-	</target>
+
+    </target>
+    
+    <target depends="dist" name="bundle">
+        <zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>
+    </target>
 
 </project>

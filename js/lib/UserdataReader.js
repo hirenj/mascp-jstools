@@ -47,12 +47,20 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
             var data_func = function(row) {
                 renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
             };
-            if (my_data instanceof Array) {
+            if (my_data instanceof Array && (! (my_data[0] instanceof Array))) {
                 data_func = function(row) {
                     var start = parseInt(row[0]);
                     var end = parseInt(row[1]);
                     renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);
                 };
+            } else if (my_data instanceof Array && ( my_data[0] instanceof Array)) {
+                data_func = function(peps) {
+                    peps.forEach(function(row) {
+                        var start = parseInt(row[0]);
+                        var end = parseInt(row[1]);
+                        renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);                        
+                    });
+                };                
             } else if (my_data === parseInt(my_data[0])) {
                 data_func = function(row) {
                     var pos = row;
@@ -102,7 +110,11 @@ var find_peptide_cols = function(data_matrix) {
         var col = i;
         if (cell.toString().match(/\d+-\d+/)) {
             retriever = function(row) {
-                return row[col].split(/-/);
+                var results = [];
+                row[col].split(/,/).forEach(function(data) {
+                    results.push(data.split(/-/));
+                });
+                return results;
             }
         }
         if (cell.toString().match(/^\d+$/)) {
