@@ -400,7 +400,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var rect = canvas.rect(-10,0,'200','100%');
     rect.setAttribute('rx','10');
     rect.setAttribute('ry','10');    
-    rect.setAttribute('opacity','0.8');
+    if (! ("ontouchend" in document)) {
+        rect.setAttribute('opacity','0.8');
+    }
     rect.style.stroke = '#000000';
     rect.style.strokeWidth = '2px';
     rect.style.fill = '#000000';
@@ -445,6 +447,13 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     jQuery(self).bind('toggleEdit',function() {
         self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
         self.drag_disabled = ! self.edit_enabled;
+        
+        if (self._rotators) {
+            self._rotators.forEach(function(rot) {
+                rot(self.edit_enabled);
+            });
+        }
+        
         self._close_buttons.forEach(function(button) {
             button.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
         });
@@ -453,7 +462,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         });
 
     });
-    
+        
     tracks_button.addEventListener('click',function() {
         jQuery(self).trigger('toggleEdit');
         jQuery(self).trigger('click');
@@ -577,7 +586,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
                 var dX = (p.x - oX);
                 var dY = (p.y - oY);
-                lbl_grp.setAttribute('transform','translate('+dX+','+dY+')');
+                var curr_transform = lbl_grp.getAttribute('transform') || '';
+                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                curr_transform += ' translate('+dX+','+dY+') ';
+                lbl_grp.setAttribute('transform',curr_transform);
                 e.stopPropagation();
                 return false;
             };
@@ -685,11 +697,18 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                         
                         if (anim_steps < 5) {
                             for (var i = 0; i < elements_to_shift.length; i++ ) {
-                                elements_to_shift[i].setAttribute('transform','translate(0,'+anim_steps*height+')');
+                                var curr_transform = elements_to_shift[i].getAttribute('transform') || '';
+                                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                                curr_transform += ' translate(0,'+anim_steps*height+')';
+                                elements_to_shift[i].setAttribute('transform',curr_transform);
                             }
 
                             for (var i = 0; i < elements_to_shift_up.length; i++ ) {
-                                elements_to_shift_up[i].setAttribute('transform','translate(0,'+anim_steps*-1*height+')');
+
+                                var curr_transform = elements_to_shift_up[i].getAttribute('transform') || '';
+                                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                                curr_transform += ' translate(0,'+anim_steps*-1*height+')';
+                                elements_to_shift_up[i].setAttribute('transform',curr_transform);
                             }
 
 
@@ -741,6 +760,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_rect.setAttribute('fill','url(#simple_gradient)');
         a_rect.setAttribute('opacity','0.1');
         
+        self._rotators = self._rotators || [];
         
         label_group.push(a_rect);
 
@@ -853,6 +873,33 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_group.push(closer);
             self._close_buttons.push(closer);
             closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
+
+            var angle = 0;
+            var delta = 0.5;
+
+            if ("ontouchend" in document) {
+                self._rotators.push(function(begin) {
+                    if ( ! label_group.parentNode ) {
+                        return;
+                    }
+                    if ((typeof begin) !== 'undefined') {
+                        closer.rotate = begin;
+                    }
+                    var curr_transform = closer.getAttribute('transform') || '';
+                    curr_transform = curr_transform.replace(/^\s*rotate\([^\)]+\)/,'');
+                    curr_transform = 'rotate('+angle+','+5*height+','+(y+height)+') '+curr_transform;
+                    closer.setAttribute('transform',curr_transform);
+
+                    angle += delta;
+                    if (angle > 3 || angle < -3) {
+                        delta *= -1;
+                    }
+                    if (closer.rotate) {
+                        setTimeout(arguments.callee,0);
+                    }
+                });
+            }
+
             
         })();
         
@@ -2820,6 +2867,13 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
         container.refresh_zoom();
 
+    }
+    var self = this;
+    
+    if (self._Navigation && self._Navigation._rotators) {
+        self._Navigation._rotators.forEach(function(rot) {
+            rot(self._Navigation.edit_enabled);
+        });
     }
 
     var viewBox = [-1,0,0,0];
