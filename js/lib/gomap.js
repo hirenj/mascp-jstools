@@ -1428,7 +1428,7 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
         };
         this.addEventListener('gesturechange',zoomscale,false);
         this.addEventListener('gestureend',function(ev) {
-            touchElement.removeEventListener('gesturechange',zoomscale);
+            touchElement.removeEventListener('gesturechange',zoomscale*0.5);
             touchElement.removeEventListener('gesturechange',arguments.callee);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
