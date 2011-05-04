@@ -452,10 +452,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
         self.drag_disabled = ! self.edit_enabled;
         
-        if (self._rotators) {
-            self._rotators.forEach(function(rot) {
-                rot(self.edit_enabled);
-            });
+        if (self.edit_enabled) {
+            self._beginRotation();
+        } else {
+            self._endRotation();
         }
         
         self._close_buttons.forEach(function(button) {
@@ -733,6 +733,32 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         },false);
 }
 
+MASCP.CondensedSequenceRenderer.Navigation.prototype._beginRotation = function() {
+    var self = this;
+    if (self._rotators) {
+        var start = (new Date()).getTime();
+        var rate = 75;
+        if (self._rotator_anim) {
+            clearInterval(self._rotator_anim);
+        }
+        self._rotator_anim = setInterval(function() {
+            var end = (new Date()).getTime();
+            var step = parseInt((end - start) / rate);
+            self._rotators.forEach(function(rot) {
+               rot(step); 
+            });
+        },rate);
+    }
+};
+
+MASCP.CondensedSequenceRenderer.Navigation.prototype._endRotation = function() {
+    if (self._rotators) {
+        if (self._rotator_anim) {
+            clearInterval(self._rotator_anim);
+        }        
+    }    
+};
+
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
     var self = this;
     this._extendWithSVGApi(canvas);
@@ -765,7 +791,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_rect.setAttribute('opacity','0.1');
         
         self._rotators = self._rotators || [];
-        
+                
         label_group.push(a_rect);
 
         // Use these for debugging positioning
@@ -878,29 +904,24 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             self._close_buttons.push(closer);
             closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
 
-            var angle = 0;
-            var delta = 0.5;
-
             if ("ontouchend" in document) {
-                self._rotators.push(function(begin) {
+                var dir = 1;
+                self._rotators.push(function(step) {
                     if ( ! label_group.parentNode ) {
                         return;
                     }
-                    if ((typeof begin) !== 'undefined') {
-                        closer.rotate = begin;
-                    }
                     var curr_transform = closer.getAttribute('transform') || '';
+                    var delta = (step % 6);
+                    if ((step % 6) == 0) {
+                        dir *= -1;
+                    }
+                    var angle = dir < 0 ? 3 : -3;
+                    angle += dir*delta;
+                    var angle = ((step % 12) / 2) - 6;
+                    
                     curr_transform = curr_transform.replace(/^\s*rotate\([^\)]+\)/,'');
-                    curr_transform = 'rotate('+angle+','+5*height+','+(y+height)+') '+curr_transform;
+                    curr_transform = 'rotate('+angle+','+(closer.getBBox().x +(closer.getBBox().width/2)) +','+(y+(height/2))+') '+curr_transform;
                     closer.setAttribute('transform',curr_transform);
-
-                    angle += delta;
-                    if (angle > 3 || angle < -3) {
-                        delta *= -1;
-                    }
-                    if (closer.rotate) {
-                        setTimeout(arguments.callee,0);
-                    }
                 });
             }
 
@@ -2897,12 +2918,11 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         container.refresh_zoom();
 
     }
-    var self = this;
-    
-    if (self._Navigation && self._Navigation._rotators) {
-        self._Navigation._rotators.forEach(function(rot) {
-            rot(self._Navigation.edit_enabled);
-        });
+
+    if (this._Navigation.edit_enabled) {
+        this._Navigation._beginRotation();
+    } else {
+        this._Navigation._endRotation();        
     }
 
     var viewBox = [-1,0,0,0];
