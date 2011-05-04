@@ -226,13 +226,17 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
 
         renderer._canvas.setCurrentTranslateXY = function(x,y) {
-                group.setAttribute('transform','translate('+x+', '+y+')');
+                var curr_transform = group.getAttribute('transform').replace(/translate\([^\)]+\)/,'');
+                curr_transform = curr_transform + ' translate('+x+', '+y+') ';
+                group.setAttribute('transform',curr_transform);
                 this.currentTranslate.x = x;
                 this.currentTranslate.y = y;
         };
         
         renderer._nav_canvas.setCurrentTranslateXY = function(x,y) {
-                nav_group.setAttribute('transform','translate('+x+', '+y+')');            
+                var curr_transform = nav_group.getAttribute('transform').replace(/translate\([^\)]+\)/,'');
+                curr_transform = curr_transform + ' translate('+x+', '+y+') ';
+                nav_group.setAttribute('transform',curr_transform);
                 this.currentTranslate.x = x;
                 this.currentTranslate.y = y;
         };
@@ -1275,13 +1279,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             var hash = jQuery.extend({},hsh);
             
             if (animated && typeof hash['y'] != 'undefined') {
-                
+                var rate = 75;
+
                 if ( ! canvas._anim_clock_funcs ) {
                     canvas._anim_clock_funcs = [];
                     canvas._in_anim = true;
                     jQuery(canvas).trigger('_anim_begin');
                     renderer._frame_count = 0;
-                    
+                    var start = null;
                     canvas._anim_clock = setInterval(function() {
                         if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
                             clearInterval(canvas._anim_clock);
@@ -1292,13 +1297,25 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                             return;
                         }
                         var susp_id = canvas.suspendRedraw(1000);
-                        for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
-                            canvas._anim_clock_funcs[i].apply();
+                        var nav_canv_id = renderer._nav_canvas.suspendRedraw(1000);
+                                                
+                        if (! start) {
+                            start = (new Date()).getTime();
                         }
+                        for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
+                            var end = (new Date()).getTime();
+                            var step_id = parseInt((end - start)/rate);
+                            canvas._anim_clock_funcs[i].apply(null,[step_id - (canvas._anim_clock_funcs[i]._last_step || step_id)]);
+                            if (canvas._anim_clock_funcs && canvas._anim_clock_funcs[i]) {
+                                canvas._anim_clock_funcs[i]._last_step = step_id;
+                            }
+                        }
+
+                        renderer._nav_canvas.unsuspendRedraw(nav_canv_id);
                         canvas.unsuspendRedraw(susp_id);
                         renderer._frame_count += 1;
                         
-                    },1);
+                    },rate);
                 }
                 
                 if (an_array.animating) {
@@ -1311,7 +1328,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 
                 
-                var counter = 0;
                 if (an_array.length == 0) {
                     return;
                 }
@@ -1325,7 +1341,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 
                 var curr_y = an_array[0] ? parseInt(a_y || an_array[0].getAttribute('y')) : 0;
-                var curr_disp = 'none';
+                var curr_disp = 'hidden';
                 for (var i = 0 ; i < an_array.length; i++ ) {
                     var a_disp = an_array[i].getAttribute('visibility');
                     if (a_disp && a_disp != 'hidden') {
@@ -1333,7 +1349,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         break;
                     }
                 }
+                
+                
                 var target_y = parseInt(hash['y']);
+
                 var target_disp = hash['visibility'];
                 if (curr_disp == target_disp && target_disp == 'hidden') {
                     an_array.attr(hsh);
@@ -1353,19 +1372,27 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
 
                 an_array.attr(hash);
+                var counter = 0;
+
                 if (target_y != curr_y) {
-                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 2000))) + 1);
+                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 500))/rate) + 1);
                     var diff = (target_y - curr_y) / anim_steps;
                     hash['y'] = curr_y || 0;
                     var orig_func = arguments.callee;
                     an_array.animating = true;
                     jQuery(an_array).trigger('_t_anim_begin');
                     canvas._anim_clock_funcs.push(                    
-                        function() {
+                        function(step) {
+                            if (diff < 0 && (hash['y'] < target_y) ) {
+                                hash['y'] = target_y;
+                            }
+                            if (diff > 0 && (hash['y'] > target_y) ) {
+                                hash['y'] = target_y;
+                            }
                             orig_func.apply(an_array,[hash]);
-                            counter += 1;
-                            if (counter <= anim_steps) {
-                                hash['y'] += diff;
+                            counter += (step || 1);
+                            if (hash['y'] != target_y) {
+                                hash['y'] = curr_y + diff*(counter);
                                 return;
                             }
                             an_array.animating = false;
@@ -1622,6 +1649,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
            renderer.zoom = 3.5;
            return;
        }
+       
        if (canvas.zoom > 3.5) {
            renderer._axis_height = 14;
            amino_acids.attr({'y': 12*RS});
@@ -1633,6 +1661,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
        }
        renderer.refresh();
    });
+   
 };
 
 MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength) {
@@ -2872,6 +2901,10 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
  *  @property   {Number}    trackGap    Vertical gap between tracks (default 10)
  */
 (function() {
+var timeout = null;
+var actual_zoom = null;
+var start_zoom = null;
+var start_x = 0;
 var accessors = { 
     setZoom: function(zoomLevel) {
         if (zoomLevel < 0.5) {
@@ -2880,31 +2913,74 @@ var accessors = {
         if (zoomLevel > 10) {
             zoomLevel = 10;
         }
-        var start_zoom = parseFloat(this._zoomLevel);
 
-        this._zoomLevel = parseFloat(zoomLevel);
-        if (this._canvas) {
-            this._canvas.zoom = parseFloat(zoomLevel);
-            if (document.createEvent) {
-                var evObj = document.createEvent('Events');
-                evObj.initEvent('zoomChange',false,true);
-                this._canvas.dispatchEvent(evObj);
-            } else {
-                jQuery(this._canvas).trigger('zoomChange');
-            }
+        if (zoomLevel == this._zoomLevel) {
+            return;
         }
-        jQuery(this).trigger('zoomChange');
 
-        if (this._canvas && this._canvas.getAttribute('viewBox')) {            
-            var cx = this.zoomCenter ? this.zoomCenter.x : 0;
-            var viewBox = this._canvas.getAttribute('viewBox').split(' ');
-            var end_zoom = this._zoomLevel;
+        var self = this;
 
-            if (this._canvas.shiftPosition && (end_zoom - start_zoom) != 0) {
-                var shift_pos = this._canvas.currentTranslate.x - (end_zoom - start_zoom)*2*this.sequence.length*(cx / parseFloat(viewBox[2]) );
-                this._canvas.shiftPosition(shift_pos,0);
-            }
+        if (! self._canvas) {
+            return;
         }
+
+        // if ( self._canvas.getAttribute('viewBox')) {
+        //     var cx = self.zoomCenter ? self.zoomCenter.x : 0;
+        //     var viewBox = self._canvas.getAttribute('viewBox').split(' ');
+        //     var residue_id = self.sequence.length*(cx / parseFloat(viewBox[2]) );
+        //     var current_residue_shift = self.sequence.length*(self._canvas.currentTranslate.x / parseFloat(viewBox[2]) );
+        //     // console.log(residue_id*this._zoomLevel);
+        //     // console.log(current_residue_shift*this._zoomLevel/actual_zoom);
+        // }
+                
+        if ( timeout ) {
+            clearTimeout(timeout);
+        } else {
+            start_zoom = parseFloat(this._zoomLevel || zoomLevel);
+            actual_zoom = start_zoom;
+            start_x = self._canvas.currentTranslate.x || 0;
+        }
+
+        this._zoomLevel = parseFloat(zoomLevel);        
+
+        var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
+        curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
+        curr_transform = 'scale('+(this._zoomLevel/actual_zoom)+') '+(curr_transform || '');
+        self._canvas.parentNode.setAttribute('transform',curr_transform);
+
+        timeout = setTimeout(function() {
+            timeout = null;
+            actual_zoom = self._zoomLevel;
+            
+            var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
+            curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
+            self._canvas.parentNode.setAttribute('transform',curr_transform);
+            
+            // 
+            // if (self._canvas && self._canvas.getAttribute('viewBox')) {            
+            //     var cx = self.zoomCenter ? self.zoomCenter.x : 0;
+            //     var viewBox = self._canvas.getAttribute('viewBox').split(' ');
+            //     var end_zoom = self._zoomLevel;
+            // 
+            //     if (self._canvas.shiftPosition && (end_zoom - start_zoom) != 0) {
+            //         var shift_pos = self._canvas.currentTranslate.x - (end_zoom - start_zoom)*2*self.sequence.length*(cx / parseFloat(viewBox[2]) );
+            //         self._canvas.shiftPosition(shift_pos,0);
+            //     }
+            // }
+
+            if (self._canvas) {
+                self._canvas.zoom = parseFloat(zoomLevel);
+                if (document.createEvent) {
+                    var evObj = document.createEvent('Events');
+                    evObj.initEvent('zoomChange',false,true);
+                    self._canvas.dispatchEvent(evObj);
+                } else {
+                    jQuery(self._canvas).trigger('zoomChange');
+                }
+            }
+            jQuery(self).trigger('zoomChange');                
+            timeout = null;
+        },100);
         
     },
 
