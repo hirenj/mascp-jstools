@@ -2976,11 +2976,12 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
  */
 (function() {
 var timeout = null;
-var actual_zoom = null;
 var start_zoom = null;
-var start_x = 0;
+var center_residue = null;
+var start_x = null;
 var accessors = { 
     setZoom: function(zoomLevel) {
+
         if (zoomLevel < 0.5) {
             zoomLevel = 0.5;
         }
@@ -2998,52 +2999,58 @@ var accessors = {
             return;
         }
 
-        // if ( self._canvas.getAttribute('viewBox')) {
-        //     var cx = self.zoomCenter ? self.zoomCenter.x : 0;
-        //     var viewBox = self._canvas.getAttribute('viewBox').split(' ');
-        //     var residue_id = self.sequence.length*(cx / parseFloat(viewBox[2]) );
-        //     var current_residue_shift = self.sequence.length*(self._canvas.currentTranslate.x / parseFloat(viewBox[2]) );
-        //     // console.log(residue_id*this._zoomLevel);
-        //     // console.log(current_residue_shift*this._zoomLevel/actual_zoom);
-        // }
-                
+        if ( self.zoomCenter && ! center_residue ) {
+            start_x = self._canvas.currentTranslate.x || 0;
+            center_residue = self.zoomCenter ? self.zoomCenter.x : 0;
+        }
+
         if ( timeout ) {
             clearTimeout(timeout);
         } else {
-            start_zoom = parseFloat(this._zoomLevel || zoomLevel);
-            actual_zoom = start_zoom;
-            start_x = self._canvas.currentTranslate.x || 0;
+            start_zoom = parseFloat(this._zoomLevel || 1);
         }
 
-        this._zoomLevel = parseFloat(zoomLevel);        
+        self._zoomLevel = parseFloat(zoomLevel);        
+
 
         var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
         curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
-        curr_transform = 'scale('+(this._zoomLevel/actual_zoom)+') '+(curr_transform || '');
+        var scale_value = Math.abs(parseFloat(zoomLevel)/start_zoom);
+        curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
         self._canvas.parentNode.setAttribute('transform',curr_transform);
 
+        if (center_residue) {
+            var delta = ((start_zoom - self._zoomLevel)/(scale_value*25))*center_residue;
+            delta += start_x/(scale_value);
+            if (self._canvas.shiftPosition) {
+                self._canvas.shiftPosition(delta,0);
+            } else {
+                self._canvas.setCurrentTranslateXY(delta,0);
+            }
+        }
+        
         timeout = setTimeout(function() {
             timeout = null;
-            actual_zoom = self._zoomLevel;
-            
+            var scale_value = Math.abs(parseFloat(self._zoomLevel)/start_zoom);
+
             var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
             curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
             self._canvas.parentNode.setAttribute('transform',curr_transform);
-            
-            // 
-            // if (self._canvas && self._canvas.getAttribute('viewBox')) {            
-            //     var cx = self.zoomCenter ? self.zoomCenter.x : 0;
-            //     var viewBox = self._canvas.getAttribute('viewBox').split(' ');
-            //     var end_zoom = self._zoomLevel;
-            // 
-            //     if (self._canvas.shiftPosition && (end_zoom - start_zoom) != 0) {
-            //         var shift_pos = self._canvas.currentTranslate.x - (end_zoom - start_zoom)*2*self.sequence.length*(cx / parseFloat(viewBox[2]) );
-            //         self._canvas.shiftPosition(shift_pos,0);
-            //     }
-            // }
 
+            if (center_residue) {
+                var delta = ((start_zoom - self._zoomLevel)/(25))*center_residue;
+                delta += start_x;
+
+                if (self._canvas.shiftPosition) {
+                    self._canvas.shiftPosition(delta,0);
+                } else {
+                    self._canvas.setCurrentTranslateXY(delta,0);
+                }
+            }
+            center_residue = null;
+            
             if (self._canvas) {
-                self._canvas.zoom = parseFloat(zoomLevel);
+                self._canvas.zoom = parseFloat(self._zoomLevel);
                 if (document.createEvent) {
                     var evObj = document.createEvent('Events');
                     evObj.initEvent('zoomChange',false,true);
@@ -3053,9 +3060,7 @@ var accessors = {
                 }
             }
             jQuery(self).trigger('zoomChange');                
-            timeout = null;
         },100);
-        
     },
 
     getZoom: function() {
