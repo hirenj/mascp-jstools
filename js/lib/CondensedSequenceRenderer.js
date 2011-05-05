@@ -3067,7 +3067,7 @@ var accessors = {
             jQuery(self).trigger('zoomChange');
 
 
-        },1000);
+        },100);
     },
 
     getZoom: function() {
