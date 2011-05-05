@@ -3018,6 +3018,7 @@ var accessors = {
         var scale_value = Math.abs(parseFloat(zoomLevel)/start_zoom);
         curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
         self._canvas.parentNode.setAttribute('transform',curr_transform);
+        jQuery(self._canvas).trigger('_anim_begin');
 
         if (center_residue) {
             var delta = ((start_zoom - self._zoomLevel)/(scale_value*25))*center_residue;
@@ -3048,6 +3049,7 @@ var accessors = {
                 }
             }
             center_residue = null;
+            jQuery(self._canvas).trigger('_anim_end');
             
             if (self._canvas) {
                 self._canvas.zoom = parseFloat(self._zoomLevel);
