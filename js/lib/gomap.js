@@ -921,6 +921,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 clearTimeout(targetElement._snapback);
                 targetElement._snapback = null;
             }
+            
             if (p.x > viewBoxScale * min_x) {
                 targetElement._snapback = setTimeout(function() {
                     if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 35 ) {
@@ -957,9 +958,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             var min_val = viewBoxScale * ( width - 2 * min_x );
             
             if (min_x == 0) {
-                min_val *= 0.75;
+                min_val *= 0.90;
             }
-
             if (p.x < 0 && Math.abs(p.x) > min_val) {
                 targetElement._snapback = setTimeout(function() {
                     if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 35 ) {
@@ -1398,7 +1398,6 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
         }
         return [ posx, posy ];
     };
-
     touchElement.addEventListener('touchstart',function(e) {
         if (e.touches.length == 2) {
             var positions = mousePosition(e.touches[0]);
@@ -1415,21 +1414,25 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
                 p.x = 0.5*(positions[0] + positions2[0]);
                 p.y = 0.5*(positions[1] + positions2[1]);
             }
-            zoomElement.zoomCenter = p;            
+            zoomElement.zoomCenter = p;  
         }
     },false);
 
     touchElement.addEventListener('gesturestart',function(e) {
         zoomElement.zoomLeft = null;
+        
         var zoomStart = zoomElement.zoom;
+
         var zoomscale = function(ev) {
-            zoomElement.zoom = zoomStart * ev.scale;
+            if ( zoomElement.zoomCenter ) {
+                zoomElement.zoom = zoomStart * ev.scale;
+            }
             ev.preventDefault();
         };
         this.addEventListener('gesturechange',zoomscale,false);
         this.addEventListener('gestureend',function(ev) {
-            touchElement.removeEventListener('gesturechange',zoomscale*0.5);
-            touchElement.removeEventListener('gesturechange',arguments.callee);
+            touchElement.removeEventListener('gesturechange',zoomscale);
+            touchElement.removeEventListener('gestureend',arguments.callee);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
         },false);        
@@ -1612,8 +1615,7 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
 
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
-
-      target.zoomCenter = mousePosition(e);            
+      target.zoomCenter = mousePosition(e);
       
       if (wheelData > 0) {
         target.zoom = target.zoom += precision;

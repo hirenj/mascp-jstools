@@ -252,7 +252,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         
         renderer._nav_canvas.hide = function() {
             renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);
-            canv.style.GomapScrollLeftMargin = 0;
+            canv.style.GomapScrollLeftMargin = 1000;
         }
         
         renderer._addNav();
@@ -2953,6 +2953,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
         if (this._Navigation._is_open) {
             this._canvas.style.GomapScrollLeftMargin = this._Navigation._width_shift;
+        } else {
+            this._canvas.style.GomapScrollLeftMargin = 1000;            
         }
         this._Navigation.setViewBox(viewBox.join(' '));
         this._Navigation.setDimensions('100%','100%');//this._canvas.width.baseVal.value,'100%');
@@ -2998,10 +3000,12 @@ var accessors = {
         if (! self._canvas) {
             return;
         }
-
         if ( self.zoomCenter && ! center_residue ) {
             start_x = self._canvas.currentTranslate.x || 0;
             center_residue = self.zoomCenter ? self.zoomCenter.x : 0;
+        } else if (center_residue && ! self.zoomCenter ) {
+            // We should not be zooming if there is a center residue and no zoomCenter;
+            return;
         }
 
         if ( timeout ) {
@@ -3023,11 +3027,7 @@ var accessors = {
         if (center_residue) {
             var delta = ((start_zoom - self._zoomLevel)/(scale_value*25))*center_residue;
             delta += start_x/(scale_value);
-            if (self._canvas.shiftPosition) {
-                self._canvas.shiftPosition(delta,0);
-            } else {
-                self._canvas.setCurrentTranslateXY(delta,0);
-            }
+            self._canvas.setCurrentTranslateXY(delta,0);
         }
         
         timeout = setTimeout(function() {
@@ -3038,18 +3038,21 @@ var accessors = {
             curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
             self._canvas.parentNode.setAttribute('transform',curr_transform);
 
-            if (center_residue) {
-                var delta = ((start_zoom - self._zoomLevel)/(25))*center_residue;
-                delta += start_x;
-
-                if (self._canvas.shiftPosition) {
-                    self._canvas.shiftPosition(delta,0);
-                } else {
-                    self._canvas.setCurrentTranslateXY(delta,0);
-                }
-            }
-            center_residue = null;
             jQuery(self._canvas).trigger('_anim_end');
+
+            jQuery(self._canvas).one('zoomChange',function() {
+                if (typeof center_residue != 'undefined') {
+                    var delta = ((start_zoom - self._zoomLevel)/(25))*center_residue;
+                    delta += start_x;
+                    if (self._canvas.shiftPosition) {
+                        self._canvas.shiftPosition(delta,0);
+                    } else {
+                        self._canvas.setCurrentTranslateXY(delta,0);
+                    }
+                }
+                center_residue = null;
+                start_x = null;              
+            });
             
             if (self._canvas) {
                 self._canvas.zoom = parseFloat(self._zoomLevel);
@@ -3061,8 +3064,10 @@ var accessors = {
                     jQuery(self._canvas).trigger('zoomChange');
                 }
             }
-            jQuery(self).trigger('zoomChange');                
-        },100);
+            jQuery(self).trigger('zoomChange');
+
+
+        },1000);
     },
 
     getZoom: function() {
