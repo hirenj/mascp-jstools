@@ -1565,19 +1565,19 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             for (var i = 0; i < an_array.length; i++ ) {
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
                     if (canvas.zoom > 3.5) {
-                        an_array[i].setAttribute('visibility', 'visible');
+                        an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
-                        an_array[i].setAttribute('visibility', 'hidden');                            
+                        an_array[i].setAttribute('display', 'none');                            
                     }                        
                 }
             
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
                     if (canvas.zoom <= 3.5) {
-                        an_array[i].setAttribute('visibility', 'visible');
+                        an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
-                        an_array[i].setAttribute('visibility', 'hidden');                            
+                        an_array[i].setAttribute('display', 'none');                            
                     }
                 }
             }
@@ -2234,13 +2234,14 @@ var addElementToLayer = function(layerName) {
         return;
     }
 
-    var circ = canvas.text_circle(this._index+0.5,0.5,2,layerName.charAt(0).toUpperCase());
-    this._renderer._layer_containers[layerName].push(circ);
-    circ.zoom_level = 'summary';
-    circ.style.strokeWidth = '0px';
-    circ.setAttribute('fill',MASCP.layers[layerName].color);
-    circ.setAttribute('visibility', 'hidden');
-    circ.setAttribute('class',layerName);
+    // var circ = canvas.text_circle(this._index+0.5,0.5,2,layerName.charAt(0).toUpperCase());
+    // this._renderer._layer_containers[layerName].push(circ);
+    // circ.zoom_level = 'summary';
+    // circ.style.strokeWidth = '0px';
+    // circ.setAttribute('fill',MASCP.layers[layerName].color);
+    // circ.setAttribute('visibility', 'hidden');
+    // circ.setAttribute('class',layerName);
+    // circ.setAttribute('pointer-events','none');
 
     var bobble = canvas.circle(this._index+0.3,10,0.25);
     bobble.setAttribute('visibility','hidden');
@@ -2263,16 +2264,15 @@ var addElementToLayer = function(layerName) {
     }
     var tracer_marker = canvas.marker(this._index+0.3,10,0.5,layerName.charAt(0).toUpperCase());
     
-    tracer_marker.zoom_level = 'text';
+    // tracer_marker.zoom_level = 'text';
     tracer_marker.setAttribute('visibility','hidden');
 
     this._renderer._layer_containers[layerName].tracers.push(tracer);
     this._renderer._layer_containers[layerName].tracers.push(bobble);
     this._renderer._layer_containers[layerName].push(tracer_marker);
     canvas.tracers.push(tracer);
-    circ.setAttribute('pointer-events','none');
     
-    return circ;
+    return [tracer,tracer_marker,bobble];
 };
 
 var addBoxOverlayToElement = function(layerName,width,fraction) {
