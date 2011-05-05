@@ -3030,7 +3030,7 @@ var accessors = {
             self._canvas.setCurrentTranslateXY(delta,0);
         }
         
-        timeout = setTimeout(function() {
+        var end_function = function() {
             timeout = null;
             var scale_value = Math.abs(parseFloat(self._zoomLevel)/start_zoom);
 
@@ -3067,7 +3067,15 @@ var accessors = {
             jQuery(self).trigger('zoomChange');
 
 
-        },100);
+        };
+        
+        if (("ontouchend" in document) && self.zoomCenter) {
+            jQuery(self).unbind('gestureend');
+            jQuery(self).one('gestureend',end_function);
+            timeout = 1;
+        } else {
+            timeout = setTimeout(end_function,100);
+        }
     },
 
     getZoom: function() {

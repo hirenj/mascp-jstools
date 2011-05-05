@@ -1034,6 +1034,11 @@ MASCP.SequenceRenderer.prototype.bind = function(ev,func)
     jQuery(this).bind(ev,func);
 };
 
+MASCP.SequenceRenderer.prototype.trigger = function(ev)
+{
+    jQuery(this).trigger(ev);
+};
+
 /**
  *  @lends MASCP.SequenceRenderer.prototype
  *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
