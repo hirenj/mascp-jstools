@@ -74,6 +74,8 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         var specs = this.result.getSpectra();
 
         var overlay_name = 'prippdb_experimental';
+        var icons = [];
+        
         if (specs.length > 0) {
             MASCP.registerLayer(overlay_name,{ 'fullname' : 'RIPP-DB (mod)', 'color' : '#666666', 'css' : css_block });
 
@@ -81,6 +83,17 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             if (sequenceRenderer.createGroupController) {
                 sequenceRenderer.createGroupController('prippdb_experimental','prippdb_peptides');
             }
+            
+            jQuery(MASCP.getGroup('prippdb_peptides')).bind('visibilityChange',function(e,rend,vis) {
+                if (rend != sequenceRenderer) {
+                    return;
+                }
+                icons.forEach(function(el) {
+                    el.style.display = vis ? 'none' : 'inline';
+                });
+            });
+            
+            
         }
 
         for (var j = 0; j < specs.length; j++ ) {
@@ -90,17 +103,20 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             if (peps.length == 0) {
                 continue;
             }
-            MASCP.registerLayer('rippdb_spectrum_'+spec.spectrum_id, { 'fullname': 'Spectrum '+spec.spectrum_id, 'group' : 'prippdb_peptides', 'color' : '#666666', 'css' : css_block });
+            var layer_name = 'prippdb_spectrum_'+spec.spectrum_id;
+            MASCP.registerLayer(layer_name, { 'fullname': 'Spectrum '+spec.spectrum_id, 'group' : 'prippdb_peptides', 'color' : '#666666', 'css' : css_block });
             for(var i = 0; i < peps.length; i++) {
                 var peptide = peps[i].sequence;
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
-                
-                for (var k = 0; k < peps[i].positions.length; k++ ) {
-                    peptide_bits[peps[i].positions[k] - 1].addToLayer('prippdb_experimental');
-                }
-                
-                var layer_name = 'rippdb_spectrum_'+spec.spectrum_id;
+                                
                 peptide_bits.addToLayer(layer_name);
+                icons.push(peptide_bits.addToLayer('prippdb_experimental'));
+
+                for (var k = 0; k < peps[i].positions.length; k++ ) {
+                    icons = icons.concat(peptide_bits[peps[i].positions[k] - 1].addToLayer('prippdb_experimental'));
+                    peptide_bits[peps[i].positions[k] - 1].addToLayer(layer_name);
+                }
+
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
