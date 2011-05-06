@@ -454,8 +454,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         
         if (self.edit_enabled) {
             self._beginRotation();
+            self._toggleMouseEvents(true);
         } else {
             self._endRotation();
+            self._toggleMouseEvents(false);
         }
         
         self._close_buttons.forEach(function(button) {
@@ -733,6 +735,15 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         },false);
 }
 
+MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = function(on) {
+    var self = this;
+    if (self._track_rects) {
+        self._track_rects.forEach(function(el) {
+            el.setAttribute('pointer-events', on ? 'all' : 'none');
+        });
+    }
+};
+
 MASCP.CondensedSequenceRenderer.Navigation.prototype._beginRotation = function() {
     var self = this;
     if (self._rotators) {
@@ -769,6 +780,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         while (canvas.firstChild) 
             canvas.removeChild(canvas.firstChild);
         this._enableDragAndDrop.targets = null;
+        this._track_rects = [];
+        this._rotators = [];
     };
     
     this.setViewBox = function(viewBox) {
@@ -789,9 +802,12 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_rect.setAttribute('stroke-width','2');
         a_rect.setAttribute('fill','url(#simple_gradient)');
         a_rect.setAttribute('opacity','0.1');
-        
+        a_rect.setAttribute('pointer-events','none');
+        self._track_rects = self._track_rects ? self._track_rects : [];
         self._rotators = self._rotators || [];
-                
+        
+        self._track_rects.push(a_rect);
+        
         label_group.push(a_rect);
 
         // Use these for debugging positioning
@@ -832,6 +848,17 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         if (track.href && ! track._group_controller) {
             a_anchor = canvas.a(track.href);
             var icon_name = null;
+            var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
+            if ("ontouchend" in document) {
+                icon_metrics[2] = icon_metrics[2] * 2;
+            }
+            icon_metrics[1] = -0.5*(icon_metrics[2] - height);
+
+            var circ = canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
+            circ.setAttribute('fill','#ffffff');
+            circ.setAttribute('opacity','0.1');
+            a_anchor.appendChild(circ);
+            
             var url_type = track.href;
             if (typeof url_type === 'string' && url_type.match(/^javascript\:/)) {
                 icon_name = '#plus_icon';
@@ -855,14 +882,10 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             if (track.icon) {
                 icon_name = track.icon;
             }
-            var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
-            if ("ontouchend" in document) {
-                icon_metrics[2] = icon_metrics[2] * 2;
-            }
-            icon_metrics[1] = y - 0.5*(icon_metrics[2] - height);
             var a_use = canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
             a_use.style.cursor = 'pointer';
             a_anchor.appendChild(a_use);
+            a_anchor.setAttribute('transform','translate(0,'+y+')');
         }
         
         label_group.addEventListener('touchstart',function() {
@@ -2921,8 +2944,10 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     if (this._Navigation.edit_enabled) {
         this._Navigation._beginRotation();
+        this._Navigation._toggleMouseEvents(true);
     } else {
         this._Navigation._endRotation();        
+        this._Navigation._toggleMouseEvents(false);
     }
 
     var viewBox = [-1,0,0,0];
