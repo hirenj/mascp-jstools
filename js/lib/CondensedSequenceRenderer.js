@@ -555,6 +555,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
             }
         };
 
+        var single_touch_event = function(fn) {
+            return function(e) {
+                if (e.touches.length == 1) {
+                    fn.call(this,e);
+                }
+            };
+        };
+
         var beginDragging = function(ev,tr,lbl_grp) {
             
             if (nav.drag_disabled) {
@@ -573,8 +581,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
             var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
 
-            p_orig.x = ev.pageX;
-            p_orig.y = ev.pageY;
+            p_orig.x = ev.pageX || ev.touches[0].pageX;
+            p_orig.y = ev.pageY || ev.touches[0].pageY;
 
             var rootCTM = lbl_grp.nearestViewportElement.getScreenCTM();
             var matrix = rootCTM.inverse();
@@ -586,8 +594,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
             var dragfn = function(e) {
                 var p = lbl_grp.nearestViewportElement.createSVGPoint();
-                p.x = e.pageX;
-                p.y = e.pageY;
+                p.x = e.pageX || e.touches[0].pageX;
+                p.y = e.pageY || e.touches[0].pageY;
                 p = p.matrixTransform(matrix);
 
                 var dX = (p.x - oX);
@@ -596,10 +604,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
                 curr_transform += ' translate('+dX+','+dY+') ';
                 lbl_grp.setAttribute('transform',curr_transform);
-                e.stopPropagation();
+                if (e.stopPropagation) {
+                    e.stopPropagation();                    
+                }
                 return false;
             };
-
+            if ("ontouchend" in document) {
+                dragfn = single_touch_event(dragfn);
+            }
 
             var enddrag = function(e) {
                 if (e.relatedTarget && (e.relatedTarget == lbl_grp || e.relatedTarget.nearestViewportElement == lbl_grp.nearestViewportElement || e.relatedTarget.nearestViewportElement == target)) {
@@ -609,13 +621,14 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     return;
                 }
 
-                if (self.in_drag && e.type == 'mouseup') {
+                if (self.in_drag && (e.type == 'mouseup' || e.type == 'touchend')) {
                     if (self.spliceBefore || self.spliceAfter) {
                         nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
                     }
                 }
-
+                target.removeEventListener('touchmove',dragfn,false);
                 target.removeEventListener('mousemove',dragfn,false);
+                target.removeEventListener('touchend',arguments.callee,false);
                 target.removeEventListener('mouseup',arguments.callee,false);
                 target.removeEventListener('mouseout',arguments.callee,false);
                 if (self.in_drag) {
@@ -627,7 +640,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
             };
 
             lbl_grp.setAttributeNS(null, 'pointer-events', 'none');
-
+            target.addEventListener('touchmove',dragfn,false);
+            target.addEventListener('touchend',single_touch_event(dragfn),false);
             target.addEventListener('mousemove',dragfn,false);
             target.addEventListener('mouseup',enddrag,false);
             target.addEventListener('mouseout',enddrag,false);
@@ -636,11 +650,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
             self.drag_el = lbl_grp;
         };
 
-        handle.addEventListener('mousedown',function(e) {
+        var handle_start = function(e) {
             beginDragging(e,track,element);
-        },false);
-
-        element.addEventListener('mousemove',function(e) {
+        };
+        
+        var el_move = function(e) {
             if ( self.in_drag && self.in_drag != track ) {
                 if (self._hover_timeout) {
                     window.clearTimeout(self._hover_timeout);
@@ -732,13 +746,20 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
                 },300);
             }
-        },false);
+        };
+        
+        
+        handle.addEventListener('mousedown', handle_start,false);
+        element.addEventListener('mousemove',el_move,false);
+        handle.addEventListener('touchstart',single_touch_event(handle_start),false);
+        element.addEventListener('touchstart',single_touch_event(el_move),false);
 }
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = function(on) {
     var self = this;
     if (self._track_rects) {
         self._track_rects.forEach(function(el) {
+            el.setAttribute('fill',on ? '#ffffff': '#000000');
             el.setAttribute('pointer-events', on ? 'all' : 'none');
         });
     }
