@@ -107,7 +107,10 @@ MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     
     MASCP.registerLayer(overlay_name,{ 'fullname' : 'PPDB MS/MS', 'color' : '#aa9900', 'css' : css_block });
 
-
+    if (sequenceRenderer.createGroupController) {
+        sequenceRenderer.createGroupController('ppdb_controller','ppdb');
+    }
+    
     this.bind('resultReceived', function() {
         
 //        
@@ -131,9 +134,6 @@ MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
 
-        if (sequenceRenderer.createGroupController) {
-            sequenceRenderer.createGroupController('ppdb_controller','ppdb');
-        }
 
 
     })
