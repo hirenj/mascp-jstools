@@ -320,7 +320,11 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
             self.hideLayer(track);            
             track.disabled = true;
         }
+        
         self.trackOrder = t_order;
+        self._Navigation.hide();        
+        self.refresh();
+        self._Navigation.show();
         
     };
     
@@ -451,7 +455,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     jQuery(self).bind('toggleEdit',function() {
         self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
         self.drag_disabled = ! self.edit_enabled;
-        
         if (self.edit_enabled) {
             self._beginRotation();
             self._toggleMouseEvents(true);
@@ -459,6 +462,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             self._endRotation();
             self._toggleMouseEvents(false);
         }
+        
+        self.hide();
+        self.show();
         
         self._close_buttons.forEach(function(button) {
             button.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
@@ -507,24 +513,24 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         return true;
     };
     
-    this._is_open = true;
-    this._toggler = toggler;
-    this.hide = function() {
+    self._is_open = true;
+    self._toggler = toggler;
+    self.hide = function() {
         toggler.call(this,false);
     };
-    this.show = function() {
+    self.show = function() {
         toggler.call(this,true);
     };
-    this.visible = function() {
+    self.visible = function() {
         return this._is_open;
     }
     
-    this.setZoom = function(zoom) {
+    self.setZoom = function(zoom) {
         this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
         rect.setAttribute('transform','scale('+zoom+',1) ');
     }
-    
+
     close_group.addEventListener('click',toggler,false);    
 };
 
@@ -543,6 +549,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         }
         
         self.targets.push(element);
+        element.track = track;
 
         self.resetDrag = function() {
             window.clearTimeout(self._anim);
@@ -557,7 +564,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
         var single_touch_event = function(fn) {
             return function(e) {
-                if (e.touches.length == 1) {
+                if (e.touches && e.touches.length == 1) {
                     fn.call(this,e);
                 }
             };
@@ -601,12 +608,18 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 var dX = (p.x - oX);
                 var dY = (p.y - oY);
                 var curr_transform = lbl_grp.getAttribute('transform') || '';
-                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                 curr_transform += ' translate('+dX+','+dY+') ';
+                curr_transform = curr_transform.replace(/\s*$/,'')
                 lbl_grp.setAttribute('transform',curr_transform);
-                if (e.stopPropagation) {
-                    e.stopPropagation();                    
-                }
+                self.targets.forEach(function(targ){
+                    var bb = targ.getBBox();
+                    if (bb.y < p.y && bb.y > (p.y - bb.height) && bb.x < p.x && bb.x > (p.x - bb.width)) {
+                        el_move.call(targ,e,targ.track);
+                    }
+                });
+                e.stopPropagation();
+                e.preventDefault();
                 return false;
             };
             if ("ontouchend" in document) {
@@ -638,10 +651,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     self.in_drag = false;
                 }
             };
-
             lbl_grp.setAttributeNS(null, 'pointer-events', 'none');
-            target.addEventListener('touchmove',dragfn,false);
-            target.addEventListener('touchend',single_touch_event(dragfn),false);
+            lbl_grp.addEventListener('touchmove',dragfn,false);
+            lbl_grp.addEventListener('touchend',single_touch_event(dragfn),false);
             target.addEventListener('mousemove',dragfn,false);
             target.addEventListener('mouseup',enddrag,false);
             target.addEventListener('mouseout',enddrag,false);
@@ -653,31 +665,36 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         var handle_start = function(e) {
             beginDragging(e,track,element);
         };
-        
-        var el_move = function(e) {
-            if ( self.in_drag && self.in_drag != track ) {
+
+        var el_move = function(e,trk) {
+            var trck = trk ? trk : track;
+            var elem = this ? this : element;
+            
+            if ( self.in_drag && self.in_drag != trck && trck != self._last_target) {
+                self._last_target = trck;
                 if (self._hover_timeout) {
                     window.clearTimeout(self._hover_timeout);
                 }
                 self._hover_timeout = window.setTimeout(function() {
-                    if ( (self.in_drag.group || track.group) &&                    
-                         (self.in_drag.group ? track.group :  ! track.group ) ) {
-                        if (self.in_drag.group.name != track.group.name) {
+                    if ( (self.in_drag.group || trck.group) &&                    
+                         (self.in_drag.group ? trck.group :  ! trck.group ) ) {
+                        if (self.in_drag.group.name != trck.group.name) {
                             return;
                         }
                     } else {
-                        if ( self.in_drag.group || track.group ) {
+                        if ( self.in_drag.group || trck.group ) {
                             return;
                         }
                     }
 
                     if (self._anim) {
-                        window.clearTimeout(self._anim);
+                        window.clearInterval(self._anim);
+                        self._anim = null;
                     }
                     
                     self.resetDrag();
                     
-                    var current_sibling = element;
+                    var current_sibling = elem;
                     
                     var elements_to_shift = [];
 
@@ -691,9 +708,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                         }
                     }
                     
-                    current_sibling = element;
+                    current_sibling = elem;
                     
-                    if (self.targets.indexOf(element) < self.targets.indexOf(self.drag_el) ) {
+                    if (self.targets.indexOf(elem) < self.targets.indexOf(self.drag_el) ) {
                         current_sibling = element.previousSibling;
                     }
                     
@@ -712,37 +729,37 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     var anim_steps = 1;
 
                     var height = 100;
-
-                    self._anim = window.setTimeout(function() {
+                    self._anim = window.setInterval(function() {
                         
                         if (anim_steps < 5) {
-                            for (var i = 0; i < elements_to_shift.length; i++ ) {
+                            for (var i = 0; (elements_to_shift_up.length > 0) && i < elements_to_shift.length; i++ ) {
                                 var curr_transform = elements_to_shift[i].getAttribute('transform') || '';
-                                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                                 curr_transform += ' translate(0,'+anim_steps*height+')';
                                 elements_to_shift[i].setAttribute('transform',curr_transform);
                             }
 
-                            for (var i = 0; i < elements_to_shift_up.length; i++ ) {
+                            for (var i = 0; (elements_to_shift.length > 0) && i < elements_to_shift_up.length; i++ ) {
 
                                 var curr_transform = elements_to_shift_up[i].getAttribute('transform') || '';
-                                curr_transform = curr_transform.replace(/translate\([^\)]+\)/,'');
+                                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                                 curr_transform += ' translate(0,'+anim_steps*-1*height+')';
                                 elements_to_shift_up[i].setAttribute('transform',curr_transform);
                             }
 
 
                             anim_steps += 1;
-                            self._anim = window.setTimeout(arguments.callee,1);
                         } else {
-                            if (self.targets.indexOf(element) > self.targets.indexOf(self.drag_el)) {
-                                self.spliceAfter = track;
+                            if (self.targets.indexOf(elem) > self.targets.indexOf(self.drag_el)) {
+                                self.spliceAfter = trck;
                             } else {
-                                self.spliceBefore = track;
+                                self.spliceBefore = trck;
                             }
                             self.trackToSplice = self.in_drag;
+                            window.clearInterval(self._anim);
+                            self._anim = null;
                         }
-                    },1);
+                    },30);
 
                 },300);
             }
@@ -750,9 +767,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
         
         
         handle.addEventListener('mousedown', handle_start,false);
-        element.addEventListener('mousemove',el_move,false);
+//        element.addEventListener('mousemove',el_move,false);
         handle.addEventListener('touchstart',single_touch_event(handle_start),false);
-        element.addEventListener('touchstart',single_touch_event(el_move),false);
+//        element.addEventListener('touchmove',single_touch_event(el_move),true);
 }
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = function(on) {
@@ -971,7 +988,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
 
             
         })();
-        
         
         if (track._group_controller) {
             if ( ! self._controller_buttons) {

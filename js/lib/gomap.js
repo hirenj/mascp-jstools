@@ -871,7 +871,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
     self.enabled = true;
     
-    var momentum = null;
+    var momentum = [];
 
     if (targetElement.nodeName == 'svg') {
         targetElement.getPosition = function() {
@@ -1168,7 +1168,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         
         p = p.matrixTransform(self.matrix);
         targetElement.shiftPosition(p.x,p.y);
-        momentum = p.x;        
+//        momentum = p.x;        
     };
 
     var mouseUp = function(evt) { 
@@ -1246,12 +1246,15 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dX = targ.getPosition()[0];
             self.dY = targ.getPosition()[1];
             
+            self._momentum_shrinker = setInterval(function() {
+                momentum.shift();
+            },20);
+            
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
                 targ.dispatchEvent(evObj);
-            }            
-            
+            }
         }
     },false);
 
@@ -1283,16 +1286,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dragging = false;
         }
 
-        if (stationary) {
-            clearTimeout(stationary);
-            stationary = null;
-        }
-        
-        stationary = window.setTimeout(function() {
-            self.dragging = false;
-        },200);
-
-
         var targ = self.targetElement ? self.targetElement : targetElement;
 
         var positions = mousePosition(e.touches[0]);
@@ -1307,10 +1300,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             p.x = positions[0];
             p.y = positions[1];
         }
-
         
-        if ((6*Math.abs(self.oX - p.x)) < Math.abs(self.oY - p.y)) {
-            self.dragging = false;
+        if (self.dragging && ((6*Math.abs(self.oX - p.x)) > Math.abs(self.oY - p.y))) {
+            e.preventDefault();
         }
 
         if (!self.dragging) {
@@ -1320,12 +1312,11 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dY = null;
             return;
         }
-                
-        momentum = p.x;
-        
+        if (momentum.length > 3) {
+            momentum.splice(2);
+        }
         targ.shiftPosition(p.x,p.y);
-
-        e.preventDefault(true);        
+        momentum.push(targ.getPosition()[0] - self.dX);
     },false);
     
     var momentum_func = function(e) {
@@ -1337,8 +1328,18 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
         var targ = self.targetElement ? self.targetElement : targetElement;
-
-        var delta = (targ.getPosition()[0] - self.dX);
+        var delta = 0;
+        
+        if (momentum.length > 0) {
+            var last_val = momentum[0];
+            momentum.forEach(function(m) {
+                if ((typeof last_val) != 'undefined') {
+                    delta += m - last_val;
+                }
+                last_val = m;
+            });
+            delta = delta / momentum.length;
+        }
         var start = targ.getPosition()[0];
         var start_delta = delta;
         self.dragging = false;
@@ -1353,6 +1354,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 //                window.setTimeout(arguments.callee,50);
             } else {
                 self.momentum = null;
+                clearInterval(self._momentum_shrinker);
                 mouseUp(e);
             }
         },50);
@@ -1415,6 +1417,7 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
                 p.y = 0.5*(positions[1] + positions2[1]);
             }
             zoomElement.zoomCenter = p;  
+            e.preventDefault();
         }
     },false);
 
@@ -1437,7 +1440,8 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
             if (zoomElement.trigger) {
                 zoomElement.trigger('gestureend');
             }
-        },false);        
+        },false);  
+        e.preventDefault();
     },false);
 
 }
