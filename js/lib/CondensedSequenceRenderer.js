@@ -284,7 +284,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         // }
 
         var t_order = self._track_order;
-        
+
         t_order.trackIndex = function(tr) {
             if (! tr ) {
                 return this.length;
@@ -298,7 +298,6 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
         
         
         t_order.splice(t_order.trackIndex(track),1);
-        
         var extra_to_push = [];
         if (track._group_controller) {
             var group_layers = track._group_under_control._layers;
@@ -698,7 +697,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     
                     var elements_to_shift = [];
 
-                    while (current_sibling) {
+                    while (current_sibling != null) {
                         if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
                             elements_to_shift.push(current_sibling);
                         }
@@ -708,15 +707,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                         }
                     }
                     
-                    current_sibling = elem;
-                    
-                    if (self.targets.indexOf(elem) < self.targets.indexOf(self.drag_el) ) {
-                        current_sibling = element.previousSibling;
-                    }
+                    current_sibling = elem.previousSibling;
                     
                     var elements_to_shift_up = [];
                     
-                    while (current_sibling) {
+                    while (current_sibling != null) {
                         if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
                             elements_to_shift_up.push(current_sibling);
                         }
@@ -725,14 +720,13 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                             break;
                         }
                     }
-
                     var anim_steps = 1;
 
                     var height = 100;
                     self._anim = window.setInterval(function() {
                         
                         if (anim_steps < 5) {
-                            for (var i = 0; (elements_to_shift_up.length > 0) && i < elements_to_shift.length; i++ ) {
+                            for (var i = 0; i < elements_to_shift.length; i++ ) {
                                 var curr_transform = elements_to_shift[i].getAttribute('transform') || '';
                                 curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                                 curr_transform += ' translate(0,'+anim_steps*height+')';
@@ -750,11 +744,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 
                             anim_steps += 1;
                         } else {
-                            if (self.targets.indexOf(elem) > self.targets.indexOf(self.drag_el)) {
-                                self.spliceAfter = trck;
-                            } else {
-                                self.spliceBefore = trck;
-                            }
+                            self.spliceBefore = trck;
                             self.trackToSplice = self.in_drag;
                             window.clearInterval(self._anim);
                             self._anim = null;
