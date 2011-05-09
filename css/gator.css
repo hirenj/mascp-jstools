@@ -448,6 +448,11 @@ h1, h2 {
     #condensed_container, #sequence_container {
         width: 100%;
     }
+
+    #condensed_container * {
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+
     
     #condensed_container *::selection {
         color: #ffffff;

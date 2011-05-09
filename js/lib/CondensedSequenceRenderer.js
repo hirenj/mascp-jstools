@@ -766,7 +766,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = functi
     var self = this;
     if (self._track_rects) {
         self._track_rects.forEach(function(el) {
-            el.setAttribute('fill',on ? '#ffffff': '#000000');
+//            el.setAttribute('fill',on ? '#ffffff': 'url(#simple_gradient)');
+            el.setAttribute('opacity',on ? '1': (("ontouchend" in document) ? "0.5" : "0.1") );
+
             el.setAttribute('pointer-events', on ? 'all' : 'none');
         });
     }
@@ -829,7 +831,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_rect.setAttribute('stroke','#000000');
         a_rect.setAttribute('stroke-width','2');
         a_rect.setAttribute('fill','url(#simple_gradient)');
-        a_rect.setAttribute('opacity','0.1');
+        a_rect.setAttribute('opacity',("ontouchend" in document) ? '0.5' : '0.1');
         a_rect.setAttribute('pointer-events','none');
         self._track_rects = self._track_rects ? self._track_rects : [];
         self._rotators = self._rotators || [];
@@ -971,7 +973,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                     var angle = ((step % 12) / 2) - 6;
                     
                     curr_transform = curr_transform.replace(/^\s*rotate\([^\)]+\)/,'');
-                    curr_transform = 'rotate('+angle+','+(closer.getBBox().x +(closer.getBBox().width/2)) +','+(y+(height/2))+') '+curr_transform;
+                    curr_transform = 'rotate('+angle+','+((closer.getBBox().width/2)) +','+(y+0.5*height+closer.getBBox().y +(closer.getBBox().height/2))+') '+curr_transform;
                     closer.setAttribute('transform',curr_transform);
                 });
             }
