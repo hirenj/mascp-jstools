@@ -433,6 +433,7 @@
         <li id="phosphat_experimental"><input type="checkbox"/> Phosphorylation </li>
         <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>
         <li id="interpro_placeholder"><input type="checkbox"/> Interpro domains</li>
+        <li id="arbitrary_placeholder"><input type="checkbox"/> Misc data</li>
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
@@ -681,6 +682,12 @@
                     } else {
                         array.splice(array.indexOf('interpro_placeholder'),0,'interpro_domains');
                     }
+
+                    if (MASCP.getGroup('arbitrary_datasets') && MASCP.getGroup('arbitrary_datasets').size() > 0) {
+                        array.splice(array.indexOf('arbitrary_placeholder'),0,'arbitrary_controller','arbitrary_datasets');
+                    } else {
+                        array.splice(array.indexOf('arbitrary_placeholder'),0,'arbitrary_datasets');
+                    }
                     
                 }
                 return array;
@@ -750,6 +757,10 @@
 
             MASCP.renderer.showLayer('interpro_controller');
             jQuery('#interpro_placeholder input').attr('checked',true);
+
+            MASCP.renderer.showLayer('arbitrary_controller');
+            jQuery('#arbitrary_placeholder input').attr('checked',true);
+
 
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy input').attr('checked',true);
@@ -1006,6 +1017,14 @@
                 }
             });
             jQuery('#interpro_placeholder').hide();
+
+
+            var arbitrary = new MASCP.ArbitraryDataReader(agi,'./datasets.pl');
+            arbitrary.registerSequenceRenderer(MASCP.renderer);
+            
+            all_readers.push(arbitrary);
+            
+            jQuery('#arbitrary_placeholder').hide();
 
 
             jQuery('#links').text('');
