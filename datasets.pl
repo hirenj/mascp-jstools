@@ -25,11 +25,14 @@ if ($dataset =~ /^[A-Za-z0-9]/) {
     unless (-e "../data/$dataset.csv") {
         exit;
     }
-    unless (-e "$dataset.json" && (stat("../data/$dataset.csv")->mtime <= stat("$dataset.json")->mtime) ) {
-        system(qq#awk -F',' 'BEGIN { print "["; }{ myagi = (\$1 ~ /^[Aa]/) ? \$1 : lastagi; if (myagi != lastagi) { if (lastagi) print "\\"\\"]}\\n,"; printf "{\\"agi\\":\\"" toupper(myagi) "\\", \\"peptides\\":["; } lastagi = myagi; printf "\\"" \$2 "\\"," } END { print "\\"\\"]}\\n]" }' ../data/$dataset.csv > $dataset.json#);
-        system(qq#sed -i '' -e's/,""//' $dataset.json#);
+    unless (-e "jsons") {
+        system("mkdir jsons");
     }
-    $filename = "$dataset.json";
+    unless (-e "jsons/$dataset.json" && (stat("../data/$dataset.csv")->mtime <= stat("jsons/$dataset.json")->mtime) ) {
+        system(qq#awk -F',' 'BEGIN { print "["; }{ myagi = (\$1 ~ /^[Aa]/) ? \$1 : lastagi; if (myagi != lastagi) { if (lastagi) print "\\"\\"]}\\n,"; printf "{\\"agi\\":\\"" toupper(myagi) "\\", \\"peptides\\":["; } lastagi = myagi; printf "\\"" \$2 "\\"," } END { print "\\"\\"]}\\n]" }' ../data/$dataset.csv > jsons/$dataset.json#);
+        system(qq#sed -i '' -e's/,""//' jsons/$dataset.json#);
+    }
+    $filename = "jsons/$dataset.json";
 }
 
 if ( $agi =~ /^AT[0-9A-Z]G\d+\.\d+/) {
