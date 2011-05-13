@@ -110,6 +110,7 @@
 
     </target>
 
+<<<<<<< HEAD
 	<target depends="build" name="dist" description="Generate a distribution directory for the app">
 
         <taskdef name="jsmin"
@@ -154,7 +155,7 @@
         <copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
 
         <copy file="tair.pl" tofile="dist/tair.pl"/>        
-
+        <copy file="datasets.pl" tofile="dist/datasets.pl"/>
         <copy file="snps.pl" tofile="dist/snps.pl"/>
         
         <copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
