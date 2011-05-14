@@ -152,5 +152,5 @@ MascotToJSON.prototype.convertReport = function(report,callback) {
 
 
 if (typeof module != 'undefined' && module.exports){
-    module.exports = MascotToJSON;
+    module.exports.MascotToJSON = MascotToJSON;
 }
