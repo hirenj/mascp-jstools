@@ -110,7 +110,6 @@
 
     </target>
 
-<<<<<<< HEAD
 	<target depends="build" name="dist" description="Generate a distribution directory for the app">
 
         <taskdef name="jsmin"
