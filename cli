@@ -2,6 +2,15 @@
 
 repl = require('repl');
 
+get_data = function(agi,service) {
+    (new service()).retrieve(agi,function(err) {
+        if (err) {
+            return;
+        }
+        console.log(this.result);
+    })
+};
+
 find_peptide = function(agi,seq) {
     (new MASCP.TairReader()).retrieve(agi,function(err) {
         if (err) {
@@ -9,7 +18,7 @@ find_peptide = function(agi,seq) {
         }
         console.log(this.result.getSequence().indexOf(seq));
     })
-}
+};
 
 find_sequence = function(agi) {
     (new MASCP.TairReader()).retrieve(agi,function(err) {
@@ -18,9 +27,9 @@ find_sequence = function(agi) {
         }
         console.log(this.result.getSequence());
     })    
-}
+};
 
-MASCP = require('./dist/js/maschup.services.min.js');
+MASCP = require('./dist/js/maschup.services.js');
 MASCP.events.once('ready',function() {
     repl.start("MASCP tools> ");
 });
