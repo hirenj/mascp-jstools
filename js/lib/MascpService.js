@@ -333,6 +333,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             var id = agi ? agi : self.agi;
             id = id.toLowerCase();
             self.agi = id;
+            if ( ! id ) {
+                _oldRetrieve.call(self,id,cback);
+                return self;
+            }
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
@@ -407,13 +411,13 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 });
             });
         };
-
-        if (db.version == "") {
-            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)");
-        }                
     }
         
     if (typeof db != 'undefined') {
+
+        if (! db.version || db.version == "") {
+            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { });
+        }
         
         clear_service = function(service) {
             db.execute("DELETE from datacache where service = ? ",[service],function() {});
@@ -437,7 +441,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         };
         
         get_db_data = function(agi,service,cback) {
-            db.execute("SELECT * from datacache where agi=? and service=?",[agi,service],function(err,records) {
+            var sql = "SELECT * from datacache where agi=? and service=?";
+            var args = agi ? [agi,service] : ["",service];
+            db.execute(sql,args,function(err,records) {
                 if (records && records.length > 0 && typeof records[0] != 'undefined') {
                     var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
                     if (data) {
@@ -451,7 +457,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         };
 
         store_db_data = function(agi,service,data) {
-            if (typeof data != 'object' || data instanceof Document) {
+            if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
                 return;
             }
             var str_rep;
@@ -462,7 +468,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             }
             db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,(new Date()).getTime(),str_rep],function(err,rows) {
                 if ( ! err ) {
-                    console.log("Caching result");
+                    console.log("Caching result for "+agi+" in "+service);
                 }
             });
         };
