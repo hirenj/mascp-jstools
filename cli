@@ -3,12 +3,15 @@
 repl = require('repl');
 
 get_data = function(agi,service) {
+    var result = {};
     (new service()).retrieve(agi,function(err) {
         if (err) {
             return;
         }
-        console.log(this.result);
+        console.log("Data ready");
+        result.result = this.result;
     })
+    return result;
 };
 
 find_peptide = function(agi,seq) {
