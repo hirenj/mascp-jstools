@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 repl = require('repl');
+fs = require('fs');
 
 get_data = function(agi,service) {
     var result = {};
@@ -31,6 +32,59 @@ find_sequence = function(agi) {
         console.log(this.result.getSequence());
     })    
 };
+
+load_data = null;
+
+
+(function() {
+    var CSVToArray = function( strData, strDelimiter ){
+        strDelimiter = (strDelimiter || ",");
+
+        var objPattern = new RegExp(
+        (
+        "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+        "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+        "([^\"\\" + strDelimiter + "\\r\\n]*))"
+        ),
+        "gi"
+        );
+
+        var arrData = [[]];
+        var arrMatches = null;
+        while (arrMatches = objPattern.exec( strData )){
+            var strMatchedDelimiter = arrMatches[ 1 ];
+            if (
+            strMatchedDelimiter.length &&
+            (strMatchedDelimiter != strDelimiter)
+            ){
+                arrData.push( [] );
+            }
+            if (arrMatches[ 2 ]){
+                var strMatchedValue = arrMatches[ 2 ].replace(
+                new RegExp( "\"\"", "g" ),
+                "\""
+                );
+            } else {
+                var strMatchedValue = arrMatches[ 3 ];
+            }
+            arrData[ arrData.length - 1 ].push( strMatchedValue );
+        }
+        return( arrData );
+    };
+    
+    var read_csv = function(filename) {
+        var data = fs.readFileSync(filename);
+        return CSVToArray(data,",");
+    };
+    
+    load_data = function(filename,setname) {
+        var reader = new MASCP.UserdataReader();
+        reader.setData(setname,read_csv(filename));
+        return reader;
+    };
+    
+})();
+
 
 MASCP = require('./dist/js/maschup.services.js');
 MASCP.events.once('ready',function() {
