@@ -65,7 +65,7 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
     var content = null;
     
     if (! this._raw_data || this._raw_data.length == 0 ) {
-        return [];
+        return {};
     }    
     
     if (this._peptides_by_domain) {
