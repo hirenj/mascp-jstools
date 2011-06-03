@@ -755,8 +755,8 @@
             MASCP.renderer.showLayer('ppdb_controller');
             jQuery('#ppdb_placeholder input').attr('checked',true);
 
-            MASCP.renderer.showLayer('interpro_controller');
-            jQuery('#interpro_placeholder input').attr('checked',true);
+//            MASCP.renderer.showLayer('interpro_controller');
+//            jQuery('#interpro_placeholder input').attr('checked',true);
 
             MASCP.renderer.showLayer('arbitrary_controller');
             jQuery('#arbitrary_placeholder input').attr('checked',true);
@@ -1009,14 +1009,15 @@
             
             rendering_readers.push(interpro);
             all_readers.push(interpro);
+
+            jQuery('#interpro_placeholder').hide();
             
             interpro.bind('resultReceived',function() {
-
-                if (this.result.getDomains().length > 0) {
+                console.log(this.result.getDomains());
+                if (Object.keys(this.result.getDomains()).length > 0) {
                     jQuery('#interpro_placeholder').show();
                 }
             });
-            jQuery('#interpro_placeholder').hide();
 
 
             var arbitrary = new MASCP.ArbitraryDataReader(agi,'./datasets.pl');
