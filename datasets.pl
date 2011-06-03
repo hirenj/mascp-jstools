@@ -31,6 +31,7 @@ if ($dataset =~ /^[A-Za-z0-9]/) {
     unless (-e "jsons/$dataset.json" && (stat("../data/$dataset.csv")->mtime <= stat("jsons/$dataset.json")->mtime) ) {
         system(qq#awk -F',' 'BEGIN { print "["; }{ myagi = (\$1 ~ /^[Aa]/) ? \$1 : lastagi; if (myagi != lastagi) { if (lastagi) print "\\"\\"]}\\n,"; printf "{\\"agi\\":\\"" toupper(myagi) "\\", \\"peptides\\":["; } lastagi = myagi; printf "\\"" \$2 "\\"," } END { print "\\"\\"]}\\n]" }' ../data/$dataset.csv > jsons/$dataset.json#);
         system(qq#sed -i '' -e's/,""//' jsons/$dataset.json#);
+        system(qq#sed -i '' -e's/\r//g' jsons/$dataset.json#);
     }
     $filename = "jsons/$dataset.json";
 }
