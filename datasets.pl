@@ -29,7 +29,7 @@ if ($dataset =~ /^[A-Za-z0-9]/) {
         system("mkdir jsons");
     }
     unless (-e "jsons/$dataset.json" && (stat("../data/$dataset.csv")->mtime <= stat("jsons/$dataset.json")->mtime) ) {
-        system(qq#awk -F',' 'BEGIN { print "["; }{ myagi = (\$1 ~ /^[Aa]/) ? \$1 : lastagi; if (myagi != lastagi) { if (lastagi) print "\\"\\"]}\\n,"; printf "{\\"agi\\":\\"" toupper(myagi) "\\", \\"peptides\\":["; } lastagi = myagi; printf "\\"" \$2 "\\"," } END { print "\\"\\"]}\\n]" }' ../data/$dataset.csv > jsons/$dataset.json#);
+        system(qq#awk -F',' 'BEGIN { print "["; split("",seen,""); }{ myagi = (\$1 ~ /^[Aa]/) ? \$1 : lastagi; if (myagi != lastagi) { if (lastagi) print "\\"\\"]}\\n,"; printf "{\\"agi\\":\\"" toupper(myagi) "\\", \\"peptides\\":["; split("",seen,""); } lastagi = myagi; if (seen[\$2] <= 0) { printf "\\"" \$2 "\\","; seen[\$2] = 1; } } END { print "\\"\\"]}\\n]" }' ../data/$dataset.csv > jsons/$dataset.json#);
         system(qq#sed -i '' -e's/,""//' jsons/$dataset.json#);
         system(qq#sed -i '' -e's/\r//g' jsons/$dataset.json#);
     }
