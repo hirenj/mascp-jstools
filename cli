@@ -1,92 +1,43 @@
 #!/usr/bin/env node
 
 repl = require('repl');
-fs = require('fs');
-
-get_data = function(agi,service) {
-    var result = {};
-    (new service()).retrieve(agi,function(err) {
-        if (err) {
-            return;
-        }
-        console.log("Data ready");
-        result.result = this.result;
-    })
-    return result;
-};
-
-find_peptide = function(agi,seq) {
-    (new MASCP.TairReader()).retrieve(agi,function(err) {
-        if (err) {
-            return;
-        }
-        console.log(this.result.getSequence().indexOf(seq));
-    })
-};
-
-find_sequence = function(agi) {
-    (new MASCP.TairReader()).retrieve(agi,function(err) {
-        if (err) {
-            return;
-        }
-        console.log(this.result.getSequence());
-    })    
-};
-
-load_data = null;
-
-
-(function() {
-    var CSVToArray = function( strData, strDelimiter ){
-        strDelimiter = (strDelimiter || ",");
-
-        var objPattern = new RegExp(
-        (
-        "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
-        "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
-        "([^\"\\" + strDelimiter + "\\r\\n]*))"
-        ),
-        "gi"
-        );
-
-        var arrData = [[]];
-        var arrMatches = null;
-        while (arrMatches = objPattern.exec( strData )){
-            var strMatchedDelimiter = arrMatches[ 1 ];
-            if (
-            strMatchedDelimiter.length &&
-            (strMatchedDelimiter != strDelimiter)
-            ){
-                arrData.push( [] );
-            }
-            if (arrMatches[ 2 ]){
-                var strMatchedValue = arrMatches[ 2 ].replace(
-                new RegExp( "\"\"", "g" ),
-                "\""
-                );
-            } else {
-                var strMatchedValue = arrMatches[ 3 ];
-            }
-            arrData[ arrData.length - 1 ].push( strMatchedValue );
-        }
-        return( arrData );
-    };
-    
-    var read_csv = function(filename) {
-        var data = fs.readFileSync(filename);
-        return CSVToArray(data,",");
-    };
-    
-    load_data = function(filename,setname) {
-        var reader = new MASCP.UserdataReader();
-        reader.setData(setname,read_csv(filename));
-        return reader;
-    };
-    
-})();
-
+tools = require('./script_tools.js');
 
 MASCP = require('./dist/js/maschup.services.js');
 MASCP.events.once('ready',function() {
     repl.start("MASCP tools> ");
+    for (func in tools) {
+        repl.repl.context[func] = tools[func];
+    }
+    
+    var old_completer = repl.repl.complete;    
+    repl.repl.complete = function(line) {
+    
+        if (line.match(/\([^\)]*$/)) {            
+            var func_parts = line.split(/\(/).reverse();
+            var variables = func_parts.shift();
+            var fname = func_parts.shift();
+            var set_vars = variables.split(/,/).filter(function(v) { if (v == '') { return false; } return true; }).length;
+            if (tools[fname]) {
+                var func_def = tools[fname].toString();
+                var match = func_def.match(/function\s*\(([^\)]*)\)/);
+                if (match) {
+                    var args = match[1].split(/,/);
+                    if (set_vars == args.length) {
+                        return [[line+")"],line];
+                    }
+                    args.splice(0,set_vars);
+                    return [[line+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],line];
+                }
+            }
+        }
+    
+        var comps = old_completer.call(repl.repl,line);
+        comps[0].forEach(function(k,i) {
+            if (tools[k]) {
+                comps[0][i] += '(';
+            }
+        });
+        return comps;
+    };
 });
