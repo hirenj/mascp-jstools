@@ -85,7 +85,11 @@ MASCP.PpdbReader.Result.prototype.getPeptides = function()
         }
     }
     for (var pep in peps_by_seq) {
-        peptides.push( { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments });       
+        var pep_obj =  { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments };
+        pep_obj.toString = function() {
+            return this.sequence;
+        }
+        peptides.push(pep_obj);       
     }
     
     this._experiments = [];
