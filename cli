@@ -17,17 +17,21 @@ MASCP.events.once('ready',function() {
             var func_parts = line.split(/\(/).reverse();
             var variables = func_parts.shift();
             var fname = func_parts.shift();
-            var set_vars = variables.split(/,/).filter(function(v) { if (v == '') { return false; } return true; }).length;
+            var set_vars = variables.split(/,/).filter(function(v) { if (v == '') { return false; } return true; });
             if (tools[fname]) {
                 var func_def = tools[fname].toString();
                 var match = func_def.match(/function\s*\(([^\)]*)\)/);
                 if (match) {
                     var args = match[1].split(/,/);
-                    if (set_vars == args.length) {
-                        return [[line+")"],line];
+                    var close_quote = '';
+                    if (set_vars.length > 0 && set_vars[set_vars.length - 1].match(/^['"][^'"]*$/)) {
+                        close_quote = set_vars[set_vars.length - 1][0];
                     }
-                    args.splice(0,set_vars);
-                    return [[line+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],line];
+                    if (set_vars.length == args.length) {
+                        return [[line+close_quote+")"],line];
+                    }
+                    args.splice(0,set_vars.length);
+                    return [[line+close_quote+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],line];
                 }
             }
         }
