@@ -14,6 +14,11 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  */
 MASCP.UserdataReader = MASCP.buildService(function(data) {
                         this.data = data;
+                        (function(self) {
+                            self.getPeptides = function() {
+                                return data;
+                            };
+                        })(this);
                         return this;
                     });
 
@@ -168,7 +173,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.retrieve = function(agi,cback) {
         console.log("Data not ready! Waiting for ready state");
         var self = this;        
-        window.jQuery(self).once('ready',function() {
+        window.jQuery(self).one('ready',function() {
             self.retrieve(agi,cback);
         })
     };
