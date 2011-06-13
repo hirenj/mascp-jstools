@@ -235,12 +235,15 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     var self = this;
 
     MASCP.Service._current_reqs = MASCP.Service._current_reqs || 0;
+    MASCP.Service._waiting_reqs = MASCP.Service._waiting_reqs || 0;
     
     if (MASCP.Service.MAX_REQUESTS) {
         var my_func = arguments.callee;
         if (MASCP.Service._current_reqs > MASCP.Service.MAX_REQUESTS) {
-            window.jQuery(MASCP.Service).one('resultReceived',function() {
+            MASCP.Service._waiting_reqs += 1;
+            window.jQuery(MASCP.Service).one('requestComplete',function() {
                 setTimeout(function() {
+                    MASCP.Service._waiting_reqs -= 1;
                     my_func.call(self,agi,callback);
                 },0);
             });
@@ -274,6 +277,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     error:      function(response,req,status) {
                     MASCP.Service._current_reqs -= 1;
                     window.jQuery(self).trigger("error",[response,req,status]);
+                    window.jQuery(MASCP.Service).trigger('requestComplete');
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
@@ -285,6 +289,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                     if (self._dataReceived(data,status)) {
                         window.jQuery(self).trigger("resultReceived");
                         window.jQuery(MASCP.Service).trigger("resultReceived");
+                        window.jQuery(MASCP.Service).trigger('requestComplete');
                     }
                 },
     /*  There is a really strange WebKit bug, where when you make a XDR request
@@ -349,6 +354,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                     if (self._dataReceived(data,"db")) {
                         window.jQuery(self).trigger("resultReceived");
                         window.jQuery(MASCP.Service).trigger("resultReceived");
+                        window.jQuery(MASCP.Service).trigger('requestComplete');
                     }
                 } else {
                     var old_received = self._dataReceived;
@@ -368,6 +374,12 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     MASCP.Service.FindCachedService = function(service,cback) {
         var serviceString = service.toString();
         search_service(serviceString,cback);
+        return true;
+    }
+
+    MASCP.Service.CachedAgis = function(service,cback) {
+        var serviceString = service.toString();
+        cached_agis(serviceString,cback);
         return true;
     }
 
@@ -440,6 +452,16 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             });
         };
         
+        cached_agis = function(service,cback) {
+            db.execute("SELECT distinct AGI from datacache where service = ?",[service],function(err,records) {
+                var results = [];
+                for (var i = 0; i < records.length; i++ ){
+                    results.push(records[i].agi);
+                }
+                cback.call(MASCP.Service,results);
+            });
+        };
+        
         get_db_data = function(agi,service,cback) {
             var sql = "SELECT * from datacache where agi=? and service=?";
             var args = agi ? [agi,service] : ["",service];
@@ -490,9 +512,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             var results = {};
             if ("localStorage" in window) {
                 var key;
+                var re = new RegExp("^"+service+".*");
                 for (var i = 0, len = localStorage.length; i < len; i++){
                     key = localStorage.key(i);
-                    if ((new RegExp("^"+service+".*")).test(key)) {                        
+                    if (re.test(key)) {                        
                         results[key.replace(/\.at[\dcm].*$/g,'')] = true;
                     }
                 }
@@ -506,6 +529,27 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             cback.call(MASCP.service,uniques);
 
             return uniques;
+        };
+
+        cached_agis = function(service,cback) {
+            if ("localStorage" in window) {
+                var key;
+                var re = new RegExp("^"+service);
+                for (var i = 0, len = localStorage.length; i < len; i++){
+                    key = localStorage.key(i);
+                    if (re.test(key)) {
+                        key = key.replace(service,'');
+                        results[key] = true;
+                    }
+                }
+            }
+
+            var uniques = [];
+            for (key in results) {
+                uniques.push(key);
+            }
+
+            cback.call(MASCP.service,uniques);
         };
 
         get_db_data = function(agi,service,cback) {
