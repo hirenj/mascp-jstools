@@ -11,6 +11,27 @@ exports.get_data = function(agi,service) {
     return result;
 };
 
+exports.find_motif = function(agi,motif) {
+    var result_struct = {};
+    (new MASCP.TairReader()).retrieve(agi,function(err) {
+        if (err) {
+            return;
+        }
+        var seq = this.result.getSequence();
+        motif.global = true;
+        var result = [];
+        var last_hit = 0;
+        seq.match(motif).forEach(function(match) {
+            var pos = seq.indexOf(match,last_hit+1);
+            result.push(pos+1);
+            last_hit = pos;
+        });
+        console.log(result);
+        return result_struct.result = result;
+    });
+    return result_struct;
+};
+
 exports.find_peptide = function(agi,seq) {
     (new MASCP.TairReader()).retrieve(agi,function(err) {
         if (err) {
