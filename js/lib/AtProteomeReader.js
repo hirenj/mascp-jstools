@@ -164,7 +164,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
         MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
                 
         var positions = this._normalise(this._mergeCounts(peptide_counts));
-        var index = 0;
+        var index = 1;
         var last_start = null;
         while (index <= positions.length) {
             if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
