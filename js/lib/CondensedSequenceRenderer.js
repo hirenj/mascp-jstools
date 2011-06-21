@@ -316,7 +316,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
             if (track._group_controller) {
                 self.hideGroup(track._group_under_control);                
             }
-            self.hideLayer(track);            
+            self.hideLayer(track,true);            
             track.disabled = true;
         }
         
@@ -1534,7 +1534,27 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 return;
             }
+
+
+            var curr_disp = 'hidden';
+            for (var i = 0 ; i < an_array.length; i++ ) {
+                var a_disp = an_array[i].getAttribute('visibility');
+                if (a_disp && a_disp != 'hidden') {
+                    curr_disp = a_disp;
+                    break;
+                }
+            }
+            
+            
+            var target_y = parseInt(hash['y']);
+
+            var target_disp = hash['visibility'];
+            if (curr_disp == target_disp && target_disp == 'hidden' && hash['y'] > 0) {
+                return;
+            }
+            
             for (var key in hash) {
+                
                 for (var i = 0; i < an_array.length; i++) {
                     if ( ! an_array[i]) {
                         continue;
@@ -2620,6 +2640,8 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
  */
 MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
     var RS = this._RS;
+    var self = this;
+    
     if ( ! this._canvas ) {
         this.bind('sequencechange',function() {
             this.addTrack(layer);
@@ -2633,31 +2655,33 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         this._track_order = [];
     }
 
+    if ( ! this._vis_change_event ) {
+        this._vis_change_event = function(e,renderer,visibility) {
+            if (renderer != self) {
+                return;
+            }
+            if ( containers[this.name].length <= 0 ) {
+                return;
+            }
+            
+            if (! visibility) {
+                if (containers[this.name].tracers) {
+                    containers[this.name].tracers.hide();
+                }
+                containers[this.name].attr({ 'y': -1000 });
+            }
+            renderer.refresh();
+        };
+    }
+
     if ( ! this._layer_containers[layer.name] ) {                
         this._layer_containers[layer.name] = this._canvas.set();
         this._track_order = this._track_order.concat([layer.name]);
         if ( ! this._layer_containers[layer.name].track_height) {
             this._layer_containers[layer.name].track_height = 4;
         }
-        var self = this;
         var containers = this._layer_containers;
-        jQuery(layer).bind('visibilityChange',function(e,renderer,visibility) {
-            if (renderer != self) {
-                return;
-            }
-            
-            if ( containers[layer.name].length <= 0 ) {
-                return;
-            }
-            
-            if (! visibility) {
-                if (containers[layer.name].tracers) {
-                    containers[layer.name].tracers.hide();
-                }
-                containers[layer.name].attr({ 'y': -1000 });
-            }
-            renderer.refresh();
-        });
+        jQuery(layer).unbind('visibilityChange',this._vis_change_event).bind('visibilityChange',this._vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event,element) {

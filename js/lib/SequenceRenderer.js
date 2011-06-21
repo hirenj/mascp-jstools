@@ -421,7 +421,7 @@ MASCP.SequenceRenderer.prototype.showRowNumbers = function() {
  * @param {String|Object} layer Layer name, or layer object
  * @see MASCP.Layer#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
+MASCP.SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
     var layerName = layer;
     if (typeof layer != 'string') {
         layerName = layer.name;
@@ -430,7 +430,9 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer) {
     }
     jQuery(this._container).toggleClass(layerName+'_active');
     jQuery(this._container).toggleClass(layerName+'_inactive');
-    jQuery(layer).trigger('visibilityChange',[this,this.isLayerActive(layer)]);
+    if ( ! consumeChange ) {
+        jQuery(layer).trigger('visibilityChange',[this,this.isLayerActive(layer)]);
+    }
     return this;
 };
 
@@ -469,7 +471,6 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     jQuery(this._container).removeClass(layer.name+'_active');
     jQuery(this._container).removeClass('active_layer');
     jQuery(this._container).addClass(layer.name+'_inactive');
-
     if (! consumeChange ) {
         jQuery(layer).trigger('visibilityChange',[this,false]);
     }
@@ -490,7 +491,7 @@ MASCP.SequenceRenderer.prototype.registerLayer = function(layer,options) {
  * @param {Boolean} visibility True for visible, false for hidden
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
+MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,consumeChange) {
     var groupName = grp;
     var group;
     if (typeof grp != 'string') {
@@ -504,18 +505,18 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
     var renderer = this;
     jQuery(group._layers).each(function(i) {
         if (this.disabled && visibility) {
-            renderer.hideLayer(this.name);
+            renderer.hideLayer(this.name,true);
             return;
         }
         if (visibility == true) {
-            renderer.showLayer(this.name);
+            renderer.showLayer(this.name,true);
         } else if (visibility == false) {
-            renderer.hideLayer(this.name);                
+            renderer.hideLayer(this.name,true);                
         } else {
-            renderer.toggleLayer(this.name);
+            renderer.toggleLayer(this.name,true);
         }
     });
-    if (visibility != null) {
+    if (visibility != null && ! consumeChange) {
         jQuery(group).trigger('visibilityChange',[renderer,visibility]);
     }
 };
@@ -524,8 +525,8 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility) {
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.hideGroup = function(group) {
-    this.setGroupVisibility(group,false);
+MASCP.SequenceRenderer.prototype.hideGroup = function(group,consumeChange) {
+    this.setGroupVisibility(group,false,consumeChange);
 }
 
 /**
@@ -533,8 +534,8 @@ MASCP.SequenceRenderer.prototype.hideGroup = function(group) {
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.showGroup = function(group) {
-    this.setGroupVisibility(group,true);
+MASCP.SequenceRenderer.prototype.showGroup = function(group,consumeChange) {
+    this.setGroupVisibility(group,true,consumeChange);
 }
 
 /**
@@ -542,8 +543,8 @@ MASCP.SequenceRenderer.prototype.showGroup = function(group) {
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.toggleGroup = function(group) {
-    this.setGroupVisibility(group);
+MASCP.SequenceRenderer.prototype.toggleGroup = function(group,consumeChange) {
+    this.setGroupVisibility(group,consumeChange);
 }
 
 /**
@@ -744,7 +745,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
         if (this.checked) {
             renderer.showLayer(layer,false);
         } else {
-            renderer.hideLayer(layer,false);
+//            renderer.hideLayer(layer,false);
         }
         if (MASCP.getLayer(layer).group && MASCP.getLayer(layer).group._check_intermediate) {
             MASCP.getLayer(layer).group._check_intermediate();
@@ -850,7 +851,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
             });
         } else {
             jQuery(group_obj._layers).each(function(i) {
-                renderer.hideLayer(this.name,false);
+//                renderer.hideLayer(this.name,false);
             });                
         }
     };
@@ -869,7 +870,6 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
                 the_input[0].removeAttribute('checked');
             }
         };
-        
         jQuery(MASCP.getGroup(group)).bind('visibilityChange', group_func);
         
         if (the_input[0].parentNode) {
@@ -897,7 +897,6 @@ MASCP.SequenceRenderer.prototype.createGroupController = function(lay,grp) {
     var group = MASCP.getGroup(grp);
 
     var self = this;
-    
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
         if (rend == self) {
             self.setGroupVisibility(group, visible);
@@ -982,7 +981,7 @@ MASCP.SequenceRenderer.prototype.reset = function()
         this.hideGroup(group);
     }    
     for ( var layer in MASCP.layers) {
-        this.hideLayer(layer);
+        this.hideLayer(layer,true);
         MASCP.layers[layer].disabled = true;
     }
     
