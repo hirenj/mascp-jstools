@@ -227,7 +227,7 @@ jQuery(document).ready(function() {
 
 jQuery(document).ready(function() {
     
-    var rendering_readers = [];
+    var rendering_readers = null;
     var all_readers = [];
 
     var updateTags = function() {
@@ -270,7 +270,8 @@ jQuery(document).ready(function() {
         return false;
     };
 
-    var tweak_track_order = function(array) {            
+    var tweak_track_order = function(array) {
+        var readers_to_show = [];
         if (array.splice && array.indexOf) {
             if (array.indexOf('hydropathy') === -1) {
                 array.push('hydropathy');
@@ -281,7 +282,7 @@ jQuery(document).ready(function() {
                     if (rdr.layers.length > 0) {
                         if (array.indexOf(rdr.layers[0]) == -1) {
                             for (var i = 0 ; i < rdr.layers.length; i++) {
-                                MASCP.renderer.showLayer(rdr.layers[i]);
+                                readers_to_show.push(rdr.layers[i]);
                                 array.push(rdr.layers[i]);
                             }
                         }                            
@@ -299,22 +300,28 @@ jQuery(document).ready(function() {
                     
                     if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
                         array.splice(array.indexOf(placeholder),1,controller,lay);
-                        MASCP.renderer.showLayer(controller);
+                        readers_to_show.push(controller);
                     } else {
                         array.splice(array.indexOf(placeholder),1,lay);                        
-                        MASCP.renderer.showLayer(lay);
+                        readers_to_show.push(lay);
                     }
                 }
             }
             if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
                 array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
-                MASCP.renderer.showLayer('phosphat_experimental');
+                readers_to_show.push('phosphat_experimental');
             }
         
             if (MASCP.getGroup('prippdb_peptides') && MASCP.getGroup('prippdb_peptides').size() > 0) {
                 array.splice(array.indexOf('prippdb_experimental')+1,0,'prippdb_peptides');                                                
-                MASCP.renderer.showLayer('prippdb_experimental');
+                readers_to_show.push('prippdb_experimental');
             }
+        }
+        if (rendering_readers && rendering_readers.length == 0) {
+            readers_to_show.forEach(function(lay) {
+                MASCP.renderer.showLayer(lay,true);
+            });
+            MASCP.renderer.refresh();
         }
         return array;
     };
@@ -335,7 +342,7 @@ jQuery(document).ready(function() {
     }
 
     var rrend = function(e,reader) {
-        if (rendering_readers) {
+        if (rendering_readers && rendering_readers.length > 0) {
             rendering_readers.splice(rendering_readers.indexOf(reader),1);
             if (rendering_readers.length > 0) {                
                 return;
@@ -351,8 +358,6 @@ jQuery(document).ready(function() {
             jQuery('#agi').focus();            
         },1000);
 
-
-        rendering_readers = null;
         
         if (document._screen) {
             document._screen.hide();
@@ -388,6 +393,8 @@ jQuery(document).ready(function() {
             }
         }
         jQuery('#sequence_controllers').trigger('sortupdate');
+
+        rendering_readers = null;
 
     };
 

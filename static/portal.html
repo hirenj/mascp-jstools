@@ -16,7 +16,7 @@
     
 <!--   <script type="text/javascript" src="js/svgweb/svg.js" data-path="js/svgweb/"></script>-->
     
-    <script type="text/javascript" src="js/maschup.min.js"></script>
+    <script type="text/javascript" src="js/maschup.js"></script>
     
     <!-- <script type="text/javascript" src="js/maschup.services.min.js"></script> -->
 
@@ -227,12 +227,14 @@
 
 
         for (var groupname in MASCP.groups) {
-            MASCP.renderer.hideGroup(groupname);
+            MASCP.renderer.hideGroup(groupname,true);
         }
         
         for (var layername in MASCP.layers) {
-            MASCP.renderer.hideLayer(layername);
+            MASCP.renderer.hideLayer(layername,true);
         }
+        
+        MASCP.renderer.refresh();
         
         var reader = new MASCP.TairReader(agi);
         jQuery(reader).bind('resultReceived',function() {
