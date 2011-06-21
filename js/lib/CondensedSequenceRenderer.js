@@ -1715,6 +1715,10 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         has_textLength = false;
     }
     
+    if ("ontouchend" in document) {
+        has_textLength = false;
+    }
+    
     renderer.select = function() {
         var vals = Array.prototype.slice.call(arguments);
         var from = vals[0];
@@ -1733,7 +1737,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
         var a_text = canvas.text(0,12,document.createTextNode(this.sequence));
-        a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
+        a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('textLength',RS*this.sequence.length);
         a_text.setAttribute('text-anchor', 'start');
@@ -2156,7 +2160,9 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         renderer._highlight = [];
         renderer._createNewHighlight = function() {
             var highlight = canv.rect(0,0,0,'100%');
-            highlight.setAttribute('fill','#eeeeee');
+            highlight.setAttribute('fill','#ffdddd');
+            var pnode = highlight.parentNode;
+            pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
             this._highlight.push(highlight);
         };
         renderer._createNewHighlight();
@@ -2702,14 +2708,12 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
         
         highlight.setAttribute('x',(from) * RS );
         highlight.setAttribute('width',(to - from) * RS );
-        highlight.setAttribute('visibiilty','visible');
+        highlight.setAttribute('visibility','visible');
         idx += 1;
     }
     for (var i = idx; i < this._highlight.length; i++){
         this._highlight[i].setAttribute('visibility','hidden');
     }
-
-    
 };
 
 /**
