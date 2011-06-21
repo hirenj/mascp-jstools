@@ -149,6 +149,7 @@ h1, h2 {
         border: dotted #999999 1px;
         margin-top: 1px;
         height: 20px;
+        width: 95%;
     }
 
     #agi_input input[type='button'] {
@@ -203,11 +204,10 @@ h1, h2 {
     
     #agi_input.first_run input[type='text'] {
         position: absolute;
-        left: 50%;
         top: 50%;
-        margin-left: -250px;
         margin-top: -75px;
-        width: 496px;
+        left: 10px;
+        right: 20px;
         height: 150px;
         font-size: 75px;
         z-index: -1;
