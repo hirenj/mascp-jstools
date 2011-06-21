@@ -215,7 +215,7 @@ jQuery(document).ready(function() {
         var last_hit = 0;
         n_sites.forEach(function(site) {
             var pos = MASCP.renderer.sequence.indexOf(site,last_hit);
-            n_pos = n_pos.concat([pos,pos+3]);
+            n_pos = n_pos.concat([pos,pos+site.length]);
             last_hit = pos+1;
         });
         MASCP.renderer.moveHighlight.apply(MASCP.renderer,n_pos);
