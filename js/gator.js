@@ -175,7 +175,8 @@ jQuery(document).ready(function() {
             MASCP.renderer.zoom = zoomFactor;
             dragger.applyToElement(MASCP.renderer._canvas);
             GOMap.Diagram.addTouchZoomControls(MASCP.renderer, MASCP.renderer._canvas);
-            GOMap.Diagram.addScrollZoomControls(MASCP.renderer, MASCP.renderer._canvas)
+            GOMap.Diagram.addScrollZoomControls(MASCP.renderer, MASCP.renderer._canvas);
+            jQuery('#search').trigger('search');
         });
     }
 
@@ -203,7 +204,25 @@ jQuery(document).ready(function() {
         }
         zoom_controls.style.zIndex = 2;
         jQuery(MASCP.renderer._Navigation._scroll_control).append(zoom_controls);                
-    }    
+    }
+    
+    var search_func = function() {
+        var pattern = this.value;
+        var re = new RegExp(pattern,"gi");
+        re.global = true;
+        var n_sites = (pattern == "") ? [] : (MASCP.renderer.sequence.match(re) || []);
+        var n_pos = [];
+        var last_hit = 0;
+        n_sites.forEach(function(site) {
+            var pos = MASCP.renderer.sequence.indexOf(site,last_hit);
+            n_pos = n_pos.concat([pos,pos+3]);
+            last_hit = pos+1;
+        });
+        MASCP.renderer.moveHighlight.apply(MASCP.renderer,n_pos);
+    };
+    
+    jQuery('#search').unbind('change').bind('change',search_func);
+    
 });
 
 jQuery(document).ready(function() {
