@@ -183,6 +183,13 @@
         
         //Trigger the change event on page load
         var hash = (window.location.hash + ""), hash = hash.replace(/#/g,'');
+        var user_data;
+        if (user_data = hash.match(/,user_data=(.*)/ig)) {
+            user_data = user_data[0].replace(/,user_data=/ig,'');
+            document.getElementById('user_data').value = 'http://'+window.location.host+user_data;
+            hash = hash.replace(/,user_data=.*/,'');
+        }
+        
         if(hash) {
             jQuery('#agi')[0].value = hash;
         } else {
