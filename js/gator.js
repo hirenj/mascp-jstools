@@ -158,14 +158,6 @@ jQuery(document).ready(function() {
         MASCP.renderer.grow_container = true;
         
         var dragger = new GOMap.Diagram.Dragger();
-        jQuery("#clicker").bind('click',function() {
-            dragger.enabled = ! dragger.enabled;
-            if (dragger.enabled) {
-                this.value = "Panning";
-            } else {
-                this.value = "Selecting";
-            }
-        })
         MASCP.renderer.zoom = 0.81;
         MASCP.renderer.padding = 10;
 
