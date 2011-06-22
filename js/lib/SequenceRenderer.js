@@ -390,7 +390,7 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
         results.addToLayer = function() {};
         return results;
     }
-    results = results.concat(this._sequence_els.slice(start,start+(peptideSequence.length-1)));
+    results = results.concat(this._sequence_els.slice(start,start+(peptideSequence.length)));
 
     results.addToLayer = function(layername, fraction) {
         return results[0].addBoxOverlay(layername,results.length,fraction);
