@@ -2731,7 +2731,7 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
             highlight = this._highlight[idx];
         }
         
-        highlight.setAttribute('x',(from) * RS );
+        highlight.setAttribute('x',(from - 0.25) * RS );
         highlight.setAttribute('width',(to - from) * RS );
         highlight.setAttribute('visibility','visible');
         idx += 1;
