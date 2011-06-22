@@ -77,6 +77,21 @@ jQuery(document).ready(function() {
         var regexp = /(http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
         if (regexp.test(document.getElementById('user_data').value)) {
             var uri = document.getElementById('user_data').value;
+            if (uri.match(new RegExp("(http|https)://"+window.location.hostname))) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", uri,true);
+                xhr.onreadystatechange=function() {
+                    if (xhr.readyState==4) {
+                        var data = xhr.responseText;                        
+                        loadData(CSVToArray(data));
+                        document.getElementById('user_data').value = '';                        
+                    }
+                };
+                xhr.send(null);
+                return;
+            }
+            
+            
             var score = 30;
 
             (new MascotToJSON()).convertReport(uri,function(data,error) {
@@ -84,7 +99,7 @@ jQuery(document).ready(function() {
                     loadData(data);
                 } else {
                     document.getElementById('user_data').value = 'Could not load MASCOT result';
-                    throw "FSDF";
+                    throw "Error";
                 }
             });
 
