@@ -1677,9 +1677,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             }
             if ( ! MASCP.IE ) {
                 var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
-                for (var i = 0 ; i < event_names.length; i++) {
-                    jQuery(new_el).bind(event_names[i], event_func);
-                }
+                var jqel = jQuery(new_el);
+                // for (var i = 0 ; i < event_names.length; i++) {
+                //     jqel.bind(event_names[i], event_func);
+                // }
                 if (new_el.addEventListener) {
                     new_el.addEventListener('touchstart',event_func,false);
                     new_el.addEventListener('touchmove',event_func,false);
