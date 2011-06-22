@@ -2658,9 +2658,12 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
 
     if ( ! this._vis_change_event ) {
         this._vis_change_event = function(e,renderer,visibility) {
+
             if (renderer != self) {
                 return;
             }
+            var containers = self._layer_containers;
+
             if ( containers[this.name].length <= 0 ) {
                 return;
             }
@@ -2681,7 +2684,6 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         if ( ! this._layer_containers[layer.name].track_height) {
             this._layer_containers[layer.name].track_height = 4;
         }
-        var containers = this._layer_containers;
         jQuery(layer).unbind('visibilityChange',this._vis_change_event).bind('visibilityChange',this._vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         for (var i = 0 ; i < event_names.length; i++) {
