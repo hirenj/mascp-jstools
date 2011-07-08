@@ -56,6 +56,7 @@ MASCP.buildService = function(dataExtractor)
     clazz.Result = function(data)
     {
         jQuery.extend(this,dataExtractor.apply(this,[data]));
+        return this;
     };
     
     
@@ -226,10 +227,18 @@ MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
     if ( ! this.result ) {
-        result = new clazz(data);
+        try {
+            result = new clazz(data);
+        } catch(err) {
+            jQuery(this).trigger("error");            
+        }
         this.result = result;
     } else {
-        var new_result = new clazz(data);
+        try {
+            var new_result = new clazz(data);
+        } catch(err) {
+            jQuery(this).trigger("error");            
+        }
         jQuery.extend( this.result, new_result );        
     }
     this.result.reader = this;
