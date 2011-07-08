@@ -99,7 +99,7 @@ MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
         return;
     }
     for (var i = 0; i < data.tissues.length; i++ ) {
-        this._tissues[i] = data.tissues[i]['PO:tissue'];
+        this._tissues[i] = data.tissues[i]['PO:tissue'] || {};
         this._tissues[i].long_name = data.tissues[i].tissue;
         this._long_name_map[this._tissues[i]] = data.tissues[i].tissue;
         
