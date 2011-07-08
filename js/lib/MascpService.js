@@ -83,6 +83,7 @@ MASCP.buildService = function(dataExtractor)
     clazz.Result = function(data)
     {
         window.jQuery.extend(this,dataExtractor.apply(this,[data]));
+        return this;
     };
     
     
@@ -152,7 +153,11 @@ MASCP.Service.prototype._dataReceived = function(data,status)
     if (data instanceof Array) {
         this.result = [];
         for (var i = 0; i < data.length; i++ ) {
-            var rez = new clazz(data[i]);
+            try {
+                var rez = new clazz(data[i]);
+            } catch(err) {
+                jQuery(this).trigger('error',[err]);
+            }
             rez.reader = this;
             rez.retrieved = data[i].retrieved;
 
@@ -167,10 +172,20 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             return result;
         };
     } else if ( ! this.result ) {
-        result = new clazz(data);
+        try {
+            result = new clazz(data);
+        } catch(err) {
+            jQuery(this).trigger('error',[err]);
+        }
+        
         this.result = result;
     } else {
-        var new_result = new clazz(data);
+        try {
+            var new_result = new clazz(data);
+        } catch(err) {
+            jQuery(this).trigger('error',[err]);
+        }
+        
         window.jQuery.extend( this.result, new_result );        
     }
 
