@@ -721,8 +721,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                         }
                     }
                     var anim_steps = 1;
-
-                    var height = 100;
+                    var height = 100.0 / nav._zoom_scale;
                     self._anim = window.setInterval(function() {
                         
                         if (anim_steps < 5) {
@@ -3052,6 +3051,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         } else {
             this._canvas.style.GomapScrollLeftMargin = 1000;            
         }
+        this._Navigation._zoom_scale = this._zoomLevel;
         this._Navigation.setViewBox(viewBox.join(' '));
         this._Navigation.setDimensions('100%','100%');//this._canvas.width.baseVal.value,'100%');
     }
