@@ -14,6 +14,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
+
 MASCP.PhosphatReader =  MASCP.buildService(function(data) {
                             if (data && data.result && ! this._sequence) {
                                 for (var i = 0; i < data.result.length; i++) {
@@ -37,16 +38,21 @@ MASCP.PhosphatReader =  MASCP.buildService(function(data) {
                             return this;
                         });
 
+MASCP.PhosphatReader.SERVICE_URL = 'http://gator.masc-proteomics.org/proxy.pl';
+
 MASCP.PhosphatReader.prototype.requestData = function()
 {
     var data = [null,this.agi];
+        
+    if ( ! this._methods || this._methods.length == 0 ) {
+        this._methods = ['getPredictedAa','getExperimentsModAa','getRelatives'];
+    }
 
-    var method = this._method ? this._method : 'getPredictedAa';
+    var method = this._methods[0];
+    
     if (method == 'getRelatives') {
         data = [this.agi];
     }
-    var self = this;
-    
     return {
         type: "POST",
         dataType: "json",
@@ -54,37 +60,41 @@ MASCP.PhosphatReader.prototype.requestData = function()
                 'method'    : method,
                 'params'    : data.toJSON ? data.toJSON() : JSON.stringify(data),
                 'service'   : 'phosphat' 
-        },
-
-        /* http://phosphat.mpimp-golm.mpg.de/PhosPhAtHost30/productive/views/Prediction.php?start=0&limit=50&id=IAMINURDBHACKING&method=getRelatives&sort=sequence&dir=ASC&params=%5B%22atcg00480.1%22%5D */
-        success: function(data,status) {
-            data.request_method = method;
-            self._dataReceived(data,status);
-            if (self.result && self.result._raw_data && self.result._raw_experimental_data && self.result._raw_relative_data) {
-               self.result.agi = self.agi;
-               jQuery(self).trigger('resultReceived'); 
-            }
         }
     };
 };
 
-MASCP.PhosphatReader.prototype._single_retrieve = MASCP.PhosphatReader.prototype.retrieve;
+(function(mpr) {
+    var defaultDataReceived = mpr.prototype._dataReceived;
 
-MASCP.PhosphatReader.prototype.retrieve = function(agi,cback)
-{
-    if (! this.agi ) {
-        this.agi = agi;
-    }
-    this._method = null;
-    this._single_retrieve(agi,cback);
-    this._method = 'getExperimentsModAa';
-    this._single_retrieve(agi);
-    this._method = 'getRelatives';
-    this._single_retrieve(agi);
-};
+    mpr.prototype._dataReceived = function(data,status)
+    {
+        data.request_method = this._methods[0];
+        this._methods.shift();
+        var res = defaultDataReceived.call(this,data,status);
+        if (this.result && this.result._raw_data && this.result._raw_experimental_data && this.result._raw_relative_data) {
+            return res;
+        } else {
+            this.retrieve();
+        }
+        return false;
+    };
+    
+    var oldToString = mpr.prototype.toString;
+    mpr.prototype.toString = function()
+    {
+        if ( ! this._methods ) {
+            this._methods = ['getPredictedAa','getExperimentsModAa','getRelatives'];
+        }
+        var string = oldToString.call(this);
+        string += "."+this._methods[0];
+        return string;
+    };
+    
+})(MASCP.PhosphatReader);
 
 /**
- *  @class   Container class for results from the AtProteome service
+ *  @class   Container class for results from the Phosphat service
  *  @extends MASCP.Service.Result
  */
 // We need this line for the JsDoc to pick up this class
