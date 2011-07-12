@@ -2699,6 +2699,17 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
     
 //    this.refresh();
 };
+
+
+MASCP.CondensedSequenceRenderer.prototype.removeTrack = function(layer) {
+    if ( this._layer_containers[layer.name] ) {                
+        this._layer_containers[layer.name].forEach(function(el) {
+            el.parentNode.removeChild(el);
+        });
+        delete this._layer_containers[layer.name];
+    }
+};
+
 /**
  * Describe what this method does
  * @private
