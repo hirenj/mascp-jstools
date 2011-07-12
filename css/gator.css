@@ -345,7 +345,7 @@ h1, h2 {
         position: absolute;
         top: 0px;
         right: 0px;
-        font-size: 8px;
+        font-size: 12px;
         color: #777777;
     }
     
@@ -463,3 +463,13 @@ h1, h2 {
         background: #ffffff;            
     }
     
+    .data_reload { 
+        background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAO5JREFUeNpiYMADAgMD7RkIAGZ8kpqamg+A2ACIT9y4ceMjNjWMeGyXB1IPkIQagHjC+vXrP+I1AKhRH6QQiB2wmAsyMABoyEWYAAuaZn8gtQGHoz6AXIGsGQSY0Jy8AMoFGSKA5nwFoOaF6KYiu6AAqukCUGEg1NAFUFsf4gorZAMMkGwDA6DGRELRyILDr/hiJgFqeCNKGCABATwWGkBd6IARiEhxnoDHgAQ0tSgGwPweAHTqfCzOB4kFoIcTI5qieKSofICUJkAaFWCuQI5ObCnRH2qIAJbABWneSGxe8EeK2gNAjQcZaAEAAgwASKxLFoUsXPQAAAAASUVORK5CYII=);
+        background-repeat: no-repeat;
+        background-position: center right;
+        height: 16px;
+        padding-right: 16px;
+        cursor: pointer;
+    }
+    
+        
