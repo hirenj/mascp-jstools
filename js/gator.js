@@ -468,12 +468,26 @@ jQuery(document).ready(function() {
             });
 
             this.bind('resultReceived',function() {
+                var self_func = arguments.callee;
                 var an_agi = this.agi;
                 var a_locus = an_agi.replace(/\.\d+/,'');
                 var rdr = READER_CONF[this.__class__];
                 var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
                 var datestring = (this.result.retrieved instanceof Date) ? this.result.retrieved.toDateString() : 'Just now';
-                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp">'+datestring+'</span></li>');
+                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp data_reload">'+datestring+'</span></li>');
+                var li = jQuery('#links ul li:last');
+                jQuery('.data_reload', li).bind('click',function(e) {
+                    var clazz = rdr.definition;
+                    var reader = new clazz(an_agi, rdr.url);
+                    reader.bind('resultReceived', rdr.result);
+                    if (rdr.layers.length > 0) {
+                        reader.registerSequenceRenderer(MASCP.renderer);
+                    }
+                    reader.bind('resultReceived', self_func);
+                    reader.retrieve();
+                    li.remove();
+                });
+                
             });
         
             this.retrieve();
