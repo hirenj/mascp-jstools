@@ -158,12 +158,21 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
 
     var self = this;
     
+    MASCP.Service.CacheService(this);
+    
     this.datasetname = name;
     this.data = data;
     
     var inserter = new MASCP.UserdataReader();
     inserter.datasetname = name;
     inserter.data = data;
+    
+    inserter.retrieve = function(agi,cback) {
+        this.agi = agi;
+        this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
+        cback.call(this);
+    };
+    
     MASCP.Service.CacheService(inserter);
     
     var agis = filter_agis(data);
@@ -175,7 +184,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         var self = this;        
         window.jQuery(self).one('ready',function() {
             self.retrieve(agi,cback);
-        })
+        });
     };
 
     (function() {
@@ -184,25 +193,10 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             window.jQuery(self).trigger("ready");
             return;
         }
-        var agi = agis.shift();        
+        var agi = agis.shift();     
         inserter.retrieve(agi,arguments.callee);
     })();
 
-};
-
-MASCP.UserdataReader.prototype.retrieve = function(agi,cback) {
-    if (agi) {
-        this.agi = agi;
-    }
-
-    this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
-
-    window.jQuery(this).trigger("resultReceived");
-    window.jQuery(MASCP.Service).trigger("resultReceived");
-    if (cback) {
-        cback.call(this);
-    }
-    
 };
 
 MASCP.UserdataReader.datasets = function(cback) {

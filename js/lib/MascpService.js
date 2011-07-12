@@ -346,6 +346,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     };
 
     MASCP.Service.CacheService = function(reader) {
+        if (reader.retrieve.caching) {
+            return;
+        }
         var _oldRetrieve = reader.retrieve;
         
         reader.retrieve = function(agi,cback) {
@@ -384,6 +387,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             });
             return self;
         };
+        reader.retrieve.caching = true;
     };
 
     MASCP.Service.FindCachedService = function(service,cback) {
