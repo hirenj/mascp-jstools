@@ -2938,15 +2938,13 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
             if (visible) {
                 self.showLayer(layer,true);
                 expanded = true;
-            } else {
-                self.hideLayer(layer,true);
             }
         }
     });
     jQuery(layer).bind('_expandevent',function(ev) {
         expanded = ! expanded;
         self.withoutRefresh(function() {
-            self.setGroupVisibility(group,expanded,true);            
+            self.setGroupVisibility(group,expanded);
         });
         self.refresh(true);
     });
