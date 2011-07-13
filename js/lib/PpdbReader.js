@@ -103,21 +103,21 @@ MASCP.PpdbReader.Result.prototype.getPeptides = function()
 MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
-    MASCP.registerGroup('ppdb', {'fullname' : 'PPDB spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#aa9900' });
-
-    var overlay_name = 'ppdb_controller';
-
-    var css_block = '.active .overlay { background: #aa9900; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
-    
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'PPDB MS/MS', 'color' : '#aa9900', 'css' : css_block });
-
-    if (sequenceRenderer.createGroupController) {
-        sequenceRenderer.createGroupController('ppdb_controller','ppdb');
-    }
     
     this.bind('resultReceived', function() {
         
 //        
+        MASCP.registerGroup('ppdb', {'fullname' : 'PPDB spectra data', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#aa9900' });
+
+        var overlay_name = 'ppdb_controller';
+
+        var css_block = '.active .overlay { background: #aa9900; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
+
+        MASCP.registerLayer(overlay_name,{ 'fullname' : 'PPDB MS/MS', 'color' : '#aa9900', 'css' : css_block });
+
+        if (sequenceRenderer.createGroupController) {
+            sequenceRenderer.createGroupController('ppdb_controller','ppdb');
+        }
         
         var peps = this.result.getPeptides();
         var experiments = this.result.getExperiments();
