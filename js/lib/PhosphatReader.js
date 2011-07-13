@@ -87,7 +87,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
             this._methods = ['getPredictedAa','getExperimentsModAa','getRelatives'];
         }
         var string = oldToString.call(this);
-        string += "."+this._methods[0];
+        string += this._methods[0] ? "."+this._methods[0] : "";
         return string;
     };
     
