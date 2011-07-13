@@ -253,11 +253,12 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
 
 MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
-    MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
     var reader = this;
 
     this.bind('resultReceived', function() {
+        MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+
         if ( sequenceRenderer.sequence != this.result.sequence && this.result.sequence != '' ) {
             jQuery(sequenceRenderer).bind('sequenceChange',function() {
                 jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
