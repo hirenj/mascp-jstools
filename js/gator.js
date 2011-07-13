@@ -479,6 +479,14 @@ jQuery(document).ready(function() {
                 jQuery('.data_reload', li).bind('click',function(e) {
                     var clazz = rdr.definition;
                     var reader = new clazz(an_agi, rdr.url);
+                    MASCP.Service.registeredLayers(reader).forEach(function(lay) {
+                        MASCP.renderer.removeTrack(lay);
+                        delete MASCP.layers[lay.name];
+                    });
+                    MASCP.Service.registeredGroups(reader).forEach(function(group) {
+                        delete MASCP.groups[group.name];
+                    });
+
                     reader.bind('resultReceived', rdr.result);
                     if (rdr.layers.length > 0) {
                         reader.registerSequenceRenderer(MASCP.renderer);
@@ -486,6 +494,7 @@ jQuery(document).ready(function() {
                     reader.bind('resultReceived', self_func);
                     reader.retrieve();
                     li.remove();
+                    MASCP.renderer.refresh();
                 });
                 
             });
