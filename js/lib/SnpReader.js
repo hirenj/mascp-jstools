@@ -81,6 +81,11 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
         var insertions_layer;
         
         while (accessions.length > 0) {
+
+            if ( ! insertions_layer ) {
+                insertions_layer = renderer.registerLayer('insertions_controller',{'fullname' : 'nsSNPs','color' : '#ff0000'});                
+            }
+
             var acc = accessions.shift();
 
             var diffs = a_result.getSnp(acc);
@@ -118,9 +123,6 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
             for (var i = 0; i < diffs.length; i++ ){
                 outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
                 ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
-            }
-            if ( ! insertions_layer ) {
-                insertions_layer = renderer.registerLayer('insertions_controller',{'fullname' : 'nsSNPs','color' : '#ff0000'});                
             }
 
             for (var i = 0; i < ins.length; i++ ) {
