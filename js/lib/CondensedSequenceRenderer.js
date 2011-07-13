@@ -2705,7 +2705,8 @@ MASCP.CondensedSequenceRenderer.prototype.removeTrack = function(layer) {
         this._layer_containers[layer.name].forEach(function(el) {
             el.parentNode.removeChild(el);
         });
-        delete this._layer_containers[layer.name];
+        this._layer_containers[layer.name] = null;
+        this._track_order.splice(this._track_order.indexOf(layer.name),1);
     }
 };
 
