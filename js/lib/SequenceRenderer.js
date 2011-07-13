@@ -497,6 +497,9 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,co
         group = grp;
     } else {
         group = MASCP.groups[grp];
+        if ( ! group ) {
+            return;
+        }
         groupName = group.name;
     }
     
