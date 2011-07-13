@@ -486,15 +486,23 @@ jQuery(document).ready(function() {
                     MASCP.Service.registeredGroups(reader).forEach(function(group) {
                         delete MASCP.groups[group.name];
                     });
-
+                    li.remove();
+                    
                     reader.bind('resultReceived', rdr.result);
                     if (rdr.layers.length > 0) {
                         reader.registerSequenceRenderer(MASCP.renderer);
                     }
+                    jQuery(MASCP.renderer).one('resultsRendered',function(e,read) {
+                        if (reader === read) {
+                            (rdr.layers || []).forEach(function(lay) {
+                                MASCP.renderer.showLayer(lay);
+                                MASCP.renderer.showGroup(lay);
+                            });
+                            MASCP.renderer.refresh();                            
+                        }
+                    });
                     reader.bind('resultReceived', self_func);
                     reader.retrieve();
-                    li.remove();
-                    MASCP.renderer.refresh();
                 });
                 
             });
