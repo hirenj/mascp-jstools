@@ -198,6 +198,51 @@ MASCP.Service.prototype._dataReceived = function(data,status)
     return true;
 };
 
+MASCP.Service.prototype.gotResult = function()
+{
+    var self = this;
+    
+    var reader_cache = function(e,thing) {
+        if ( ! thing.readers ) {
+            thing.readers = [];
+        }
+        thing.readers.push(self.toString());
+    };
+    
+    window.jQuery(MASCP).bind('layerRegistered', reader_cache);
+    window.jQuery(MASCP).bind('groupRegistered', reader_cache);
+    
+    window.jQuery(self).trigger("resultReceived");
+
+    window.jQuery(MASCP).unbind('layerRegistered',reader_cache);
+    window.jQuery(MASCP).unbind('groupRegistered',reader_cache);
+
+    window.jQuery(MASCP.Service).trigger("resultReceived");
+    window.jQuery(MASCP.Service).trigger('requestComplete');
+};
+
+MASCP.Service.registeredLayers = function(service) {
+    var result = [];
+    for (var layname in MASCP.layers) {
+        var layer = MASCP.layers[layname];
+        if (layer.readers.indexOf(service.toString()) >= 0) {
+            result.push(layer);
+        }        
+    }
+    return result;
+};
+
+MASCP.Service.registeredGroups = function(service) {
+    var result = [];
+    for (var name in MASCP.groups) {
+        var group = MASCP.groups[name];
+        if (group.readers.indexOf(service.toString()) >= 0) {
+            result.push(group);
+        }
+    }
+    return result;  
+};
+
 /**
  *  Binds a handler to one or more events. Returns a reference to self, so this method
  *  can be chained.
@@ -302,9 +347,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
                     if (self._dataReceived(data,status)) {
-                        window.jQuery(self).trigger("resultReceived");
-                        window.jQuery(MASCP.Service).trigger("resultReceived");
-                        window.jQuery(MASCP.Service).trigger('requestComplete');
+                        self.gotResult();
                     }
                 },
     /*  There is a really strange WebKit bug, where when you make a XDR request
@@ -370,9 +413,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                         window.jQuery(self).one("resultReceived",result_func);
                     }
                     if (self._dataReceived(data,"db")) {
-                        window.jQuery(self).trigger("resultReceived");
-                        window.jQuery(MASCP.Service).trigger("resultReceived");
-                        window.jQuery(MASCP.Service).trigger('requestComplete');
+                        self.gotResult();
                     }
                 } else {
                     var old_received = self._dataReceived;
