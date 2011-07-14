@@ -443,9 +443,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         return true;
     }
 
-    MASCP.Service.ClearCache = function(service) {
+    MASCP.Service.ClearCache = function(service,agi) {
         var serviceString = service.toString();
-        clear_service(serviceString);
+        clear_service(serviceString,agi);
         return true;
     }
 
@@ -491,8 +491,15 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { });
         }
         
-        clear_service = function(service) {
-            db.execute("DELETE from datacache where service = ? ",[service],function() {});
+        clear_service = function(service,agi) {
+            var servicename = service;
+            servicename += "%";
+            if ( ! agi ) {
+                db.execute("DELETE from datacache where service like ? ",[servicename],function() {});
+            } else {
+                db.execute("DELETE from datacache where service like ? and agi = ?",[servicename,agi],function() {});
+            }
+            
         };
         
         search_service = function(service,cback) {
@@ -556,7 +563,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         };
     } else if ("localStorage" in window) {
         
-        clear_service = function(service) {
+        clear_service = function(service,agi) {
             if ("localStorage" in window) {
                 var key;
                 for (var i = 0, len = localStorage.length; i < len; i++){
