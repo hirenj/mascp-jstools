@@ -478,6 +478,7 @@ jQuery(document).ready(function() {
                 var li = jQuery('#links ul li:last');
                 jQuery('.data_reload', li).bind('click',function(e) {
                     var clazz = rdr.definition;
+                    MASCP.Service.ClearCache(clazz,an_agi);
                     var reader = new clazz(an_agi, rdr.url);
                     MASCP.Service.registeredLayers(reader).forEach(function(lay) {
                         MASCP.renderer.removeTrack(lay);
