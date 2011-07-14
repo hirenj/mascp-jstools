@@ -91,7 +91,7 @@ var READER_CONF = (function() {
                             }
                             document.getElementById('tissue_tags').updateTags();
                         },
-        'url'           : 'proxy.pl',
+        'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
         'layers'        : ['phosphat_experimental','phosphat_theoretical'],
     },
     MASCP.RippdbReader ,  {
@@ -136,7 +136,7 @@ var READER_CONF = (function() {
         'nicename'      : 'PPDB',
         'error_url'     : 'http://ppdb.tc.cornell.edu',
         'success_url'   : 'http://ppdb.tc.cornell.edu/?refagi=',
-        'url'           : 'proxy.pl',
+        'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
         'result'        : function() {
                                 if (this.result.getPeptides().length > 0) {
                                     jQuery('#ppdb_placeholder').show();
@@ -214,7 +214,7 @@ var READER_CONF = (function() {
     MASCP.SnpReader, {
         'definition'    : MASCP.SnpReader,
         'nicename'      : 'Snps',
-        'url'           : './snps.pl',
+        'url'           : 'http://snp.jbei.org/snps.pl',
         'result'        : function() {            
         },
         'layers'        : ['insertions_controller','insertions']
