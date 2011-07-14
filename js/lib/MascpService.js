@@ -497,7 +497,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             if ( ! agi ) {
                 db.execute("DELETE from datacache where service like ? ",[servicename],function() {});
             } else {
-                db.execute("DELETE from datacache where service like ? and agi = ?",[servicename,agi],function() {});
+                db.execute("DELETE from datacache where service like ? and agi = ?",[servicename,agi.toLowerCase()],function() {});
             }
             
         };
@@ -568,8 +568,11 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 var key;
                 for (var i = 0, len = localStorage.length; i < len; i++){
                     key = localStorage.key(i);
-                    if ((new RegExp("^"+service+".*")).test(key)) {
-                        localStorage.removeItem(i);
+                    if ((new RegExp("^"+service+".*"+(agi?agi+"$" : ""))).test(key)) {
+                        localStorage.removeItem(key);
+                        if (agi) {
+                            return;
+                        }
                     }
                 }
             }            
