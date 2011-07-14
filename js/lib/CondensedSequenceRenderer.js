@@ -318,6 +318,8 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
             }
             self.hideLayer(track,true);            
             track.disabled = true;
+            t_order.push(track.name);
+            t_order = t_order.concat(extra_to_push);
         }
         
         self.trackOrder = t_order;
@@ -2431,7 +2433,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     return rect;
 };
 
-var all_annotations = {};
+var all_annotations = new Object();
 var default_annotation_height = 15;
 
 var addAnnotationToLayer = function(layerName,width,opts) {
@@ -2462,7 +2464,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     }
     
     if ( ! all_annotations[layerName]) {
-        all_annotations[layerName] = {};
+        all_annotations[layerName] = new Object();
     }
     
     var blob_id = this._index+'_'+opts['angle'];
@@ -2471,7 +2473,6 @@ var addAnnotationToLayer = function(layerName,width,opts) {
 
     var height = default_annotation_height;
     var offset = this._renderer._RS * height / 2;
-
     var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts['content'],opts);
     blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,'+offset+')');
     all_annotations[layerName][blob_id] = blob;
@@ -2516,10 +2517,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
-    all_annotations = {};
+    all_annotations = new Object();
 };
 
-MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(layerName) {
+MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
+    var layerName = lay;
+    if (typeof layerName !== 'string') {
+        layerName = lay.name;
+    }
     var canvas = this._canvas;
     if ( ! canvas || typeof layerName == 'undefined') {
         return;
@@ -2528,20 +2533,26 @@ MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(layerName
     for (var blob_id in all_annotations[layerName]) {
         var blob = all_annotations[layerName][blob_id];
         var container = this._layer_containers[layerName];
-        delete container[blob_id];
+        if (container.indexOf(blob) >= 0) {
+            container.splice(container.indexOf(blob),1);
+        }
         if (canvas.tracers && container.tracers) {
             for (var i = 0; i < container.tracers.length; i++ ) {
                 var tracer = container.tracers[i];
                 tracer.parentNode.removeChild(tracer);
-                delete canvas.tracers[canvas.tracers.indexOf(tracer)];
+                if (canvas.tracers.indexOf(tracer) >= 0) {                    
+                    canvas.tracers.splice(canvas.tracers.indexOf(tracer),1);
+                }
             }
             container.tracers = canvas.set();
         }
-        
-        blob.parentNode.removeChild(blob);
-        
+        if (blob.parentNode) {
+            blob.parentNode.removeChild(blob);
+        }
+        all_annotations[layerName][blob_id] = null;        
     }
-    all_annotations[layerName] = {};    
+    all_annotations[layerName] = null;
+    delete all_annotations[layerName];
 };
 
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
@@ -2705,8 +2716,11 @@ MASCP.CondensedSequenceRenderer.prototype.removeTrack = function(layer) {
         this._layer_containers[layer.name].forEach(function(el) {
             el.parentNode.removeChild(el);
         });
+        this.removeAnnotations(layer);
         this._layer_containers[layer.name] = null;
-        this._track_order.splice(this._track_order.indexOf(layer.name),1);
+        if (this._track_order.indexOf(layer.name) >= 0) {
+            this._track_order.splice(this._track_order.indexOf(layer.name),1);
+        }
     }
 };
 
@@ -2916,14 +2930,22 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
         if (rend == self && group.length > 0) {            
-            self.setGroupVisibility(group, expanded && visible);
+            self.setGroupVisibility(group, expanded && visible,true);
             self.refresh();
+        }
+    });
+    jQuery(group).bind('visibilityChange',function(ev,rend,visible) {
+        if (rend === self) {
+            if (visible) {
+                self.showLayer(layer,true);
+                expanded = true;
+            }
         }
     });
     jQuery(layer).bind('_expandevent',function(ev) {
         expanded = ! expanded;
         self.withoutRefresh(function() {
-            self.setGroupVisibility(group,expanded);            
+            self.setGroupVisibility(group,expanded);
         });
         self.refresh(true);
     });

@@ -79,6 +79,7 @@ var READER_CONF = (function() {
         'result'        : function() {
                             if (this.result.getAllExperimentalPositions().length > 0) {                 
                                 jQuery('#phosphat_experimental').show();
+                                MASCP.renderer.showLayer('phosphat_experimental');
                             } else if (this.result.getAllPredictedPositions().length > 0) {
                                 jQuery('#phosphat_theoretical').show();                 
                             }
@@ -92,7 +93,7 @@ var READER_CONF = (function() {
                             document.getElementById('tissue_tags').updateTags();
                         },
         'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
-        'layers'        : ['phosphat_experimental','phosphat_theoretical'],
+        'layers'        : ['phosphat_experimental'],
     },
     MASCP.RippdbReader ,  {
         'definition'    :  MASCP.RippdbReader,
