@@ -319,6 +319,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
             self.hideLayer(track,true);            
             track.disabled = true;
             t_order.push(track.name);
+            t_order = t_order.concat(extra_to_push);
         }
         
         self.trackOrder = t_order;
