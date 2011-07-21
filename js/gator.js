@@ -456,57 +456,86 @@ jQuery(document).ready(function() {
             }
         }
 
+        var result_function = function() {
+            var self_func = arguments.callee;
+            var an_agi = this.agi;
+            var a_locus = an_agi.replace(/\.\d+/,'');
+            var rdr = READER_CONF[this.__class__];
+            var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
+            var datestring = (this.result.retrieved instanceof Date) ? this.result.retrieved.toDateString() : 'Just now';
+            jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp data_reload">'+datestring+'</span></li>');
+            var li = jQuery('#links ul li:last');
+            jQuery('.data_reload', li).bind('click',function(e) {
+                var clazz = rdr.definition;
+                MASCP.Service.ClearCache(clazz,an_agi);
+                var reader = new clazz(an_agi, rdr.url);
+                MASCP.Service.registeredLayers(reader).forEach(function(lay) {
+                    MASCP.renderer.removeTrack(lay);
+                    delete MASCP.layers[lay.name];
+                });
+                MASCP.Service.registeredGroups(reader).forEach(function(group) {
+                    delete MASCP.groups[group.name];
+                });
+                li.remove();
+                
+                reader.bind('resultReceived', rdr.result);
+                reader.bind('error', error_function);
+                
+                if (rdr.layers.length > 0) {
+                    reader.registerSequenceRenderer(MASCP.renderer);
+                }
+                jQuery(MASCP.renderer).one('resultsRendered',function(e,read) {
+                    if (reader === read) {
+                        (rdr.layers || []).forEach(function(lay) {
+                            MASCP.renderer.showLayer(lay);
+                            MASCP.renderer.showGroup(lay);
+                        });
+                        MASCP.renderer.refresh();                            
+                    }
+                });
+                reader.bind('resultReceived', self_func);
+                reader.retrieve();
+            });
+            
+        };
+        
+        var error_function = function(resp,req,status) {
+            var rdr = READER_CONF[this.__class__];
+            jQuery('#links ul').append('<li class="error"><span class="timestamp data_reload">Error</span><a href="'+rdr.error_url+'">'+rdr.nicename+'</a></li>');
+            var li = jQuery('#links ul li:last');
+            jQuery('.data_reload', li).bind('click',function(e) {
+                var clazz = rdr.definition;
+                MASCP.Service.ClearCache(clazz,an_agi);
+                var reader = new clazz(an_agi, rdr.url);
+                li.remove();
+                
+                reader.bind('resultReceived', rdr.result);
+                if (rdr.layers.length > 0) {
+                    reader.registerSequenceRenderer(MASCP.renderer);
+                }
+                jQuery(MASCP.renderer).one('resultsRendered',function(e,read) {
+                    if (reader === read) {
+                        (rdr.layers || []).forEach(function(lay) {
+                            MASCP.renderer.showLayer(lay);
+                            MASCP.renderer.showGroup(lay);
+                        });
+                        MASCP.renderer.refresh();                            
+                    }
+                });
+                reader.bind('resultReceived', result_function);
+                reader.retrieve();
+            });
+
+            jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
+        };
 
         jQuery('#links').text('');
         jQuery('#links').append('<ul></ul>');
         jQuery(all_readers).each(function(i) {
 
-            this.bind('error',function(resp,req,status) {
-                var rdr = READER_CONF[this.__class__];
-                jQuery('#links ul').append('<li class="error"><a href="'+rdr.error_url+'">'+rdr.nicename+'</a></li>');
-                jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
-            });
+            this.bind('error',error_function);
 
-            this.bind('resultReceived',function() {
-                var self_func = arguments.callee;
-                var an_agi = this.agi;
-                var a_locus = an_agi.replace(/\.\d+/,'');
-                var rdr = READER_CONF[this.__class__];
-                var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
-                var datestring = (this.result.retrieved instanceof Date) ? this.result.retrieved.toDateString() : 'Just now';
-                jQuery('#links ul').append('<li><a href="'+rdr.success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp data_reload">'+datestring+'</span></li>');
-                var li = jQuery('#links ul li:last');
-                jQuery('.data_reload', li).bind('click',function(e) {
-                    var clazz = rdr.definition;
-                    MASCP.Service.ClearCache(clazz,an_agi);
-                    var reader = new clazz(an_agi, rdr.url);
-                    MASCP.Service.registeredLayers(reader).forEach(function(lay) {
-                        MASCP.renderer.removeTrack(lay);
-                        delete MASCP.layers[lay.name];
-                    });
-                    MASCP.Service.registeredGroups(reader).forEach(function(group) {
-                        delete MASCP.groups[group.name];
-                    });
-                    li.remove();
-                    
-                    reader.bind('resultReceived', rdr.result);
-                    if (rdr.layers.length > 0) {
-                        reader.registerSequenceRenderer(MASCP.renderer);
-                    }
-                    jQuery(MASCP.renderer).one('resultsRendered',function(e,read) {
-                        if (reader === read) {
-                            (rdr.layers || []).forEach(function(lay) {
-                                MASCP.renderer.showLayer(lay);
-                                MASCP.renderer.showGroup(lay);
-                            });
-                            MASCP.renderer.refresh();                            
-                        }
-                    });
-                    reader.bind('resultReceived', self_func);
-                    reader.retrieve();
-                });
-                
-            });
+            this.bind('resultReceived',result_function);
         
             this.retrieve();
         });
