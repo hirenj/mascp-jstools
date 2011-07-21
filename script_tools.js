@@ -4,6 +4,7 @@ exports.get_data = function(agi,service) {
     var result = {};
     (new service()).retrieve(agi,function(err) {
         if (err) {
+            result.error = err;
             return;
         }
         result.result = this.result;
