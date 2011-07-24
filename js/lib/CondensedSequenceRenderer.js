@@ -778,25 +778,44 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = functi
 MASCP.CondensedSequenceRenderer.Navigation.prototype._beginRotation = function() {
     var self = this;
     if (self._rotators) {
-        var start = (new Date()).getTime();
-        var rate = 75;
+        var start = null;
+        var rate = 500;
         if (self._rotator_anim) {
-            clearInterval(self._rotator_anim);
+            clearTimeout(self._rotator_anim);
         }
-        self._rotator_anim = setInterval(function() {
-            var end = (new Date()).getTime();
+        var step_id = 0;
+        self._rotator_anim = setTimeout(function() {
+            var end = (new Date()).getTime();            
+            if ( ! start ) {
+                start = (new Date()).getTime();
+                step_id = 0;
+            } else {
+                step_id += 1;                
+            }
             var step = parseInt((end - start) / rate);
+
             self._rotators.forEach(function(rot) {
                rot(step); 
             });
+            if ((step - step_id) > 2) {
+                console.log(step+" "+step_id);
+                console.log(end - start);
+                rate = parseInt(rate * 1.1);
+                console.log(rate);
+                start = null;
+                step = 0;
+                step_id = 0;
+            }
+            self._rotator_anim = setTimeout(arguments.callee,rate);
         },rate);
     }
 };
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._endRotation = function() {
+    var self = this;
     if (self._rotators) {
         if (self._rotator_anim) {
-            clearInterval(self._rotator_anim);
+            clearTimeout(self._rotator_anim);
         }        
     }    
 };
@@ -947,7 +966,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             
             var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
             closer.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
-            closer.firstChild.setAttribute('fill','#ff0000');
+            closer.firstChild.setAttribute('fill','url(#red_3d)');
             for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
                 nodes[i].setAttribute('stroke-width',(t_height/4).toString());
             };
@@ -958,23 +977,22 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             self._close_buttons.push(closer);
             closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
 
-            if ("ontouchend" in document) {
+            if (true || ("ontouchend" in document)) {
                 var dir = 1;
                 self._rotators.push(function(step) {
                     if ( ! label_group.parentNode ) {
                         return;
                     }
                     var curr_transform = closer.getAttribute('transform') || '';
-                    var delta = (step % 6);
-                    if ((step % 6) == 0) {
+                    var delta = (step % 8);
+                    if (delta === 0) {
                         dir *= -1;
                     }
                     var angle = dir < 0 ? 3 : -3;
                     angle += dir*delta;
-                    var angle = ((step % 12) / 2) - 6;
                     
-                    curr_transform = curr_transform.replace(/^\s*rotate\([^\)]+\)/,'');
-                    curr_transform = 'rotate('+angle+','+((closer.getBBox().width/2)) +','+(y+0.5*height+closer.getBBox().y +(closer.getBBox().height/2))+') '+curr_transform;
+                    curr_transform = curr_transform.replace(/\s*rotate\([^\)]+\)\s*/,'');
+                    curr_transform = curr_transform + ' rotate('+angle+','+((closer.getBBox().x + closer.getBBox().width/2)) +',0) ';
                     closer.setAttribute('transform',curr_transform);
                 });
             }
@@ -2046,6 +2064,26 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'offset':'100%',
             'style':'stop-color:#ffffff;stop-opacity:1',
         }));        
+
+
+        gradient = makeEl('linearGradient',{
+            'id':'red_3d',
+            'x1':'0%',
+            'x2':'0%',
+            'y1':'0%',
+            'y2':'100%'
+        });
+
+        defs.appendChild(gradient);
+
+        gradient.appendChild(makeEl('stop',{
+            'offset':'0%',
+            'style':'stop-color:#CF0000;stop-opacity:1',
+        }));
+        gradient.appendChild(makeEl('stop',{
+            'offset':'100%',
+            'style':'stop-color:#540000;stop-opacity:1',
+        }));
         
         var glow = makeEl('filter',{
             'id':'track_glow',
