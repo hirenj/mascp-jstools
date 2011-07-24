@@ -213,9 +213,11 @@ MASCP.Service.prototype.gotResult = function()
     window.jQuery(MASCP).bind('groupRegistered', reader_cache);
     
     window.jQuery(self).trigger("resultReceived");
-
-    window.jQuery(MASCP).unbind('layerRegistered',reader_cache);
-    window.jQuery(MASCP).unbind('groupRegistered',reader_cache);
+    try {
+        window.jQuery(MASCP).unbind('layerRegistered',reader_cache);
+        window.jQuery(MASCP).unbind('groupRegistered',reader_cache);
+    } catch (e) {
+    }
 
     window.jQuery(MASCP.Service).trigger("resultReceived");
     window.jQuery(MASCP.Service).trigger('requestComplete');
