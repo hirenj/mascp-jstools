@@ -15,7 +15,7 @@ MASCP.P3dbReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.P3dbReader.SERVICE_URL = 'http://digbio.missouri.edu/p3db/gator.php';
+MASCP.P3dbReader.SERVICE_URL = 'http://p3db.org/gator.php';
 
 MASCP.P3dbReader.prototype.requestData = function()
 {
