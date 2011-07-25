@@ -457,10 +457,8 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
         self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
         self.drag_disabled = ! self.edit_enabled;
         if (self.edit_enabled) {
-            self._beginRotation();
             self._toggleMouseEvents(true);
         } else {
-            self._endRotation();
             self._toggleMouseEvents(false);
         }
         
@@ -775,51 +773,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = functi
     }
 };
 
-MASCP.CondensedSequenceRenderer.Navigation.prototype._beginRotation = function() {
-    var self = this;
-    if (self._rotators) {
-        var start = null;
-        var rate = 500;
-        if (self._rotator_anim) {
-            clearTimeout(self._rotator_anim);
-        }
-        var step_id = 0;
-        self._rotator_anim = setTimeout(function() {
-            var end = (new Date()).getTime();            
-            if ( ! start ) {
-                start = (new Date()).getTime();
-                step_id = 0;
-            } else {
-                step_id += 1;                
-            }
-            var step = parseInt((end - start) / rate);
-
-            self._rotators.forEach(function(rot) {
-               rot(step); 
-            });
-            if ((step - step_id) > 2) {
-                console.log(step+" "+step_id);
-                console.log(end - start);
-                rate = parseInt(rate * 1.1);
-                console.log(rate);
-                start = null;
-                step = 0;
-                step_id = 0;
-            }
-            self._rotator_anim = setTimeout(arguments.callee,rate);
-        },rate);
-    }
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._endRotation = function() {
-    var self = this;
-    if (self._rotators) {
-        if (self._rotator_anim) {
-            clearTimeout(self._rotator_anim);
-        }        
-    }    
-};
-
 MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
     var self = this;
     this._extendWithSVGApi(canvas);
@@ -831,7 +784,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             canvas.removeChild(canvas.firstChild);
         this._enableDragAndDrop.targets = null;
         this._track_rects = [];
-        this._rotators = [];
     };
     
     this.setViewBox = function(viewBox) {
@@ -854,7 +806,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         a_rect.setAttribute('opacity',("ontouchend" in document) ? '0.5' : '0.1');
         a_rect.setAttribute('pointer-events','none');
         self._track_rects = self._track_rects ? self._track_rects : [];
-        self._rotators = self._rotators || [];
         
         self._track_rects.push(a_rect);
         
@@ -976,27 +927,6 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             label_group.push(closer);
             self._close_buttons.push(closer);
             closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
-
-            if (true || ("ontouchend" in document)) {
-                var dir = 1;
-                self._rotators.push(function(step) {
-                    if ( ! label_group.parentNode ) {
-                        return;
-                    }
-                    var curr_transform = closer.getAttribute('transform') || '';
-                    var delta = (step % 8);
-                    if (delta === 0) {
-                        dir *= -1;
-                    }
-                    var angle = dir < 0 ? 3 : -3;
-                    angle += dir*delta;
-                    
-                    curr_transform = curr_transform.replace(/\s*rotate\([^\)]+\)\s*/,'');
-                    curr_transform = curr_transform + ' rotate('+angle+','+((closer.getBBox().x + closer.getBBox().width/2)) +',0) ';
-                    closer.setAttribute('transform',curr_transform);
-                });
-            }
-
             
         })();
         
@@ -3074,10 +3004,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     }
 
     if (this._Navigation.edit_enabled) {
-        this._Navigation._beginRotation();
         this._Navigation._toggleMouseEvents(true);
     } else {
-        this._Navigation._endRotation();        
         this._Navigation._toggleMouseEvents(false);
     }
 
