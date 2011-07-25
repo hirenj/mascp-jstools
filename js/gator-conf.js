@@ -212,6 +212,17 @@ var READER_CONF = (function() {
         'layers'        : ['atproteome'],
         'placeholder'   : true
     },
+    MASCP.P3dbReader, {
+        'definition'    : MASCP.P3dbReader,
+        'nicename'      : 'P3DB',
+        'error_url'     : 'http://ppdb.tc.cornell.edu',
+        'success_url'   : 'http://ppdb.tc.cornell.edu/?refagi=',
+        'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
+        'result'        : function() {
+                          },
+        'layers'        : ['p3db_experimental'],
+        'placeholder'   : true
+    },
     MASCP.SnpReader, {
         'definition'    : MASCP.SnpReader,
         'nicename'      : 'Snps',
