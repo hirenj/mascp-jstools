@@ -74,7 +74,7 @@ MASCP.P3dbReader.Result.prototype.getOrthologousPeptides = function(organism)
     }
     var peptides = [];
     this._raw_data.orthologs.forEach(function(orth) {
-        if (orth.organism === organism) {
+        if (orth.organism === organism && orth.peptides) {
             for (var i = 0; i < orth.peptides.length; i++ ) {
                 var a_peptide = orth.peptides[i];
                 var the_pep = { 'sequence' : self._cleanSequence(a_peptide) };
@@ -108,19 +108,40 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
 
-    var css_block = '.active .overlay { background: #55ff33; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
+    var color = '#5533ff';
     
+    MASCP.registerGroup('p3db_experimental', {'fullname' : 'P3DB MS/MS', 'color' : color });
 
     this.bind('resultReceived', function() {
         var peps = this.result.getPeptides();
         if (peps.length > 0) {
-            MASCP.registerLayer('p3db_experimental',{ 'fullname' : 'P3DB MS/MS', 'color' : '#55ff33', 'css' : css_block });
+            MASCP.registerLayer('p3db_controller',{ 'fullname' : 'P3DB MS/MS', 'color' : color });
         }
         for(var i = 0; i < peps.length; i++) {
             var peptide = peps[i].sequence;
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
-            peptide_bits.addToLayer('p3db_experimental');
+            peptide_bits.addToLayer('p3db_controller');
         }
+        this.result.getOrganisms().forEach(function(organism) {
+            if (organism.id === 3702) {
+                return;
+            }
+            var layer_name = 'p3db_tax_'+organism.id;
+            var peps = this.result.getOrthologousPeptides(organism.id);
+            if (peps.length > 0) {
+                MASCP.registerLayer(layer_name,{ 'fullname' : organism.name, 'group' : 'p3db_experimental', 'color' : color });
+            }
+            for(var i = 0; i < peps.length; i++) {
+                var peptide = peps[i].sequence;
+                var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
+                peptide_bits.addToLayer(layer_name);
+            }
+        });
+        
+        if (sequenceRenderer.createGroupController) {
+            sequenceRenderer.createGroupController('p3db_controller','p3db_experimental');
+        }        
+        
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     })
     return this;
