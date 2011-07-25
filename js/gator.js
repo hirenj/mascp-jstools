@@ -501,6 +501,7 @@ jQuery(document).ready(function() {
         
         var error_function = function(resp,req,status) {
             var rdr = READER_CONF[this.__class__];
+            var an_agi = this.agi;
             jQuery('#links ul').append('<li class="error"><span class="timestamp data_reload">Error</span><a href="'+rdr.error_url+'">'+rdr.nicename+'</a></li>');
             var li = jQuery('#links ul li:last');
             jQuery('.data_reload', li).bind('click',function(e) {
