@@ -44,8 +44,6 @@ MASCP.P3dbReader.Result = MASCP.P3dbReader.Result;
  */
 MASCP.P3dbReader.Result.prototype.getPeptides = function()
 {
-    var content = null;
-
     if (this._peptides) {
         return this._peptides;
     }
@@ -61,12 +59,45 @@ MASCP.P3dbReader.Result.prototype.getPeptides = function()
     
     for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
         var a_peptide = this._raw_data.peptides[i];
-        var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence) };
+        var the_pep = { 'sequence' : this._cleanSequence(a_peptide) };
         peptides.push(the_pep);
     }
     this._peptides = peptides;
     return peptides;
 };
+
+MASCP.P3dbReader.Result.prototype.getOrthologousPeptides = function(organism)
+{
+    var self = this;
+    if ( ! this._raw_data.orthologs) {
+        return [];
+    }
+    var peptides = [];
+    this._raw_data.orthologs.forEach(function(orth) {
+        if (orth.organism === organism) {
+            for (var i = 0; i < orth.peptides.length; i++ ) {
+                var a_peptide = orth.peptides[i];
+                var the_pep = { 'sequence' : self._cleanSequence(a_peptide) };
+                peptides.push(the_pep);
+            }
+        }
+    });
+    return peptides;
+};
+
+MASCP.P3dbReader.Result.prototype.getOrganisms = function()
+{
+    var self = this;
+    if ( ! this._raw_data.orthologs) {
+        return [];
+    }
+    var organisms = [];
+    this._raw_data.orthologs.forEach(function(orth) {
+        organisms.push({ 'id' : orth.organism, 'name' : orth.name });
+    });
+    return organisms;
+};
+
 
 MASCP.P3dbReader.Result.prototype._cleanSequence = function(sequence)
 {
