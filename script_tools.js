@@ -51,6 +51,24 @@ exports.find_sequence = function(agi) {
     })    
 };
 
+exports.find_region = function(agi,region) {
+    (new MASCP.TairReader()).retrieve(agi,function(err) {
+        if (err) {
+            return;
+        }
+        var min = region[0] - 10;
+        if (min < 0) {
+            min = 0;
+        }
+        var max = region[1] + 10;
+        if (max > this.result.getSequence().length) {
+            max = this.result.getSequence().length;
+        }
+        console.log(this.result.getSequence().substring(region[0],region[1])+'xx'+this.result.getSequence().substring(min,region[0]-1)+'[1m'+this.result.getSequence().substring(region[0]-1,region[1]-1)+'[22m'+this.result.getSequence().substring(region[1]-1,max));
+        
+    })    
+};
+
 (function() {
     var CSVToArray = function( strData, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
