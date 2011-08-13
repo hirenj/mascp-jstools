@@ -38,6 +38,7 @@ my $URLS = {
   'atproteome-json' => 'http://fgcz-atproteome.unizh.ch/mascpv2.php',
   'tair'    => 'http://www.arabidopsis.org/servlets/TairObject',
   'ppdb'    => 'http://ppdb.tc.cornell.edu/das/arabidopsis/features/',
+  'p3db'    => 'http://p3db.org/gator.php',
 };
 
 my $tidy = {
@@ -78,7 +79,6 @@ if ( -e $cached )
     exit;
 }
 
-
 my $request;
 if ($method eq 'GET') {
     $request = HTTP::Request->new('GET', "${url}?${data}");
@@ -115,7 +115,7 @@ if ($tidy->{$service} eq 'xml') {
     close $outfile;
 } else {
     print CGI->header(-Content_type => 'text/plain', -Access_Control_Allow_Origin => '*', -Access_Control_Allow_Methods => '*', -Access_Control_Max_Age => '1728000', -Access_Control_Allow_Headers => 'x-requested-with');
-    my $content = LWP::UserAgent->new->request($request)->content;    
+    my $content = LWP::UserAgent->new->request($request)->content;
     print $content;
     open $outfile, ">".$cached;
     print $outfile $content;
