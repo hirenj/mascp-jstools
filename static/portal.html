@@ -434,6 +434,7 @@
         <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>
         <li id="interpro_placeholder"><input type="checkbox"/> Interpro domains</li>
         <li id="arbitrary_placeholder"><input type="checkbox"/> Misc data</li>
+        <li id="p3db_placeholder"><input type="checkbox"/> P3DB</li>            
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
@@ -671,6 +672,11 @@
                     } else {
                         array.splice(array.indexOf('atpeptide_placeholder'),0,'atpeptide_experimental');
                     }
+                    if (MASCP.getGroup('p3db_experimental').size() > 0) {
+                        array.splice(array.indexOf('p3db_placeholder'),0,'p3db_controller','p3db_experimental');
+                    } else {
+                        array.splice(array.indexOf('p3db_placeholder'),0,'p3db_experimental');
+                    }                    
                     if (MASCP.getGroup('phosphat_peptides') && MASCP.getGroup('phosphat_peptides').size() > 0) {
                         array.splice(array.indexOf('phosphat_experimental')+1,0,'phosphat_peptides');                                                
                     }
@@ -757,6 +763,9 @@
 
 //            MASCP.renderer.showLayer('interpro_controller');
 //            jQuery('#interpro_placeholder input').attr('checked',true);
+
+            MASCP.renderer.showLayer('p3db_controller');
+            jQuery('#p3db_placeholder input').attr('checked',true);
 
             MASCP.renderer.showLayer('arbitrary_controller');
             jQuery('#arbitrary_placeholder input').attr('checked',true);
@@ -934,6 +943,20 @@
             });
             jQuery('#ppdb_placeholder').hide();
 
+            var p3db = new MASCP.P3dbReader(agi,'proxy.pl');
+            p3db.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push(p3db);
+            all_readers.push(p3db);
+            
+            p3db.bind('resultReceived',function() {
+                if (this.result.getPeptides().length > 0) {
+                    jQuery('#p3db_placeholder').show();
+                }
+            });
+            jQuery('#p3db_placeholder').hide();
+
+
             var atpeptide = new MASCP.AtPeptideReader(agi);
             atpeptide.registerSequenceRenderer(MASCP.renderer);
             
@@ -1048,6 +1071,9 @@
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
                         break;
+                        case MASCP.P3dbReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://p3db.org">P3DB</a></li>');
+                        break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://promex.pph.univie.ac.at/promex/">ProMEX</a></li>');
                         break;
@@ -1081,6 +1107,9 @@
                         break;
                         case MASCP.PpdbReader:
                         jQuery('#links ul').append('<li><a href="http://ppdb.tc.cornell.edu">PPDB</a></li>');
+                        break;
+                        case MASCP.P3dbReader:
+                        jQuery('#links ul').append('<li><a href="http://p3db.org">P3DB</a></li>');
                         break;
                         case MASCP.PromexReader:
                         jQuery('#links ul').append('<li><a href="http://promex.pph.univie.ac.at/promex/?ac='+a_locus+'">ProMEX</a></li>');
