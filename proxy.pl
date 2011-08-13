@@ -38,6 +38,7 @@ my $URLS = {
   'atproteome-json' => 'http://fgcz-atproteome.unizh.ch/mascpv2.php',
   'tair'    => 'http://www.arabidopsis.org/servlets/TairObject',
   'ppdb'    => 'http://ppdb.tc.cornell.edu/das/arabidopsis/features/',
+  'p3db'    => 'http://p3db.org/gator.php',
 };
 
 my $tidy = {

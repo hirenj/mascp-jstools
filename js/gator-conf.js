@@ -215,8 +215,8 @@ var READER_CONF = (function() {
     MASCP.P3dbReader, {
         'definition'    : MASCP.P3dbReader,
         'nicename'      : 'P3DB',
-        'error_url'     : 'http://ppdb.tc.cornell.edu',
-        'success_url'   : 'http://ppdb.tc.cornell.edu/?refagi=',
+        'error_url'     : 'http://p3db.org',
+        'success_url'   : 'http://p3db.org',
         'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
         'result'        : function() {
                           },
