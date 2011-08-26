@@ -387,10 +387,13 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     for (var i = 0; i < peptideSequence.length; i++) {
         results.push(this._sequence_els[start+i]);
     }
-    
-    results.addToLayer = function(layername, fraction) {
-        return results[0].addBoxOverlay(layername,results.length,fraction);
-    };
+    if (results.length) {
+        results.addToLayer = function(layername, fraction) {
+            return results[0].addBoxOverlay(layername,results.length,fraction);
+        };
+    } else {
+        results.addToLayer = function() {};
+    }
     
     return results;
 };
