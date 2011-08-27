@@ -50,7 +50,7 @@ MASCP.InterproReader.prototype.retrieve = function(agi,func) {
     }
     old_retrieve.call(self,self.agi,cback);
     return this;
-}
+};
 })();
 
 /**
@@ -69,7 +69,7 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
 {
     var content = null;
     
-    if (! this._raw_data || this._raw_data.length == 0 ) {
+    if (! this._raw_data || this._raw_data.length === 0 ) {
         return [];
     }    
     
@@ -107,9 +107,12 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         MASCP.getLayer('interpro_controller').href = '';
         var domains = this.result instanceof Array ? this.result.collect(function(res) { return res.getDomains(); }) : [ this.result.getDomains() ];
         domains.forEach(function(dom) {
-            var domain = null;            
-            for (name in dom) {
-                domain = name;
+            var domain = null;
+            for (var nm in dom) {
+                if (dom.hasOwnProperty(nm)) {
+                    domain = nm;
+                    break;
+                }
             }
             var lay = MASCP.registerLayer('interpro_domain_'+domain, { 'fullname': domain, 'group' : 'interpro_domains', 'color' : '#000000', 'css' : css_block });
             lay.href = "http://www.ebi.ac.uk/interpro/IEntry?ac="+domain;
@@ -127,7 +130,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
 
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
 
-    })
+    });
     return this;
 };
 

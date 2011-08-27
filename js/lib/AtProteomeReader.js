@@ -103,7 +103,7 @@ MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
         this._tissues[i].long_name = data.tissues[i].tissue;
         this._long_name_map[this._tissues[i]] = data.tissues[i].tissue;
         
-        this.spectra[data.tissues[i]['PO:tissue']] = parseInt(data.tissues[i].qty_spectra);
+        this.spectra[data.tissues[i]['PO:tissue']] = parseInt(data.tissues[i].qty_spectra,10);
     }
 };
 
@@ -120,23 +120,25 @@ MASCP.AtProteomeReader.Result.prototype._populate_peptides = function(data)
     for (var i = 0; i < data.peptides.length; i++ ) {
         var a_peptide = data.peptides[i];
         this._peptides.push(a_peptide.sequence);
-        var peptide_position = a_peptide.position+'-'+(parseInt(a_peptide.position)+parseInt(a_peptide.sequence.length));
+        var peptide_position = a_peptide.position+'-'+(parseInt(a_peptide.position,10)+parseInt(a_peptide.sequence.length,10));
         for (var j = 0; j < a_peptide.tissues.length; j++ ) {
             var a_tissue = a_peptide.tissues[j];
             if (! this.peptide_counts_by_tissue[a_tissue['PO:tissue']]) {
                 this.peptide_counts_by_tissue[a_tissue['PO:tissue']] = {};
             }
-            this.peptide_counts_by_tissue[a_tissue['PO:tissue']][peptide_position] = parseInt(a_tissue.qty_spectra);
+            this.peptide_counts_by_tissue[a_tissue['PO:tissue']][peptide_position] = parseInt(a_tissue.qty_spectra,10);
         }
     }
 };
 
 MASCP.AtProteomeReader.Result.prototype.render = function()
 {
-    var params = jQuery.param(this.reader.requestData()['data']);
+    var params = jQuery.param(this.reader.requestData().data);
     var total = 0;
     for (var i in this.spectra) {
-        total += parseInt(this.spectra[i]);
+        if (this.spectra.hasOwnProperty(i)) {
+            total += parseInt(this.spectra[i],10);
+        }
     }
     var a_container = jQuery('<div>MS/MS spectra <input type="checkbox" class="group_toggle"/><a style="display: block; float: right;" href="http://fgcz-atproteome.unizh.ch/index.php?'+params+'">AtProteome</a></div>');
     jQuery(this.reader.renderers).each ( function(i){
@@ -149,32 +151,34 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
     var tissues = this.result? this.result.tissues() : [];
         
     for (var tiss in tissues) {
-        var tissue = tissues[tiss];
-        if (this.result.spectra[tissue] < 1) {
-            continue;
-        }
-        var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
+        if (tissues.hasOwnProperty(tiss)) {        
+            var tissue = tissues[tiss];
+            if (this.result.spectra[tissue] < 1) {
+                continue;
+            }
+            var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
 
-        var overlay_name = 'atproteome_by_tissue_'+tissue;
+            var overlay_name = 'atproteome_by_tissue_'+tissue;
         
-        // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+            // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
-        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+            var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
         
-        MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
+            MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
                 
-        var positions = this._normalise(this._mergeCounts(peptide_counts));
-        var index = 1;
-        var last_start = null;
-        while (index <= positions.length) {
-            if ((! (positions[index] > 0) || (index == positions.length) ) && last_start != null) {
-                sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,index-1-last_start);
-                last_start = null;
+            var positions = this._normalise(this._mergeCounts(peptide_counts));
+            var index = 1;
+            var last_start = null;
+            while (index <= positions.length) {
+                if ((positions[index] <= 0) && (index != positions.length) && (last_start !== null)) {
+                    sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,index-1-last_start);
+                    last_start = null;
+                }
+                if (positions[index] > 0 && last_start === null) {
+                    last_start = index;
+                }
+                index += 1;
             }
-            if (positions[index] > 0 && last_start == null) {
-                last_start = index;
-            }
-            index += 1;
         }
     }
 };
@@ -187,26 +191,30 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
     var tissue_func = function() {
         var tissues = [];
         for (var tiss in this) {
-            tissues.push(tiss);
+            if (this.hasOwnProperty(tiss)) {
+                tissues.push(tiss);
+            }
         }
         return tissues.sort().join(',');
-    }
+    };
     
     for (var tiss in tissues) {
-        var tissue = tissues[tiss];
-        if (this.result.spectra[tissue] < 1) {
-            continue;
-        }
+        if (tissues.hasOwnProperty(tiss)) {
+            var tissue = tissues[tiss];
+            if (this.result.spectra[tissue] < 1) {
+                continue;
+            }
 
-        var peptide_counts = this._mergeCounts(this.result.peptide_counts_by_tissue[tissue]);
+            var peptide_counts = this._mergeCounts(this.result.peptide_counts_by_tissue[tissue]);
 
-        for (var i = 0; i < peptide_counts.length; i++ ) {
-            if ( peptide_counts[i] > 0 ) {
-                if (! positions[i]) {
-                    positions[i] = {};
-                    positions[i].tissue = tissue_func;
+            for (var i = 0; i < peptide_counts.length; i++ ) {
+                if ( peptide_counts[i] > 0 ) {
+                    if (! positions[i]) {
+                        positions[i] = {};
+                        positions[i].tissue = tissue_func;
+                    }
+                    positions[i][tissue] = true;              
                 }
-                positions[i][tissue] = true;              
             }
         }
     }    
@@ -227,11 +235,11 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
 
     MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
     while (index <= positions.length) {
-        if ( ! index > 0 ) {
+        if ( index <= 0 ) {
             index += 1;
             continue;
         }
-        if ((! positions[index] || positions[index].tissue() != last_tissue || (index == positions.length) ) && last_start != null) {
+        if ((! positions[index] || positions[index].tissue() != last_tissue || (index == positions.length) ) && last_start !== null) {
             var endpoint = index - last_start;
             if ( ! positions[index] ) {
                 endpoint -= 1;
@@ -239,7 +247,7 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
             sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,endpoint);
             last_start = null;
         }
-        if (positions[index] && last_start == null) {
+        if (positions[index] && last_start === null) {
             last_tissue = positions[index].tissue();
             last_start = index;
         }
@@ -280,14 +288,14 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
 
 MASCP.AtProteomeReader.prototype._normalise = function(array)
 {
-    var max_val = 0;
-    for (var i = 0; i < array.length; i++)
+    var max_val = 0, i = 0;
+    for (i = 0; i < array.length; i++)
     {
         if (array[i] && array[i] > max_val) {
             max_val = array[i];
         }
     }
-    for (var i = 0; i < array.length; i++)
+    for (i = 0; i < array.length; i++)
     {
         if (array[i] && array[i] > 0) {
             array[i] = (array[i] * 1.0) / max_val;
@@ -300,14 +308,16 @@ MASCP.AtProteomeReader.prototype._mergeCounts = function(hash)
 {
     var counts = [];
     for (var position in hash) {
-        var ends = position.split('-');
-        var start = parseInt(ends[0]);
-        var end = parseInt(ends[1]);
-        for (var i = start; i <= end; i++) {
-            if ( ! counts[i] ) {
-                counts[i] = 0;
+        if (hash.hasOwnProperty(position)) {        
+            var ends = position.split('-');
+            var start = parseInt(ends[0],10);
+            var end = parseInt(ends[1],10);
+            for (var i = start; i <= end; i++) {
+                if ( ! counts[i] ) {
+                    counts[i] = 0;
+                }
+                counts[i] += hash[position];
             }
-            counts[i] += hash[position];
         }
     }
     return counts;

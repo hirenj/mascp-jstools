@@ -100,7 +100,7 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             var spec = specs[j];
             
             var peps = spec.peptides;
-            if (peps.length == 0) {
+            if (peps.length === 0) {
                 continue;
             }
             var layer_name = 'prippdb_spectrum_'+spec.spectrum_id;
@@ -120,7 +120,7 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 
