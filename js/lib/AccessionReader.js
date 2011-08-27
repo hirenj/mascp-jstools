@@ -37,7 +37,7 @@ MASCP.AccessionReader.prototype.requestData = function()
 MASCP.AccessionReader.Result.prototype.getDeletions = function() {
     /* This doesn't work any more */
     return [];
-    
+    /*
     var old_sequence = this.reader.reference;
 
     var new_sequence = this.getSequence();
@@ -59,6 +59,7 @@ MASCP.AccessionReader.Result.prototype.getDeletions = function() {
         }
     }
     return deletions;
+    */
 };
 
 MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
@@ -100,8 +101,8 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
 
             renderer.registerLayer(in_layer, {'fullname' : an_accession, 'group' : 'all_insertions' });
 
-
-            for (var i = 0; i < diffs.length; i++ ){
+            var i;
+            for (i = diffs.length - 1; i >= 0; i-- ){
                 if (i > 0 && diffs[i-1][0] <= 0) {
                     last_index += diffs[i-1][1].length;
                     if (last_index > renderer.sequence.length) {
@@ -115,13 +116,12 @@ MASCP.AccessionReader.prototype.setupSequenceRenderer = function(renderer) {
                     ins.push( { 'insertBefore' : last_index, 'delta' : diffs[i][1] });
                 }
             }
-        
-            for (var i = 0; i < ins.length; i++ ) {
+            for (i = ins.length - 1; i >= 0; i-- ) {
                 renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
                 renderer.getAA(ins[i].insertBefore - 1).addAnnotation('insertions',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
             }
         
-            for (var i = 0; i < outs.length; i++) {
+            for (i = outs.length - 1; i >= 0; i--) {
                 renderer.getAA(outs[i].index).addAnnotation(in_layer,1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
                 renderer.getAA(outs[i].index).addAnnotation('insertions',1, {'angle' : 90, 'border' : 'rgb(0,0,150)', 'content' : outs[i].delta });
             }

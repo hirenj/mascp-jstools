@@ -79,22 +79,28 @@ MASCP.PpdbReader.Result.prototype.getPeptides = function()
             if ( ! peps_by_seq[seq] ) {
                 peps_by_seq[seq] = { 'experiments' : [] };
             }
-            var exp_id = parseInt(features[i].getElementsByTagName('GROUP')[0].getAttribute('id'));
+            var exp_id = parseInt(features[i].getElementsByTagName('GROUP')[0].getAttribute('id'),10);
             peps_by_seq[seq].experiments.push(exp_id);
             all_experiments[exp_id] = true;            
         }
     }
     for (var pep in peps_by_seq) {
-        var pep_obj =  { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments };
-        pep_obj.toString = function() {
-            return this.sequence;
+        if (peps_by_seq.hasOwnProperty(pep)) {
+            var pep_obj =  { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments };
+            pep_obj.toString = function(p) {
+                return function() {
+                    return p.sequence;
+                };
+            }(pep_obj);
+            peptides.push(pep_obj);
         }
-        peptides.push(pep_obj);       
     }
     
     this._experiments = [];
     for (var expid in all_experiments) {
-        this._experiments.push(parseInt(expid));
+        if (all_experiments.hasOwnProperty(expid)) {
+            this._experiments.push(parseInt(expid,10));
+        }
     }
     
     return peptides;
@@ -140,6 +146,6 @@ MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
 
 
-    })
+    });
     return this;
 };

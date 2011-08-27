@@ -34,15 +34,16 @@ MASCP.ArbitraryDataReader.prototype.requestData = function()
         return {
             type: "GET",
             dataType: "json",
-            data: {'service' : 'ArbitraryData'},
-        }
+            data: {'service' : 'ArbitraryData'}
+        };
     }
 };
 
 MASCP.ArbitraryDataReader.prototype._extend = function(setName)
 {
-    if(this == null || typeof(this) != 'object')
+    if (this === null || typeof(this) != 'object') {
         return this;
+    }
 
     var temp = new MASCP.ArbitraryDataReader(); // changed
 
@@ -55,13 +56,13 @@ MASCP.ArbitraryDataReader.prototype._extend = function(setName)
     
     temp._dataset = function() {
         return setName;
-    }
+    };
     temp.layer = function() {
         return "arbitrary_"+setName;
-    }
+    };
     
     return temp;
-}
+};
 
 MASCP.ArbitraryDataReader.prototype._dataset = function()
 {
@@ -164,7 +165,7 @@ MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRen
         }
         
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 
