@@ -15,12 +15,12 @@ MASCP.GelMapReader = MASCP.buildService(function(data) {
                         if (! data) {
                             return this;
                         }
+                        if ( ! data.Maps ) {
+                            return this;
+                        }
                         var maps = [];
-                        for (var mapk in data) {
-                            var map = data[mapk];
-                            map.id = map.mapID;
-                            map.title = map.mapTitle;
-                            map.peptides = map.sequence;
+                        for (var i = data.Maps.length - 1; i >= 0; i--) {
+                            var map = data.Maps[i];
                             map.sequence = "";
                             maps.push(map);
                         }
@@ -28,7 +28,7 @@ MASCP.GelMapReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.GelMapReader.SERVICE_URL = ' http://gelmap.de/gator.php';
+MASCP.GelMapReader.SERVICE_URL = ' http://gelmap.de/gator2.php';
 
 MASCP.GelMapReader.prototype.requestData = function()
 {
