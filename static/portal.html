@@ -434,7 +434,8 @@
         <li id="prippdb_experimental"><input type="checkbox"/> Phosphorylation (RippDB) </li>
         <li id="interpro_placeholder"><input type="checkbox"/> Interpro domains</li>
         <li id="arbitrary_placeholder"><input type="checkbox"/> Misc data</li>
-        <li id="p3db_placeholder"><input type="checkbox"/> P3DB</li>            
+        <li id="p3db_placeholder"><input type="checkbox"/> P3DB</li>
+        <li id="gelmap_placeholder"><input type="checkbox"/> GelMap</li>
         <li id="hydropathy"><input type="checkbox"/> Hydropathy plot</li>
     </ul>
 </div>
@@ -636,6 +637,12 @@
             } else {
                 MASCP.renderer.createGroupCheckbox('atproteome',jQuery('#atproteome_placeholder input')[0],true);
             }
+
+            if (MASCP.getGroup('gelmap_experimental').size() > 0) {
+                MASCP.renderer.createLayerCheckbox('gelmap_controller',jQuery('#gelmap_placeholder input')[0],true);
+            } else {
+                MASCP.renderer.createGroupCheckbox('gelmap_experimental',jQuery('#gelmap_placeholder input')[0],true);
+            }
             
             MASCP.renderer.createLayerCheckbox('atchloro_experimental', jQuery('#atchloro_experimental input')[0],true);
             
@@ -687,6 +694,12 @@
                         array.splice(array.indexOf('interpro_placeholder'),0,'interpro_controller','interpro_domains');
                     } else {
                         array.splice(array.indexOf('interpro_placeholder'),0,'interpro_domains');
+                    }
+
+                    if (MASCP.getGroup('gelmap_experimental').size() > 0) {
+                        array.splice(array.indexOf('gelmap_placeholder'),0,'gelmap_controller','gelmap_experimental');
+                    } else {
+                        array.splice(array.indexOf('gelmap_placeholder'),0,'gelmap_experimental');
                     }
 
                     if (MASCP.getGroup('arbitrary_datasets') && MASCP.getGroup('arbitrary_datasets').size() > 0) {
@@ -770,6 +783,8 @@
             MASCP.renderer.showLayer('arbitrary_controller');
             jQuery('#arbitrary_placeholder input').attr('checked',true);
 
+            MASCP.renderer.showLayer('gelmap_controller');
+            jQuery('#gelmap_placeholder input').attr('checked',true);            
 
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy input').attr('checked',true);
@@ -863,7 +878,7 @@
 
             all_readers.push(suba);
 
-            var phosphat = new MASCP.PhosphatReader(agi,'proxy.pl');
+            var phosphat = new MASCP.PhosphatReader(agi,'http://gator.masc-proteomics.org/proxy.pl');
             phosphat.registerSequenceRenderer(MASCP.renderer);
             
             rendering_readers.push(phosphat);
@@ -924,7 +939,7 @@
             });
             jQuery('#promex_placeholder').hide();
 
-            var ppdb = new MASCP.PpdbReader(agi,'proxy.pl');
+            var ppdb = new MASCP.PpdbReader(agi,'http://gator.masc-proteomics.org/proxy.pl');
             ppdb.registerSequenceRenderer(MASCP.renderer);
             
             rendering_readers.push(ppdb);
@@ -943,7 +958,7 @@
             });
             jQuery('#ppdb_placeholder').hide();
 
-            var p3db = new MASCP.P3dbReader(agi,'proxy.pl');
+            var p3db = new MASCP.P3dbReader(agi,'http://gator.masc-proteomics.org/proxy.pl');
             p3db.registerSequenceRenderer(MASCP.renderer);
             
             rendering_readers.push(p3db);
@@ -1043,12 +1058,21 @@
             });
 
 
-            var arbitrary = new MASCP.ArbitraryDataReader(agi,'./datasets.pl');
+            var arbitrary = new MASCP.ArbitraryDataReader(agi,'http://gator.masc-proteomics.org/datasets.pl');
             arbitrary.registerSequenceRenderer(MASCP.renderer);
             
             all_readers.push(arbitrary);
             
             jQuery('#arbitrary_placeholder').hide();
+
+            var gelmap = new MASCP.GelMapReader(agi);
+            gelmap.registerSequenceRenderer(MASCP.renderer);
+            
+            rendering_readers.push()
+            all_readers.push(gelmap);
+            
+            jQuery('#gelmap').hide();
+
 
 
             jQuery('#links').text('');
@@ -1086,6 +1110,9 @@
                         case MASCP.InterproReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
                         break;
+                        case MASCP.GelMapReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://www.gelmap.de">GelMap</a></li>');
+                        break;
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
                 });
@@ -1122,6 +1149,9 @@
                         break;
                         case MASCP.InterproReader:
                         jQuery('#links ul').append('<li><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
+                        break;
+                        case MASCP.GelMapReader:
+                        jQuery('#links ul').append('<li><a href="http://www.gelmap.de">GelMap</a></li>');
                         break;
                     }
                 });
