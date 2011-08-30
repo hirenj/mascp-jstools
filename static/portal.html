@@ -5,7 +5,6 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    
     <title>GATOR</title>
 
     <link rel="stylesheet" type="text/css" href="css/no-theme/jquery-ui-1.7.2.custom.css"/>
@@ -191,6 +190,12 @@
             hash = hash.replace(/,user_data=.*/,'');
         }
         
+        jQuery(window).resize(function() {
+            document.getElementById('condensed_container').children[0].setAttribute('width',window.innerWidth);
+        });
+
+        // Trigger the change event on page load
+        var hash = window.location.hash.replace(/#/g,'');
         if(hash) {
             jQuery('#agi')[0].value = hash;
         } else {
