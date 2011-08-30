@@ -1110,6 +1110,9 @@
                         case MASCP.InterproReader:
                         jQuery('#links ul').append('<li class="error"><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
                         break;
+                        case MASCP.GelMapReader:
+                        jQuery('#links ul').append('<li class="error"><a href="http://www.tppp.uni-hannover.de">GelMap</a></li>');
+                        break;
                     }
                     jQuery(MASCP.renderer).trigger('resultsRendered',[this]);
                 });
@@ -1146,6 +1149,9 @@
                         break;
                         case MASCP.InterproReader:
                         jQuery('#links ul').append('<li><a href="http://www.ebi.ac.uk/interpro/">Interpro</a></li>');
+                        break;
+                        case MASCP.GelMapReader:
+                        jQuery('#links ul').append('<li><a href="http://www.tppp.uni-hannover.de">GelMap</a></li>');
                         break;
                     }
                 });
