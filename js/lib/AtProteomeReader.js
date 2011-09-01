@@ -170,7 +170,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
             var index = 1;
             var last_start = null;
             while (index <= positions.length) {
-                if ((positions[index] <= 0) && (index != positions.length) && (last_start !== null)) {
+                if ((typeof positions[index] === 'undefined') && (index != positions.length) && (last_start !== null)) {
                     sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,index-1-last_start);
                     last_start = null;
                 }
