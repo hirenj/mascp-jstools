@@ -143,7 +143,7 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         }        
         
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 

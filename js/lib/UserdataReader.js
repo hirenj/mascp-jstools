@@ -49,28 +49,28 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
                 continue;
             }
             MASCP.registerLayer(reader.datasetname,{'fullname' : reader.datasetname,'color' : '#00ff00'});
-            var data_func = function(row) {
+            var data_func = function() { return function(row) {
                 renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
-            };
+            }; }();
             if (my_data instanceof Array && (! (my_data[0] instanceof Array))) {
-                data_func = function(row) {
-                    var start = parseInt(row[0]);
-                    var end = parseInt(row[1]);
+                data_func = function() { return function(row) {
+                    var start = parseInt(row[0],10);
+                    var end = parseInt(row[1],10);
                     renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);
-                };
+                }; }();
             } else if (my_data instanceof Array && ( my_data[0] instanceof Array)) {
-                data_func = function(peps) {
+                data_func = function() { return function(peps) {
                     peps.forEach(function(row) {
-                        var start = parseInt(row[0]);
-                        var end = parseInt(row[1]);
+                        var start = parseInt(row[0],10);
+                        var end = parseInt(row[1],10);
                         renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);                        
                     });
-                };                
-            } else if (my_data === parseInt(my_data[0])) {
-                data_func = function(row) {
+                }; }();                
+            } else if (my_data === parseInt(my_data[0],10)) {
+                data_func = function() { return function(row) {
                     var pos = row;
                     renderer.getAA(pos).addAnnotation(reader.datasetname,1);
-                };
+                }; }();
             }
             data_func.call(this,my_data);
         }
@@ -83,8 +83,9 @@ var filter_agis = function(data_matrix,agi) {
     if (! data_matrix || data_matrix.length < 1) {
         return [];
     }
-    var id_col = -1;
-    for (var i = 0; i < data_matrix[0].length; i++) {
+    var id_col = -1,i;
+    
+    for (i = 0; i < data_matrix[0].length; i++) {
         if ((data_matrix[0][i] || '').toString().toLowerCase().match(/at[\dA-Z]g\d+/)) {
             id_col = i;
             break;
@@ -94,7 +95,7 @@ var filter_agis = function(data_matrix,agi) {
         return data_matrix;
     }
     var results = [];
-    for (var i = 0; i < data_matrix.length; i++ ) {
+    for (i = 0; i < data_matrix.length; i++ ) {
         if ( ! agi ) {
             results.push(data_matrix[i][id_col].toLowerCase());
         }
@@ -109,42 +110,42 @@ var find_peptide_cols = function(data_matrix) {
     if (data_matrix.length < 1) {
         return [];
     }
-    var retriever = null;
-    for (var i = 0; i < data_matrix[0].length; i++) {
+    var retriever = null, i;
+    for (i = 0; i < data_matrix[0].length; i++) {
         var cell = data_matrix[0][i];
         var col = i;
         if (cell.toString().match(/\d+-\d+/)) {
-            retriever = function(row) {
+            retriever = function() { return function(row) {
                 var results = [];
                 row[col].split(/,/).forEach(function(data) {
                     results.push(data.split(/-/));
                 });
                 return results;
-            }
+            };}(i);
         }
         if (cell.toString().match(/^\d+$/)) {
             if (data_matrix[0][i+1] && data_matrix[0][i+1].toString().match(/^\d+$/)) {
-                retriever = function(row) {
+                retriever = function() { return function(row) {
                     return [ row[col], row[col+1] ];
-                }
+                };}(i);
             } else {
-                retriever = function(row) {
+                retriever = function() { return function(row) {
                     return row[col];
-                }
+                };}(i);
             }
             break;
         }
         if (cell.toString().match(/^[A-Z]+$/)) {
-            retriever = function(row) {
+            retriever = function() { return function(row) {
                 return row[col];
-            }
+            };}(i);
         }
     }
     if (! retriever) {
         return [];
     }
     var results = [];
-    for (var i = 0; i < data_matrix.length; i++) {
+    for (i = 0; i < data_matrix.length; i++) {
         results.push(retriever.call(this,data_matrix[i]));
     }
     return results;
@@ -188,7 +189,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     };
 
     (function() {
-        if (agis.length == 0) {
+        if (agis.length === 0) {
             self.retrieve = retrieve;
             window.jQuery(self).trigger("ready");
             return;

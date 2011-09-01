@@ -47,13 +47,13 @@ MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
 
 //    renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'all_insertions' });
 
-
-    for (var i = 0; i < diffs.length; i++ ){
+    var i;
+    for (i = diffs.length - 1 ; i >= 0 ; i-- ){
         outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
         ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
     }
 
-    for (var i = 0; i < ins.length; i++ ) {
+    for (i = ins.length - 1; i >= 0 ; i-- ) {
         renderer.getAA(ins[i].insertBefore - 1).addAnnotation(in_layer,1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta });
     }
 
@@ -100,32 +100,35 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
             var outs = [];
 
             var acc_layer = renderer.registerLayer(in_layer, {'fullname' : acc, 'group' : 'insertions' });
-            (function() {
-                var visible = false;
-                var tempname = in_layer;
-                var this_acc = acc;
-                acc_layer.href = function() {
-                    visible = ! visible;
-                    if (visible) {
-                        MASCP.getLayer(tempname).icon = '#minus_icon';
-                        reader.showSnp(MASCP.renderer,this_acc);
-                    } else {
-                        MASCP.getLayer(tempname).icon = '#plus_icon';
-                        MASCP.renderer.removeAnnotations(tempname);
-                        MASCP.renderer.redrawAnnotations();
-                    }
-                    MASCP.renderer.refresh();
-                    return false;
+            
+            (function(this_acc) {
+                return function() {
+                    var visible = false;
+                    var tempname = in_layer;
+                    acc_layer.href = function() {
+                        visible = ! visible;
+                        if (visible) {
+                            MASCP.getLayer(tempname).icon = '#minus_icon';
+                            reader.showSnp(MASCP.renderer,this_acc);
+                        } else {
+                            MASCP.getLayer(tempname).icon = '#plus_icon';
+                            MASCP.renderer.removeAnnotations(tempname);
+                            MASCP.renderer.redrawAnnotations();
+                        }
+                        MASCP.renderer.refresh();
+                        return false;
+                    };
                 };
-            })();
+            }(acc))();
+            
             MASCP.getLayer(in_layer).icon = null;
-
-            for (var i = 0; i < diffs.length; i++ ){
+            var i;
+            for (i = diffs.length - 1; i >= 0 ; i-- ){
                 outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
                 ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
             }
 
-            for (var i = 0; i < ins.length; i++ ) {
+            for (i = ins.length - 1; i >= 0 ; i-- ) {
                 var pos = ins[i].insertBefore - 1;
                 if (pos > renderer.sequence.length) {
                     pos = renderer.sequence.length;
@@ -153,10 +156,12 @@ MASCP.SnpReader.Result.prototype.getSnp = function(accession) {
     var snps_data = this._data[accession];
     var results = [];
     for (var pos in snps_data) {
-        var position = parseInt(pos);
-        var changes = snps_data[pos];
-        var a_result = [ position, changes.charAt(0), changes.charAt(1)];
-        results.push(a_result);
+        if (snps_data.hasOwnProperty(pos)) {
+            var position = parseInt(pos,10);
+            var changes = snps_data[pos];
+            var a_result = [ position, changes.charAt(0), changes.charAt(1)];
+            results.push(a_result);
+        }
     }
     return results;
 };

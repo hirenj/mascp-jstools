@@ -45,24 +45,30 @@ var mascot_params = {
     '_noerrortolerant':'0',
     '_show_decoy_report':'0',
     '_showsubsets'  : '0',
-    '_server_mudpit_switch':'0.000000001',
+    '_server_mudpit_switch':'0.000000001'
 };
 
 var clone = function(obj){
-    if(obj == null || typeof(obj) != 'object')
+    if(obj === null || typeof(obj) != 'object') {
         return obj;
+    }
 
     var temp = obj.constructor(); // changed
 
-    for(var key in obj)
-        temp[key] = clone(obj[key]);
+    for(var key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            temp[key] = clone(obj[key]);
+        }
+    }
     return temp;
-}
+};
 
 var params_to_url = function(params) {
     var result = [];
-    for (name in params) {
-        result.push(name +'='+params[name]);
+    for (var nam in params) {
+        if (params.hasOwnProperty(nam)) {
+            result.push(nam +'='+params[nam]);
+        }
     }
     return result.join('&');
 };
@@ -81,7 +87,7 @@ var CSVToArray = function( strData, strDelimiter ){
 
     var arrData = [[]];
     var arrMatches = null;
-    while (arrMatches = objPattern.exec( strData )){
+    while ((arrMatches = objPattern.exec( strData )) !== null){
         var strMatchedDelimiter = arrMatches[ 1 ];
         if (
         strMatchedDelimiter.length &&
@@ -89,13 +95,14 @@ var CSVToArray = function( strData, strDelimiter ){
         ){
             arrData.push( [] );
         }
+        var strMatchedValue;
         if (arrMatches[ 2 ]){
-            var strMatchedValue = arrMatches[ 2 ].replace(
+            strMatchedValue = arrMatches[ 2 ].replace(
             new RegExp( "\"\"", "g" ),
             "\""
             );
         } else {
-            var strMatchedValue = arrMatches[ 3 ];
+            strMatchedValue = arrMatches[ 3 ];
         }
         arrData[ arrData.length - 1 ].push( strMatchedValue );
     }
@@ -124,9 +131,9 @@ MascotToJSON.prototype.convertReport = function(report,callback) {
     var self = this;
     var xhr = new window.XMLHttpRequest();
     var report_base = report.replace(/master_results(_2)?.pl.*/,'export_dat_2.pl');
-    var file_url = /file=([^&]*)/.exec(report), file_url = file_url ? file_url[1] : null;
+    var file_url = (/file=([^&]*)/.exec(report) || []).shift();
     var params = clone(mascot_params);
-    params['file'] = file_url;
+    params.file = file_url;
     
     xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
@@ -137,7 +144,7 @@ MascotToJSON.prototype.convertReport = function(report,callback) {
                 if (callback) {
                     callback.call(self,data_matrix_to_summary(CSVToArray(response)));
                 }
-            } else if (xhr.status == 0) {
+            } else if (xhr.status === 0) {
                 if (callback) {
                     callback.call(self,[],new Error("Could not load page"));
                 }
