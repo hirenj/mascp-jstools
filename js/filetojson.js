@@ -31,7 +31,7 @@ function filetojson(place, server, data_matcher,complete) {
 
         this.selectColumn = function(columns) {
             var selected_column = 0;
-            if (columns.length == 0) {
+            if (columns.length === 0) {
                 return;
             }
             if (columns.length > 1) {
@@ -109,7 +109,9 @@ function filetojson(place, server, data_matcher,complete) {
                     div_data.appendChild(select_box);
                     selector.appendChild(div_data);
                 })();
-                
+                var col_func = function() {
+                    pick_column(this._index);
+                };
                 for (var i = 0; i < columns.length; i++ ) {
                     var div_data = document.createElement('div');
                     div_data.style.width = col_width+"%";
@@ -129,9 +131,7 @@ function filetojson(place, server, data_matcher,complete) {
                     div_data.appendChild(select_box);
                     
                     select_box._index = i;
-                    select_box.addEventListener('click',function() {
-                        pick_column(this._index);
-                    },false);
+                    select_box.addEventListener('click',col_func,false);
                     
                     var max_els = columns[i].length > 3 ? 3 : columns[i].length;
                     for (var j = 0; j < max_els; j++) {
@@ -141,7 +141,7 @@ function filetojson(place, server, data_matcher,complete) {
                         }
                         text.textContent = columns[i][j];
                         text.style.fontSize = '10px';
-                        if (j == 0) {
+                        if (j === 0) {
                             text.style.fontWeight = 'bold';
                         }
                         div_data.appendChild(text);
@@ -161,7 +161,7 @@ function filetojson(place, server, data_matcher,complete) {
                 complete();
             }
             
-        }
+        };
 
         this.readResponse = function(data) {
             if (data.length < 1) {
@@ -169,8 +169,9 @@ function filetojson(place, server, data_matcher,complete) {
             }
             var max_rows = data.length < 2 ? 1 : (data.length / 2);
             var good_col_indexes = {};
-            for (var i = 0; i < max_rows; i++ ) {
-                for (var j = 0; j < data[i].length; j++) {
+            var i,j;
+            for (i = 0; i < max_rows; i++ ) {
+                for (j = 0; j < data[i].length; j++) {
                     if (data_matcher.call(data_matcher,data[i][j])) {
                         good_col_indexes[j] = true;
                     }
@@ -178,10 +179,12 @@ function filetojson(place, server, data_matcher,complete) {
             }
             var good_cols = [];
             for (var good_col in good_col_indexes) {
-                var idx = good_cols.length;
-                good_cols.push([]);
-                for (var i = 0; i < data.length; i++ ) {
-                    good_cols[idx].push(data[i][good_col]);
+                if (good_col_indexes.hasOwnProperty(good_col)) {
+                    var idx = good_cols.length;
+                    good_cols.push([]);
+                    for (i = 0; i < data.length; i++ ) {
+                        good_cols[idx].push(data[i][good_col]);
+                    }
                 }
             }
             
@@ -211,7 +214,7 @@ function filetojson(place, server, data_matcher,complete) {
                 xhr.setRequestHeader('content-type', 'multipart/form-data; boundary=' + boundary);
                 
                 // Firefox 3.6 provides a feature sendAsBinary ()
-                if(xhr.sendAsBinary != null) { 
+                if(xhr.sendAsBinary !== null) { 
                     xhr.sendAsBinary(body); 
                 // Chrome 7 sends data but you must use the base64_decode on the PHP side
                 } else {
@@ -221,7 +224,7 @@ function filetojson(place, server, data_matcher,complete) {
                     xhr.setRequestHeader('UP-TYPE', file.type);
                     xhr.send(window.btoa(bin));
                 }
-            }
+            };
                 
             // Loading errors
             this.loadError = function(event) {
@@ -237,7 +240,7 @@ function filetojson(place, server, data_matcher,complete) {
                     default:
                         document.getElementById(status).innerHTML = 'Read error.';
                 }   
-            }
+            };
         
             // Reading Progress
             this.loadProgress = function(event) {
@@ -245,14 +248,14 @@ function filetojson(place, server, data_matcher,complete) {
                     var percentage = Math.round((event.loaded * 100) / event.total);
 //                    document.getElementById(status).innerHTML = 'Loaded : '+percentage+'%';
                 }               
-            }
+            };
                 
 
             reader = new FileReader();
             // Firefox 3.6, WebKit
             if(reader.addEventListener) { 
                 reader.addEventListener('loadend', this.loadEnd, false);
-                if (status != null) 
+                if (status !== null) 
                 {
                     reader.addEventListener('error', this.loadError, false);
                     reader.addEventListener('progress', this.loadProgress, false);
@@ -261,7 +264,7 @@ function filetojson(place, server, data_matcher,complete) {
             // Chrome 7
             } else { 
                 reader.onloadend = this.loadEnd;
-                if (status != null) 
+                if (status !== null) 
                 {
                     reader.onerror = this.loadError;
                     reader.onprogress = this.loadProgress;
@@ -280,17 +283,21 @@ function filetojson(place, server, data_matcher,complete) {
             xhr.setRequestHeader('NO-BASE64', 'true');
             xhr.send(file);
         }
-    }
+    };
 
     // Function drop file
     this.drop = function(event) {
-        if (event.preventDefault) event.preventDefault();
+        if (event.preventDefault) {
+            event.preventDefault();
+        }
         
-        if (event.dataTransfer && event.dataTransfer.files.length == 0) {
+        var i;
+        
+        if (event.dataTransfer && event.dataTransfer.files.length === 0) {
             var txt = event.dataTransfer.getData('Text');
             var vals = txt.split(/[\n\t\s,]+/);
             results = [];
-            for (var i = 0; i < vals.length; i++) {
+            for (i = 0; i < vals.length; i++) {
                 if (data_matcher(vals[i])) {
                     results.push(vals[i]);
                 }
@@ -300,12 +307,12 @@ function filetojson(place, server, data_matcher,complete) {
         }
         var dt = event.dataTransfer;
         var files = dt.files || [];
-        for (var i = 0; i<files.length; i++) {
+        for (i = 0; i<files.length; i++) {
             var file = files[i];            
             upload(file);
         }
         return false;
-    }
+    };
     
     // The inclusion of the event listeners (DragOver and drop)
     if (place && document.getElementById(place)) {
@@ -313,16 +320,24 @@ function filetojson(place, server, data_matcher,complete) {
         if ( ! this.uploadPlace.addEventListener ) {        
             this.uploadPlace.addEventListener = function(ev,fn) {
                 this.attachEvent("on"+ev,fn);
-            }
+            };
         }
         this.uploadPlace.addEventListener("dragover", function(event) {
-            if (event.stopPropagation) event.stopPropagation(); 
-            if (event.preventDefault) event.preventDefault();
+            if (event.stopPropagation) {
+                event.stopPropagation(); 
+            }
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
             return false;
         }, true);
         this.uploadPlace.addEventListener("dragenter", function(event) {
-            if (event.stopPropagation) event.stopPropagation(); 
-            if (event.preventDefault) event.preventDefault();
+            if (event.stopPropagation) {
+                event.stopPropagation(); 
+            }
+            if (event.preventDefault) {
+                event.preventDefault();
+            }
             return false;
         }, true);
 
