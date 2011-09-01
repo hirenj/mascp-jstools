@@ -128,7 +128,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
                 ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
             }
 
-            for (i = ins.length; i >= 0 ; i-- ) {
+            for (i = ins.length - 1; i >= 0 ; i-- ) {
                 var pos = ins[i].insertBefore - 1;
                 if (pos > renderer.sequence.length) {
                     pos = renderer.sequence.length;
