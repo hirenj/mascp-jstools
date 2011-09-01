@@ -25,7 +25,7 @@ jQuery(document).ready(function() {
 
         var arrData = [[]];
         var arrMatches = null;
-        while (arrMatches = objPattern.exec( strData )){
+        while ((arrMatches = objPattern.exec( strData )) !== null){
             var strMatchedDelimiter = arrMatches[ 1 ];
             if (
             strMatchedDelimiter.length &&
@@ -33,13 +33,15 @@ jQuery(document).ready(function() {
             ){
                 arrData.push( [] );
             }
+            var strMatchedValue;
+            
             if (arrMatches[ 2 ]){
-                var strMatchedValue = arrMatches[ 2 ].replace(
+                strMatchedValue = arrMatches[ 2 ].replace(
                 new RegExp( "\"\"", "g" ),
                 "\""
                 );
             } else {
-                var strMatchedValue = arrMatches[ 3 ];
+                strMatchedValue = arrMatches[ 3 ];
             }
             arrData[ arrData.length - 1 ].push( strMatchedValue );
         }
@@ -62,7 +64,7 @@ jQuery(document).ready(function() {
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
-            if ( ! jQuery('#'+datasetname).length > 0) {
+            if ( jQuery('#'+datasetname).length <= 0) {
                 jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
                 jQuery('#'+datasetname).show();
             }
@@ -136,10 +138,10 @@ jQuery(document).ready(function() {
                 reader.registerSequenceRenderer(MASCP.renderer);
                 reader.datasetname = set;
                 reader.bind('resultReceived',function() {
-                    if (! this.result || this.result.length == 0 ) {
+                    if (! this.result || this.result.length === 0 ) {
                         return;
                     }
-                    if ( ! jQuery('#'+datasetname).length > 0) {
+                    if ( jQuery('#'+datasetname).length <= 0) {
                         jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
                         jQuery('#'+datasetname).show();
                     }
@@ -265,7 +267,7 @@ jQuery(document).ready(function() {
         var found = false;
         jQuery('#tissue_results').find('tr td').each(function() {
             if (jQuery(this).html().toString() == key.toString()) {
-                var current_val = parseInt(jQuery(this.nextSibling).html());
+                var current_val = parseInt(jQuery(this.nextSibling).html(),10);
                 jQuery(this.nextSibling).html(current_val + val);
                 found = true;
             }
@@ -284,33 +286,35 @@ jQuery(document).ready(function() {
                 array.push('hydropathy');
             }
             for (var rdr_id in READER_CONF) {
-                var rdr = READER_CONF[rdr_id];
-                if (! rdr.placeholder) {
-                    if (rdr.layers.length > 0) {
-                        if (array.indexOf(rdr.layers[0]) == -1) {
-                            for (var i = 0 ; i < rdr.layers.length; i++) {
-                                readers_to_show.push(rdr.layers[i]);
-                                array.push(rdr.layers[i]);
-                            }
-                        }                            
+                if (READER_CONF.hasOwnProperty(rdr_id)) {
+                    var rdr = READER_CONF[rdr_id],i;
+                    if (! rdr.placeholder) {
+                        if (rdr.layers.length > 0) {
+                            if (array.indexOf(rdr.layers[0]) == -1) {
+                                for (i = 0 ; i < rdr.layers.length; i++) {
+                                    readers_to_show.push(rdr.layers[i]);
+                                    array.push(rdr.layers[i]);
+                                }
+                            }                            
+                        }
+                        continue;
                     }
-                    continue;
-                }
-                for (var i = 0; i < rdr.layers.length; i++) {
-                    var lay = rdr.layers[i];
-                    var placeholder = lay.replace(/_.*$/,'') + '_placeholder';
-                    var controller = lay.replace(/_.*$/,'') + '_controller';
+                    for (i = 0; i < rdr.layers.length; i++) {
+                        var lay = rdr.layers[i];
+                        var placeholder = lay.replace(/_.*$/,'') + '_placeholder';
+                        var controller = lay.replace(/_.*$/,'') + '_controller';
                     
-                    if (array.indexOf(placeholder) === -1) {
-                        array.push(placeholder);
-                    }
+                        if (array.indexOf(placeholder) === -1) {
+                            array.push(placeholder);
+                        }
                     
-                    if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
-                        array.splice(array.indexOf(placeholder),1,controller,lay);
-                        readers_to_show.push(controller);
-                    } else {
-                        array.splice(array.indexOf(placeholder),1,lay);                        
-                        readers_to_show.push(lay);
+                        if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
+                            array.splice(array.indexOf(placeholder),1,controller,lay);
+                            readers_to_show.push(controller);
+                        } else {
+                            array.splice(array.indexOf(placeholder),1,lay);                        
+                            readers_to_show.push(lay);
+                        }
                     }
                 }
             }
@@ -324,7 +328,7 @@ jQuery(document).ready(function() {
                 readers_to_show.push('prippdb_experimental');
             }
         }
-        if (rendering_readers && rendering_readers.length == 0) {
+        if (rendering_readers && rendering_readers.length === 0) {
             readers_to_show.forEach(function(lay) {
                 MASCP.renderer.showLayer(lay,true);
             });
@@ -369,34 +373,36 @@ jQuery(document).ready(function() {
         if (document._screen) {
             document._screen.hide();
         }
-
+        var rdr,lay,i;
         for (var rdr_id in READER_CONF) {
-            var rdr = READER_CONF[rdr_id];
-            if (rdr.placeholder) {
-                for (var i = 0; i < rdr.layers.length; i++ ) {
-                    var lay = rdr.layers[i];
-                    var placeholder = lay+'';
-                    var controller = lay+'';
-                    placeholder = placeholder.replace(/_experimental/,'') + '_placeholder';
-                    controller = controller.replace(/_experimental/,'') + '_controller';
-                    var checkbox = jQuery('#'+placeholder+' input');
+            if (READER_CONF.hasOwnProperty(rdr_id)) {
+                rdr = READER_CONF[rdr_id];
+                if (rdr.placeholder) {
+                    for (i = 0; i < rdr.layers.length; i++ ) {
+                        lay = rdr.layers[i];
+                        var placeholder = lay+'';
+                        var controller = lay+'';
+                        placeholder = placeholder.replace(/_experimental/,'') + '_placeholder';
+                        controller = controller.replace(/_experimental/,'') + '_controller';
+                        var checkbox = jQuery('#'+placeholder+' input');
                                 
-                    if ( ! checkbox ) {
-                        continue;
-                    }
+                        if ( ! checkbox ) {
+                            continue;
+                        }
                 
-                    checkbox.attr('checked',true);
-                    if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
-                        MASCP.renderer.createLayerCheckbox(controller,checkbox[0],true);
-                    } else {
-                        MASCP.renderer.createGroupCheckbox(lay,checkbox[0],true);
+                        checkbox.attr('checked',true);
+                        if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
+                            MASCP.renderer.createLayerCheckbox(controller,checkbox[0],true);
+                        } else {
+                            MASCP.renderer.createGroupCheckbox(lay,checkbox[0],true);
+                        }
                     }
+                } else {
+                    for (i = 0; i < rdr.layers.length; i++ ) {
+                        lay = rdr.layers[i];
+                        MASCP.renderer.createLayerCheckbox(lay,jQuery('#'+lay+' input')[0],true);
+                    }            
                 }
-            } else {
-                for (var i = 0; i < rdr.layers.length; i++ ) {
-                    var lay = rdr.layers[i];
-                    MASCP.renderer.createLayerCheckbox(lay,jQuery('#'+lay+' input')[0],true);
-                }            
             }
         }
         jQuery('#sequence_controllers').trigger('sortupdate');
@@ -426,33 +432,37 @@ jQuery(document).ready(function() {
 
         all_readers = [];
         rendering_readers = [];
-
-        for (var rdr_id in READER_CONF) {
-            var rdr = READER_CONF[rdr_id];
-            var clazz = rdr.definition;
-            var reader = new clazz(agi, rdr.url);
-            reader.bind('resultReceived', rdr.result);
-            if (rdr.layers.length > 0) {
-                reader.registerSequenceRenderer(MASCP.renderer);
-                rendering_readers.push(reader);
+        var rdr,rdr_id,lay,i;
+        for (rdr_id in READER_CONF) {
+            if (READER_CONF.hasOwnProperty(rdr_id)) {
+                rdr = READER_CONF[rdr_id];
+                var clazz = rdr.definition;
+                var reader = new clazz(agi, rdr.url);
+                reader.bind('resultReceived', rdr.result);
+                if (rdr.layers.length > 0) {
+                    reader.registerSequenceRenderer(MASCP.renderer);
+                    rendering_readers.push(reader);
+                }
+                all_readers.push(reader);
             }
-            all_readers.push(reader);
         }
 
-        for (var rdr_id in READER_CONF) {
-            var rdr = READER_CONF[rdr_id];
-            if (rdr.placeholder) {
-                for (var i = 0; i < rdr.layers.length; i++ ) {
-                    var lay = rdr.layers[i];
-                    var placeholder = lay+'';
-                    placeholder = placeholder.replace(/_(.*)$/,'') + '_placeholder';
-                    jQuery('#'+placeholder).hide();
+        for (rdr_id in READER_CONF) {
+            if (READER_CONF.hasOwnProperty(rdr_id)) {
+                rdr = READER_CONF[rdr_id];
+                if (rdr.placeholder) {
+                    for (i = 0; i < rdr.layers.length; i++ ) {
+                        lay = rdr.layers[i];
+                        var placeholder = lay+'';
+                        placeholder = placeholder.replace(/_(.*)$/,'') + '_placeholder';
+                        jQuery('#'+placeholder).hide();
+                    }
+                } else {
+                    for (i = 0; i < rdr.layers.length; i++ ) {
+                        lay = rdr.layers[i];
+                        jQuery('#'+lay).hide();                
+                    }            
                 }
-            } else {
-                for (var i = 0; i < rdr.layers.length; i++ ) {
-                    var lay = rdr.layers[i];
-                    jQuery('#'+lay).hide();                
-                }            
             }
         }
 
