@@ -176,8 +176,7 @@ MASCP.registerLayer = function(layerName, options)
  * @requires jQuery
  */
 MASCP.SequenceRenderer = function(sequenceContainer) {
-    if (sequenceContainer !== null) {
-
+    if (typeof sequenceContainer !== 'undefined') {
         this._container = sequenceContainer;
         this._container.style.position = 'relative';
 //        this._container.style.width = '100%';
