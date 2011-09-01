@@ -68,15 +68,16 @@ MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
 
         
     var peptides = [];
+    var toString = function() {
+        return this.sequence;
+    };
     
-    for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
+    for (var i = this._raw_data.peptides.length - 1; i >= 0; i-- ) {
         var a_peptide = this._raw_data.peptides[i];
         var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence), 'tissues' : [] };
-        the_pep.toString = function() {
-            return this.sequence;
-        };
+        the_pep.toString = toString;
         peptides.push(the_pep);
-        for (var j = 0; j < a_peptide.tissues.length; j++ ) {
+        for (var j = a_peptide.tissues.length - 1; j >= 0 ; j-- ) {
             var a_tissue = a_peptide.tissues[j];
             if ( this._tissues.indexOf(a_tissue['PO:tissue']) < 0 ) {
                 var some_tiss = a_tissue['PO:tissue'];
@@ -135,7 +136,7 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 

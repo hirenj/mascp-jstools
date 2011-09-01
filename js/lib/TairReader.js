@@ -16,7 +16,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  */
 MASCP.TairReader = MASCP.buildService(function(data) {
                         this._data = data || {};
-                        if ( ! this._data['data'] ) {
+                        if ( ! this._data.data ) {
                             this._data = { 'data' : ['',''] };
                         }
                         return this;

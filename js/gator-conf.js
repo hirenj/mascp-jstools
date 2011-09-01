@@ -19,21 +19,27 @@ var READER_CONF = (function() {
                                 var loc_data = this;
                                 var loc_key = null;
                                 for (loc_key in loc_data) {
-                                    jQuery('#suba_results tbody').append("<tr><td>MS "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                                    if (loc_data.hasOwnProperty(loc_key)) {
+                                        jQuery('#suba_results tbody').append("<tr><td>MS "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                                    }
                                 }
                             });
                             jQuery(this.result.getGfpLocalisation()).each(function(i) {
                                 var loc_data = this;
                                 var loc_key = null;
                                 for (loc_key in loc_data) {
-                                    jQuery('#suba_results tbody').append("<tr><td>GFP "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                                    if (loc_data.hasOwnProperty(loc_key)) {
+                                        jQuery('#suba_results tbody').append("<tr><td>GFP "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");
+                                    }
                                 }
                             });
                             jQuery(this.result.getPredictedLocalisations()).each(function(i) {
                                 var loc_data = this;
                                 var loc_key = null;
                                 for (loc_key in loc_data) {
-                                    jQuery('#suba_results tbody').append("<tr><td>Prediction "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");                    
+                                    if (loc_data.hasOwnProperty(loc_key)) {
+                                        jQuery('#suba_results tbody').append("<tr><td>Prediction "+loc_key+"</td><td>"+loc_data[loc_key].length+"</td></tr>");                    
+                                    }
                                 }
                             });                
 
@@ -69,7 +75,7 @@ var READER_CONF = (function() {
                             tagvis.visualisations[0].update(1);
                             jQuery('#suba .rich_tagcloud').masonry({ 'itemSelector' : '.rich_tagcloud_tag', 'animate': true });
                         },
-        'layers'        : [],
+        'layers'        : []
     },
     MASCP.PhosphatReader , {
         'definition'    : MASCP.PhosphatReader,
@@ -86,14 +92,16 @@ var READER_CONF = (function() {
                             var tissues = this.result.getSpectra();
                             var loc_key = null;
                             for (loc_key in tissues) {
-                                var long_name = loc_key;
-                                var count = tissues[loc_key];
-                                document.getElementById('tissue_results').updateKey(long_name,count);
+                                if (tissues.hasOwnProperty(loc_key)) {
+                                    var long_name = loc_key;
+                                    var count = tissues[loc_key];
+                                    document.getElementById('tissue_results').updateKey(long_name,count);
+                                }
                             }
                             document.getElementById('tissue_tags').updateTags();
                         },
         'url'           : 'http://gator.masc-proteomics.org/proxy.pl',
-        'layers'        : ['phosphat_experimental'],
+        'layers'        : ['phosphat_experimental']
     },
     MASCP.RippdbReader ,  {
         'definition'    :  MASCP.RippdbReader,
@@ -106,7 +114,7 @@ var READER_CONF = (function() {
                                 MASCP.renderer.showLayer('prippdb_experimental');
                             }
                         },
-        'layers'        : ['prippdb_experimental'],
+        'layers'        : ['prippdb_experimental']
     },
     MASCP.PromexReader, { 
         'definition'    : MASCP.PromexReader,
@@ -156,7 +164,7 @@ var READER_CONF = (function() {
                                     jQuery('#atchloro_experimental').show();
                                 }
                             },
-        'layers'        : ['atchloro'],
+        'layers'        : ['atchloro']
     },
     MASCP.AtPeptideReader, {
         'definition'    : MASCP.AtPeptideReader,
@@ -172,9 +180,11 @@ var READER_CONF = (function() {
 
                                 var loc_key = null;
                                 for (loc_key in this.result.spectra) {
-                                    var long_name = this.result._long_name_map[loc_key];
-                                    var count = this.result.spectra[loc_key];                    
-                                    document.getElementById('tissue_results').updateKey(long_name,count);
+                                    if (this.result.spectra.hasOwnProperty(loc_key)) {
+                                        var long_name = this.result._long_name_map[loc_key];
+                                        var count = this.result.spectra[loc_key];                    
+                                        document.getElementById('tissue_results').updateKey(long_name,count);
+                                    }
                                 }
                                 document.getElementById('tissue_tags').updateTags();
                                 if (this.result.getPeptides().length > 0) {
@@ -190,7 +200,7 @@ var READER_CONF = (function() {
         'error_url'     : 'http://fgcz-atproteome.unizh.ch/',
         'success_url'   : 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf=',
         'result'        : function() {
-                                if (this.result == null) {
+                                if (this.result === null) {
                                     return;
                                 }
 
@@ -202,9 +212,11 @@ var READER_CONF = (function() {
 
                                 var loc_key = null;
                                 for (loc_key in this.result.spectra) {
-                                    var long_name = this.result._long_name_map[loc_key];
-                                    var count = this.result.spectra[loc_key];
-                                    document.getElementById('tissue_results').updateKey(long_name,count);
+                                    if (this.result.spectra.hasOwnProperty(loc_key)) {
+                                        var long_name = this.result._long_name_map[loc_key];
+                                        var count = this.result.spectra[loc_key];
+                                        document.getElementById('tissue_results').updateKey(long_name,count);
+                                    }
                                 }
                                 document.getElementById('tissue_tags').updateTags();
                                 jQuery('#atproteome_placeholder').show();
