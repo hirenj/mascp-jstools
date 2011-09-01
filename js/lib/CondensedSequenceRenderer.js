@@ -6,13 +6,17 @@
  *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
  *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
  */
-if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
+if ( (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
 
+    var svg_path = 'svgweb/';
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
-    } else {
-        document.write('<script src="svgweb/svg.js" data-path="svgweb/"></script>');
+        svg_path = SVGWEB_PATH;
     }
+    var scriptTag = document.createElement("script");
+    scriptTag.src = svg_path + 'svg.js';
+    scriptTag.type="text/javascript";
+    scriptTag.setAttribute('data-path',svg_path);
+    document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
     
     SVGWEB_LOADING = true;
 }
@@ -46,8 +50,10 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     jQuery(this).unbind('sequenceChange');
     jQuery(this).bind('sequenceChange',function() {
         for (var layername in MASCP.layers) {
-            self.addTrack(MASCP.layers[layername]);
-            MASCP.layers[layername].disabled = true;
+            if (MASCP.layers.hasOwnProperty(layername)) {
+                self.addTrack(MASCP.layers[layername]);
+                MASCP.layers[layername].disabled = true;
+            }
         }
         self.zoom = self.zoom;
     });
@@ -253,7 +259,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         renderer._nav_canvas.hide = function() {
             renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);
             canv.style.GomapScrollLeftMargin = 1000;
-        }
+        };
         
         renderer._addNav();
 
@@ -337,7 +343,7 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     var show_chrome = function() {
         nav.promote(); 
         nav.showFilters();        
-    }
+    };
 
     if ( ! MASCP.IE ) {
     jQuery(this._canvas).bind('panstart',hide_chrome);
@@ -482,7 +488,9 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     var visible = true;
 
     var toggler = function(vis) {
-        visible = ( vis == false || vis == true ) ? vis : ! visible;
+        visible = ( vis === false || vis === true ) ? vis : ! visible;
+        var close_transform;
+        
         if (visible) {
             self._track_canvas.setAttribute('display','inline');
             panel_back.setAttribute('visibility','visible');
@@ -490,7 +498,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
 
             rect.setAttribute('filter','url(#drop_shadow)');
             close_group._button.removeAttribute('filter');
-            var close_transform = close_group.getAttribute('transform') || ' ';
+            close_transform = close_group.getAttribute('transform') || ' ';
             close_transform = close_transform.replace(/translate\(.*\)/,'');
             close_transform = close_transform.replace(/rotate\(.*\)/,'');
             
@@ -503,7 +511,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
             canvas.hide();
             rect.removeAttribute('filter');
             close_group._button.setAttribute('filter','url(#drop_shadow)');            
-            var close_transform = close_group.getAttribute('transform') || ' ';
+            close_transform = close_group.getAttribute('transform') || ' ';
             close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
             close_group.setAttribute('transform',close_transform);
             scroll_controls.setAttribute('display','none');
@@ -522,13 +530,13 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(ca
     };
     self.visible = function() {
         return this._is_open;
-    }
+    };
     
     self.setZoom = function(zoom) {
         this._zoom_scale = zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
         rect.setAttribute('transform','scale('+zoom+',1) ');
-    }
+    };
 
     close_group.addEventListener('click',toggler,false);    
 };
@@ -609,7 +617,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                 var curr_transform = lbl_grp.getAttribute('transform') || '';
                 curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                 curr_transform += ' translate('+dX+','+dY+') ';
-                curr_transform = curr_transform.replace(/\s*$/,'')
+                curr_transform = curr_transform.replace(/\s*$/,'');
                 lbl_grp.setAttribute('transform',curr_transform);
                 self.targets.forEach(function(targ){
                     var bb = targ.getBBox();
@@ -697,7 +705,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     
                     var elements_to_shift = [];
 
-                    while (current_sibling != null) {
+                    while (current_sibling !== null) {
                         if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
                             elements_to_shift.push(current_sibling);
                         }
@@ -711,7 +719,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     
                     var elements_to_shift_up = [];
                     
-                    while (current_sibling != null) {
+                    while (current_sibling !== null) {
                         if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
                             elements_to_shift_up.push(current_sibling);
                         }
@@ -723,18 +731,19 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
                     var anim_steps = 1;
                     var height = 100.0 / nav._zoom_scale;
                     self._anim = window.setInterval(function() {
+                        var curr_transform, i = 0;
                         
                         if (anim_steps < 5) {
-                            for (var i = 0; i < elements_to_shift.length; i++ ) {
-                                var curr_transform = elements_to_shift[i].getAttribute('transform') || '';
+                            for (i = 0; i < elements_to_shift.length; i++ ) {
+                                curr_transform = elements_to_shift[i].getAttribute('transform') || '';
                                 curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                                 curr_transform += ' translate(0,'+anim_steps*height+')';
                                 elements_to_shift[i].setAttribute('transform',curr_transform);
                             }
 
-                            for (var i = 0; (elements_to_shift.length > 0) && i < elements_to_shift_up.length; i++ ) {
+                            for (i = 0; (elements_to_shift.length > 0) && i < elements_to_shift_up.length; i++ ) {
 
-                                var curr_transform = elements_to_shift_up[i].getAttribute('transform') || '';
+                                curr_transform = elements_to_shift_up[i].getAttribute('transform') || '';
                                 curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
                                 curr_transform += ' translate(0,'+anim_steps*-1*height+')';
                                 elements_to_shift_up[i].setAttribute('transform',curr_transform);
@@ -759,7 +768,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = functi
 //        element.addEventListener('mousemove',el_move,false);
         handle.addEventListener('touchstart',single_touch_event(handle_start),false);
 //        element.addEventListener('touchmove',single_touch_event(el_move),true);
-}
+};
 
 MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = function(on) {
     var self = this;
@@ -780,22 +789,23 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
     canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
     
     this.clearTracks = function() {
-        while (canvas.firstChild) 
+        while (canvas.firstChild) {
             canvas.removeChild(canvas.firstChild);
+        }
         this._enableDragAndDrop.targets = null;
         this._track_rects = [];
     };
     
     this.setViewBox = function(viewBox) {
         canvas.setAttribute('viewBox',viewBox);
-    }
+    };
     
     this.setDimensions = function(width,height) {
         canvas.style.height = height;
         canvas.style.width = width;
         canvas.setAttribute('height',height);        
         canvas.setAttribute('width',width);
-    }
+    };
     
     this.renderTrack = function(track,y,height,options) {
         var label_group = canvas.group();
@@ -823,10 +833,11 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         
         var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
+        var text_left;
         if ("ontouchend" in document) {
-            var text_left = 8*height*text_scale;
+            text_left = 8*height*text_scale;
         } else {
-            var text_left = 4*height*text_scale;            
+            text_left = 4*height*text_scale;            
         }
         var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
         a_text.setAttribute('height', 2*height);
@@ -845,6 +856,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
         
         a_text.setAttribute('pointer-events','none');
         
+        var circ;
         
         if (track.href && ! track._group_controller) {
             a_anchor = canvas.a(track.href);
@@ -855,7 +867,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             }
             icon_metrics[1] = -0.5*(icon_metrics[2] - height);
 
-            var circ = canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
+            circ = canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
             circ.setAttribute('fill','#ffffff');
             circ.setAttribute('opacity','0.1');
             a_anchor.appendChild(circ);
@@ -870,10 +882,16 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 a_anchor.addEventListener('click',function(e) {
                     url_type.call();
 
-                    if (e.preventDefault) e.preventDefault();
-                    else e.returnResult = false;
-                    if (e.stopPropagation) e.stopPropagation();
-                    else e.cancelBubble = true;
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    } else {
+                        e.returnResult = false;
+                    }
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    } else {
+                        e.cancelBubble = true;
+                    }
 
                     return false;
                 },false);
@@ -920,7 +938,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
             closer.firstChild.setAttribute('fill','url(#red_3d)');
             for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
                 nodes[i].setAttribute('stroke-width',(t_height/4).toString());
-            };
+            }
             closer.addEventListener('click',function() {
                 self._spliceTrack(track);
             },false);
@@ -940,7 +958,7 @@ MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(
                 t_height = 3*height;
             }
             var expander = canvas.group();
-            var circ = canvas.circle(1.5*t_height,0,t_height);
+            circ = canvas.circle(1.5*t_height,0,t_height);
             circ.setAttribute('fill','#ffffff');
             circ.setAttribute('opacity','0.1');
             expander.push(circ);
@@ -1005,7 +1023,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
        a_poly.setAttribute('points',points);
        this.appendChild(a_poly);
        return a_poly;
-    }
+    };
 
     canvas.circle = function(x,y,radius) {
         var a_circle = document.createElementNS(svgns,'circle');
@@ -1084,9 +1102,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         button.textContent = text;
         fo.appendChild(button);
         return button;
-    }
+    };
 
-    canvas.svgbutton = function(x,y,width,height,text) {
+    canvas.svgbutton = function(x,y,width,height,txt) {
         var button = this.group();
         var back = this.rect(x,y,width,height);
         back.setAttribute('rx','10');
@@ -1099,7 +1117,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         width = back.width.baseVal.value;
         height = back.height.baseVal.value;
         
-        var text = this.text(x+width/2,y+(height/3),text);        
+        var text = this.text(x+width/2,y+(height/3),txt);        
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('dominant-baseline', 'hanging');
         text.setAttribute('font-size',0.5*height);
@@ -1171,7 +1189,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var marker = this.group();
 
-        var fill_color = (opts && opts['border']) ? opts['border'] : 'rgb(0,0,0)';
+        var fill_color = (opts && opts.border) ? opts.border : 'rgb(0,0,0)';
 
         marker.push(this.circle(0,-0.5*r,r));
         
@@ -1181,7 +1199,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         marker.lastChild.style.fill = fill_color;
 
-        var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(.9)*r*RS+','+(0*r*RS));
+        var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(0.9)*r*RS+','+(0*r*RS));
         
         
         arrow.setAttribute('style','fill:'+fill_color+';stroke-width: 0;');
@@ -1202,7 +1220,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     };
 
     canvas.text_circle = function(cx,cy,r,txt,opts) {
-        var cx,cy,r;
 
         if ( ! opts ) {
             opts = {};
@@ -1240,7 +1257,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
         var back = this.circle(0,dim.CY,9/10*dim.R);
         back.setAttribute('fill','url(#simple_gradient)');
-        back.setAttribute('stroke', opts['border'] || '#000000');
+        back.setAttribute('stroke', opts.border || '#000000');
         back.setAttribute('stroke-width', (r/10)*RS);
 
         marker_group.push(back);
@@ -1259,7 +1276,6 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
     };
 
     canvas.crossed_circle = function(cx,cy,r) {
-        var cx,cy,r;
 
         var units = 0;
 
@@ -1342,12 +1358,12 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
 
 
     canvas.set = function() {
-        var an_array = new Array();
+        var an_array = [], curr_x, curr_y, curr_transform, targ_disp, curr_disp, a_disp, i, targ_y;
         an_array.attr = function(hsh,animated) {
             
             var hash = jQuery.extend({},hsh);
             
-            if (animated && typeof hash['y'] != 'undefined') {
+            if (animated && typeof hash.y != 'undefined') {
                 var rate = 75;
 
                 if ( ! canvas._anim_clock_funcs ) {
@@ -1357,7 +1373,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     renderer._frame_count = 0;
                     var start = null;
                     canvas._anim_clock = setInterval(function() {
-                        if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length == 0 ) {
+                        if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length === 0 ) {
                             clearInterval(canvas._anim_clock);
                             canvas._anim_clock = null;
                             canvas._anim_clock_funcs = null;
@@ -1371,9 +1387,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         if (! start) {
                             start = (new Date()).getTime();
                         }
-                        for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
+                        for (i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
                             var end = (new Date()).getTime();
-                            var step_id = parseInt((end - start)/rate);
+                            var step_id = parseInt((end - start)/rate,10);
                             canvas._anim_clock_funcs[i].apply(null,[step_id - (canvas._anim_clock_funcs[i]._last_step || step_id)]);
                             if (canvas._anim_clock_funcs && canvas._anim_clock_funcs[i]) {
                                 canvas._anim_clock_funcs[i]._last_step = step_id;
@@ -1388,7 +1404,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 
                 if (an_array.animating) {
-                    for (var i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {                    
+                    for (i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {                    
                         if (canvas._anim_clock_funcs[i].target_set != an_array) {
                             continue;
                         }
@@ -1397,7 +1413,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 
                 
-                if (an_array.length == 0) {
+                if (an_array.length === 0) {
                     return;
                 }
                 var a_y;
@@ -1409,10 +1425,10 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                     }
                 }
                 
-                var curr_y = an_array[0] ? parseInt(a_y || an_array[0].getAttribute('y')) : 0;
-                var curr_disp = 'hidden';
-                for (var i = 0 ; i < an_array.length; i++ ) {
-                    var a_disp = an_array[i].getAttribute('visibility');
+                curr_y = an_array[0] ? parseInt(a_y || an_array[0].getAttribute('y'),10) : 0;
+                curr_disp = 'hidden';
+                for (i = 0 ; i < an_array.length; i++ ) {
+                    a_disp = an_array[i].getAttribute('visibility');
                     if (a_disp && a_disp != 'hidden') {
                         curr_disp = a_disp;
                         break;
@@ -1420,48 +1436,48 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 }
                 
                 
-                var target_y = parseInt(hash['y']);
+                var target_y = parseInt(hash.y,10);
 
-                var target_disp = hash['visibility'];
+                var target_disp = hash.visibility;
                 if (curr_disp == target_disp && target_disp == 'hidden') {
                     an_array.attr(hsh);
                     return;
                 }
 
-                delete hash['y'];
+                delete hash.y;
 
                 if (curr_disp == target_disp && target_disp == 'visible' ) {
-                    delete hash['visibility'];
+                    delete hash.visibility;
                     target_disp = null;                    
                     an_array.attr({'visibility' : 'visible'});
                 }
 
-                if (hash['visibility'] == 'hidden') {
-                    delete hash['visibility'];
+                if (hash.visibility == 'hidden') {
+                    delete hash.visibility;
                 }
 
                 an_array.attr(hash);
                 var counter = 0;
 
                 if (target_y != curr_y) {
-                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 500))/rate) + 1);
+                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 500),10)/rate) + 1);
                     var diff = (target_y - curr_y) / anim_steps;
-                    hash['y'] = curr_y || 0;
+                    hash.y = curr_y || 0;
                     var orig_func = arguments.callee;
                     an_array.animating = true;
                     jQuery(an_array).trigger('_t_anim_begin');
                     canvas._anim_clock_funcs.push(                    
                         function(step) {
-                            if (diff < 0 && (hash['y'] < target_y) ) {
-                                hash['y'] = target_y;
+                            if (diff < 0 && (hash.y < target_y) ) {
+                                hash.y = target_y;
                             }
-                            if (diff > 0 && (hash['y'] > target_y) ) {
-                                hash['y'] = target_y;
+                            if (diff > 0 && (hash.y > target_y) ) {
+                                hash.y = target_y;
                             }
                             orig_func.apply(an_array,[hash]);
                             counter += (step || 1);
-                            if (hash['y'] != target_y) {
-                                hash['y'] = curr_y + diff*(counter);
+                            if (hash.y != target_y) {
+                                hash.y = curr_y + diff*(counter);
                                 return;
                             }
                             an_array.animating = false;
@@ -1470,7 +1486,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                                 jQuery(an_array).trigger('_t_anim_end');
                             }
                             canvas._anim_clock_funcs.splice(canvas._anim_clock_funcs.indexOf(arguments.callee),1);
-                            if (canvas._anim_clock_funcs.length == 0) {
+                            if (canvas._anim_clock_funcs.length === 0) {
                                 clearInterval(canvas._anim_clock);
                                 canvas._anim_clock = null;
                                 canvas._anim_clock_funcs = null;
@@ -1485,9 +1501,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             }
 
 
-            var curr_disp = 'hidden';
-            for (var i = 0 ; i < an_array.length; i++ ) {
-                var a_disp = an_array[i].getAttribute('visibility');
+            curr_disp = 'hidden';
+            for (i = 0 ; i < an_array.length; i++ ) {
+                a_disp = an_array[i].getAttribute('visibility');
                 if (a_disp && a_disp != 'hidden') {
                     curr_disp = a_disp;
                     break;
@@ -1495,83 +1511,84 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
             }
             
             
-            var target_y = parseInt(hash['y']);
+            targ_y = parseInt(hash.y,10);
 
-            var target_disp = hash['visibility'];
-            if (curr_disp == target_disp && target_disp == 'hidden' && hash['y'] > 0) {
+            targ_disp = hash.visibility;
+            if (curr_disp == targ_disp && targ_disp == 'hidden' && hash.y > 0) {
                 return;
             }
             
             for (var key in hash) {
-                
-                for (var i = 0; i < an_array.length; i++) {
-                    if ( ! an_array[i]) {
-                        continue;
-                    }
-                    var value = hash[key];
-                    if (key == 'style' && an_array[i].hasAttribute('style')) {
-                        var curr_style = an_array[i].getAttribute('style');
-                        curr_style += '; '+hash[key];
-                        value = curr_style;
-                    }
-                    if (key == 'height' && an_array[i].hasAttribute('transform')) {
-                        var curr_transform = an_array[i].getAttribute('transform');
-
-                        var curr_scale = /scale\((-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                        
-                        var curr_height = parseFloat(an_array[i].getAttribute('height') || 1);
-                        
-                        var new_scale = 1;
-                        if (curr_scale == null) {
-                            curr_transform += ' scale(1) ';
-                            curr_scale = 1;
-                        } else {
-                            curr_scale = parseFloat(curr_scale[1]);
-                        }
-                        
-                        
-                        new_scale = ( parseFloat(hash[key]) / curr_height ) * curr_scale;
-                        
-                        curr_transform = curr_transform.replace(/scale\((-?\d+\.?\d*)\)/,'scale('+new_scale+')');
-
-                        an_array[i].setAttribute('transform',curr_transform);
-                    }
-                    if  (! (an_array[i].hasAttribute('transform') && (key == 'y' || key == 'x'))) {
-                        an_array[i].setAttribute(key, value);                        
-                    }
-                    if (key == 'y' && an_array[i].hasAttribute('d')) {
-                        var curr_path = an_array[i].getAttribute('d');
-                        var re = /M([\d\.]+) ([\d\.]+)/;
-                        curr_path = curr_path.replace(re,'');
-                        an_array[i].setAttribute('d', 'M0 '+parseInt(value)+' '+curr_path);
-                    }
-                    if (key == 'y' && an_array[i].hasAttribute('cy')) {
-                        an_array[i].setAttribute('cy', hash[key]);
-                    }
-                    
-                    
-                    if (key == 'y' && an_array[i].hasAttribute('transform')) {
-                        var curr_transform = an_array[i].getAttribute('transform');
-                        
-                        var curr_x = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                        if (curr_x == null) {
+                if (hash.hasOwnProperty(key)) {
+                    for (i = 0; i < an_array.length; i++) {
+                        if ( ! an_array[i]) {
                             continue;
                         }
-                        curr_x = curr_x[1];
-                        curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+curr_x+','+value+')');
-                        an_array[i].setAttribute('transform',curr_transform);                        
-                    }
-                    if (key == 'x' && an_array[i].hasAttribute('transform')) {
-                        var curr_transform = an_array[i].getAttribute('transform');
-                        
-                        var curr_y = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                        if (curr_y == null) {
-                            continue;
+                        var value = hash[key];
+                        if (key == 'style' && an_array[i].hasAttribute('style')) {
+                            var curr_style = an_array[i].getAttribute('style');
+                            curr_style += '; '+hash[key];
+                            value = curr_style;
                         }
-                        curr_y = curr_y[2];
-                        curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
-                        an_array[i].setAttribute('transform',curr_transform);                        
-                    }                    
+                        if (key == 'height' && an_array[i].hasAttribute('transform')) {
+                            curr_transform = an_array[i].getAttribute('transform');
+
+                            var curr_scale = /scale\((-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                        
+                            var curr_height = parseFloat(an_array[i].getAttribute('height') || 1);
+                        
+                            var new_scale = 1;
+                            if (curr_scale === null) {
+                                curr_transform += ' scale(1) ';
+                                curr_scale = 1;
+                            } else {
+                                curr_scale = parseFloat(curr_scale[1]);
+                            }
+                        
+                        
+                            new_scale = ( parseFloat(hash[key]) / curr_height ) * curr_scale;
+                        
+                            curr_transform = curr_transform.replace(/scale\((-?\d+\.?\d*)\)/,'scale('+new_scale+')');
+
+                            an_array[i].setAttribute('transform',curr_transform);
+                        }
+                        if  (! (an_array[i].hasAttribute('transform') && (key == 'y' || key == 'x'))) {
+                            an_array[i].setAttribute(key, value);                        
+                        }
+                        if (key == 'y' && an_array[i].hasAttribute('d')) {
+                            var curr_path = an_array[i].getAttribute('d');
+                            var re = /M([\d\.]+) ([\d\.]+)/;
+                            curr_path = curr_path.replace(re,'');
+                            an_array[i].setAttribute('d', 'M0 '+parseInt(value,10)+' '+curr_path);
+                        }
+                        if (key == 'y' && an_array[i].hasAttribute('cy')) {
+                            an_array[i].setAttribute('cy', hash[key]);
+                        }
+                    
+                    
+                        if (key == 'y' && an_array[i].hasAttribute('transform')) {
+                            curr_transform = an_array[i].getAttribute('transform');
+                        
+                            curr_x = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                            if (curr_x === null) {
+                                continue;
+                            }
+                            curr_x = curr_x[1];
+                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+curr_x+','+value+')');
+                            an_array[i].setAttribute('transform',curr_transform);                        
+                        }
+                        if (key == 'x' && an_array[i].hasAttribute('transform')) {
+                            curr_transform = an_array[i].getAttribute('transform');
+                        
+                            curr_y = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                            if (curr_y === null) {
+                                continue;
+                            }
+                            curr_y = curr_y[2];
+                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
+                            an_array[i].setAttribute('transform',curr_transform);                        
+                        }                    
+                    }
                 }
             }
         };
@@ -1605,7 +1622,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
         };
         
         an_array._old_push = an_array.push;
-        an_array._event_proxy = new Object();
+        an_array._event_proxy = {};
 
         var event_func = function(ev) {
             var target_el = this;
@@ -1676,11 +1693,11 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var x = 0;
     
     var has_textLength = true;
-    
+    var no_op = function() {};
     try {
         var test_el = document.createElementNS(svgns,'text');
         test_el.setAttribute('textLength',10);
-        test_el.textLength;
+        no_op(test_el.textLength);
     } catch (e) {
         has_textLength = false;
     }
@@ -1694,7 +1711,9 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         var from = vals[0];
         var to = vals[1];
         var sel = window.getSelection();
-        if(sel.rangeCount > 0) sel.removeAllRanges();
+        if(sel.rangeCount > 0) {
+            sel.removeAllRanges();
+        }
         var range = document.createRange();
         range.selectNodeContents(aa_selection.childNodes[0]);
         sel.addRange(range);
@@ -1704,9 +1723,10 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         sel.addRange(range);
         this.moveHighlight.apply(this,vals);
     };
-
+    var a_text;
+    
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-        var a_text = canvas.text(0,12,document.createTextNode(this.sequence));
+        a_text = canvas.text(0,12,document.createTextNode(this.sequence));
         a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('textLength',RS*this.sequence.length);
@@ -1717,7 +1737,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
         amino_acids.push(a_text);
     } else {    
         for (var i = 0; i < seq_chars.length; i++) {
-            var a_text = canvas.text(x,12,seq_chars[i]);
+            a_text = canvas.text(x,12,seq_chars[i]);
             amino_acids.push(a_text);
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
             x += 1;
@@ -1760,7 +1780,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
 
 MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength) {
     var RS = this._RS;
-    var x = 0;
+    var x = 0, i = 0;
     
     
     var axis = canvas.set();
@@ -1778,31 +1798,31 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
     var little_labels = canvas.set();
     
     
-    for (var i = 0; i < (lineLength/5); i++ ) {
+    for ( i = 0; i < (lineLength/5); i++ ) {
 
-        if ( (x % 10) == 0) {
+        if ( (x % 10) === 0) {
             big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
         } else {
             little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
         }
 
-        if ( (x % 20) == 0 && x != 0) {
+        if ( (x % 20) === 0 && x !== 0) {
             big_labels.push(canvas.text(x,5,""+(x)));
-        } else if (( x % 10 ) == 0 && x != 0) {
+        } else if (( x % 10 ) === 0 && x !== 0) {
             little_labels.push(canvas.text(x,7,""+(x)));
         }
 
         x += 5;
     }
     
-    for ( var i = 0; i < big_labels.length; i++ ) {
+    for ( i = 0; i < big_labels.length; i++ ) {
         big_labels[i].style.textAnchor = 'middle';
         big_labels[i].setAttribute('text-anchor','middle');
         big_labels[i].setAttribute('dominant-baseline','hanging');
         big_labels[i].setAttribute('font-size',7*RS+'pt');
     }
 
-    for ( var i = 0; i < little_labels.length; i++ ) {
+    for ( i = 0; i < little_labels.length; i++ ) {
         little_labels[i].style.textAnchor = 'middle';
         little_labels[i].setAttribute('text-anchor','middle');
         little_labels[i].setAttribute('dominant-baseline','hanging');
@@ -1862,7 +1882,7 @@ MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength
 
 MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     var new_sequence = this._cleanSequence(sequence);
-    if (new_sequence == this.sequence && new_sequence != null) {
+    if (new_sequence == this.sequence && new_sequence !== null) {
         jQuery(this).trigger('sequenceChange');
         return;
     }
@@ -1876,7 +1896,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
     var seq_chars = this.sequence.split('');
     var line_length = seq_chars.length;
 
-    if (line_length == 0) {
+    if (line_length === 0) {
         return;
     }
 
@@ -1897,7 +1917,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     var RS = this._RS;
 
-    jQuery(this).unbind('svgready').bind('svgready',function(canv) {
+    jQuery(this).unbind('svgready').bind('svgready',function(cnv) {
         var canv = renderer._canvas;
         renderer._extendWithSVGApi(canv);
         canv.setAttribute('background', '#000000');
@@ -1909,7 +1929,9 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         var makeEl = function(name,attributes) {
             var result = document.createElementNS(svgns,name);
             for (var attribute in attributes) {
-                result.setAttribute(attribute, attributes[attribute]);
+                if (attributes.hasOwnProperty(attribute)) {
+                    result.setAttribute(attribute, attributes[attribute]);
+                }
             }
             return result;
         };
@@ -1926,15 +1948,15 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         gradient.appendChild(makeEl('stop',{
             'offset':'0%',
-            'style':'stop-color:#111111;stop-opacity:0.5',
+            'style':'stop-color:#111111;stop-opacity:0.5'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'50%',
-            'style':'stop-color:#aaaaaa;stop-opacity:0.5',
+            'style':'stop-color:#aaaaaa;stop-opacity:0.5'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'100%',
-            'style':'stop-color:#111111;stop-opacity:0.5',
+            'style':'stop-color:#111111;stop-opacity:0.5'
         }));
         
         gradient = makeEl('linearGradient',{
@@ -1949,11 +1971,11 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         gradient.appendChild(makeEl('stop',{
             'offset':'0%',
-            'style':'stop-color:#aaaaaa;stop-opacity:1',
+            'style':'stop-color:#aaaaaa;stop-opacity:1'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'100%',
-            'style':'stop-color:#888888;stop-opacity:1',
+            'style':'stop-color:#888888;stop-opacity:1'
         }));
 
         gradient = makeEl('linearGradient',{
@@ -1968,11 +1990,11 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         gradient.appendChild(makeEl('stop',{
             'offset':'0%',
-            'style':'stop-color:#ffffff;stop-opacity:1',
+            'style':'stop-color:#ffffff;stop-opacity:1'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'100%',
-            'style':'stop-color:#ffffff;stop-opacity:0',
+            'style':'stop-color:#ffffff;stop-opacity:0'
         }));        
 
 
@@ -1988,11 +2010,11 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         gradient.appendChild(makeEl('stop',{
             'offset':'0%',
-            'style':'stop-color:#ffffff;stop-opacity:0',
+            'style':'stop-color:#ffffff;stop-opacity:0'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'100%',
-            'style':'stop-color:#ffffff;stop-opacity:1',
+            'style':'stop-color:#ffffff;stop-opacity:1'
         }));        
 
 
@@ -2008,11 +2030,11 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         gradient.appendChild(makeEl('stop',{
             'offset':'0%',
-            'style':'stop-color:#CF0000;stop-opacity:1',
+            'style':'stop-color:#CF0000;stop-opacity:1'
         }));
         gradient.appendChild(makeEl('stop',{
             'offset':'100%',
-            'style':'stop-color:#540000;stop-opacity:1',
+            'style':'stop-color:#540000;stop-opacity:1'
         }));
         
         var glow = makeEl('filter',{
@@ -2032,7 +2054,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'x': '0',
             'y': '0',
             'width':'150%',
-            'height':'130%',
+            'height':'130%'
         });
         // 'x': '-100%',
         // 'y': '-100%',
@@ -2188,7 +2210,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         }
     };
     
-    seq_change_func['ready'] = function(other_func) {
+    seq_change_func.ready = function(other_func) {
         this.call(this,other_func);
     };
     
@@ -2261,9 +2283,9 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
     plot.setAttribute('pointer-events','none');
     axis.setAttribute('pointer-events','none');
     
-    this._layer_containers['hydropathy'].push(plot);    
-    this._layer_containers['hydropathy'].push(axis);
-    this._layer_containers['hydropathy'].fixed_track_height = (-1*min_value+max_value) / RS;
+    this._layer_containers.hydropathy.push(plot);    
+    this._layer_containers.hydropathy.push(axis);
+    this._layer_containers.hydropathy.fixed_track_height = (-1*min_value+max_value) / RS;
     return values;
 };
 
@@ -2308,7 +2330,7 @@ var addElementToLayer = function(layerName) {
         canvas.tracers = canvas.set();
         canvas._visibleTracers = function() {
             return renderer._visibleTracers();
-        }
+        };
     }
     var tracer_marker = canvas.marker(this._index+0.3,10,0.5,layerName.charAt(0).toUpperCase());
     
@@ -2401,7 +2423,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     return rect;
 };
 
-var all_annotations = new Object();
+var all_annotations = {};
 var default_annotation_height = 15;
 
 var addAnnotationToLayer = function(layerName,width,opts) {
@@ -2426,23 +2448,23 @@ var addAnnotationToLayer = function(layerName,width,opts) {
                 'content': 'A'
          };
     } else {
-        if ( typeof opts['angle'] == 'undefined' ) {
-            opts['angle'] = 0;
+        if ( typeof opts.angle == 'undefined' ) {
+            opts.angle = 0;
         }
     }
     
     if ( ! all_annotations[layerName]) {
-        all_annotations[layerName] = new Object();
+        all_annotations[layerName] = {};
     }
     
-    var blob_id = this._index+'_'+opts['angle'];
+    var blob_id = this._index+'_'+opts.angle;
 
     var blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
 
     var height = default_annotation_height;
     var offset = this._renderer._RS * height / 2;
-    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts['content'],opts);
-    blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts['angle']+',0.01,'+offset+')');
+    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
+    blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts.angle+',0.01,'+offset+')');
     all_annotations[layerName][blob_id] = blob;
     if ( ! blob_exists ) {
         blob._value = 0;
@@ -2464,7 +2486,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
             canvas.tracers = canvas.set();
             canvas._visibleTracers = function() {
                 return renderer._visibleTracers();
-            }
+            };
         }
 
         this._renderer._layer_containers[layerName].tracers.push(tracer);
@@ -2485,7 +2507,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
-    all_annotations = new Object();
+    all_annotations = {};
 };
 
 MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
@@ -2498,65 +2520,73 @@ MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
         return;
     }
 
-    for (var blob_id in all_annotations[layerName]) {
-        var blob = all_annotations[layerName][blob_id];
-        var container = this._layer_containers[layerName];
-        if (container.indexOf(blob) >= 0) {
-            container.splice(container.indexOf(blob),1);
-        }
-        if (canvas.tracers && container.tracers) {
-            for (var i = 0; i < container.tracers.length; i++ ) {
-                var tracer = container.tracers[i];
-                tracer.parentNode.removeChild(tracer);
-                if (canvas.tracers.indexOf(tracer) >= 0) {                    
-                    canvas.tracers.splice(canvas.tracers.indexOf(tracer),1);
-                }
+    for (var blob_idx in all_annotations[layerName]) {
+        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
+            var blob = all_annotations[layerName][blob_idx];
+            var container = this._layer_containers[layerName];
+            if (container.indexOf(blob) >= 0) {
+                container.splice(container.indexOf(blob),1);
             }
-            container.tracers = canvas.set();
+            if (canvas.tracers && container.tracers) {
+                for (var i = 0; i < container.tracers.length; i++ ) {
+                    var tracer = container.tracers[i];
+                    tracer.parentNode.removeChild(tracer);
+                    if (canvas.tracers.indexOf(tracer) >= 0) {                    
+                        canvas.tracers.splice(canvas.tracers.indexOf(tracer),1);
+                    }
+                }
+                container.tracers = canvas.set();
+            }
+            if (blob.parentNode) {
+                blob.parentNode.removeChild(blob);
+            }
+            all_annotations[layerName][blob_idx] = null;
         }
-        if (blob.parentNode) {
-            blob.parentNode.removeChild(blob);
-        }
-        all_annotations[layerName][blob_id] = null;        
     }
     all_annotations[layerName] = null;
     delete all_annotations[layerName];
 };
 
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
-    var canvas = this._canvas;
+    var canvas = this._canvas, a_parent = null, blob_idx = 0;
     var susp_id = canvas.suspendRedraw(10000);
     
     var max_value = 0;
     var height = default_annotation_height;
     var offset = this._RS * height / 2;
-    for (var blob_idx in all_annotations[layerName]) {
-        if ( all_annotations[layerName][blob_idx]._value > max_value ) {
-            max_value = all_annotations[layerName][blob_idx]._value;
+    for (blob_idx in all_annotations[layerName]) {
+        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
+            if ( all_annotations[layerName][blob_idx]._value > max_value ) {
+                max_value = all_annotations[layerName][blob_idx]._value;
+            }
+            a_parent = all_annotations[layerName][blob_idx].parentNode;
+            if ( ! a_parent ) {
+                continue;
+            }
+            a_parent.removeChild(all_annotations[layerName][blob_idx]);
+            all_annotations[layerName][blob_idx]._parent = a_parent;
         }
-        var a_parent = all_annotations[layerName][blob_idx].parentNode;
-        if ( ! a_parent ) {
-            continue;
-        }
-        a_parent.removeChild(all_annotations[layerName][blob_idx]);
-        all_annotations[layerName][blob_idx]._parent = a_parent;
     }
-    for (var blob_idx in all_annotations[layerName]) {
-        var a_blob = all_annotations[layerName][blob_idx];
-        var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 0.5);
-        var curr_transform = a_blob.getAttribute('transform');
-        var transform_shift = ((-315.0/1000.0)*size_val);
-        var rotate_shift = (1.0/3.0)*size_val;
-        curr_transform = curr_transform.replace(/translate\(\s*(-?\d+\.?\d*)\s*\)/,'translate('+transform_shift+')');
-        curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*\d+\.?\d*\s*\)/,','+rotate_shift+','+offset+')');
-        a_blob.setAttribute('transform', curr_transform);
-        a_blob.firstChild.setAttribute('width',size_val);
-        a_blob.firstChild.setAttribute('height',size_val);
+    for (blob_idx in all_annotations[layerName]) {
+        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
+            var a_blob = all_annotations[layerName][blob_idx];
+            var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 0.5);
+            var curr_transform = a_blob.getAttribute('transform');
+            var transform_shift = ((-315.0/1000.0)*size_val);
+            var rotate_shift = (1.0/3.0)*size_val;
+            curr_transform = curr_transform.replace(/translate\(\s*(-?\d+\.?\d*)\s*\)/,'translate('+transform_shift+')');
+            curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*\d+\.?\d*\s*\)/,','+rotate_shift+','+offset+')');
+            a_blob.setAttribute('transform', curr_transform);
+            a_blob.firstChild.setAttribute('width',size_val);
+            a_blob.firstChild.setAttribute('height',size_val);
+        }
     }
     
-    for (var blob_idx in all_annotations[layerName]) {
-        var a_parent = all_annotations[layerName][blob_idx]._parent;
-        a_parent.appendChild(all_annotations[layerName][blob_idx]);        
+    for (blob_idx in all_annotations[layerName]) {
+        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
+            a_parent = all_annotations[layerName][blob_idx]._parent;
+            a_parent.appendChild(all_annotations[layerName][blob_idx]);
+        }
     }
     canvas.unsuspendRedraw(susp_id);
 };
@@ -2664,10 +2694,11 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
         }
         jQuery(layer).unbind('visibilityChange',this._vis_change_event).bind('visibilityChange',this._vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
+        var ev_function = function(ev,original_event,element) {
+            jQuery(layer).trigger(ev.type,[original_event,element.position_start,element.position_end]);
+        };
         for (var i = 0 ; i < event_names.length; i++) {
-            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],function(ev,original_event,element) {
-                jQuery(layer).trigger(ev.type,[original_event,element.position_start,element.position_end]);
-            });
+            jQuery(this._layer_containers[layer.name]._event_proxy).bind(event_names[i],ev_function);
         }
     }
     
@@ -2716,8 +2747,8 @@ MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
 MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
     var vals = Array.prototype.slice.call(arguments);
     var RS = this._RS;
-    var idx = 0;
-    for (var i = 0; i < vals.length; i+= 2) {
+    var i = 0, idx = 0;
+    for (i = 0; i < vals.length; i+= 2) {
         var from = vals[i];
         var to = vals[i+1];
         var highlight = this._highlight[idx];
@@ -2731,7 +2762,7 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
         highlight.setAttribute('visibility','visible');
         idx += 1;
     }
-    for (var i = idx; i < this._highlight.length; i++){
+    for (i = idx; i < this._highlight.length; i++){
         this._highlight[i].setAttribute('visibility','hidden');
     }
 };
@@ -2742,7 +2773,7 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
  * @private
  */
 MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighlight) {
-    var self = this;
+    var self = this, i = 0;
     if ( ! this._layer_containers ) {
         return;
     }
@@ -2765,7 +2796,7 @@ MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighl
                 return;
             }
             layerObj._highlight_filter = [];
-            for (var i = 0; i < layer_container.length; i++ ) {
+            for (i = 0; i < layer_container.length; i++ ) {
                 layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter')+"";
                 layer_container[i].removeAttribute('filter');
             }
@@ -2776,7 +2807,7 @@ MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighl
                 return;
             }
             for (var i = 0; i < layer_container.length; i++ ) {
-                if (layerObj._highlight_filter[i] && layer_container[i].getAttribute('filter') == null) {
+                if (layerObj._highlight_filter[i] && layer_container[i].getAttribute('filter') === null) {
                     layer_container[i].setAttribute('filter',layerObj._highlight_filter[i]);
                 }
             }
@@ -2785,14 +2816,14 @@ MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighl
         layerObj._highlight_event_bound = true;
     }
     if (doHighlight) {
-        for (var i = 0 ; i < layer_container.length; i++ ) {
+        for (i = 0 ; i < layer_container.length; i++ ) {
             if (layer_container[i]._is_shine) {
                 continue;
             }
             layer_container[i].setAttribute('filter','url(#track_glow)');
         }
     } else {
-        for (var i = 0 ; i < layer_container.length; i++ ) {
+        for (i = 0 ; i < layer_container.length; i++ ) {
             if (layer_container[i]._is_shine) {
                 continue;
             }
@@ -2800,7 +2831,7 @@ MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighl
         }
     }
     
-}
+};
 
 
 /*
@@ -2843,8 +2874,8 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         } else {
             // var height,width,curr_style;
             // if (curr_style = document.defaultView.getComputedStyle(this._container, null)) {
-            //     height = curr_style['height'];
-            //     width = curr_style['width'];
+            //     height = curr_style.height;
+            //     width = curr_style.width;
             // } else if (this._container.style) {
             //     height = this._container.style.height;
             //     width = this._container.style.width;
@@ -2890,11 +2921,11 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     
     layer._setunexpanded = function() {
         expanded = false;
-    }
+    };
     
     layer._isExpanded = function() {
         return expanded;
-    }
+    };
     
     jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
         if (rend == self && group.length > 0) {            
@@ -2933,7 +2964,8 @@ MASCP.CondensedSequenceRenderer.prototype.getElementDefinedStyle = function(el,p
         var rx=new RegExp( "(#"+elm.id+"(,|$))|(\\."+elm.className+"(,|$))" ,"i"), out="";
         r.some(function(a){
            if(a.selectorText && a.selectorText.match(rx) && document.querySelectorAll(a.selectorText)[0]==elm){
-               return out=a.style[prop];
+               out=a.style[prop];
+               return out;
            }
         });
         return out;
@@ -2955,9 +2987,10 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     var track_heights = 0;
     var order = this._track_order || [];
     
-    if (this._Navigation)
+    if (this._Navigation) {
         this._Navigation.clearTracks();
-
+    }
+    
     for (var i = 0; i < order.length; i++ ) {
         
         var name = order[i];
@@ -2965,7 +2998,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
             if (container.fixed_track_height) {
-                delete attrs['height'];
+                delete attrs.height;
             }
             container.attr(attrs,animated);
             continue;
