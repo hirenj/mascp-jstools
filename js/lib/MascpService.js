@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  *  @fileOverview   Basic classes and defitions for the MASCP services
  */
@@ -10,7 +12,7 @@
 
 var window = window || null;
 
-if (typeof window.jQuery !== 'undefined' && window.jQuery) {
+if (window !== null && typeof window.jQuery !== 'undefined' && window.jQuery) {
     window.jQuery.noConflict();
 }
 
@@ -46,7 +48,6 @@ if (typeof module != 'undefined' && module.exports){
     window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
     
     var svgns = 'http://ns';
-    var globals = this;
     var jQuery = null;
     jsdom.jQueryify(window, 'http://code.jquery.com/jquery-1.4.2.js', function (window, jquery) {
         window.jQuery = jquery;
