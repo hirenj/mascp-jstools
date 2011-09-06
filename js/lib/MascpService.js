@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 /**
  *  @fileOverview   Basic classes and defitions for the MASCP services
@@ -552,7 +552,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     if (typeof db != 'undefined') {
 
         if (! db.version || db.version == "") {
-            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { });
+            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { if (err && err != 'not an error') { throw err; } });
         }
         
         sweep_cache = function(timestamp) {
