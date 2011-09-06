@@ -69,6 +69,10 @@ exports.find_region = function(agi,region) {
     })    
 };
 
+exports.print_result = function() {
+    console.log(arguments);
+};
+
 (function() {
     var CSVToArray = function( strData, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
