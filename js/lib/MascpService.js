@@ -413,10 +413,39 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
 
 (function() {
 
-    var get_db_data, store_db_data, search_service, clear_service;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache;
+    
+    var max_age = 0, min_age = 0;
 
     MASCP.Service.BeginCaching = function() {
         MASCP.Service.CacheService(MASCP.Service.prototype);
+    };
+
+    // To do 7 days ago, you do
+    // var date = new Date();
+    // date.setDate(date.getDate() - 1);
+    // MASCP.Service.SetMinimumFreshnessAge(date);
+    MASCP.Service.SetMinimumAge = function(date) {
+        if (date === 0) {
+            min_age = 0;
+        } else {
+            min_age = date.getTime();
+        }
+    };
+
+    MASCP.Service.SetMaximumAge = function(date) {
+        if (date === 0) {
+            max_age = 0;
+        } else {
+            max_age = date.getTime();
+        }
+    };
+
+    MASCP.Service.SweepCache = function(date) {
+        if (! date) {
+            date = date.getTime();
+        }
+        sweep_cache(date.getTime());
     };
 
     MASCP.Service.CacheService = function(reader) {
@@ -480,6 +509,11 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         return true;
     };
 
+    MASCP.Service.HistoryForService = function(service,cback) {
+        var serviceString = service.toString();
+        data_timestamps(serviceString,null,cback);
+    };
+
     var db;
 
     if (typeof module != 'undefined' && module.exports) {
@@ -520,6 +554,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         if (! db.version || db.version == "") {
             db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { });
         }
+        
+        sweep_cache = function(timestamp) {
+            db.execute("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
+        };
         
         clear_service = function(service,agi) {
             var servicename = service;
@@ -562,19 +600,8 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         };
         
         get_db_data = function(agi,service,cback) {
-            var sql = "SELECT * from datacache where agi=? and service=?";
-            var args = agi ? [agi,service] : ["",service];
-            db.execute(sql,args,function(err,records) {
-                if (records && records.length > 0 && typeof records[0] != 'undefined') {
-                    var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
-                    if (data) {
-                        data.retrieved = new Date(records[0].retrieved);
-                    }
-                    cback.call(null,null,data);
-                } else {
-                    cback.call(null,null,null);
-                }
-            });
+            var timestamps = max_age ? [min_age,max_age] : [min_age, (new Date()).getTime()];
+            return find_latest_data(agi,service,timestamps,cback);
         };
 
         store_db_data = function(agi,service,data) {
@@ -593,7 +620,58 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                 }
             });
         };
+        
+        find_latest_data = function(agi,service,timestamps,cback) {
+            var sql = "SELECT * from datacache where agi=? and service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved DESC LIMIT 1";
+            var args = [agi,service,timestamps[0],timestamps[1]];
+            db.execute(sql,args,function(err,records) {
+                if (records && records.length > 0 && typeof records[0] != "undefined") {
+                    var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
+                    if (data) {
+                        data.retrieved = new Date(records[0].retrieved);
+                    }
+                    cback.call(null,null,data);
+                } else {
+                    cback.call(null,null,null);
+                }
+            });
+        };
+        
+        data_timestamps = function(service,timestamps,cback) {
+            if (! timestamps || typeof timestamps != 'object' || ! timestamps.length ) {
+                timestamps = [0,(new Date()).getTime()];
+            }
+            var sql = "SELECT distinct retrieved from datacache where service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved ASC";
+            var args = [service,timestamps[0],timestamps[1]];
+            db.execute(sql,args,function(err,records) {
+                var result = [];
+                if (records && records.length > 0 && typeof records[0] != "undefined") {
+                    for (var i = records.length - 1; i >= 0; i--) {
+                        result.push(new Date(records[i].retrieved));
+                    }
+                }
+                cback.call(null,result);
+            });            
+        };
+        
     } else if ("localStorage" in window) {
+        
+        sweep_cache = function(timestamp) {
+            if ("localStorage" in window) {
+                var key;
+                for (var i = 0, len = localStorage.length; i < len; i++) {
+                    key = localStorage.key(i);
+                    if (new RegExp("^MASCP.*").test(key)) {
+                        var data = localStorage[key];
+                        if (data && typeof data === 'string') {
+                            var datablock = JSON.parse(data);
+                            datablock.retrieved = timestamp;
+                            localStorage.removeItem(key);
+                        }
+                    }
+                }
+            }
+        };
         
         clear_service = function(service,agi) {
             if ("localStorage" in window) {
@@ -677,6 +755,16 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             data.retrieved = (new Date()).getTime();
             localStorage[service.toString()+"."+(agi || '').toLowerCase()] = JSON.stringify(data);
         };
+
+        find_latest_data = function(agi,service,timestamp,cback) {
+            // We don't actually retrieve historical data for this
+            return get_db_data(agi,service,cback);
+        };
+
+        data_timestamps = function(service,timestamp,cback) {
+            cback.call(null,[]);
+        };
+
     }
     
     

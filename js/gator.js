@@ -10,7 +10,13 @@ jQuery(document).ready(function() {
     }
     
     MASCP.Service.BeginCaching();
-
+    
+    (function() {
+        var onemonthago = new Date();
+        onemonthago.setMonth((new Date()).getMonth() - 1);
+        MASCP.Service.SweepCache(onemonthago);
+    })();
+    
     var CSVToArray = function( strData, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
 
