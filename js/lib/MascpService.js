@@ -614,7 +614,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             } catch (err) {
                 return;
             }
-            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,(new Date()).getTime(),str_rep],function(err,rows) {
+            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,data.retrieved ? data.retrieved.getTime() : (new Date()).getTime(),str_rep],function(err,rows) {
                 if ( ! err ) {
                     console.log("Caching result for "+agi+" in "+service);
                 }
