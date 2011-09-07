@@ -184,9 +184,10 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             }
             rez.reader = this;
             rez.retrieved = data[i].retrieved;
-
             this.result.push(rez);
         }
+        this.result._raw_data = data;
+        
         this.result.collect = function(callback) {
             var results = this;
             var result = [];
@@ -201,7 +202,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         } catch(err2) {
             jQuery(this).trigger('error',[err2]);
         }
-        
+        result._raw_data = data;
         this.result = result;
     } else {
         var new_result = {};
@@ -210,8 +211,8 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         } catch(err3) {
             jQuery(this).trigger('error',[err3]);
         }
-        
         window.jQuery.extend( this.result, new_result );        
+        this.result._raw_data = data;
     }
 
     if (data && data.retrieved) {
@@ -251,7 +252,7 @@ MASCP.Service.prototype.gotResult = function()
 MASCP.Service.registeredLayers = function(service) {
     var result = [];
     for (var layname in MASCP.layers) {
-        if (MASCP.layers.hasOwnProperty(nm)) {
+        if (MASCP.layers.hasOwnProperty(layname)) {
             var layer = MASCP.layers[layname];
             if (layer.readers.indexOf(service.toString()) >= 0) {
                 result.push(layer);
