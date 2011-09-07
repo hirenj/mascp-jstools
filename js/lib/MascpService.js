@@ -458,12 +458,14 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         reader.retrieve = function(agi,cback) {
             var self = this;
             var id = agi ? agi : self.agi;
-            id = id.toLowerCase();
-            self.agi = id;
             if ( ! id ) {
                 _oldRetrieve.call(self,id,cback);
                 return self;
             }
+
+            id = id.toLowerCase();
+            self.agi = id;
+
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
