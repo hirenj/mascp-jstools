@@ -648,7 +648,12 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             } catch (err) {
                 return;
             }
-            var datetime = data.retrieved ? data.retrieved.getTime() : (new Date()).getTime();
+            var dateobj = data.retrieved ? data.retrieved : (new Date());
+            dateobj.setUTCHours(0);
+            dateobj.setUTCMinutes(0);
+            dateobj.setUTCSeconds(0);
+            dateobj.setUTCMilliseconds(0);
+            var datetime = dateobj.getTime();
             data = {};
             db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
         };
