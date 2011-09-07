@@ -413,7 +413,7 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
 
 (function() {
 
-    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache,begin_transaction,end_transaction;
     
     var max_age = 0, min_age = 0;
 
@@ -477,12 +477,14 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
                     }
                 } else {
                     var old_received = self._dataReceived;
-                    self._dataReceived = function(data) {
-                        store_db_data(id,self.toString(),data || {});
-                        var res = old_received.call(self,data);
-                        self._dataReceived = old_received;
+                    self._dataReceived = (function() { return function(dat) {
+                        store_db_data(id,this.toString(),dat || {});
+                        var res = old_received.call(this,dat);
+                        this._dataReceived = null;
+                        this._dataReceived = old_received;
+                        dat = {};
                         return res;
-                    };
+                    };})();
                     _oldRetrieve.call(self,id,cback);                    
                 }             
             });
@@ -512,6 +514,13 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     MASCP.Service.HistoryForService = function(service,cback) {
         var serviceString = service.toString();
         data_timestamps(serviceString,null,cback);
+    };
+
+    MASCP.Service.BulkOperation = function() {
+        begin_transaction();
+        return function() {
+            end_transaction();
+        };
     };
 
     var db;
@@ -554,6 +563,22 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         if (! db.version || db.version == "") {
             db.execute("CREATE TABLE if not exists datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { if (err && err != "Error: not an error") { throw err; } });
         }
+        
+        var old_get_db_data = get_db_data;
+        
+        begin_transaction = function() {
+            get_db_data = function(id,clazz,cback) {
+                 setTimeout(function() {
+                     cback.call(null,null);
+                 },0);
+            };
+            db.execute("BEGIN_TRANSACTION;",function() {});
+        };
+        
+        end_transaction = function() {
+            get_db_data = old_get_db_data;
+            db.execute("END TRANSACTION;",function() {});
+        };
         
         sweep_cache = function(timestamp) {
             db.execute("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
@@ -604,6 +629,14 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             return find_latest_data(agi,service,timestamps,cback);
         };
 
+        var insert_report_func = function(agi,service) {
+            return function(err,rows) {
+                if ( ! err && rows) {
+                    console.log("Caching result for "+agi+" in "+service);
+                }
+            };
+        };
+
         store_db_data = function(agi,service,data) {
             if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
                 return;
@@ -614,11 +647,9 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             } catch (err) {
                 return;
             }
-            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,data.retrieved ? data.retrieved.getTime() : (new Date()).getTime(),str_rep],function(err,rows) {
-                if ( ! err ) {
-                    console.log("Caching result for "+agi+" in "+service);
-                }
-            });
+            var datetime = data.retrieved ? data.retrieved.getTime() : (new Date()).getTime();
+            data = {};
+            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
         };
         
         find_latest_data = function(agi,service,timestamps,cback) {
@@ -764,7 +795,13 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         data_timestamps = function(service,timestamp,cback) {
             cback.call(null,[]);
         };
-
+        
+        begin_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
+        end_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
     }
     
     
