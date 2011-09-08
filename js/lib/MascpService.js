@@ -202,10 +202,9 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         } catch(err3) {
             bean.fire(this,'error',[err3]);
         }
-        
         for(var field in new_result) {
             if (new_result.hasOwnProperty(field)) {
-                this.field = new_result[field];
+                this.result[field] = new_result[field];
             }
         }
     }
@@ -250,7 +249,7 @@ MASCP.Service.registeredLayers = function(service) {
     for (var layname in MASCP.layers) {
         if (MASCP.layers.hasOwnProperty(layname)) {
             var layer = MASCP.layers[layname];
-            if (layer.readers.indexOf(service.toString()) >= 0) {
+            if (layer.readers && layer.readers.indexOf(service.toString()) >= 0) {
                 result.push(layer);
             }
         }
@@ -263,7 +262,7 @@ MASCP.Service.registeredGroups = function(service) {
     for (var nm in MASCP.groups) {
         if (MASCP.groups.hasOwnProperty(nm)) {
             var group = MASCP.groups[nm];
-            if (group.readers.indexOf(service.toString()) >= 0) {
+            if (group.readers && group.readers.indexOf(service.toString()) >= 0) {
                 result.push(group);
             }            
         }
@@ -333,23 +332,25 @@ var do_request = function(request_data) {
     var datablock = null;
     if (request_data.type == 'GET' && request_data.data) {
         request_data.url = request_data.url.replace(/\?$/,'') + '?' + make_params(request_data.data);
-    } if (request_data.type == 'POST') {
-        datablock = new FormData();
-        var fields = request_data.data;
-        for(var fieldname in fields) {
-            if (fields.hasOwnProperty(fieldname)) {
-                datablock.append(fieldname,fields[fieldname]);
-            }
-        }
+    }
+    request.open(request_data.type,request_data.url,request_data.async);
+    if (request_data.type == 'POST') {
+        request.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        datablock = make_params(request_data.data);
     }
     
-    request.open(request_data.type,request_data.url,request_data.async);
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
             if (request.status == 200) {
-                request_data.success.call(null,JSON.parse(request.responseText),request.status,request);
+                var data_block = {};
+                try {
+                    data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
+                } catch (e) {
+                    request_data.error.call(null,request.responseText,request,status);
+                }
+                request_data.success.call(null,data_block,request.status,request);
             } else {
-                
+                request_data.error.call(null,request.responseText,request,status);
             }
         }
     };
@@ -906,6 +907,12 @@ MASCP.Service.prototype.setupSequenceRenderer = function(sequenceRenderer)
  */
 MASCP.Service.importNode = function(external_node)
 {
+    if (typeof external_node == 'string') {
+        var new_data = document.createElement('div');
+        new_data.innerHTML = external_node;
+        return new_data.firstChild;        
+    }
+    
     if ( document.importNode ) {
         return document.importNode(external_node,true);
     } else {
