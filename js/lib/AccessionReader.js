@@ -25,7 +25,7 @@ MASCP.AccessionReader.prototype.requestData = function()
 {
     var self = this;
     return {
-        type: "POST",
+        type: "GET",
         dataType: "json",
         data: { 'agi'   : this.agi,
                 'accession' : this.accession,
