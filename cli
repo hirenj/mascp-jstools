@@ -60,3 +60,4 @@ MASCP.events.once('ready',function() {
         return comps;
     };
 });
+MASCP.events.emit('ready');
