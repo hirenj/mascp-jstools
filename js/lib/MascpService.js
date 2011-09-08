@@ -124,7 +124,7 @@ MASCP.buildService = function(dataExtractor)
 
 MASCP.extend = function(in_hsh,hsh) {
     for (var i in hsh) {
-        if (hsh.hasOwnProperty(i)) {
+        if (true) {
             in_hsh[i] = hsh[i];
         }
     }
@@ -321,7 +321,9 @@ MASCP.Service.prototype.unbind = function(type,func)
 var make_params = function(params) {
     var qpoints = [];
     for(var fieldname in params) {
-        qpoints.push(fieldname +'='+params[fieldname]);
+        if (params.hasOwnProperty(fieldname)) {
+            qpoints.push(fieldname +'='+params[fieldname]);
+        }
     }
     return qpoints.join('&');
 };
@@ -335,7 +337,9 @@ var do_request = function(request_data) {
         datablock = new FormData();
         var fields = request_data.data;
         for(var fieldname in fields) {
-            datablock.append(fieldname,fields[fieldname]);
+            if (fields.hasOwnProperty(fieldname)) {
+                datablock.append(fieldname,fields[fieldname]);
+            }
         }
     }
     
