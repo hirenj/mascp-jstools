@@ -38,11 +38,7 @@ if (typeof module != 'undefined' && module.exports){
     window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
     
     var svgns = 'http://ns';
-    // var jQuery = null;
-    // jsdom.jQueryify(window, 'http://code.jquery.com/jquery-1.4.2.js', function (window, jquery) {
-    //     window.jQuery = jquery;
     MASCP.events.emit('ready');
-    // });
 } else {
     window.MASCP = MASCP;
     var ie = (function(){
