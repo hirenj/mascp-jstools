@@ -503,6 +503,9 @@
     };
     
     var updateKey = function(key,val) {
+        if ( ! key ) {
+            return;
+        }
         key = key.replace(/ves$/,'f');
         key = key.replace(/s$/,'');
         var found = false;
@@ -1051,7 +1054,6 @@
             jQuery('#interpro_placeholder').hide();
             
             interpro.bind('resultReceived',function() {
-                console.log(this.result.getDomains());
                 if (Object.keys(this.result.getDomains()).length > 0) {
                     jQuery('#interpro_placeholder').show();
                 }
