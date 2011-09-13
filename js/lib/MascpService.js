@@ -338,7 +338,7 @@ var do_request = function(request_data) {
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
             if (request.status == 200) {
-                var data_block = {};
+                var data_block = request_data.dataType == 'xml' ? document.implementation.createDocument(null, "nodata", null) : {};
                 try {
                     data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
                 } catch (e) {
