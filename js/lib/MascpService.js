@@ -251,7 +251,7 @@ MASCP.Service.prototype.gotResult = function()
 MASCP.Service.registeredLayers = function(service) {
     var result = [];
     for (var layname in MASCP.layers) {
-        if (MASCP.layers.hasOwnProperty(nm)) {
+        if (MASCP.layers.hasOwnProperty(layname)) {
             var layer = MASCP.layers[layname];
             if (layer.readers.indexOf(service.toString()) >= 0) {
                 result.push(layer);
