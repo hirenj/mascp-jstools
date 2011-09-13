@@ -120,7 +120,7 @@ var READER_CONF = (function() {
         'definition'    : MASCP.PromexReader,
         'nicename'      : 'ProMEX',
         'error_url'     : 'http://promex.pph.univie.ac.at/promex/',
-        'success_url'   : 'http://promex.pph.univie.ac.at/promex/?locus=true&ac=',
+        'success_url'   : 'http://promex.pph.univie.ac.at/promex/?ac=#locus=true',
         'result'        : function() {
                             if (this.result.getPeptides().length > 0) {
                                 jQuery('#promex_placeholder').show();
@@ -206,9 +206,9 @@ var READER_CONF = (function() {
     },
     MASCP.AtProteomeReader, {
         'definition'    : MASCP.AtProteomeReader,
-        'nicename'      : 'AtProteome',
+        'nicename'      : 'Pep2Pro',
         'error_url'     : 'http://fgcz-atproteome.unizh.ch/',
-        'success_url'   : 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf=',
+        'success_url'   : 'http://fgcz-pep2pro.uzh.ch/locus.php?#locus=true',
         'result'        : function() {
                                 if (this.result === null) {
                                     return;
