@@ -86,6 +86,7 @@
         <concat destfile="build/maschup.services.js"
                   force="yes">
             <fileset dir="js" includes="json-2.js"/> 
+            <fileset dir="js" includes="bean.js"/>
             <fileset dir="js" includes="diff_match_patch.js"/>
             <fileset dir="js/lib" includes="MascpService.js"/>
             <fileset dir="js/lib" includes="*Reader.js"/>

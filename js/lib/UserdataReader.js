@@ -183,7 +183,8 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.retrieve = function(agi,cback) {
         console.log("Data not ready! Waiting for ready state");
         var self = this;        
-        window.jQuery(self).one('ready',function() {
+        bean.add(self,'ready',function() {
+            bend.remove(self,'ready',arguments.callee);
             self.retrieve(agi,cback);
         });
     };
@@ -191,7 +192,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     (function() {
         if (agis.length === 0) {
             self.retrieve = retrieve;
-            window.jQuery(self).trigger("ready");
+            bean.fire(self,'ready');
             return;
         }
         var agi = agis.shift();     
