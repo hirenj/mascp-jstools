@@ -38,7 +38,7 @@
       </dependency>
 
       <dependency org="org.jquery.masonry" name="jquery-masonry" rev="1.2.0">
-          <artifact type="js" ext="min.js" name="jquery-masonry" url="https://raw.github.com/desandro/masonry/b20474d9d17c8682d69147ff66b0c7f0b3daeed0/js/jquery.masonry.min.js"/>
+          <artifact type="js" ext="min.js" name="jquery-masonry" url="https://raw.github.com/desandro/masonry/fc047884eef893d452309f800ec4471adf93bada/js/jquery.masonry.min.js"/>
       </dependency>
 
       <dependency org="org.json" name="json" rev="2">
