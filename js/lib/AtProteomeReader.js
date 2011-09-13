@@ -43,7 +43,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
     var self = this;
     var agi = this.agi;
     return {
-        type: "POST",
+        type: "GET",
         dataType: "json",
         data: { 'agi'       : agi,
                 'service'   : 'atproteome-json' 

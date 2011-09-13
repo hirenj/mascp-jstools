@@ -16,18 +16,6 @@ if (window !== null && typeof window.jQuery !== 'undefined' && window.jQuery) {
     window.jQuery.noConflict();
 }
 
-log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function() {} : function(msg) {    
-    if (typeof msg == 'String') {
-        console.log("%s: %o", msg, this);
-    } else {
-        console.log("%o: %o", msg, this);
-    }
-    return this;
-} : log ;
-
-
-
-
 /**
  *  @namespace MASCP namespace
  */
@@ -35,24 +23,22 @@ var MASCP = MASCP || {};
 
 if (typeof module != 'undefined' && module.exports){
     var events = require('events');
+    var bean = require('./bean.js');
+    
     MASCP.events = new events.EventEmitter();
     module.exports = MASCP;
     var jsdom = require('jsdom').jsdom,
         sys = require('sys');
     
     window = jsdom().createWindow();
-
+    var document;
     if (typeof document == 'undefined') {
         document = window.document;
     }
     window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
     
     var svgns = 'http://ns';
-    var jQuery = null;
-    jsdom.jQueryify(window, 'http://code.jquery.com/jquery-1.4.2.js', function (window, jquery) {
-        window.jQuery = jquery;
-        MASCP.events.emit('ready');
-    });
+    MASCP.events.emit('ready');
 } else {
     window.MASCP = MASCP;
     var ie = (function(){
@@ -103,7 +89,8 @@ MASCP.buildService = function(dataExtractor)
 
     clazz.Result = function(data)
     {
-        window.jQuery.extend(this,dataExtractor.apply(this,[data]));
+        var new_fields = dataExtractor.apply(this,[data]);
+        MASCP.extend(this,new_fields);
         return this;
     };
     
@@ -119,7 +106,7 @@ MASCP.buildService = function(dataExtractor)
     });
 
     clazz.Result.prototype = MASCP.extend(clazz.Result.prototype,dataExtractor.apply({},[]));
-    
+        
     clazz.toString = function() {
         for (var serv in MASCP) {
             if (this == MASCP[serv]) {
@@ -133,7 +120,7 @@ MASCP.buildService = function(dataExtractor)
 
 MASCP.extend = function(in_hsh,hsh) {
     for (var i in hsh) {
-        if (hsh.hasOwnProperty(i)) {
+        if (true) {
             in_hsh[i] = hsh[i];
         }
     }
@@ -180,7 +167,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             try {
                 rez = new clazz(data[i]);
             } catch(err1) {
-                jQuery(this).trigger('error',[err1]);
+                bean.fire(this,'error',[err1]);
             }
             rez.reader = this;
             rez.retrieved = data[i].retrieved;
@@ -196,10 +183,11 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             return result;
         };
     } else if ( ! this.result ) {
+        var result;
         try {
             result = new clazz(data);
         } catch(err2) {
-            jQuery(this).trigger('error',[err2]);
+            bean.fire(this,'error',[err2]);
         }
         
         this.result = result;
@@ -208,10 +196,13 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         try {
             new_result = new clazz(data);
         } catch(err3) {
-            jQuery(this).trigger('error',[err3]);
+            bean.fire(this,'error',[err3]);
         }
-        
-        window.jQuery.extend( this.result, new_result );        
+        for(var field in new_result) {
+            if (new_result.hasOwnProperty(field)) {
+                this.result[field] = new_result[field];
+            }
+        }
     }
 
     if (data && data.retrieved) {
@@ -234,18 +225,19 @@ MASCP.Service.prototype.gotResult = function()
         thing.readers.push(self.toString());
     };
     
-    window.jQuery(MASCP).bind('layerRegistered', reader_cache);
-    window.jQuery(MASCP).bind('groupRegistered', reader_cache);
+    bean.add(MASCP,'layerRegistered', reader_cache);
+    bean.add(MASCP,'groupRegistered', reader_cache);
     
-    window.jQuery(self).trigger("resultReceived");
+    bean.fire(self,"resultReceived");
+    
     try {
-        window.jQuery(MASCP).unbind('layerRegistered',reader_cache);
-        window.jQuery(MASCP).unbind('groupRegistered',reader_cache);
+        bean.remove(MASCP,'layerRegistered',reader_cache);
+        bean.remove(MASCP,'groupRegistered',reader_cache);
     } catch (e) {
     }
 
-    window.jQuery(MASCP.Service).trigger("resultReceived");
-    window.jQuery(MASCP.Service).trigger('requestComplete');
+    bean.fire(MASCP.Service,"resultReceived");
+    bean.fire(MASCP.Service,'requestComplete');
 };
 
 MASCP.Service.registeredLayers = function(service) {
@@ -253,7 +245,7 @@ MASCP.Service.registeredLayers = function(service) {
     for (var layname in MASCP.layers) {
         if (MASCP.layers.hasOwnProperty(layname)) {
             var layer = MASCP.layers[layname];
-            if (layer.readers.indexOf(service.toString()) >= 0) {
+            if (layer.readers && layer.readers.indexOf(service.toString()) >= 0) {
                 result.push(layer);
             }
         }
@@ -266,7 +258,7 @@ MASCP.Service.registeredGroups = function(service) {
     for (var nm in MASCP.groups) {
         if (MASCP.groups.hasOwnProperty(nm)) {
             var group = MASCP.groups[nm];
-            if (group.readers.indexOf(service.toString()) >= 0) {
+            if (group.readers && group.readers.indexOf(service.toString()) >= 0) {
                 result.push(group);
             }            
         }
@@ -280,12 +272,11 @@ MASCP.Service.registeredGroups = function(service) {
  *
  *  @param  {String}    type        Event type to bind
  *  @param  {Function}  function    Handler to execute on event
- *  @see jQuery <a href="http://docs.jquery.com/Events/bind">bind function</a>.
  */
 
 MASCP.Service.prototype.bind = function(type,func)
 {
-    window.jQuery(this).bind(type,func);
+    bean.add(this,type,func);
     return this;
 };
 
@@ -295,11 +286,10 @@ MASCP.Service.prototype.bind = function(type,func)
  *
  *  @param  {String}    type        Event type to unbind
  *  @param  {Function}  function    Handler to unbind from event
- *  @see jQuery <a href="http://docs.jquery.com/Events/unbind">unbind function</a>.
  */
 MASCP.Service.prototype.unbind = function(type,func)
 {
-    window.jQuery(this).unbind(type,func);
+    bean.remove(this,type,func);
     return this;    
 };
 
@@ -321,7 +311,100 @@ MASCP.Service.prototype.unbind = function(type,func)
  *  event is triggered when an error occurs. This method returns a reference to self
  *  so it can be chained.
  */
-MASCP.Service.prototype.retrieve = function(agi,callback)
+(function(base) {
+
+var make_params = function(params) {
+    var qpoints = [];
+    for(var fieldname in params) {
+        if (params.hasOwnProperty(fieldname)) {
+            qpoints.push(fieldname +'='+params[fieldname]);
+        }
+    }
+    return qpoints.join('&');
+};
+
+var do_request = function(request_data) {
+    var request = new window.XMLHttpRequest();
+    var datablock = null;
+    if (request_data.type == 'GET' && request_data.data) {
+        request_data.url = request_data.url.replace(/\?$/,'') + '?' + make_params(request_data.data);
+    }
+    request.open(request_data.type,request_data.url,request_data.async);
+    if (request_data.type == 'POST') {
+        request.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        datablock = make_params(request_data.data);
+    }
+    
+    request.onreadystatechange = function(evt) {
+        if (request.readyState == 4) {
+            if (request.status == 200) {
+                var data_block = {};
+                try {
+                    data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
+                } catch (e) {
+                    request_data.error.call(null,request.responseText,request,status);
+                }
+                request_data.success.call(null,data_block,request.status,request);
+            } else {
+                request_data.error.call(null,request.responseText,request,status);
+            }
+        }
+    };
+    request.send(datablock);
+};
+
+/**
+ * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
+ * parameters passed, and builds an XDR object. There is no support for a locking
+ * synchronous method to do these requests (that is required for Unit testing) so an alert box is used
+ * to provide the locking.
+ * @private
+ * @param {Object} dataHash Hash with the data and settings used to build the query.
+ */
+
+
+var do_request_ie = function(dataHash)
+{
+    // Use XDR
+    var xdr = new XDomainRequest();
+    var loaded = false;
+    var counter = 0;
+    xdr.onerror = dataHash.error;
+    xdr.open("GET",dataHash.url+"?"+make_params(dataHash.data));
+    xdr.onload = function() {
+        loaded = true;
+        if (dataHash.dataType == 'xml') {
+            var dom = new ActiveXObject("Microsoft.XMLDOM");
+            dom.async = false;
+            dom.loadXML(xdr.responseText);
+            dataHash.success(dom, 'success',xdr);
+        } else if (dataHash.dataType == 'json') {
+            var parsed = null;
+            try {
+                parsed = JSON.parse(xdr.responseText);
+            } catch(err) {
+                dataHash.error(xdr,xdr,{});           
+            }
+            if (parsed) {
+                dataHash.success(parsed,'success',xdr);
+            }
+        } else {
+            dataHash.success(xdr.responseText, 'success', xdr);
+        }
+    };
+    
+    // We can't set the content-type on the parameters here to url-encoded form data.
+    xdr.send();
+    while (! dataHash.async && ! loaded && counter < 3) {
+        alert("This browser does not support synchronous requests, click OK while we're waiting for data");
+        counter += 1;
+    }
+    if ( ! dataHash.async && ! loaded ) {
+        alert("No data");
+    }
+};
+
+base.retrieve = function(agi,callback)
 {
     var self = this;
 
@@ -332,7 +415,8 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         var my_func = arguments.callee;
         if (MASCP.Service._current_reqs > MASCP.Service.MAX_REQUESTS) {
             MASCP.Service._waiting_reqs += 1;
-            window.jQuery(MASCP.Service).one('requestComplete',function() {
+            bean.add(MASCP.Service,'requestComplete',function() {
+                bean.remove(this,'requestComplete',arguments.callee);
                 setTimeout(function() {
                     MASCP.Service._waiting_reqs -= 1;
                     my_func.call(self,agi,callback);
@@ -348,11 +432,12 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     if (agi && callback) {
         this.agi = agi;
         self.removeEventListener = function() {};
-        var result_func = function() {
+        bean.add(self,"resultReceived",function() {
+            bean.remove(self,"resultReceived",arguments.callee);
             callback.call(self);
-        };
-        window.jQuery(self).one("resultReceived",result_func);
-        window.jQuery(self).one("error",function(resp,req,status) {
+        });
+        bean.add(self,"error",function(resp,req,status) {
+            bean.remove(self,"error",arguments.callee);
             callback.call(self,status);
         });
     }
@@ -361,59 +446,41 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
         return this;
     }
     
-    request_data = window.jQuery.extend({
+    var default_params = {
     async:      this.async,
     url:        request_data.url || this._endpointURL,
     timeout:    5000,
     error:      function(response,req,status) {
                     MASCP.Service._current_reqs -= 1;
-                    window.jQuery(self).trigger("error",[response,req,status]);
-                    window.jQuery(MASCP.Service).trigger('requestComplete');
+                    bean.add(self,"error",[response,req,status]);
+                    bean.fire(MASCP.Service,'requestComplete');
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
                     MASCP.Service._current_reqs -= 1;
                     if ( xhr && xhr.status !== null && xhr.status === 0 ) {
-                        window.jQuery(self).trigger("error");
+                        bean.fire(self,"error");
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
                     if (self._dataReceived(data,status)) {
                         self.gotResult();
                     }
-                },
-    /*  There is a really strange WebKit bug, where when you make a XDR request
-        with the X-Requested-With header set, it caused the body to be returned
-        to be duplicated. We're going to disable the preflighting on these requests
-        for now.
-        Submitted a bug to the webkit people https://bugs.webkit.org/show_bug.cgi?id=36854
-    */
-    xhr:        function() {
-                    var xhr = window.jQuery.ajaxSettings.xhr();
-                    if ( ! MASCP.IE ) {
-                        var oldSetRequestHeader = xhr.setRequestHeader;
-                        xhr.setRequestHeader = function(key,val) {
-                            if (key != 'X-Requested-With') {
-                                oldSetRequestHeader.apply(xhr,[key,val]);
-                            }
-                        };
-                    }
-                    return xhr;
                 }
-    },request_data);
+    };
+    MASCP.extend(default_params,request_data);
+
+    do_request(default_params);
     
     MASCP.Service._current_reqs += 1;
 
-    if (window.jQuery.browser.msie && window.XDomainRequest && this._endpointURL.match(/^https?\:/) ) {
-        this._retrieveIE(request_data);
-        return this;
-    }
-    window.jQuery.ajax(request_data);
     return this;
 };
 
+})(MASCP.Service.prototype);
+
 (function() {
 
-    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_agis;
     
     var max_age = 0, min_age = 0;
 
@@ -466,11 +533,10 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
-                        self.removeEventListener = function() {};
-                        var result_func = function() {
+                        bean.add(self,"resultReceived",function() {
+                            bean.remove(self,"resultReceived",arguments.callee);
                             cback.call(self);
-                        };
-                        window.jQuery(self).one("resultReceived",result_func);
+                        });
                     }
                     if (self._dataReceived(data,"db")) {
                         self.gotResult();
@@ -771,56 +837,6 @@ MASCP.Service.prototype.retrieve = function(agi,callback)
     
 
 })();
-/**
- * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
- * parameters passed to the jQuery method, and builds an XDR object. There is no support for a locking
- * synchronous method to do these requests (that is required for Unit testing) so an alert box is used
- * to provide the locking.
- * @private
- * @param {Object} dataHash Hash with the data and settings used to build the query.
- */
-
-
-MASCP.Service.prototype._retrieveIE = function(dataHash)
-{
-    // Use XDR
-    var xdr = new XDomainRequest();
-    var loaded = false;
-    var counter = 0;
-    xdr.onerror = dataHash.error;
-    xdr.open("GET",dataHash.url+"?"+window.jQuery.param(dataHash.data));
-    xdr.onload = function() {
-        loaded = true;
-        if (dataHash.dataType == 'xml') {
-            var dom = new ActiveXObject("Microsoft.XMLDOM");
-            dom.async = false;
-            dom.loadXML(xdr.responseText);
-            dataHash.success(dom, 'success',xdr);
-        } else if (dataHash.dataType == 'json') {
-            var parsed = null;
-            try {
-                parsed = JSON.parse(xdr.responseText);
-            } catch(err) {
-                dataHash.error(xdr,xdr,{});           
-            }
-            if (parsed) {
-                dataHash.success(parsed,'success',xdr);
-            }
-        } else {
-            dataHash.success(xdr.responseText, 'success', xdr);
-        }
-    };
-    
-    // We can't set the content-type on the parameters here to url-encoded form data.
-    xdr.send();
-    while (! dataHash.async && ! loaded && counter < 3) {
-        alert("This browser does not support synchronous requests, click OK while we're waiting for data");
-        counter += 1;
-    }
-    if ( ! dataHash.async && ! loaded ) {
-        alert("No data");
-    }
-};
 
 /**
  * Set the async parameter for this service.
@@ -836,9 +852,7 @@ MASCP.Service.prototype.setAsync = function(asyncFlag)
 
 /**
  *  Get the parameters that will be used to build this request. Implementations of services will
- *  override this method, returning the parameters to be used to build the XHR. The format for
- *  parameters follows the options used in jQuery
- *  @see <a href="http://docs.jquery.com/Ajax/jQuery.ajax#toptions">jQuery options</a>.
+ *  override this method, returning the parameters to be used to build the XHR.
  */
 
 MASCP.Service.prototype.requestData = function()
@@ -889,10 +903,16 @@ MASCP.Service.prototype.setupSequenceRenderer = function(sequenceRenderer)
  */
 MASCP.Service.importNode = function(external_node)
 {
+    if (typeof external_node == 'string') {
+        var new_data = document.createElement('div');
+        new_data.innerHTML = external_node;
+        return new_data.firstChild;        
+    }
+    
     if ( document.importNode ) {
         return document.importNode(external_node,true);
     } else {
-        var new_data = window.jQuery('<div></div>');
+        var new_data = document.createElement('div');
         new_data.innerHTML = external_node.xml;
         return new_data.firstChild;
     }    
@@ -912,7 +932,7 @@ MASCP.Service.Result.prototype = {
 
 
 MASCP.Service.Result.prototype.render = function() {
-    return window.jQuery('<span>Result received for '+this.agi+'</span>');
+//    return window.jQuery('<span>Result received for '+this.agi+'</span>');
 };
 
 
@@ -962,8 +982,8 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
 
     if (self._in_call) {
         var self_func = arguments.callee;
-        window.jQuery(self).bind('resultReceived', function() {
-            window.jQuery(self).unbind('resultReceived',arguments.callee);
+        bean.add(self,'resultReceived', function() {
+            bean.remove(self,'resultReceived',arguments.callee);
             self_func.call(self,agi,opts);
         });
         return;
@@ -983,7 +1003,7 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
                 opts.success.call();
             }
             self._in_call = false;
-            window.jQuery(self).trigger('resultReceived');
+            bean.fire(self,'resultReceived');
         }
     };
     
@@ -1009,15 +1029,15 @@ MASCP.BatchRead.prototype.retrieve = function(agi, opts) {
         }
 
         a_reader.bind('resultReceived',function() { return function() {
-            window.jQuery(this).trigger('_resultReceived');
-            window.jQuery(this).unbind('resultReceived');
+            bean.fire(this,'_resultReceived');
+            bean.remove(this,'resultReceived');
             result_count -= 1;
             trigger_done.call(this);
         };}(i));
         
         a_reader.bind('error',function() { return function() {
-            window.jQuery(this).trigger('_error');
-            window.jQuery(this).unbind('error');
+            bean.fire(this,'_error');
+            bean.remove(this,'error');
             result_count -= 1;
             trigger_done.call(this);
         };}(i));
