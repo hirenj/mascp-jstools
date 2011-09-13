@@ -149,36 +149,35 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
 
 MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
     var tissues = this.result? this.result.tissues() : [];
-        
-    for (var tiss in tissues) {
-        if (tissues.hasOwnProperty(tiss)) {        
-            var tissue = tissues[tiss];
-            if (this.result.spectra[tissue] < 1) {
-                continue;
-            }
-            var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
+    for (var i = (tissues.length - 1); i >= 0; i-- ) {
+        var tissue = tissues[i];
+        if (this.result.spectra[tissue] < 1) {
+            continue;
+        }
+        var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
 
-            var overlay_name = 'atproteome_by_tissue_'+tissue;
-        
-            // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
-        
-            var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
-        
-            MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
-                
-            var positions = this._normalise(this._mergeCounts(peptide_counts));
-            var index = 1;
-            var last_start = null;
-            while (index <= positions.length) {
-                if ((typeof positions[index] === 'undefined') && (index != positions.length) && (last_start !== null)) {
+        var overlay_name = 'atproteome_by_tissue_'+tissue;
+    
+        // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+    
+        var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
+    
+        MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
+            
+        var positions = this._normalise(this._mergeCounts(peptide_counts));
+        var index = 1;
+        var last_start = null;
+        while (index <= positions.length) {
+            if ( last_start !== null ) {
+                if ((typeof positions[index] === 'undefined') || (index == positions.length)) {
                     sequenceRenderer.getAminoAcidsByPosition([last_start])[0].addBoxOverlay(overlay_name,index-1-last_start);
-                    last_start = null;
+                    last_start = null;                    
                 }
-                if (positions[index] > 0 && last_start === null) {
-                    last_start = index;
-                }
-                index += 1;
             }
+            if (positions[index] > 0 && last_start === null) {
+                last_start = index;
+            }
+            index += 1;
         }
     }
 };
@@ -227,13 +226,13 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
 
     var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtProteome MS/MS', 'color' : '#000099', 'css' : css_block });
+    MASCP.registerLayer(overlay_name,{ 'fullname' : 'Pep2Pro MS/MS', 'color' : '#000099', 'css' : css_block });
 
 
     var an_agi = this.result.agi;
     var a_locus = an_agi.replace(/\.\d/,'');
 
-    MASCP.getLayer('atproteome_controller').href = 'http://fgcz-atproteome.unizh.ch/index.php?page=query_protein&myassembly=1%239&queryf='+a_locus;
+    MASCP.getLayer('atproteome_controller').href = 'http://fgcz-pep2pro.uzh.ch/locus.php?'+a_locus;
     while (index <= positions.length) {
         if ( index <= 0 ) {
             index += 1;
@@ -265,7 +264,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
     var reader = this;
 
     this.bind('resultReceived', function() {
-        MASCP.registerGroup('atproteome',{ 'fullname' : 'AtProteome data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+        MASCP.registerGroup('atproteome',{ 'fullname' : 'Pep2Pro data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
         if ( sequenceRenderer.sequence != this.result.sequence && this.result.sequence != '' ) {
             jQuery(sequenceRenderer).bind('sequenceChange',function() {

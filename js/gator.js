@@ -268,6 +268,9 @@ jQuery(document).ready(function() {
     };
 
     document.getElementById('tissue_results').updateKey = function(key,val) {
+        if ( ! key ) {
+            return false;
+        }
         key = key.replace(/ves$/,'f');
         key = key.replace(/s$/,'');
         var found = false;
@@ -478,7 +481,7 @@ jQuery(document).ready(function() {
             var a_locus = an_agi.replace(/\.\d+/,'');
             var rdr = READER_CONF[this.__class__];
             var indexing_id = (rdr.success_url || '').indexOf('locus=true') > 0 ? a_locus : an_agi;
-            var success_url = rdr.success_url.replace(/\#.*$/,'');
+            var success_url = (rdr.success_url || '').replace(/\#.*$/,'');
             var datestring = (this.result.retrieved instanceof Date) ? this.result.retrieved.toDateString() : 'Just now';
             jQuery('#links ul').append('<li><a href="'+success_url+a_locus+'">'+rdr.nicename+'</a><span class="timestamp data_reload">'+datestring+'</span></li>');
             var li = jQuery('#links ul li:last');
