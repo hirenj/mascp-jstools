@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 /**
  *  @fileOverview   Basic classes and defitions for the MASCP services
@@ -171,9 +171,10 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             }
             rez.reader = this;
             rez.retrieved = data[i].retrieved;
-
             this.result.push(rez);
         }
+        this.result._raw_data = data;
+        
         this.result.collect = function(callback) {
             var results = this;
             var result = [];
@@ -189,7 +190,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         } catch(err2) {
             bean.fire(this,'error',[err2]);
         }
-        
+        result._raw_data = data;
         this.result = result;
     } else {
         var new_result = {};
@@ -203,6 +204,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
                 this.result[field] = new_result[field];
             }
         }
+        this.result._raw_data = data;
     }
 
     if (data && data.retrieved) {
@@ -326,6 +328,12 @@ var make_params = function(params) {
 var do_request = function(request_data) {
     var request = new window.XMLHttpRequest();
     var datablock = null;
+    
+    if ( ! request_data.url ) {
+        request_data.success.call(null,null);
+        return;
+    }
+    
     if (request_data.type == 'GET' && request_data.data) {
         request_data.url = request_data.url.replace(/\?$/,'') + '?' + make_params(request_data.data);
     }
@@ -338,18 +346,21 @@ var do_request = function(request_data) {
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
             if (request.status == 200) {
+                console.log("Request out firing stuff");
                 var data_block = request_data.dataType == 'xml' ? document.implementation.createDocument(null, "nodata", null) : {};
                 try {
                     data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
                 } catch (e) {
-                    request_data.error.call(null,request.responseText,request,status);
+                    request_data.error.call(null,request.responseText,request,request.status);
                 }
                 request_data.success.call(null,data_block,request.status,request);
             } else {
-                request_data.error.call(null,request.responseText,request,status);
+                console.log(request.status);
+                request_data.error.call(null,request.responseText,request,request.status);
             }
         }
     };
+    console.log("Request out sending");
     request.send(datablock);
 };
 
@@ -445,7 +456,7 @@ base.retrieve = function(agi,callback)
     if (! request_data ) {
         return this;
     }
-    
+        
     var default_params = {
     async:      this.async,
     url:        request_data.url || this._endpointURL,
@@ -480,7 +491,7 @@ base.retrieve = function(agi,callback)
 
 (function() {
 
-    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_agis;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_agis, begin_transaction, end_transaction;
     
     var max_age = 0, min_age = 0;
 
@@ -522,14 +533,17 @@ base.retrieve = function(agi,callback)
         var _oldRetrieve = reader.retrieve;
         
         reader.retrieve = function(agi,cback) {
+            console.log("Cached retrieve function");
             var self = this;
             var id = agi ? agi : self.agi;
-            id = id.toLowerCase();
-            self.agi = id;
             if ( ! id ) {
                 _oldRetrieve.call(self,id,cback);
                 return self;
             }
+
+            id = id.toLowerCase();
+            self.agi = id;
+
             get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
@@ -543,12 +557,14 @@ base.retrieve = function(agi,callback)
                     }
                 } else {
                     var old_received = self._dataReceived;
-                    self._dataReceived = function(data) {
-                        store_db_data(id,self.toString(),data || {});
-                        var res = old_received.call(self,data);
-                        self._dataReceived = old_received;
+                    self._dataReceived = (function() { return function(dat) {
+                        store_db_data(id,this.toString(),dat || {});
+                        var res = old_received.call(this,dat);
+                        this._dataReceived = null;
+                        this._dataReceived = old_received;
+                        dat = {};
                         return res;
-                    };
+                    };})();
                     _oldRetrieve.call(self,id,cback);                    
                 }             
             });
@@ -578,6 +594,13 @@ base.retrieve = function(agi,callback)
     MASCP.Service.HistoryForService = function(service,cback) {
         var serviceString = service.toString();
         data_timestamps(serviceString,null,cback);
+    };
+
+    MASCP.Service.BulkOperation = function() {
+        begin_transaction();
+        return function() {
+            end_transaction();
+        };
     };
 
     var db;
@@ -618,8 +641,24 @@ base.retrieve = function(agi,callback)
     if (typeof db != 'undefined') {
 
         if (! db.version || db.version == "") {
-            db.execute("CREATE TABLE datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { });
+            db.execute("CREATE TABLE if not exists datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { if (err && err != "Error: not an error") { throw err; } });
         }
+        
+        var old_get_db_data = get_db_data;
+        
+        begin_transaction = function() {
+            get_db_data = function(id,clazz,cback) {
+                 setTimeout(function() {
+                     cback.call(null,null);
+                 },0);
+            };
+            db.execute("BEGIN_TRANSACTION;",function() {});
+        };
+        
+        end_transaction = function() {
+            get_db_data = old_get_db_data;
+            db.execute("END TRANSACTION;",function() {});
+        };
         
         sweep_cache = function(timestamp) {
             db.execute("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
@@ -670,6 +709,14 @@ base.retrieve = function(agi,callback)
             return find_latest_data(agi,service,timestamps,cback);
         };
 
+        var insert_report_func = function(agi,service) {
+            return function(err,rows) {
+                if ( ! err && rows) {
+                    console.log("Caching result for "+agi+" in "+service);
+                }
+            };
+        };
+
         store_db_data = function(agi,service,data) {
             if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
                 return;
@@ -680,11 +727,14 @@ base.retrieve = function(agi,callback)
             } catch (err) {
                 return;
             }
-            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,(new Date()).getTime(),str_rep],function(err,rows) {
-                if ( ! err ) {
-                    console.log("Caching result for "+agi+" in "+service);
-                }
-            });
+            var dateobj = data.retrieved ? data.retrieved : (new Date());
+            dateobj.setUTCHours(0);
+            dateobj.setUTCMinutes(0);
+            dateobj.setUTCSeconds(0);
+            dateobj.setUTCMilliseconds(0);
+            var datetime = dateobj.getTime();
+            data = {};
+            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
         };
         
         find_latest_data = function(agi,service,timestamps,cback) {
@@ -830,7 +880,13 @@ base.retrieve = function(agi,callback)
         data_timestamps = function(service,timestamp,cback) {
             cback.call(null,[]);
         };
-
+        
+        begin_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
+        end_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
     }
     
     
