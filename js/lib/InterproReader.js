@@ -41,12 +41,15 @@ MASCP.InterproReader.prototype.retrieve = function(agi,func) {
     }
     var self_func = arguments.callee;
     var cback = func;
-    if ( ! this.sequence ) {
+    if ( this.sequence === null ) {
         (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
-            self.sequence = this.result.getSequence();
+            self.sequence = this.result.getSequence() || '';
             self_func.call(self,self.agi,cback);
-        }).retrieve();
+        }).bind('error',function() { console.log("Errored out"); self.trigger('error'); }).retrieve();
         return this;
+    }
+    if (old_retrieve !== MASCP.Service.prototype.retrieve) {
+        old_retrieve = MASCP.Service.prototype.retrieve;
     }
     old_retrieve.call(self,self.agi,cback);
     return this;
