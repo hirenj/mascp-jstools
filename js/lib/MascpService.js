@@ -649,7 +649,7 @@ base.retrieve = function(agi,callback)
                      cback.call(null,null);
                  },0);
             };
-            db.execute("BEGIN_TRANSACTION;",function() {});
+            db.execute("BEGIN TRANSACTION;",function() {});
         };
         
         end_transaction = function() {
