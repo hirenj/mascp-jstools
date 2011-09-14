@@ -533,7 +533,6 @@ base.retrieve = function(agi,callback)
         var _oldRetrieve = reader.retrieve;
         
         reader.retrieve = function(agi,cback) {
-            console.log("Cached retrieve function");
             var self = this;
             var id = agi ? agi : self.agi;
             if ( ! id ) {
