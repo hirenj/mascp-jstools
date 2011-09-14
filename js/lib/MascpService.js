@@ -346,7 +346,6 @@ var do_request = function(request_data) {
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
             if (request.status == 200) {
-                console.log("Request out firing stuff");
                 var data_block = request_data.dataType == 'xml' ? document.implementation.createDocument(null, "nodata", null) : {};
                 try {
                     data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
@@ -360,7 +359,6 @@ var do_request = function(request_data) {
             }
         }
     };
-    console.log("Request out sending");
     request.send(datablock);
 };
 
