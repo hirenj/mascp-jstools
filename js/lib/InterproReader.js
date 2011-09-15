@@ -12,8 +12,14 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.InterproReader = MASCP.buildService(function(data) {
-                        
-                        this._raw_data = data instanceof Array ? data : [ data ];
+                        if (data) {
+                            if (! this._raw_data && ! data.data ) {
+                                this._raw_data = { 'data' : [] };
+                                this._raw_data.data.push(data);
+                            } else {
+                                this._raw_data = data;
+                            }
+                        }
                         return this;
                     });
 
@@ -41,7 +47,7 @@ MASCP.InterproReader.prototype.retrieve = function(agi,func) {
     }
     var self_func = arguments.callee;
     var cback = func;
-    if ( this.sequence === null ) {
+    if ( this.sequence === null || typeof this.sequence == 'undefined' ) {
         (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
             self.sequence = this.result.getSequence() || '';
             self_func.call(self,self.agi,cback);
@@ -72,7 +78,7 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
 {
     var content = null;
     
-    if (! this._raw_data || this._raw_data.length === 0 ) {
+    if (! this._raw_data || this._raw_data.data.length === 0 ) {
         return [];
     }    
     
@@ -82,11 +88,12 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
     
     var peptides_by_domain = {};
     var domain_descriptions = {};
-    for (var i = 0; i < this._raw_data.length; i++ ) {
-        var peptides = peptides_by_domain[this._raw_data[i].interpro] || [];
-        peptides.push(this.reader.sequence.substring(this._raw_data[i].start, this._raw_data[i].end));
-        domain_descriptions[this._raw_data[i].interpro] = this._raw_data[i].description;
-        peptides_by_domain[this._raw_data[i].interpro] = peptides;
+    var datablock = this._raw_data.data;
+    for (var i = 0; i < datablock.length; i++ ) {
+        var peptides = peptides_by_domain[datablock[i].interpro] || [];
+        peptides.push(this.reader.sequence.substring(datablock[i].start, datablock[i].end));
+        domain_descriptions[datablock[i].interpro] = datablock[i].description;
+        peptides_by_domain[datablock[i].interpro] = peptides;
     }
     
     this._peptides_by_domain = peptides_by_domain;
@@ -108,7 +115,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var agi = this.agi;
         
         MASCP.getLayer('interpro_controller').href = '';
-        var domains = this.result instanceof Array ? this.result.collect(function(res) { return res.getDomains(); }) : [ this.result.getDomains() ];
+        var domains = this.result.getDomains();
         domains.forEach(function(dom) {
             var domain = null;
             for (var nm in dom) {

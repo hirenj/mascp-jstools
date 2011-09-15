@@ -161,28 +161,10 @@ MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
     if (data instanceof Array) {
-        this.result = [];
         for (var i = 0; i < data.length; i++ ) {
-            var rez;
-            try {
-                rez = new clazz(data[i]);
-            } catch(err1) {
-                bean.fire(this,'error',[err1]);
-            }
-            rez.reader = this;
-            rez.retrieved = data[i].retrieved;
-            this.result.push(rez);
+            arguments.callee.call(this,data[i],status);
         }
-        this.result._raw_data = data;
-        
-        this.result.collect = function(callback) {
-            var results = this;
-            var result = [];
-            for (var i = 0; i < results.length; i++ ) {
-                result.push(callback.call(this,results[i]));
-            }
-            return result;
-        };
+        this.result._raw_data = { 'data' : data };
     } else if ( ! this.result ) {
         var result;
         try {
@@ -213,6 +195,9 @@ MASCP.Service.prototype._dataReceived = function(data,status)
 
     this.result.reader = this;
     this.result.agi = this.agi;
+    
+    
+    
     return true;
 };
 
@@ -229,9 +214,7 @@ MASCP.Service.prototype.gotResult = function()
     
     bean.add(MASCP,'layerRegistered', reader_cache);
     bean.add(MASCP,'groupRegistered', reader_cache);
-    
     bean.fire(self,"resultReceived");
-    
     try {
         bean.remove(MASCP,'layerRegistered',reader_cache);
         bean.remove(MASCP,'groupRegistered',reader_cache);
