@@ -232,7 +232,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 
 
         renderer._canvas.setCurrentTranslateXY = function(x,y) {
-                var curr_transform = group.getAttribute('transform').replace(/translate\([^\)]+\)/,'');
+                var curr_transform = (group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
                 curr_transform = curr_transform + ' translate('+x+', '+y+') ';
                 group.setAttribute('transform',curr_transform);
                 this.currentTranslate.x = x;
@@ -240,7 +240,7 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         };
         
         renderer._nav_canvas.setCurrentTranslateXY = function(x,y) {
-                var curr_transform = nav_group.getAttribute('transform').replace(/translate\([^\)]+\)/,'');
+                var curr_transform = (nav_group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
                 curr_transform = curr_transform + ' translate('+x+', '+y+') ';
                 nav_group.setAttribute('transform',curr_transform);
                 this.currentTranslate.x = x;
@@ -1419,7 +1419,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                 var a_y;
                 
                 if (an_array[0].getAttribute('transform')) {                    
-                    a_y = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
+                    a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
                     if (typeof a_y != 'undefined') {
                         a_y = a_y[2];
                     }
@@ -1557,7 +1557,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         }
                         if (key == 'y' && an_array[i].hasAttribute('d')) {
                             var curr_path = an_array[i].getAttribute('d');
-                            var re = /M([\d\.]+) ([\d\.]+)/;
+                            var re = /M\s*([\d\.]+) ([\d\.]+)/;
                             curr_path = curr_path.replace(re,'');
                             an_array[i].setAttribute('d', 'M0 '+parseInt(value,10)+' '+curr_path);
                         }
@@ -1569,23 +1569,23 @@ MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
                         if (key == 'y' && an_array[i].hasAttribute('transform')) {
                             curr_transform = an_array[i].getAttribute('transform');
                         
-                            curr_x = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                            curr_x = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
                             if (curr_x === null) {
                                 continue;
                             }
                             curr_x = curr_x[1];
-                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+curr_x+','+value+')');
+                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+curr_x+','+value+')');
                             an_array[i].setAttribute('transform',curr_transform);                        
                         }
                         if (key == 'x' && an_array[i].hasAttribute('transform')) {
                             curr_transform = an_array[i].getAttribute('transform');
                         
-                            curr_y = /translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
+                            curr_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
                             if (curr_y === null) {
                                 continue;
                             }
                             curr_y = curr_y[2];
-                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
+                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
                             an_array[i].setAttribute('transform',curr_transform);                        
                         }                    
                     }

@@ -23,6 +23,7 @@
     <!-- <script type="text/javascript" src="js/lib/TagVisualisation.js"></script>
 
     <script type="text/javascript" src="js/json-2.js"></script>
+    <script type="text/javascript" src="js/bean.js"></script>
     <script type="text/javascript" src="js/lib/MascpService.js"></script>
     <script type="text/javascript" src="js/lib/AtProteomeReader.js"></script>
     <script type="text/javascript" src="js/lib/AtPeptideReader.js"></script>
@@ -191,7 +192,10 @@
         }
         
         jQuery(window).resize(function() {
-            document.getElementById('condensed_container').children[0].setAttribute('width',window.innerWidth);
+            var cc = document.getElementById('condensed_container');
+            if (cc.children.length > 0) {
+                cc.children[0].setAttribute('width',window.innerWidth);
+            }
         });
 
         // Trigger the change event on page load
@@ -248,7 +252,7 @@
         MASCP.renderer.refresh();
         
         var reader = new MASCP.TairReader(agi);
-        bean.add(reader,'resultReceived',function() {
+        reader.bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();
                 return;
@@ -259,7 +263,7 @@
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         });
-        bean.add(reader,'error',function() {
+        reader.bind('error',function(response,req,status) {
             document._screen.hide();            
         });
         reader.retrieve();

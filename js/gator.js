@@ -185,7 +185,7 @@ jQuery(document).ready(function() {
         MASCP.renderer.padding = 10;
 
         jQuery(MASCP.renderer).bind('sequenceChange', function() {
-            var zoomFactor = 0.95 * document.width / (2 * MASCP.renderer.sequence.length);
+            var zoomFactor = 0.95 * window.innerWidth / (2 * MASCP.renderer.sequence.length);
             MASCP.renderer.defaultZoom = zoomFactor;
             MASCP.renderer.zoom = zoomFactor;
             dragger.applyToElement(MASCP.renderer._canvas);

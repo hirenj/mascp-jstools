@@ -1040,7 +1040,7 @@ MASCP.SequenceRenderer.prototype.refresh = function()
     if ( ! this._z_indexes) {
         this._z_indexes = {};
     }
-    for (var i = 0; i < this._track_order.length; i++ ) {
+    for (var i = 0; i < (this._track_order || []).length; i++ ) {
         if (! this.isLayerActive(this._track_order[i])) {
             continue;
         }
