@@ -3242,7 +3242,7 @@ if (MASCP.CondensedSequenceRenderer.prototype.__defineSetter__) {
     MASCP.CondensedSequenceRenderer.prototype.__defineSetter__("trackGap", accessors.setTrackGap);
     MASCP.CondensedSequenceRenderer.prototype.__defineGetter__("trackGap", accessors.getTrackGap);
 }
-/*
+
 if (Object.defineProperty) {
     Object.defineProperty(MASCP.CondensedSequenceRenderer.prototype,"zoom", {
         get : accessors.getZoom,
@@ -3261,5 +3261,5 @@ if (Object.defineProperty) {
         set : accessors.setTrackGap
     });
 }
-*/
+
 })();

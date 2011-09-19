@@ -213,7 +213,7 @@
             });
         }
                 
-        jQuery('#agi').trigger(MASCP.IE ? 'blur' : 'change',[true]);
+        jQuery('#agi').trigger('change',[true]);
     });
 
 
@@ -269,11 +269,7 @@
         reader.retrieve();
     };
 
-    if (MASCP.IE) {
-        jQuery("#agi").bind('blur',change_func);
-    } else {
-        jQuery('#agi').bind('change',change_func);
-    }
+    jQuery('#agi').bind('change',change_func);
 //]]>
 </script>
 <table align="center" style="margin-top: 400px; display: none;">
