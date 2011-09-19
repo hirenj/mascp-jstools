@@ -10,12 +10,6 @@
  *  @param  {Object}    message Message to log
  */
 
-var window = window || null;
-
-if (window !== null && typeof window.jQuery !== 'undefined' && window.jQuery) {
-    window.jQuery.noConflict();
-}
-
 /**
  *  @namespace MASCP namespace
  */
@@ -27,17 +21,8 @@ if (typeof module != 'undefined' && module.exports){
     
     MASCP.events = new events.EventEmitter();
     module.exports = MASCP;
-    var jsdom = require('jsdom').jsdom,
-        sys = require('sys');
     
-    window = jsdom().createWindow();
-    var document;
-    if (typeof document == 'undefined') {
-        document = window.document;
-    }
-    window.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-    
-    var svgns = 'http://ns';
+    var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
     MASCP.events.emit('ready');
 } else {
     window.MASCP = MASCP;
@@ -313,7 +298,7 @@ var make_params = function(params) {
 };
 
 var do_request = function(request_data) {
-    var request = new window.XMLHttpRequest();
+    var request = new XMLHttpRequest();
     var datablock = null;
     
     if ( ! request_data.url ) {
