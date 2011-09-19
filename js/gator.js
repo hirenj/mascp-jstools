@@ -171,7 +171,7 @@ jQuery(document).ready(function() {
     
     refreshSets();
     
-    if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") || ! supportsXHR ) {
+    if (! document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1")) {
         MASCP.renderer = new MASCP.SequenceRenderer(document.getElementById('sequence_container'));
         if (document.cookie.indexOf('iesplash') < 0) {
             showIESplash();

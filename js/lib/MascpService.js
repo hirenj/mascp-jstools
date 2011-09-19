@@ -49,6 +49,7 @@ if (typeof module != 'undefined' && module.exports){
             MASCP.IE = true;
             MASCP.IE8 = true;
         }
+        MASCP.IE = true;
     }
 }
 
@@ -361,6 +362,7 @@ var do_request_ie = function(dataHash)
     var loaded = false;
     var counter = 0;
     xdr.onerror = dataHash.error;
+    xdr.onprogress = function() { };
     xdr.open("GET",dataHash.url+"?"+make_params(dataHash.data));
     xdr.onload = function() {
         loaded = true;
@@ -383,9 +385,10 @@ var do_request_ie = function(dataHash)
             dataHash.success(xdr.responseText, 'success', xdr);
         }
     };
-    
     // We can't set the content-type on the parameters here to url-encoded form data.
-    xdr.send();
+    setTimeout(function () {
+        xdr.send();
+    }, 0);
     while (! dataHash.async && ! loaded && counter < 3) {
         alert("This browser does not support synchronous requests, click OK while we're waiting for data");
         counter += 1;
@@ -458,8 +461,11 @@ base.retrieve = function(agi,callback)
                 }
     };
     MASCP.extend(default_params,request_data);
-
-    do_request(default_params);
+    if (MASCP.IE) {
+        do_request_ie(default_params);
+    } else {
+        do_request(default_params);
+    }
     
     MASCP.Service._current_reqs += 1;
 
