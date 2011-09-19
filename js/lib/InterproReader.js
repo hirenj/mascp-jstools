@@ -116,9 +116,9 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         
         MASCP.getLayer('interpro_controller').href = '';
         var domains = this.result.getDomains();
-        for (var dom in domains) {
-            var domain = null;
+        for (var dom in domains) {            
             if (domains.hasOwnProperty(dom)) {
+                var domain = null;
                 domain = dom;
                 var lay = MASCP.registerLayer('interpro_domain_'+domain, { 'fullname': domain, 'group' : 'interpro_domains', 'color' : '#000000', 'css' : css_block });
                 lay.href = "http://www.ebi.ac.uk/interpro/IEntry?ac="+domain;
@@ -130,7 +130,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
                     peptide_bits.addToLayer(overlay_name);
                 }
             }
-        };
+        }
         if (sequenceRenderer.createGroupController) {
             sequenceRenderer.createGroupController('interpro_controller','interpro_domains');
         }
