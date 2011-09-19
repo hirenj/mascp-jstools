@@ -109,7 +109,7 @@ MASCP.buildService = function(dataExtractor)
         
     clazz.toString = function() {
         for (var serv in MASCP) {
-            if (this == MASCP[serv]) {
+            if (this === MASCP[serv]) {
                 return "MASCP."+serv;
             }
         }
@@ -164,6 +164,9 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         for (var i = 0; i < data.length; i++ ) {
             arguments.callee.call(this,data[i],status);
         }
+        if (i === 0) {
+            this.result = new clazz();
+        }
         this.result._raw_data = { 'data' : data };
     } else if ( ! this.result ) {
         var result;
@@ -191,6 +194,7 @@ MASCP.Service.prototype._dataReceived = function(data,status)
 
     if (data && data.retrieved) {
         this.result.retrieved = data.retrieved;
+        this.result._raw_data.retrieved = data.retrieved;
     }
 
     this.result.reader = this;
@@ -329,15 +333,25 @@ var do_request = function(request_data) {
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
             if (request.status == 200) {
-                var data_block = request_data.dataType == 'xml' ? document.implementation.createDocument(null, "nodata", null) : {};
+                var data_block;
+                if (request_data.dataType == 'xml') {
+                    data_block = typeof(document) !== 'undefined' ? document.implementation.createDocument(null, "nodata", null) : { 'getElementsByTagName' : function() { return []; } };
+                } else {
+                    data_block = {};
+                }
                 try {
-                    data_block = request_data.dataType == 'xml' ?request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
+                    data_block = request_data.dataType == 'xml' ? request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
                 } catch (e) {
-                    request_data.error.call(null,request.responseText,request,request.status);
+                    if (e.type == 'unexpexted_eos') {
+                        request_data.success.call(null,{},request.status,request);
+                        return;
+                    } else {
+                        request_data.error.call(null,request.responseText,request,request.status);
+                        return;
+                    }
                 }
                 request_data.success.call(null,data_block,request.status,request);
             } else {
-                console.log(request.status);
                 request_data.error.call(null,request.responseText,request,request.status);
             }
         }
@@ -423,7 +437,6 @@ base.retrieve = function(agi,callback)
 
     if (agi && callback) {
         this.agi = agi;
-        self.removeEventListener = function() {};
         bean.add(self,"resultReceived",function() {
             bean.remove(self,"resultReceived",arguments.callee);
             callback.call(self);
@@ -444,14 +457,14 @@ base.retrieve = function(agi,callback)
     timeout:    5000,
     error:      function(response,req,status) {
                     MASCP.Service._current_reqs -= 1;
-                    bean.add(self,"error",[response,req,status]);
+                    bean.fire(self,"error",[response,req,status]);
                     bean.fire(MASCP.Service,'requestComplete');
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
                     MASCP.Service._current_reqs -= 1;
                     if ( xhr && xhr.status !== null && xhr.status === 0 ) {
-                        bean.fire(self,"error");
+                        bean.fire(self,"error",[xhr,xhr,status]);
                         throw "Error occurred retrieving data for service "+self._endpointURL;
                     }
                     if (self._dataReceived(data,status)) {
@@ -538,14 +551,21 @@ base.retrieve = function(agi,callback)
                 } else {
                     var old_received = self._dataReceived;
                     self._dataReceived = (function() { return function(dat) {
-                        store_db_data(id,this.toString(),dat || {});
+                        if (dat !== null) {
+                            store_db_data(id,this.toString(),dat || {});
+                        }
                         var res = old_received.call(this,dat);
                         this._dataReceived = null;
                         this._dataReceived = old_received;
                         dat = {};
                         return res;
                     };})();
-                    _oldRetrieve.call(self,id,cback);                    
+                    var old_url = self._endpointURL;
+                    if ((max_age !== 0) || (min_age !== 0)) {
+                        self._endpointURL = null;
+                    }
+                    _oldRetrieve.call(self,id,cback);
+                    self._endopointURL = old_url;
                 }             
             });
             return self;
@@ -754,9 +774,12 @@ base.retrieve = function(agi,callback)
         
         sweep_cache = function(timestamp) {
             if ("localStorage" in window) {
-                var key;
+                var keys = [];
                 for (var i = 0, len = localStorage.length; i < len; i++) {
-                    key = localStorage.key(i);
+                    keys.push(localStorage.key(i));
+                }
+                var key = keys.shift();
+                while (key) {
                     if (new RegExp("^MASCP.*").test(key)) {
                         var data = localStorage[key];
                         if (data && typeof data === 'string') {
@@ -765,21 +788,26 @@ base.retrieve = function(agi,callback)
                             localStorage.removeItem(key);
                         }
                     }
+                    key = keys.shift();
                 }
             }
         };
         
         clear_service = function(service,agi) {
             if ("localStorage" in window) {
-                var key;
-                for (var i = 0, len = localStorage.length; i < len; i++){
-                    key = localStorage.key(i);
+                var keys = [];
+                for (var i = 0, len = localStorage.length; i < len; i++) {
+                    keys.push(localStorage.key(i));
+                }
+                var key = keys.shift();
+                while (key) {
                     if ((new RegExp("^"+service+".*"+(agi?agi+"$" : ""))).test(key)) {
                         localStorage.removeItem(key);
                         if (agi) {
                             return;
                         }
                     }
+                    key = keys.shift();
                 }
             }            
         };
@@ -845,7 +873,7 @@ base.retrieve = function(agi,callback)
         };
         
         store_db_data = function(agi,service,data) {
-            if (data && typeof data !== 'object' || data instanceof Document){
+            if (data && (typeof data !== 'object' || data instanceof Document || data.nodeName)){
                 return;
             }
             data.retrieved = (new Date()).getTime();
@@ -939,8 +967,12 @@ MASCP.Service.prototype.setupSequenceRenderer = function(sequenceRenderer)
  */
 MASCP.Service.importNode = function(external_node)
 {
+    if (typeof document == 'undefined') {
+        return external_node;
+    }
+    var new_data;    
     if (typeof external_node == 'string') {
-        var new_data = document.createElement('div');
+        new_data = document.createElement('div');
         new_data.innerHTML = external_node;
         return new_data.firstChild;        
     }
@@ -948,7 +980,7 @@ MASCP.Service.importNode = function(external_node)
     if ( document.importNode ) {
         return document.importNode(external_node,true);
     } else {
-        var new_data = document.createElement('div');
+        new_data = document.createElement('div');
         new_data.innerHTML = external_node.xml;
         return new_data.firstChild;
     }    
