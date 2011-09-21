@@ -1320,17 +1320,6 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
             // properly, and the drop shadow gets cut off
             this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 30);
         } else {
-            // var height,width,curr_style;
-            // if (curr_style = document.defaultView.getComputedStyle(this._container, null)) {
-            //     height = curr_style.height;
-            //     width = curr_style.width;
-            // } else if (this._container.style) {
-            //     height = this._container.style.height;
-            //     width = this._container.style.width;
-            // } else {
-            //     height = this._container.clientHeight;
-            //     width = this._container.clientWidth;                
-            // }
             this._container_canvas.setAttribute('height','100%');
             this._container_canvas.setAttribute('width','100%');
             this._Navigation.setZoom(this.zoom);
