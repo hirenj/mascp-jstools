@@ -2,26 +2,6 @@
  *  @fileOverview   Basic classes and definitions for an SVG-based sequence renderer
  */
 
-/*
- *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
- *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
- */
-if ( (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
-
-    var svg_path = 'svgweb/';
-    if (typeof SVGWEB_PATH != 'undefined') {
-        svg_path = SVGWEB_PATH;
-    }
-    var scriptTag = document.createElement("script");
-    scriptTag.src = svg_path + 'svg.js';
-    scriptTag.type="text/javascript";
-    scriptTag.setAttribute('data-path',svg_path);
-    document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
-    
-    SVGWEB_LOADING = true;
-}
-
-
 /** Default class constructor
  *  @class      Renders a sequence using a condensed track-based display
  *  @param      {Element} sequenceContainer Container element that the sequence currently is found in, and also 
@@ -32,7 +12,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     this._RS = 50;
     MASCP.SequenceRenderer.apply(this,arguments);
     var self = this;
-    
     
     this.__class__ = MASCP.CondensedSequenceRenderer;
     
@@ -61,7 +40,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
-
 
 (function() {
     var scripts = document.getElementsByTagName("script");
@@ -353,1328 +331,6 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     }
 };
 
-MASCP.CondensedSequenceRenderer.Navigation = function(canvas) {
-    this._RS = 1;
-    this._extendWithSVGApi(canvas);
-
-    this._canvas = canvas;
-
-    this._buildNavPane(canvas);
-    
-    var close_group = canvas.lastChild;
-    track_group = canvas.group();
-
-    canvas.insertBefore(track_group,close_group);
-
-
-    var track_canvas = document.createElementNS(svgns,'svg');    
-    this._buildTrackPane(track_canvas);
-
-    track_group.appendChild(track_canvas);
-
-    track_group.setAttribute('clip-path','url(#nav_clipping)');
-    
-    this._track_canvas = track_group;
-    
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype.hideFilters = function() {
-    this._nav_pane_back.removeAttribute('filter');
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype.showFilters = function() {
-    if (this._is_open) {
-        this._nav_pane_back.setAttribute('filter','url(#drop_shadow)');
-    }
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype.demote = function() {
-    var canv = this._track_canvas;
-    if (canv.fader) {
-        window.clearTimeout(canv.fader);
-    }
-    canv.setAttribute('display','none');
-    return;
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype.promote = function() {
-    var canv = this._track_canvas;
-    if (canv.fader) {
-        window.clearTimeout(canv.fader);
-    }
-    canv.setAttribute('display',this.visible() ? 'inline' : 'none');
-};
-
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._buildNavPane = function(canvas) {
-    var self = this;
-    
-    var panel_back = canvas.group();
-    var button_group = canvas.group();
-    
-    var rect = canvas.rect(-10,0,'200','100%');
-    rect.setAttribute('rx','10');
-    rect.setAttribute('ry','10');    
-    if (! ("ontouchend" in document)) {
-        rect.setAttribute('opacity','0.8');
-    }
-    rect.style.stroke = '#000000';
-    rect.style.strokeWidth = '2px';
-    rect.style.fill = '#000000';
-    rect.id = 'nav_back';
-
-    rect.setAttribute('filter','url(#drop_shadow)');
-
-    this._nav_pane_back = rect;
-
-    panel_back.push(rect);
-
-    var clipping = document.createElementNS(svgns,'clipPath');
-    clipping.id = 'nav_clipping';
-    var rect2 = document.createElementNS(svgns,'use');
-    rect2.setAttributeNS('http://www.w3.org/1999/xlink','href','#nav_back');
-    
-    //canvas.rect(0,0,'190','100%');
-    canvas.insertBefore(clipping,canvas.firstChild);
-    clipping.appendChild(rect2);
-
-    var close_group = canvas.crossed_circle('179','12','10');
-
-    close_group.style.cursor = 'pointer';
-
-    button_group.push(close_group);
-
-    var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Edit') : canvas.button(100,5,65,25,'Edit');
-    tracks_button.id = 'controls';
-    tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
-
-    panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
-
-    var scroll_controls = document.createElementNS(svgns,'foreignObject');
-    scroll_controls.setAttribute('x','0');
-    scroll_controls.setAttribute('y','0');
-    scroll_controls.setAttribute('width','100');
-    scroll_controls.setAttribute('height','45');
-    scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
-    
-    panel_back.push(scroll_controls);
-    
-    jQuery(self).bind('toggleEdit',function() {
-        self.edit_enabled = typeof self.edit_enabled == 'undefined' ? true : ! self.edit_enabled;
-        self.drag_disabled = ! self.edit_enabled;
-        if (self.edit_enabled) {
-            self._toggleMouseEvents(true);
-        } else {
-            self._toggleMouseEvents(false);
-        }
-        
-        self.hide();
-        self.show();
-        
-        self._close_buttons.forEach(function(button) {
-            button.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
-        });
-        self._controller_buttons.forEach(function(button) {
-            button.setAttribute('visibility', self.edit_enabled ? 'hidden' : 'visible');
-        });
-
-    });
-        
-    tracks_button.addEventListener('click',function() {
-        jQuery(self).trigger('toggleEdit');
-        jQuery(self).trigger('click');
-    },false);
-    
-    var visible = true;
-
-    var toggler = function(vis) {
-        visible = ( vis === false || vis === true ) ? vis : ! visible;
-        var close_transform;
-        
-        if (visible) {
-            self._track_canvas.setAttribute('display','inline');
-            panel_back.setAttribute('visibility','visible');
-            canvas.show();
-
-            rect.setAttribute('filter','url(#drop_shadow)');
-            close_group._button.removeAttribute('filter');
-            close_transform = close_group.getAttribute('transform') || ' ';
-            close_transform = close_transform.replace(/translate\(.*\)/,'');
-            close_transform = close_transform.replace(/rotate\(.*\)/,'');
-            
-            close_group.setAttribute('transform',close_transform);
-
-            scroll_controls.setAttribute('display','inline');
-        } else {
-            self._track_canvas.setAttribute('display','none');
-            panel_back.setAttribute('visibility','hidden');
-            canvas.hide();
-            rect.removeAttribute('filter');
-            close_group._button.setAttribute('filter','url(#drop_shadow)');            
-            close_transform = close_group.getAttribute('transform') || ' ';
-            close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
-            close_group.setAttribute('transform',close_transform);
-            scroll_controls.setAttribute('display','none');
-        }
-        self._is_open = visible;
-        return true;
-    };
-    
-    self._is_open = true;
-    self._toggler = toggler;
-    self.hide = function() {
-        toggler.call(this,false);
-    };
-    self.show = function() {
-        toggler.call(this,true);
-    };
-    self.visible = function() {
-        return this._is_open;
-    };
-    
-    self.setZoom = function(zoom) {
-        this._zoom_scale = zoom;
-        close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
-        rect.setAttribute('transform','scale('+zoom+',1) ');
-    };
-
-    close_group.addEventListener('click',toggler,false);    
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._enableDragAndDrop = function(handle,element,track,canvas) {
-        var nav = this;
-
-        if ( typeof nav.drag_disabled == 'undefined') {
-            nav.drag_disabled = true;
-        }
-
-        var self = arguments.callee;
-        self.in_drag = false;
-
-        if ( ! self.targets ) {
-            self.targets = [];
-        }
-        
-        self.targets.push(element);
-        element.track = track;
-
-        self.resetDrag = function() {
-            window.clearTimeout(self._anim);
-            window.clearTimeout(self._hover_timeout);
-            for (var i = 0; i < self.targets.length; i++) {
-                if (self.targets[i] != self.drag_el) {
-                    self.targets[i].removeAttribute('transform');
-                    self.targets[i].setAttribute('pointer-events','all');
-                }
-            }
-        };
-
-        var single_touch_event = function(fn) {
-            return function(e) {
-                if (e.touches && e.touches.length == 1) {
-                    fn.call(this,e);
-                }
-            };
-        };
-
-        var beginDragging = function(ev,tr,lbl_grp) {
-            
-            if (nav.drag_disabled) {
-                return;
-            }
-
-            var target = canvas.nearestViewportElement;
-
-            if (self.in_drag) {
-                return;                
-            }
-
-
-            self.spliceBefore = null;
-            self.spliceAfter = null;            
-
-            var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
-
-            p_orig.x = ev.pageX || ev.touches[0].pageX;
-            p_orig.y = ev.pageY || ev.touches[0].pageY;
-
-            var rootCTM = lbl_grp.nearestViewportElement.getScreenCTM();
-            var matrix = rootCTM.inverse();
-
-            p_orig = p_orig.matrixTransform(matrix);
-
-            var oX = p_orig.x;
-            var oY = p_orig.y;
-
-            var dragfn = function(e) {
-                var p = lbl_grp.nearestViewportElement.createSVGPoint();
-                p.x = e.pageX || e.touches[0].pageX;
-                p.y = e.pageY || e.touches[0].pageY;
-                p = p.matrixTransform(matrix);
-
-                var dX = (p.x - oX);
-                var dY = (p.y - oY);
-                var curr_transform = lbl_grp.getAttribute('transform') || '';
-                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
-                curr_transform += ' translate('+dX+','+dY+') ';
-                curr_transform = curr_transform.replace(/\s*$/,'');
-                lbl_grp.setAttribute('transform',curr_transform);
-                self.targets.forEach(function(targ){
-                    var bb = targ.getBBox();
-                    if (bb.y < p.y && bb.y > (p.y - bb.height) && bb.x < p.x && bb.x > (p.x - bb.width)) {
-                        el_move.call(targ,e,targ.track);
-                    }
-                });
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            };
-            if ("ontouchend" in document) {
-                dragfn = single_touch_event(dragfn);
-            }
-
-            var enddrag = function(e) {
-                if (e.relatedTarget && (e.relatedTarget == lbl_grp || e.relatedTarget.nearestViewportElement == lbl_grp.nearestViewportElement || e.relatedTarget.nearestViewportElement == target)) {
-                    if (self.in_drag && self.targets.indexOf(e.relatedTarget) >= 0) {                        
-                        self.resetDrag();
-                    }
-                    return;
-                }
-
-                if (self.in_drag && (e.type == 'mouseup' || e.type == 'touchend')) {
-                    if (self.spliceBefore || self.spliceAfter) {
-                        nav._spliceTrack(self.trackToSplice, self.spliceBefore, self.spliceAfter);
-                    }
-                }
-                target.removeEventListener('touchmove',dragfn,false);
-                target.removeEventListener('mousemove',dragfn,false);
-                target.removeEventListener('touchend',arguments.callee,false);
-                target.removeEventListener('mouseup',arguments.callee,false);
-                target.removeEventListener('mouseout',arguments.callee,false);
-                if (self.in_drag) {
-                    lbl_grp.setAttributeNS(null, 'pointer-events', 'all');
-                    lbl_grp.removeAttribute('transform');
-                    self.resetDrag();
-                    self.in_drag = false;
-                }
-            };
-            lbl_grp.setAttributeNS(null, 'pointer-events', 'none');
-            lbl_grp.addEventListener('touchmove',dragfn,false);
-            lbl_grp.addEventListener('touchend',single_touch_event(dragfn),false);
-            target.addEventListener('mousemove',dragfn,false);
-            target.addEventListener('mouseup',enddrag,false);
-            target.addEventListener('mouseout',enddrag,false);
-            
-            self.in_drag = track;
-            self.drag_el = lbl_grp;
-        };
-
-        var handle_start = function(e) {
-            beginDragging(e,track,element);
-        };
-
-        var el_move = function(e,trk) {
-            var trck = trk ? trk : track;
-            var elem = this ? this : element;
-            
-            if ( self.in_drag && self.in_drag != trck && trck != self._last_target) {
-                self._last_target = trck;
-                if (self._hover_timeout) {
-                    window.clearTimeout(self._hover_timeout);
-                }
-                self._hover_timeout = window.setTimeout(function() {
-                    if ( (self.in_drag.group || trck.group) &&                    
-                         (self.in_drag.group ? trck.group :  ! trck.group ) ) {
-                        if (self.in_drag.group.name != trck.group.name) {
-                            return;
-                        }
-                    } else {
-                        if ( self.in_drag.group || trck.group ) {
-                            return;
-                        }
-                    }
-
-                    if (self._anim) {
-                        window.clearInterval(self._anim);
-                        self._anim = null;
-                    }
-                    
-                    self.resetDrag();
-                    
-                    var current_sibling = elem;
-                    
-                    var elements_to_shift = [];
-
-                    while (current_sibling !== null) {
-                        if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
-                            elements_to_shift.push(current_sibling);
-                        }
-                        current_sibling = current_sibling.nextSibling;
-                        if (current_sibling == self.drag_el) {
-                            break;
-                        }
-                    }
-                    
-                    current_sibling = elem.previousSibling;
-                    
-                    var elements_to_shift_up = [];
-                    
-                    while (current_sibling !== null) {
-                        if (current_sibling != self.drag_el && self.targets.indexOf(current_sibling) >= 0) {
-                            elements_to_shift_up.push(current_sibling);
-                        }
-                        current_sibling = current_sibling.previousSibling;
-                        if (current_sibling == self.drag_el) {
-                            break;
-                        }
-                    }
-                    var anim_steps = 1;
-                    var height = 100.0 / nav._zoom_scale;
-                    self._anim = window.setInterval(function() {
-                        var curr_transform, i = 0;
-                        
-                        if (anim_steps < 5) {
-                            for (i = 0; i < elements_to_shift.length; i++ ) {
-                                curr_transform = elements_to_shift[i].getAttribute('transform') || '';
-                                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
-                                curr_transform += ' translate(0,'+anim_steps*height+')';
-                                elements_to_shift[i].setAttribute('transform',curr_transform);
-                            }
-
-                            for (i = 0; (elements_to_shift.length > 0) && i < elements_to_shift_up.length; i++ ) {
-
-                                curr_transform = elements_to_shift_up[i].getAttribute('transform') || '';
-                                curr_transform = curr_transform.replace(/\s?translate\([^\)]+\)/,'');
-                                curr_transform += ' translate(0,'+anim_steps*-1*height+')';
-                                elements_to_shift_up[i].setAttribute('transform',curr_transform);
-                            }
-
-
-                            anim_steps += 1;
-                        } else {
-                            self.spliceBefore = trck;
-                            self.trackToSplice = self.in_drag;
-                            window.clearInterval(self._anim);
-                            self._anim = null;
-                        }
-                    },30);
-
-                },300);
-            }
-        };
-        
-        
-        handle.addEventListener('mousedown', handle_start,false);
-//        element.addEventListener('mousemove',el_move,false);
-        handle.addEventListener('touchstart',single_touch_event(handle_start),false);
-//        element.addEventListener('touchmove',single_touch_event(el_move),true);
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._toggleMouseEvents = function(on) {
-    var self = this;
-    if (self._track_rects) {
-        self._track_rects.forEach(function(el) {
-//            el.setAttribute('fill',on ? '#ffffff': 'url(#simple_gradient)');
-            el.setAttribute('opacity',on ? '1': (("ontouchend" in document) ? "0.5" : "0.1") );
-
-            el.setAttribute('pointer-events', on ? 'all' : 'none');
-        });
-    }
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._buildTrackPane = function(canvas) {
-    var self = this;
-    this._extendWithSVGApi(canvas);
-
-    canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
-    
-    this.clearTracks = function() {
-        while (canvas.firstChild) {
-            canvas.removeChild(canvas.firstChild);
-        }
-        this._enableDragAndDrop.targets = null;
-        this._track_rects = [];
-    };
-    
-    this.setViewBox = function(viewBox) {
-        canvas.setAttribute('viewBox',viewBox);
-    };
-    
-    this.setDimensions = function(width,height) {
-        canvas.style.height = height;
-        canvas.style.width = width;
-        canvas.setAttribute('height',height);        
-        canvas.setAttribute('width',width);
-    };
-    
-    this.renderTrack = function(track,y,height,options) {
-        var label_group = canvas.group();
-        var a_rect = canvas.rect(0,y-1*height,'100%',3*height);
-        a_rect.setAttribute('stroke','#000000');
-        a_rect.setAttribute('stroke-width','2');
-        a_rect.setAttribute('fill','url(#simple_gradient)');
-        a_rect.setAttribute('opacity',("ontouchend" in document) ? '0.5' : '0.1');
-        a_rect.setAttribute('pointer-events','none');
-        self._track_rects = self._track_rects ? self._track_rects : [];
-        
-        self._track_rects.push(a_rect);
-        
-        label_group.push(a_rect);
-
-        // Use these for debugging positioning
-        
-        // var r = canvas.rect(0,y-height,height,height);
-        // r.setAttribute('fill','#ff0000');
-        // label_group.push(r);
-        // 
-        // r = canvas.rect(0,y+height,height,height);
-        // r.setAttribute('fill','#ff0000');
-        // label_group.push(r);
-        
-        
-        var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
-        var text_left;
-        if ("ontouchend" in document) {
-            text_left = 8*height*text_scale;
-        } else {
-            text_left = 4*height*text_scale;            
-        }
-        var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
-        a_text.setAttribute('height', 2*height);
-        a_text.setAttribute('width', 2*height);
-        a_text.setAttribute('font-size',2*height*text_scale);
-        a_text.setAttribute('fill','#ffffff');
-        a_text.setAttribute('stroke','#ffffff');
-        a_text.setAttribute('stroke-width','1');
-        a_text.setAttribute('dominant-baseline', 'middle');
-
-        // r = canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
-        // r.setAttribute('fill','#00ff00');
-        // label_group.push(r);
-
-        label_group.push(a_text);
-        
-        a_text.setAttribute('pointer-events','none');
-        
-        var circ;
-        
-        if (track.href && ! track._group_controller) {
-            a_anchor = canvas.a(track.href);
-            var icon_name = null;
-            var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
-            if ("ontouchend" in document) {
-                icon_metrics[2] = icon_metrics[2] * 2;
-            }
-            icon_metrics[1] = -0.5*(icon_metrics[2] - height);
-
-            circ = canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
-            circ.setAttribute('fill','#ffffff');
-            circ.setAttribute('opacity','0.1');
-            a_anchor.appendChild(circ);
-            
-            var url_type = track.href;
-            if (typeof url_type === 'string' && url_type.match(/^javascript\:/)) {
-                icon_name = '#plus_icon';
-            } else if (typeof url_type === 'function') {
-                icon_name = '#plus_icon';
-                a_anchor.setAttribute('href','#');
-                a_anchor.removeAttribute('target');
-                a_anchor.addEventListener('click',function(e) {
-                    url_type.call();
-
-                    if (e.preventDefault) {
-                        e.preventDefault();
-                    } else {
-                        e.returnResult = false;
-                    }
-                    if (e.stopPropagation) {
-                        e.stopPropagation();
-                    } else {
-                        e.cancelBubble = true;
-                    }
-
-                    return false;
-                },false);
-            } else {
-                icon_name = '#new_link_icon';
-            }
-            if (track.icon) {
-                icon_name = track.icon;
-            }
-            var a_use = canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
-            a_use.style.cursor = 'pointer';
-            a_anchor.appendChild(a_use);
-            a_anchor.setAttribute('transform','translate(0,'+y+')');
-        }
-        
-        label_group.addEventListener('touchstart',function() {
-            label_group.onmouseover = undefined;
-            label_group.onmouseout = undefined;
-        },false);
-
-        label_group.addEventListener('touchend',function() {
-            label_group.onmouseover = undefined;
-            label_group.onmouseout = undefined;
-        },false);
-        
-        this._enableDragAndDrop(a_rect,label_group,track,canvas);
-        
-        (function() {
-            
-            if (track.group) {
-                return;
-            }
-            
-            var t_height = 1.5*height;            
-            if ("ontouchend" in document) {
-                t_height = 3*height;
-            }
-            if ( ! self._close_buttons) {
-                self._close_buttons = [];
-            }
-            
-            var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
-            closer.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
-            closer.firstChild.setAttribute('fill','url(#red_3d)');
-            for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
-                nodes[i].setAttribute('stroke-width',(t_height/4).toString());
-            }
-            closer.addEventListener('click',function() {
-                self._spliceTrack(track);
-            },false);
-            label_group.push(closer);
-            self._close_buttons.push(closer);
-            closer.setAttribute('visibility', self.edit_enabled ? 'visible' : 'hidden');
-            
-        })();
-        
-        if (track._group_controller) {
-            if ( ! self._controller_buttons) {
-                self._controller_buttons = [];
-            }
-
-            var t_height = 1.5*height;            
-            if ("ontouchend" in document) {
-                t_height = 3*height;
-            }
-            var expander = canvas.group();
-            circ = canvas.circle(1.5*t_height,0,t_height);
-            circ.setAttribute('fill','#ffffff');
-            circ.setAttribute('opacity','0.1');
-            expander.push(circ);
-
-            var t_metrics = [1.1*t_height,-1.25*t_height,2.25*t_height,(-0.5*t_height),1.1*t_height,0.25*t_height];
-            
-            t_metrics[1] += 0.5*(t_height - 0*height);
-            t_metrics[3] += 0.5*(t_height - 0*height);
-            t_metrics[5] += 0.5*(t_height - 0*height);
-
-            
-            var group_toggler = canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
-            if (track._isExpanded()) {
-                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');
-            } else {
-                expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
-            }
-            group_toggler.setAttribute('height', 1.75*t_height);
-            group_toggler.setAttribute('font-size',1.5*t_height);
-            group_toggler.setAttribute('fill','#ffffff');
-            group_toggler.setAttribute('dominant-baseline','central');
-            group_toggler.setAttribute('pointer-events','none');
-            
-            expander.push(group_toggler);
-
-            expander.style.cursor = 'pointer';
-            expander.addEventListener('click',function(e) {
-                e.stopPropagation();
-                jQuery(track).trigger('_expandevent');
-                if (track._isExpanded()) {
-                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');                
-                } else {
-                    expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
-                }
-            },false);
-            label_group.push(expander);
-
-            self._controller_buttons.push(expander);
-            expander.setAttribute('visibility', self.edit_enabled ? 'hidden' : 'visible');            
-        }
-    };
-};
-
-MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi = function(canvas) {
-    // We're going to use a render scale (RS) so we scale up the dimensions of the
-    // whole widget
-    
-    var RS = this._RS;
-    var renderer = this;
-    
-    canvas.path = function(pathdesc) {
-      var a_path = document.createElementNS(svgns,'path');
-      a_path.setAttribute('d', pathdesc);
-      a_path.setAttribute('stroke','#000000');
-      a_path.setAttribute('stroke-width','1');
-      this.appendChild(a_path);
-      return a_path;
-    };
-
-    canvas.poly = function(points) {
-       var a_poly = document.createElementNS(svgns,'polygon');
-       a_poly.setAttribute('points',points);
-       this.appendChild(a_poly);
-       return a_poly;
-    };
-
-    canvas.circle = function(x,y,radius) {
-        var a_circle = document.createElementNS(svgns,'circle');
-        a_circle.setAttribute('cx', typeof x == 'string' ? x : x * RS);
-        a_circle.setAttribute('cy', typeof y == 'string' ? y : y * RS);
-        a_circle.setAttribute('r', typeof radius == 'string' ? radius : radius * RS);        
-        this.appendChild(a_circle);
-        return a_circle;
-    };
-
-    canvas.group = function() {
-        var a_g = document.createElementNS(svgns,'g');
-        this.appendChild(a_g);
-        a_g.push = function(new_el) {
-            a_g.appendChild(new_el);
-        };
-        
-        return a_g;
-    };
-    
-    canvas.line = function(x,y,x2,y2) {
-        var a_line = document.createElementNS(svgns,'line');
-        a_line.setAttribute('x1', typeof x == 'string' ? x : x * RS);
-        a_line.setAttribute('y1', typeof y == 'string' ? y : y * RS);
-        a_line.setAttribute('x2', typeof x2 == 'string' ? x2 : x2 * RS);
-        a_line.setAttribute('y2', typeof y2 == 'string' ? y2 : y2 * RS);
-        this.appendChild(a_line);
-        return a_line;        
-    };
-
-    canvas.rect = function(x,y,width,height) {
-      var a_rect = document.createElementNS(svgns,'rect');
-      a_rect.setAttribute('x', typeof x == 'string' ? x : x * RS);
-      a_rect.setAttribute('y', typeof y == 'string' ? y : y * RS);
-      a_rect.setAttribute('width', typeof width == 'string' ? width : width * RS);
-      a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
-      a_rect.setAttribute('stroke','#000000');
-//      a_rect.setAttribute('shape-rendering','optimizeSpeed');
-      this.appendChild(a_rect);
-      return a_rect;
-    };
-
-    canvas.use = function(ref,x,y,width,height) {
-        var a_use = document.createElementNS(svgns,'use');
-        a_use.setAttribute('x', typeof x == 'string' ? x : x * RS);
-        a_use.setAttribute('y', typeof y == 'string' ? y : y * RS);
-        a_use.setAttribute('width', typeof width == 'string' ? width : width * RS);
-        a_use.setAttribute('height', typeof height == 'string' ? height : height * RS);
-        a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',ref);
-        this.appendChild(a_use);
-                
-        return a_use;        
-    };
-
-    canvas.a = function(href) {
-        var a_anchor = document.createElementNS(svgns,'a');
-        a_anchor.setAttribute('target','_new');        
-        a_anchor.setAttributeNS('http://www.w3.org/1999/xlink','href',href);
-        this.appendChild(a_anchor);
-        return a_anchor;
-    };
-
-    canvas.button = function(x,y,width,height,text) {
-        var fo = document.createElementNS(svgns,'foreignObject');
-        fo.setAttribute('x',0);
-        fo.setAttribute('y',0);
-        fo.setAttribute('width',x+width);
-        fo.setAttribute('height',y+height);
-        fo.style.position = 'absolute';
-        this.appendChild(fo);
-        var button = document.createElement('button');
-        button.style.display = 'block';
-        button.style.position = 'relative';
-        button.style.top = y+'px';
-        button.style.left = x+'px';
-        button.textContent = text;
-        fo.appendChild(button);
-        return button;
-    };
-
-    canvas.svgbutton = function(x,y,width,height,txt) {
-        var button = this.group();
-        var back = this.rect(x,y,width,height);
-        back.setAttribute('rx','10');
-        back.setAttribute('ry','10');
-        back.setAttribute('stroke','#ffffff');
-        back.setAttribute('stroke-width','2');
-        back.setAttribute('fill','url(#simple_gradient)');
-        x = back.x.baseVal.value;
-        y = back.y.baseVal.value;
-        width = back.width.baseVal.value;
-        height = back.height.baseVal.value;
-        
-        var text = this.text(x+width/2,y+(height/3),txt);        
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('dominant-baseline', 'hanging');
-        text.setAttribute('font-size',0.5*height);
-        text.setAttribute('fill','#ffffff');
-        button.push(back);
-        button.push(text);
-        button.background_element = back;
-        button.text_element = text;
-        
-        button.setAttribute('cursor','pointer');
-        var button_trigger = function() {
-            back.setAttribute('fill','#999999');
-            back.setAttribute('stroke','#000000');
-        };
-        button.addEventListener('mousedown',button_trigger,false);
-        button.addEventListener('touchstart',button_trigger,false);
-        var button_reset = function() {
-            back.setAttribute('stroke','#ffffff');
-            back.setAttribute('fill','url(#simple_gradient)');
-        };
-        button.addEventListener('mouseup',button_reset,false);
-        button.addEventListener('mouseout',button_reset,false);
-        button.addEventListener('touchend',button_reset,false);
-        return button;
-    };
-
-    canvas.growingMarker = function(x,y,symbol,opts) {
-        var container = document.createElementNS(svgns,'svg');
-        container.setAttribute('viewBox', '-50 -100 150 300');
-        container.setAttribute('preserveAspectRatio', 'xMinYMin meet');
-        container.setAttribute('x',x);
-        container.setAttribute('y',y);
-        var the_marker = this.marker(50/RS,50/RS,50/RS,symbol,opts);
-        container.appendChild(the_marker);
-        container.contentElement = the_marker.contentElement;
-        var result = this.group();
-        result.appendChild(container);
-        return result;
-    };
-
-    canvas.marker = function(cx,cy,r,symbol,opts) {
-        var units = 0;
-        if (typeof cx == 'string') {
-            var parts = new RegExp(/(\d+)(.*)/g).exec(cx);
-            units = parts[2];
-            cx = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(cy);
-            cy = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(r);
-            r = parseFloat(parts[1]);        
-
-        }
-
-        var dim = {
-            CX      : cx+units,
-            CY      : cy+units,
-            R       : r+units,
-            MIN_X   : (cx-r)+units,
-            MAX_X   : (cx+r)+units,
-            MIN_Y   : (cy-r)+units,
-            MAX_Y   : (cy+r)+units,
-            MID_X1  : (cx-(r/2))+units,
-            MID_X2  : (cx+(r/2))+units,
-            MID_Y1  : (cy-(r/2))+units,
-            MID_Y2  : (cy+(r/2))+units
-        };
-
-        var marker = this.group();
-
-        var fill_color = (opts && opts.border) ? opts.border : 'rgb(0,0,0)';
-
-        marker.push(this.circle(0,-0.5*r,r));
-        
-        marker.lastChild.style.fill = fill_color;
-        
-        marker.push(this.circle(0,1.5*r,r));
-
-        marker.lastChild.style.fill = fill_color;
-
-        var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(0.9)*r*RS+','+(0*r*RS));
-        
-        
-        arrow.setAttribute('style','fill:'+fill_color+';stroke-width: 0;');
-        marker.push(arrow);
-        marker.setAttribute('transform','translate('+((cx)*RS)+','+0.5*cy*RS+') scale(1)');
-        marker.setAttribute('height', dim.R*RS);
-        if (typeof symbol == 'string') {
-            marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
-            marker.push(marker.contentElement);
-        } else {
-            marker.contentElement = this.group();
-            if (symbol) {
-                marker.contentElement.push(symbol);
-            }
-            marker.push(marker.contentElement);
-        }
-        return marker;
-    };
-
-    canvas.text_circle = function(cx,cy,r,txt,opts) {
-
-        if ( ! opts ) {
-            opts = {};
-        }        
-
-        var units = 0;
-
-        if (typeof cx == 'string') {
-            var parts = new RegExp(/(\d+)(.*)/g).exec(cx);
-            units = parts[2];
-            cx = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(cy);
-            cy = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(r);
-            r = parseFloat(parts[1]);        
-
-        }
-        var dim = {
-            CX      : cx+units,
-            CY      : cy+units,
-            R       : r+units,
-            MIN_X   : (cx-r)+units,
-            MAX_X   : (cx+r)+units,
-            MIN_Y   : (cy-r)+units,
-            MAX_Y   : (cy+r)+units,
-            MID_X1  : (cx-(r/2))+units,
-            MID_X2  : (cx+(r/2))+units,
-            MID_Y1  : (cy-(r/2))+units,
-            MID_Y2  : (cy+(r/2))+units
-        };
-
-        var marker_group = this.group();
-
-        var back = this.circle(0,dim.CY,9/10*dim.R);
-        back.setAttribute('fill','url(#simple_gradient)');
-        back.setAttribute('stroke', opts.border || '#000000');
-        back.setAttribute('stroke-width', (r/10)*RS);
-
-        marker_group.push(back);
-        var text = this.text(0,dim.CY-0.5*dim.R,txt);
-        text.setAttribute('font-size',r*RS);
-        text.setAttribute('font-weight','bolder');
-        text.setAttribute('fill','#ffffff');
-        text.setAttribute('style','font-family: sans-serif; text-anchor: middle; dominant-baseline: hanging;');
-        text.setAttribute('dominant-baseline','hanging');
-        text.setAttribute('text-anchor','middle');
-        marker_group.push(text);
-        
-        marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1) scale(1)');
-        marker_group.setAttribute('height', (dim.R/2)*RS );
-        return marker_group;
-    };
-
-    canvas.crossed_circle = function(cx,cy,r) {
-
-        var units = 0;
-
-
-        if (typeof cx == 'string') {
-            var parts = new RegExp(/(\d+)(.*)/g).exec(cx);
-            units = parts[2];
-            cx = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(cy);
-            cy = parseFloat(parts[1]);
-            
-            parts = new RegExp(/(\d+)(.*)/g).exec(r);
-            r = parseFloat(parts[1]);        
-
-        }
-        var dim = {
-            CX      : cx+units,
-            CY      : cy+units,
-            R       : r+units,
-            MIN_X   : (cx-r)+units,
-            MAX_X   : (cx+r)+units,
-            MIN_Y   : (cy-r)+units,
-            MAX_Y   : (cy+r)+units,
-            MID_X1  : (cx-(r/2))+units,
-            MID_X2  : (cx+(r/2))+units,
-            MID_Y1  : (cy-(r/2))+units,
-            MID_Y2  : (cy+(r/2))+units
-        };
-
-        var close_group = this.group();
-
-        var close_button = this.circle(dim.CX,dim.CY,dim.R);
-        close_button.setAttribute('fill','#000000');
-        close_button.setAttribute('stroke', '#ffffff');
-        close_button.setAttribute('stroke-width', '2');
-
-        close_group._button = close_button;
-
-        close_group.push(close_button);
-
-        var a_line = this.line(dim.MID_X1,dim.MID_Y1,dim.MID_X2,dim.MID_Y2);
-        a_line.setAttribute('stroke', '#ffffff');
-        a_line.setAttribute('stroke-width', '2');
-
-        close_group.push(a_line);
-
-        a_line = this.line(dim.MID_X1,dim.MID_Y2,dim.MID_X2,dim.MID_Y1);
-        a_line.setAttribute('stroke', '#ffffff');
-        a_line.setAttribute('stroke-width', '2');
-
-        close_group.push(a_line);
-
-        return close_group;        
-    };
-
-
-    // var annotation = makeEl('svg',{
-    //     'width' : '100%',
-    //     'height': '100%',
-    //     'id'    : 'annotation_icon',
-    //     'viewBox': '0 0 100 100',
-    //     'preserveAspectRatio' : 'xMinYMin meet'
-    // });
-    // 
-    // defs.appendChild(annotation);
-    // 
-    // annotation.appendChild(makeEl('path', {
-    //     'd' : 'M50,0 l25,80 l-50,0 Z',
-    //     'fill' : '#dd0000',
-    // }));
-    // 
-    // 
-    // annotation.appendChild(makeEl('circle', {
-    //     'cx'  : '50',
-    //     'cy'  : '75',
-    //     'r'  : '25',
-    //     'fill' : '#dd0000',
-    // }));
-
-
-    canvas.set = function() {
-        var an_array = [], curr_x, curr_y, curr_transform, targ_disp, curr_disp, a_disp, i, targ_y;
-        an_array.attr = function(hsh,animated) {
-            
-            var hash = jQuery.extend({},hsh);
-            
-            if (animated && typeof hash.y != 'undefined') {
-                var rate = 75;
-
-                if ( ! canvas._anim_clock_funcs ) {
-                    canvas._anim_clock_funcs = [];
-                    canvas._in_anim = true;
-                    jQuery(canvas).trigger('_anim_begin');
-                    renderer._frame_count = 0;
-                    var start = null;
-                    canvas._anim_clock = setInterval(function() {
-                        if ( ! canvas._anim_clock_funcs || canvas._anim_clock_funcs.length === 0 ) {
-                            clearInterval(canvas._anim_clock);
-                            canvas._anim_clock = null;
-                            canvas._anim_clock_funcs = null;
-                            canvas._in_anim = false;
-                            jQuery(canvas).trigger('_anim_end');
-                            return;
-                        }
-                        var susp_id = canvas.suspendRedraw(1000);
-                        var nav_canv_id = renderer._nav_canvas.suspendRedraw(1000);
-                                                
-                        if (! start) {
-                            start = (new Date()).getTime();
-                        }
-                        for (i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {
-                            var end = (new Date()).getTime();
-                            var step_id = parseInt((end - start)/rate,10);
-                            canvas._anim_clock_funcs[i].apply(null,[step_id - (canvas._anim_clock_funcs[i]._last_step || step_id)]);
-                            if (canvas._anim_clock_funcs && canvas._anim_clock_funcs[i]) {
-                                canvas._anim_clock_funcs[i]._last_step = step_id;
-                            }
-                        }
-
-                        renderer._nav_canvas.unsuspendRedraw(nav_canv_id);
-                        canvas.unsuspendRedraw(susp_id);
-                        renderer._frame_count += 1;
-                        
-                    },rate);
-                }
-                
-                if (an_array.animating) {
-                    for (i = 0; i < (canvas._anim_clock_funcs || []).length; i++ ) {                    
-                        if (canvas._anim_clock_funcs[i].target_set != an_array) {
-                            continue;
-                        }
-                        canvas._anim_clock_funcs.splice(i,1);
-                    }
-                }
-                
-                
-                if (an_array.length === 0) {
-                    return;
-                }
-                var a_y;
-                
-                if (an_array[0].getAttribute('transform')) {                    
-                    a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
-                    if (typeof a_y != 'undefined') {
-                        a_y = a_y[2];
-                    }
-                }
-                
-                curr_y = an_array[0] ? parseInt(a_y || an_array[0].getAttribute('y'),10) : 0;
-                curr_disp = 'hidden';
-                for (i = 0 ; i < an_array.length; i++ ) {
-                    a_disp = an_array[i].getAttribute('visibility');
-                    if (a_disp && a_disp != 'hidden') {
-                        curr_disp = a_disp;
-                        break;
-                    }
-                }
-                
-                
-                var target_y = parseInt(hash.y,10);
-
-                var target_disp = hash.visibility;
-                if (curr_disp == target_disp && target_disp == 'hidden') {
-                    an_array.attr(hsh);
-                    return;
-                }
-
-                delete hash.y;
-
-                if (curr_disp == target_disp && target_disp == 'visible' ) {
-                    delete hash.visibility;
-                    target_disp = null;                    
-                    an_array.attr({'visibility' : 'visible'});
-                }
-
-                if (hash.visibility == 'hidden') {
-                    delete hash.visibility;
-                }
-
-                an_array.attr(hash);
-                var counter = 0;
-
-                if (target_y != curr_y) {
-                    var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y) / 500),10)/rate) + 1);
-                    var diff = (target_y - curr_y) / anim_steps;
-                    hash.y = curr_y || 0;
-                    var orig_func = arguments.callee;
-                    an_array.animating = true;
-                    jQuery(an_array).trigger('_t_anim_begin');
-                    canvas._anim_clock_funcs.push(                    
-                        function(step) {
-                            if (diff < 0 && (hash.y < target_y) ) {
-                                hash.y = target_y;
-                            }
-                            if (diff > 0 && (hash.y > target_y) ) {
-                                hash.y = target_y;
-                            }
-                            orig_func.apply(an_array,[hash]);
-                            counter += (step || 1);
-                            if (hash.y != target_y) {
-                                hash.y = curr_y + diff*(counter);
-                                return;
-                            }
-                            an_array.animating = false;
-                            if (target_disp) {
-                                an_array.attr({'visibility' : target_disp});
-                                jQuery(an_array).trigger('_t_anim_end');
-                            }
-                            canvas._anim_clock_funcs.splice(canvas._anim_clock_funcs.indexOf(arguments.callee),1);
-                            if (canvas._anim_clock_funcs.length === 0) {
-                                clearInterval(canvas._anim_clock);
-                                canvas._anim_clock = null;
-                                canvas._anim_clock_funcs = null;
-                                canvas._in_anim = false;
-                                jQuery(canvas).trigger('_anim_end');                                
-                            }
-                        }
-                    );
-                    canvas._anim_clock_funcs[canvas._anim_clock_funcs.length - 1].target_set = an_array;
-                }
-                return;
-            }
-
-
-            curr_disp = 'hidden';
-            for (i = 0 ; i < an_array.length; i++ ) {
-                a_disp = an_array[i].getAttribute('visibility');
-                if (a_disp && a_disp != 'hidden') {
-                    curr_disp = a_disp;
-                    break;
-                }
-            }
-            
-            
-            targ_y = parseInt(hash.y,10);
-
-            targ_disp = hash.visibility;
-            if (curr_disp == targ_disp && targ_disp == 'hidden' && hash.y > 0) {
-                return;
-            }
-            
-            for (var key in hash) {
-                if (hash.hasOwnProperty(key)) {
-                    for (i = 0; i < an_array.length; i++) {
-                        if ( ! an_array[i]) {
-                            continue;
-                        }
-                        var value = hash[key];
-                        if (key == 'style' && an_array[i].hasAttribute('style')) {
-                            var curr_style = an_array[i].getAttribute('style');
-                            curr_style += '; '+hash[key];
-                            value = curr_style;
-                        }
-                        if (key == 'height' && an_array[i].hasAttribute('transform')) {
-                            curr_transform = an_array[i].getAttribute('transform');
-
-                            var curr_scale = /scale\((-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                        
-                            var curr_height = parseFloat(an_array[i].getAttribute('height') || 1);
-                        
-                            var new_scale = 1;
-                            if (curr_scale === null) {
-                                curr_transform += ' scale(1) ';
-                                curr_scale = 1;
-                            } else {
-                                curr_scale = parseFloat(curr_scale[1]);
-                            }
-                        
-                        
-                            new_scale = ( parseFloat(hash[key]) / curr_height ) * curr_scale;
-                        
-                            curr_transform = curr_transform.replace(/scale\((-?\d+\.?\d*)\)/,'scale('+new_scale+')');
-
-                            an_array[i].setAttribute('transform',curr_transform);
-                        }
-                        if  (! (an_array[i].hasAttribute('transform') && (key == 'y' || key == 'x'))) {
-                            an_array[i].setAttribute(key, value);                        
-                        }
-                        if (key == 'y' && an_array[i].hasAttribute('d')) {
-                            var curr_path = an_array[i].getAttribute('d');
-                            var re = /M\s*([\d\.]+) ([\d\.]+)/;
-                            curr_path = curr_path.replace(re,'');
-                            an_array[i].setAttribute('d', 'M0 '+parseInt(value,10)+' '+curr_path);
-                        }
-                        if (key == 'y' && an_array[i].hasAttribute('cy')) {
-                            an_array[i].setAttribute('cy', hash[key]);
-                        }
-                    
-                    
-                        if (key == 'y' && an_array[i].hasAttribute('transform')) {
-                            curr_transform = an_array[i].getAttribute('transform');
-                        
-                            curr_x = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                            if (curr_x === null) {
-                                continue;
-                            }
-                            curr_x = curr_x[1];
-                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+curr_x+','+value+')');
-                            an_array[i].setAttribute('transform',curr_transform);                        
-                        }
-                        if (key == 'x' && an_array[i].hasAttribute('transform')) {
-                            curr_transform = an_array[i].getAttribute('transform');
-                        
-                            curr_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                            if (curr_y === null) {
-                                continue;
-                            }
-                            curr_y = curr_y[2];
-                            curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
-                            an_array[i].setAttribute('transform',curr_transform);                        
-                        }                    
-                    }
-                }
-            }
-        };
-        an_array.hide = function() {
-            this.attr({ 'visibility' : 'hidden'});
-        };
-        an_array.show = function() {
-            this.attr({ 'visibility' : 'visible'});
-        };
-
-        an_array.refresh_zoom = function() {
-            for (var i = 0; i < an_array.length; i++ ) {
-                if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
-                    if (canvas.zoom > 3.5) {
-                        an_array[i].setAttribute('display', 'inline');
-                        an_array[i].setAttribute('opacity', 1);
-                    } else {
-                        an_array[i].setAttribute('display', 'none');                            
-                    }                        
-                }
-            
-                if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
-                    if (canvas.zoom <= 3.5) {
-                        an_array[i].setAttribute('display', 'inline');
-                        an_array[i].setAttribute('opacity', 1);
-                    } else {
-                        an_array[i].setAttribute('display', 'none');                            
-                    }
-                }
-            }
-        };
-        
-        an_array._old_push = an_array.push;
-        an_array._event_proxy = {};
-
-        var event_func = function(ev) {
-            var target_el = this;
-            if (canvas._in_anim) {
-                return;
-            }
-            jQuery(an_array._event_proxy).trigger(ev.type,[ev,target_el]);
-        };
-        
-        an_array.push = function(new_el) {
-            this._old_push(new_el);
-
-            if ( ! new_el || typeof new_el == 'undefined' ) {
-                return;
-            }
-            if (new_el._has_proxy) {
-                return;
-            }
-            if ( ! MASCP.IE ) {
-                var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
-                var jqel = jQuery(new_el);
-                // for (var i = 0 ; i < event_names.length; i++) {
-                //     jqel.bind(event_names[i], event_func);
-                // }
-                if (new_el.addEventListener) {
-                    new_el.addEventListener('touchstart',event_func,false);
-                    new_el.addEventListener('touchmove',event_func,false);
-                    new_el.addEventListener('touchend',event_func,false);
-                }
-            }
-            new_el._has_proxy = true;
-        };
-        return an_array;
-    };
-    
-    canvas.text = function(x,y,text) {
-        var a_text = document.createElementNS(svgns,'text');
-        if (typeof text != 'string') {
-            a_text.appendChild(text);
-        } else {
-            a_text.textContent = text;
-        }
-        a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
-        a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
-        a_text.setAttribute('y',typeof y == 'string' ? y : y * RS);        
-        this.appendChild(a_text);
-        return a_text;
-    };    
-};
-
-MASCP.CondensedSequenceRenderer.Navigation.prototype._extendWithSVGApi = MASCP.CondensedSequenceRenderer.prototype._extendWithSVGApi;
-
 MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
     var RS = this._RS;
     var seq_chars = this.sequence.split('');
@@ -1919,136 +575,22 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
     jQuery(this).unbind('svgready').bind('svgready',function(cnv) {
         var canv = renderer._canvas;
-        renderer._extendWithSVGApi(canv);
+        canv.RS = RS;
+        SVGCanvas(canv);
         canv.setAttribute('background', '#000000');
         canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
-        var defs = document.createElementNS(svgns,'defs');
+        var defs = canv.makeEl('defs');
         renderer._container_canvas.appendChild(defs);
 
-        var makeEl = function(name,attributes) {
-            var result = document.createElementNS(svgns,name);
-            for (var attribute in attributes) {
-                if (attributes.hasOwnProperty(attribute)) {
-                    result.setAttribute(attribute, attributes[attribute]);
-                }
-            }
-            return result;
-        };
 
-        var gradient = makeEl('linearGradient',{
-            'id':'track_shine',
-            'x1':'0%',
-            'x2':'0%',
-            'y1':'0%',
-            'y2':'100%'
-        });
-
-        defs.appendChild(gradient);
-
-        gradient.appendChild(makeEl('stop',{
-            'offset':'0%',
-            'style':'stop-color:#111111;stop-opacity:0.5'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'50%',
-            'style':'stop-color:#aaaaaa;stop-opacity:0.5'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'100%',
-            'style':'stop-color:#111111;stop-opacity:0.5'
-        }));
+        defs.appendChild(canv.make_gradient('track_shine','0%','100%',['#111111','#aaaaaa','#111111'], [0.5,0.5,0.5]));
+        defs.appendChild(canv.make_gradient('simple_gradient','0%','100%',['#aaaaaa','#888888'], [1,1]));
+        defs.appendChild(canv.make_gradient('left_fade','100%','0%',['#ffffff','#ffffff'], [1,0]));
+        defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
+        defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
         
-        gradient = makeEl('linearGradient',{
-            'id':'simple_gradient',
-            'x1':'0%',
-            'x2':'0%',
-            'y1':'0%',
-            'y2':'100%'
-        });
-
-        defs.appendChild(gradient);
-
-        gradient.appendChild(makeEl('stop',{
-            'offset':'0%',
-            'style':'stop-color:#aaaaaa;stop-opacity:1'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'100%',
-            'style':'stop-color:#888888;stop-opacity:1'
-        }));
-
-        gradient = makeEl('linearGradient',{
-            'id':'left_fade',
-            'x1':'0%',
-            'x2':'100%',
-            'y1':'0%',
-            'y2':'0%'
-        });
-
-        defs.appendChild(gradient);
-
-        gradient.appendChild(makeEl('stop',{
-            'offset':'0%',
-            'style':'stop-color:#ffffff;stop-opacity:1'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'100%',
-            'style':'stop-color:#ffffff;stop-opacity:0'
-        }));        
-
-
-        gradient = makeEl('linearGradient',{
-            'id':'right_fade',
-            'x1':'0%',
-            'x2':'100%',
-            'y1':'0%',
-            'y2':'0%'
-        });
-
-        defs.appendChild(gradient);
-
-        gradient.appendChild(makeEl('stop',{
-            'offset':'0%',
-            'style':'stop-color:#ffffff;stop-opacity:0'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'100%',
-            'style':'stop-color:#ffffff;stop-opacity:1'
-        }));        
-
-
-        gradient = makeEl('linearGradient',{
-            'id':'red_3d',
-            'x1':'0%',
-            'x2':'0%',
-            'y1':'0%',
-            'y2':'100%'
-        });
-
-        defs.appendChild(gradient);
-
-        gradient.appendChild(makeEl('stop',{
-            'offset':'0%',
-            'style':'stop-color:#CF0000;stop-opacity:1'
-        }));
-        gradient.appendChild(makeEl('stop',{
-            'offset':'100%',
-            'style':'stop-color:#540000;stop-opacity:1'
-        }));
-        
-        var glow = makeEl('filter',{
-            'id':'track_glow',
-            'filterUnits':'objectBoundingBox',
-            'x':'-2%',
-            'y':'-2%',
-            'width':'105%',
-            'height':'105%'
-        });
-        glow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
-        defs.appendChild(glow);
-
-        var shadow = makeEl('filter',{
+        var shadow = canv.makeEl('filter',{
             'id':'drop_shadow',
             'filterUnits':'objectBoundingBox',
             'x': '0',
@@ -2056,19 +598,14 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'width':'150%',
             'height':'130%'
         });
-        // 'x': '-100%',
-        // 'y': '-100%',
-        // 'width': '300%',
-        // 'height': '300%'
-//        shadow.appendChild(makeEl('feFlood',{'result':'flooded','style':'flood-color:rgb(255,0,0);'}));        
 
-        shadow.appendChild(makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
-        shadow.appendChild(makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'3','dy':'1'}));
-        shadow.appendChild(makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
+        shadow.appendChild(canv.makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
+        shadow.appendChild(canv.makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'3','dy':'1'}));
+        shadow.appendChild(canv.makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
         
         defs.appendChild(shadow);
 
-        var link_icon = makeEl('svg',{
+        var link_icon = canv.makeEl('svg',{
             'width' : '100%',
             'height': '100%',
             'id'    : 'new_link_icon',
@@ -2078,7 +615,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         defs.appendChild(link_icon);
 
-        link_icon.appendChild(makeEl('rect', {
+        link_icon.appendChild(canv.makeEl('rect', {
             'x' : '5',
             'y' : '10',
             'stroke-width' : '1',
@@ -2087,7 +624,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'stroke': '#ffffff',
             'fill'  : 'none'            
         }));
-        link_icon.appendChild(makeEl('rect', {
+        link_icon.appendChild(canv.makeEl('rect', {
             'x' : '5',
             'y' : '10',
             'stroke-width' : '0',
@@ -2098,7 +635,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         }));
 
 
-        link_icon.appendChild(makeEl('rect', {
+        link_icon.appendChild(canv.makeEl('rect', {
             'x' : '30',
             'y' : '0',
             'stroke-width' : '1',
@@ -2109,7 +646,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'fill-opacity': '1'            
         }));
         
-        link_icon.appendChild(makeEl('rect', {
+        link_icon.appendChild(canv.makeEl('rect', {
             'x' : '30',
             'y' : '0',
             'stroke-width' : '1',
@@ -2120,7 +657,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
         }));
 
 
-        var plus_icon = makeEl('svg',{
+        var plus_icon = canv.makeEl('svg',{
             'width' : '100%',
             'height': '100%',
             'id'    : 'plus_icon',
@@ -2130,7 +667,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         defs.appendChild(plus_icon);
 
-        plus_icon.appendChild(makeEl('rect', {
+        plus_icon.appendChild(canv.makeEl('rect', {
             'x' : '40',
             'y' : '10',
             'stroke-width' : '1',
@@ -2140,7 +677,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'fill'  : '#ffffff'            
         }));
 
-        plus_icon.appendChild(makeEl('rect', {
+        plus_icon.appendChild(canv.makeEl('rect', {
             'x' : '10',
             'y' : '40',
             'stroke-width' : '1',
@@ -2150,7 +687,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
             'fill'  : '#ffffff'            
         }));
 
-        var minus_icon = makeEl('svg',{
+        var minus_icon = canv.makeEl('svg',{
             'width' : '100%',
             'height': '100%',
             'id'    : 'minus_icon',
@@ -2160,7 +697,7 @@ MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
 
         defs.appendChild(minus_icon);
 
-        minus_icon.appendChild(makeEl('rect', {
+        minus_icon.appendChild(canv.makeEl('rect', {
             'x' : '10',
             'y' : '40',
             'stroke-width' : '1',
@@ -2709,7 +1246,6 @@ MASCP.CondensedSequenceRenderer.prototype.addTrack = function(layer) {
 //    this.refresh();
 };
 
-
 MASCP.CondensedSequenceRenderer.prototype.removeTrack = function(layer) {
     if ( this._layer_containers[layer.name] ) {                
         this._layer_containers[layer.name].forEach(function(el) {
@@ -2722,27 +1258,6 @@ MASCP.CondensedSequenceRenderer.prototype.removeTrack = function(layer) {
         }
     }
 };
-
-/**
- * Describe what this method does
- * @private
- * @param {String|Object|Array|Boolean|Number} paramName Describe this parameter
- * @returns Describe what it returns
- * @type String|Object|Array|Boolean|Number
- */
-MASCP.CondensedSequenceRenderer.prototype.applyStyle = function(layer,style) {
-    if ( ! this._layer_containers ) {
-        return;
-    }
-    if (typeof layer != 'string') {
-        layer = layer.name;
-    }
-    if ( this._layer_containers[layer] ) {
-        var layer_container = this._layer_containers[layer];
-        layer_container.attr({'style' : style});
-    }
-};
-
 
 MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
     var vals = Array.prototype.slice.call(arguments);
@@ -2766,73 +1281,6 @@ MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
         this._highlight[i].setAttribute('visibility','hidden');
     }
 };
-
-/**
- * Deprecate the setHighlight method for the sequence renderer. There has to be a better way
- * to do this.
- * @private
- */
-MASCP.CondensedSequenceRenderer.prototype._setHighlight = function(layer,doHighlight) {
-    var self = this, i = 0;
-    if ( ! this._layer_containers ) {
-        return;
-    }
-    var layerObj = layer;
-    if (typeof layer != 'string') {
-        layer = layer.name;        
-    } else {
-        layerObj = MASCP.getLayer(layer);
-    }
-
-    if ( ! this._layer_containers[layer] ) {
-        return;
-    }
-
-    var layer_container = this._layer_containers[layer];
-
-    if ( ! layerObj._highlight_event_bound ) {
-        jQuery(layer_container).bind('_t_anim_begin',function() {
-            if (layerObj._highlight_filter) {
-                return;
-            }
-            layerObj._highlight_filter = [];
-            for (i = 0; i < layer_container.length; i++ ) {
-                layerObj._highlight_filter[i] = layer_container[i].getAttribute('filter')+"";
-                layer_container[i].removeAttribute('filter');
-            }
-        });
-
-        jQuery(layer_container).bind('_t_anim_end',function() {
-            if ( ! layerObj._highlight_filter ) {
-                return;
-            }
-            for (var i = 0; i < layer_container.length; i++ ) {
-                if (layerObj._highlight_filter[i] && layer_container[i].getAttribute('filter') === null) {
-                    layer_container[i].setAttribute('filter',layerObj._highlight_filter[i]);
-                }
-            }
-            layerObj._highlight_filter = null;        
-        });
-        layerObj._highlight_event_bound = true;
-    }
-    if (doHighlight) {
-        for (i = 0 ; i < layer_container.length; i++ ) {
-            if (layer_container[i]._is_shine) {
-                continue;
-            }
-            layer_container[i].setAttribute('filter','url(#track_glow)');
-        }
-    } else {
-        for (i = 0 ; i < layer_container.length; i++ ) {
-            if (layer_container[i]._is_shine) {
-                continue;
-            }
-            layer_container[i].removeAttribute('filter');
-        }
-    }
-    
-};
-
 
 /*
  * Get a canvas set of the visible tracers on this renderer
@@ -2913,6 +1361,7 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     
     layer._group_controller = true;
     layer._group_under_control = group;
+    group.controller_name = layer.name;
     
     var sticky = false;
     var expanded = false;
@@ -2950,30 +1399,6 @@ MASCP.CondensedSequenceRenderer.prototype.createGroupController = function(lay,g
     });
 };
 
-MASCP.CondensedSequenceRenderer.prototype.getElementDefinedStyle = function(el,pr) {
-    return (function gs(){
-        function R(c){return [].slice.call(c);}
-        var sheets=R(document.styleSheets),
-            sels={},
-            r=[];
-        sheets.map(function(a){
-            r.splice.apply(r, [r.length, 0].concat(R(a.cssRules)));
-        });
-        r.reverse();
-      return function getElementDefinedStyle(elm, prop){
-        var rx=new RegExp( "(#"+elm.id+"(,|$))|(\\."+elm.className+"(,|$))" ,"i"), out="";
-        r.some(function(a){
-           if(a.selectorText && a.selectorText.match(rx) && document.querySelectorAll(a.selectorText)[0]==elm){
-               out=a.style[prop];
-               return out;
-           }
-        });
-        return out;
-      };
-    }())(el,pr);//end builder wrap    
-};
-
-
 /**
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
@@ -2997,10 +1422,20 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
         var container = this._layer_containers[name];
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
+            if (MASCP.getLayer(name).group) {
+                var parent_group = MASCP.getLayer(name);
+                if (parent_group.controller_name && this.isLayerActive(parent_group.controller_name)) {
+                    attrs[y] = this._layer_containers[parent_group.controller_name].currenty;
+                }
+            }
             if (container.fixed_track_height) {
                 delete attrs.height;
             }
-            container.attr(attrs,animated);
+            if (animated) {
+                container.animate(attrs);
+            } else {
+                container.attr(attrs);
+            }
             continue;
         } else {
             container.attr({ 'opacity' : '1' });
@@ -3013,19 +1448,31 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
             if (container.fixed_track_height) {
                 height += 0.5*container.fixed_track_height * RS;
             }
-            container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height },animated);
+            if(animated) {
+                container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
+            } else {
+                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });                
+            }
         }
         if (container.fixed_track_height) {
             var track_height = container.fixed_track_height;
             var y_val = this._axis_height + (track_heights / this.zoom);
-            container.attr({ 'visibility' : 'visible','y' : (y_val)*RS },animated);
+            if (animated) {
+                container.animate({ 'visibility' : 'visible','y' : (y_val)*RS });
+            } else {
+                container.attr({ 'visibility' : 'visible','y' : (y_val)*RS });                
+            }
             if (this._Navigation) {
                 var grow_scale = this.grow_container ? 1 / this.zoom : 1;
                 this._Navigation.renderTrack(MASCP.getLayer(name), (y_val+track_height/3)*RS , RS * track_height/3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
             track_heights += (this.zoom * track_height) + this.trackGap;
         } else {
-            container.attr({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom },animated);
+            if (animated) {
+                container.animate({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom });
+            } else {
+                container.attr({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom });                
+            }
             if (this._Navigation) {
                 this._Navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , RS * container.track_height / this.zoom );
             }
@@ -3055,7 +1502,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     outer_viewbox[0] = 0;
     outer_viewbox[2] = (this._zoomLevel || 1)*(2*this.sequence.length)+(this.padding);
     outer_viewbox[3] = (this._zoomLevel || 1)*2*(this._axis_height + (track_heights / this.zoom)+ (this.padding));
-    if (! this.grow_container ) {//&& (this.getElementDefinedStyle(this._container,'width') != '100%')) {
+    if (! this.grow_container ) {
         this._container_canvas.setAttribute('viewBox', outer_viewbox.join(' '));
     }
     
