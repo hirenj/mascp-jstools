@@ -149,20 +149,8 @@
         <copy todir="dist/js">
             <fileset dir="js"/>
         </copy>
-                
-        <copy file="proxy.pl" tofile="dist/proxy.pl"/>
-        <copy file="atpeptide.pl" tofile="dist/atpeptide.pl"/>
-        <copy file="atpeptides.txt" tofile="dist/atpeptides.txt"/>
-        <copy file="rippdb.pl" tofile="dist/rippdb.pl"/>
-        <copy file="rippdb.txt" tofile="dist/rippdb.txt"/>
-
-        <copy file="tair.pl" tofile="dist/tair.pl"/>        
-        <copy file="datasets.pl" tofile="dist/datasets.pl"/>
-        <copy file="snps.pl" tofile="dist/snps.pl"/>
-        
+                        
         <copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
-
-        <copy file="TAIR9json.txt" tofile="dist/TAIR9json.txt"/>
 
        <copy todir="dist">
             <fileset dir="." includes="*-json.txt"/>
