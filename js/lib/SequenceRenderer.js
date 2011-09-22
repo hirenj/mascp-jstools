@@ -1082,20 +1082,30 @@ var accessors = {
         if ( ! order instanceof Array ) {
             order = [ in_order ];
         }
+        
         for (var i = 0; i < order.length; i++) {
             if (MASCP.getLayer(order[i])) {
                 track_order.push(order[i]);
+                if (this._track_order.indexOf(order[i]) >= 0) {
+                    this._track_order.splice(this._track_order.indexOf(order[i]),1);
+                }
             } else if (MASCP.getGroup(order[i])) {
                 var group_layers = MASCP.getGroup(order[i])._layers;
                 for (var j = 0; j < group_layers.length; j++ ) {
                     track_order.push(group_layers[j].name);
+                    if (this._track_order.indexOf(group_layers[j].name) >= 0) {
+                        this._track_order.splice(this._track_order.indexOf(group_layers[j].name),1);
+                    }
                 }
             }
         }
-
+        while((this._track_order || []).length > 0) {
+            var a_track = this._track_order.shift();
+            this.hideLayer(a_track);
+        }
         this._track_order = track_order;
         if (this.refresh) {
-            this.refresh();
+            this.refresh(true);
         }
     }
 };
@@ -1109,17 +1119,13 @@ if (MASCP.IE) {
     MASCP.SequenceRenderer.prototype.setTrackOrder = accessors.setTrackOrder;
 }
 
-/*
-
 if (Object.defineProperty && MASCP.IE) {
-    log("Setting a property on some weird-arse prototype");
-    Object.defineProperty(MASCP.SequenceRenderer.prototype.prototype,"trackOrder", {
+    Object.defineProperty(MASCP.SequenceRenderer.prototype,"trackOrder", {
         get : accessors.getTrackOrder,
         set : accessors.setTrackOrder
     });
 }
 
-*/
 
 })();
 
