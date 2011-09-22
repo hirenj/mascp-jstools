@@ -1,156 +1,79 @@
 MASCP.CondensedSequenceRenderer.Navigation = (function() {
-    var Navigation = function(canvas) {
-        construct.call(this,canvas);
-    };
+    var Navigation = function(parent_canvas,renderer) {
+        SVGCanvas(parent_canvas);
 
+        buildNavPane.call(this,parent_canvas);
 
-    function construct(parent_canvas)  {
+        var track_group = parent_canvas.group();
 
-    var toggleMouseEvents, DragAndDrop, close_buttons, controller_buttons, close_group, track_canvas, renderer;
-        
-    var buildNavPane = function(canvas) {
-        var self = this;
-    
-        var panel_back = canvas.group();
-        var button_group = canvas.group();
-        var rect = canvas.rect(-10,0,'200','100%');
-        rect.setAttribute('rx','10');
-        rect.setAttribute('ry','10');    
-        if (! ("ontouchend" in document)) {
-            rect.setAttribute('opacity','0.8');
-        }
-        rect.style.stroke = '#000000';
-        rect.style.strokeWidth = '2px';
-        rect.style.fill = '#000000';
-        rect.id = 'nav_back';
+        parent_canvas.insertBefore(track_group,parent_canvas.lastChild);
 
-        panel_back.push(rect);
+        var track_canvas = document.createElementNS(svgns,'svg');    
+        buildTrackPane.call(this,track_canvas,connectRenderer(renderer));
 
-        var clipping = document.createElementNS(svgns,'clipPath');
-        clipping.id = 'nav_clipping';
-        var rect2 = document.createElementNS(svgns,'use');
-        rect2.setAttributeNS('http://www.w3.org/1999/xlink','href','#nav_back');
-    
-        //canvas.rect(0,0,'190','100%');
-        canvas.insertBefore(clipping,canvas.firstChild);
-        clipping.appendChild(rect2);
+        track_group.appendChild(track_canvas);
 
-        var close_group = canvas.crossed_circle('179','12','10');
+        track_group.setAttribute('clip-path','url(#nav_clipping)');
 
-        close_group.style.cursor = 'pointer';
-
-        button_group.push(close_group);
-
-        var tracks_button = MASCP.IE ? canvas.svgbutton(100,5,65,25,'Edit') : canvas.button(100,5,65,25,'Edit');
-        tracks_button.id = 'controls';
-        tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
-
-        panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
-
-        var scroll_controls = document.createElementNS(svgns,'foreignObject');
-        scroll_controls.setAttribute('x','0');
-        scroll_controls.setAttribute('y','0');
-        scroll_controls.setAttribute('width','100');
-        scroll_controls.setAttribute('height','45');
-        scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
-    
-        panel_back.push(scroll_controls);
-    
-
-        var edit_enabled;
-
-        self.refresh = function() {
-            (close_buttons || []).forEach(function(button) {
-                button.setAttribute('visibility', edit_enabled ? 'visible' : 'hidden');
-            });
-            (controller_buttons || []).forEach(function(button) {
-                button.setAttribute('visibility', edit_enabled ? 'hidden' : 'visible');
-            });
-            if (edit_enabled) {
-                toggleMouseEvents.call(self,true);
-            } else {
-                toggleMouseEvents.call(self,false);
-            }
+        this.demote = function() {
+            track_canvas.hide();
+            return;
         };
 
-        jQuery(self).bind('toggleEdit',function() {
-            edit_enabled = typeof edit_enabled == 'undefined' ? true : ! edit_enabled;
-            DragAndDrop.disabled = ! edit_enabled;
-            if (edit_enabled) {
-                toggleMouseEvents.call(self,true);
+        this.promote = function() {
+            if (this.visible()) {
+                track_canvas.show();
             } else {
-                toggleMouseEvents.call(self,false);
+                track_canvas.hide();
+            }
+        };
+    };
+
+    var connectRenderer = function(renderer) {
+        return DragAndDrop(function(track,before,after){
+            var t_order = renderer._track_order;
+
+            t_order.trackIndex = function(tr) {
+                if (! tr ) {
+                    return this.length;
+                }
+                return this.indexOf(tr.name);
+            };
+        
+            if (after && ! before) {
+                before = MASCP.getLayer(t_order[t_order.trackIndex(after) + 1]);
             }
         
-            self.hide();
-            self.show();
-            
-            (close_buttons || []).forEach(function(button) {
-                button.setAttribute('visibility', edit_enabled ? 'visible' : 'hidden');
-            });
-            (controller_buttons || []).forEach(function(button) {
-                button.setAttribute('visibility', edit_enabled ? 'hidden' : 'visible');
-            });
-
+            t_order.splice(t_order.trackIndex(track),1);
+            var extra_to_push = [];
+            if (track._group_controller) {
+                var group_layers = track._group_under_control._layers;
+                for (var j = 0; j < group_layers.length; j++ ) {
+                    extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
+                }
+            }
+            if (before) {
+                t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
+                for (var i = 0; i < extra_to_push.length; i++ ) {
+                    if (extra_to_push[i]) {
+                        t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
+                    }
+                }
+            } else {
+                if (track._group_controller) {
+                    renderer.hideGroup(track._group_under_control);                
+                }
+                renderer.hideLayer(track,true);            
+                track.disabled = true;
+                t_order.push(track.name);
+                t_order = t_order.concat(extra_to_push);
+            }
+        
+            renderer.trackOrder = t_order;
         });
-        
-        tracks_button.addEventListener('click',function() {
-            jQuery(self).trigger('toggleEdit');
-            jQuery(self).trigger('click');
-        },false);
-    
-        var visible = true;
-        
-        var toggler = function(vis) {
-            visible = ( vis === false || vis === true ) ? vis : ! visible;
-            var close_transform;
-        
-            if (visible) {
-                track_canvas.setAttribute('display','inline');
-                panel_back.setAttribute('visibility','visible');
-                canvas.show();
-
-                close_group._button.removeAttribute('filter');
-                close_transform = close_group.getAttribute('transform') || ' ';
-                close_transform = close_transform.replace(/translate\(.*\)/,'');
-                close_transform = close_transform.replace(/rotate\(.*\)/,'');
-            
-                close_group.setAttribute('transform',close_transform);
-
-                scroll_controls.setAttribute('display','inline');
-            } else {
-                track_canvas.setAttribute('display','none');
-                panel_back.setAttribute('visibility','hidden');
-                canvas.hide();
-                close_group._button.setAttribute('filter','url(#drop_shadow)');            
-                close_transform = close_group.getAttribute('transform') || ' ';
-                close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
-                close_group.setAttribute('transform',close_transform);
-                scroll_controls.setAttribute('display','none');
-            }
-            return true;
-        };
-    
-        self.hide = function() {
-            toggler.call(this,false);
-        };
-        self.show = function() {
-            toggler.call(this,true);
-        };
-
-        self.visible = function() {
-            return visible;
-        };
-
-        self.setZoom = function(zoom) {
-            close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
-            rect.setAttribute('transform','scale('+zoom+',1) ');
-        };
-
-        close_group.addEventListener('click',toggler,false);
     };
 
-    DragAndDrop = (function() {    
+    var DragAndDrop = function(spliceFunction) {    
         var targets = [];
         var in_drag = false, drag_el;
         
@@ -258,7 +181,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
                     if (in_drag && (e.type == 'mouseup' || e.type == 'touchend')) {
                         if (spliceBefore || spliceAfter) {
-                            spliceTrack(trackToSplice, spliceBefore, spliceAfter);
+                            spliceFunction(trackToSplice, spliceBefore, spliceAfter);
                         }
                     }
                     target.removeEventListener('touchmove',dragfn,false);
@@ -387,25 +310,145 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         };
 
         return drag_func;
-    })();
+    };
 
-    var buildTrackPane = function(canvas) {
+    var buildNavPane = function(back_canvas) {
         var self = this;
-        SVGCanvas(canvas);
-        canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
+    
+        var panel_back = back_canvas.group();
+        var button_group = back_canvas.group();
+        var rect = back_canvas.rect(-10,0,'200','100%');
+        var base_rounded_corner = [12,10];
+        rect.setAttribute('rx',base_rounded_corner[0].toString());
+        rect.setAttribute('ry',base_rounded_corner[1].toString());    
+        if (! ("ontouchend" in document)) {
+            rect.setAttribute('opacity','0.8');
+        }
+        rect.style.stroke = '#000000';
+        rect.style.strokeWidth = '2px';
+        rect.style.fill = '#000000';
+        rect.id = 'nav_back';
+
+        panel_back.push(rect);
+
+        var clipping = document.createElementNS(svgns,'clipPath');
+        clipping.id = 'nav_clipping';
+        var rect2 = document.createElementNS(svgns,'use');
+        rect2.setAttributeNS('http://www.w3.org/1999/xlink','href','#nav_back');
+    
+        back_canvas.insertBefore(clipping,back_canvas.firstChild);
+        clipping.appendChild(rect2);
+
+        var close_group = back_canvas.crossed_circle('179','12','10');
+
+        close_group.style.cursor = 'pointer';
+
+        button_group.push(close_group);
+
+        var tracks_button = MASCP.IE ? back_canvas.svgbutton(100,5,65,25,'Edit') : back_canvas.button(100,5,65,25,'Edit');
+        tracks_button.id = 'controls';
+        tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
+
+        panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
+
+        var scroll_controls = document.createElementNS(svgns,'foreignObject');
+        scroll_controls.setAttribute('x','0');
+        scroll_controls.setAttribute('y','0');
+        scroll_controls.setAttribute('width','100');
+        scroll_controls.setAttribute('height','45');
+        scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
+    
+        panel_back.push(scroll_controls);
+            
+        tracks_button.addEventListener('click',function() {
+            jQuery(self).trigger('toggleEdit');
+            jQuery(self).trigger('click');
+        },false);
+    
+        var visible = true;
+        
+        var toggler = function(vis) {
+            visible = ( vis === false || vis === true ) ? vis : ! visible;
+            var close_transform;
+        
+            if (visible) {
+                self.promote();
+                panel_back.setAttribute('visibility','visible');
+
+                close_group._button.removeAttribute('filter');
+                close_transform = close_group.getAttribute('transform') || ' ';
+                close_transform = close_transform.replace(/translate\(.*\)/,'');
+                close_transform = close_transform.replace(/rotate\(.*\)/,'');
+            
+                close_group.setAttribute('transform',close_transform);
+
+                scroll_controls.setAttribute('display','inline');
+            } else {
+                self.demote();
+                panel_back.setAttribute('visibility','hidden');
+
+                close_group._button.setAttribute('filter','url(#drop_shadow)');            
+                close_transform = close_group.getAttribute('transform') || ' ';
+                close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
+                close_group.setAttribute('transform',close_transform);
+                scroll_controls.setAttribute('display','none');
+            }
+            return true;
+        };
+    
+        self.hide = function() {
+            toggler.call(this,false);
+        };
+        self.show = function() {
+            toggler.call(this,true);
+        };
+
+        self.visible = function() {
+            return visible;
+        };
+
+        self.setZoom = function(zoom) {
+            close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
+            rect.setAttribute('transform','scale('+zoom+',1) ');
+            rect.setAttribute('ry', (zoom*base_rounded_corner[1]).toString());
+        };
+
+        close_group.addEventListener('click',toggler,false);
+    };
+
+    var buildTrackPane = function(track_canvas,draganddrop) {
+        var self = this;
+        
+        var close_buttons, controller_buttons, edit_enabled;
+        
+        SVGCanvas(track_canvas);
+        track_canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
 
         var track_rects = [];
 
-        this.reset = function() {
-            while (canvas.firstChild) {
-                canvas.removeChild(canvas.firstChild);
+        self.reset = function() {
+            while (track_canvas.firstChild) {
+                track_canvas.removeChild(track_canvas.firstChild);
             }
             track_rects = [];
             this.refresh();
         };
 
-        toggleMouseEvents = function(on) {
-            var self = this;
+        self.refresh = function() {
+            (close_buttons || []).forEach(function(button) {
+                button.setAttribute('visibility', edit_enabled ? 'visible' : 'hidden');
+            });
+            (controller_buttons || []).forEach(function(button) {
+                button.setAttribute('visibility', edit_enabled ? 'hidden' : 'visible');
+            });
+            if (edit_enabled) {
+                toggleMouseEvents.call(this,true);
+            } else {
+                toggleMouseEvents.call(this,false);
+            }
+        };
+
+        var toggleMouseEvents = function(on) {
             if (track_rects) {
                 (track_rects || []).forEach(function(el) {
                     el.setAttribute('opacity',on ? '1': (("ontouchend" in document) ? "0.5" : "0.1") );
@@ -413,19 +456,36 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 });
             }
         };
+
+        jQuery(self).bind('toggleEdit',function() {
+            edit_enabled = typeof edit_enabled == 'undefined' ? true : ! edit_enabled;
+            draganddrop.disabled = ! edit_enabled;
+            toggleMouseEvents.call(self,edit_enabled);
+        
+            self.hide();
+            self.show();
+            
+            (close_buttons || []).forEach(function(button) {
+                button.setAttribute('visibility', edit_enabled ? 'visible' : 'hidden');
+            });
+            (controller_buttons || []).forEach(function(button) {
+                button.setAttribute('visibility', edit_enabled ? 'hidden' : 'visible');
+            });
+
+        });
         
         this.setViewBox = function(viewBox) {
-            canvas.setAttribute('viewBox',viewBox);
+            track_canvas.setAttribute('viewBox',viewBox);
         };
     
-        canvas.style.height = '100%';
-        canvas.style.width = '100%';
-        canvas.setAttribute('height','100%');        
-        canvas.setAttribute('width','100%');
+        track_canvas.style.height = '100%';
+        track_canvas.style.width = '100%';
+        track_canvas.setAttribute('height','100%');        
+        track_canvas.setAttribute('width','100%');
     
         this.renderTrack = function(track,y,height,options) {
-            var label_group = canvas.group();
-            var a_rect = canvas.rect(0,y-1*height,'100%',3*height);
+            var label_group = track_canvas.group();
+            var a_rect = track_canvas.rect(0,y-1*height,'100%',3*height);
             a_rect.setAttribute('stroke','#000000');
             a_rect.setAttribute('stroke-width','2');
             a_rect.setAttribute('fill','url(#simple_gradient)');
@@ -439,11 +499,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
             // Use these for debugging positioning
         
-            // var r = canvas.rect(0,y-height,height,height);
+            // var r = track_canvas.rect(0,y-height,height,height);
             // r.setAttribute('fill','#ff0000');
             // label_group.push(r);
             // 
-            // r = canvas.rect(0,y+height,height,height);
+            // r = track_canvas.rect(0,y+height,height,height);
             // r.setAttribute('fill','#ff0000');
             // label_group.push(r);
         
@@ -455,7 +515,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             } else {
                 text_left = 4*height*text_scale;            
             }
-            var a_text = canvas.text(text_left,y+0.5*height,track.fullname);
+            var a_text = track_canvas.text(text_left,y+0.5*height,track.fullname);
             a_text.setAttribute('height', 2*height);
             a_text.setAttribute('width', 2*height);
             a_text.setAttribute('font-size',2*height*text_scale);
@@ -464,7 +524,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             a_text.setAttribute('stroke-width','1');
             a_text.setAttribute('dominant-baseline', 'middle');
 
-            // r = canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
+            // r = track_canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
             // r.setAttribute('fill','#00ff00');
             // label_group.push(r);
 
@@ -475,7 +535,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             var circ;
         
             if (track.href && ! track._group_controller) {
-                a_anchor = canvas.a(track.href);
+                a_anchor = track_canvas.a(track.href);
                 var icon_name = null;
                 var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
                 if ("ontouchend" in document) {
@@ -483,7 +543,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 }
                 icon_metrics[1] = -0.5*(icon_metrics[2] - height);
 
-                circ = canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
+                circ = track_canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
                 circ.setAttribute('fill','#ffffff');
                 circ.setAttribute('opacity','0.1');
                 a_anchor.appendChild(circ);
@@ -517,7 +577,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 if (track.icon) {
                     icon_name = track.icon;
                 }
-                var a_use = canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
+                var a_use = track_canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
                 a_use.style.cursor = 'pointer';
                 a_anchor.appendChild(a_use);
                 a_anchor.setAttribute('transform','translate(0,'+y+')');
@@ -533,7 +593,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 label_group.onmouseout = undefined;
             },false);
         
-            DragAndDrop.call(this,a_rect,label_group,track,canvas);
+            draganddrop.call(this,a_rect,label_group,track,track_canvas);
         
             (function() {
             
@@ -549,7 +609,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     close_buttons = [];
                 }
             
-                var closer = canvas.crossed_circle(1.5*t_height,0,t_height);
+                var closer = track_canvas.crossed_circle(1.5*t_height,0,t_height);
                 closer.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
                 closer.firstChild.setAttribute('fill','url(#red_3d)');
                 for (var nodes = closer.childNodes, i = 0, len = nodes.length; i < len; i++) {
@@ -573,8 +633,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 if ("ontouchend" in document) {
                     t_height = 3*height;
                 }
-                var expander = canvas.group();
-                circ = canvas.circle(1.5*t_height,0,t_height);
+                var expander = track_canvas.group();
+                circ = track_canvas.circle(1.5*t_height,0,t_height);
                 circ.setAttribute('fill','#ffffff');
                 circ.setAttribute('opacity','0.1');
                 expander.push(circ);
@@ -586,7 +646,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 t_metrics[5] += 0.5*(t_height - 0*height);
 
             
-                var group_toggler = canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
+                var group_toggler = track_canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
                 if (track._isExpanded()) {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');
                 } else {
@@ -618,82 +678,5 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         };
     };
 
-    var spliceTrack = function(track,before,after){
-
-        var t_order = renderer._track_order;
-
-        t_order.trackIndex = function(tr) {
-            if (! tr ) {
-                return this.length;
-            }
-            return this.indexOf(tr.name);
-        };
-        
-        if (after && ! before) {
-            before = MASCP.getLayer(t_order[t_order.trackIndex(after) + 1]);
-        }
-        
-        
-        t_order.splice(t_order.trackIndex(track),1);
-        var extra_to_push = [];
-        if (track._group_controller) {
-            var group_layers = track._group_under_control._layers;
-            for (var j = 0; j < group_layers.length; j++ ) {
-                extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
-            }
-        }
-        if (before) {
-            t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
-            for (var i = 0; i < extra_to_push.length; i++ ) {
-                if (extra_to_push[i]) {
-                    t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
-                }
-            }
-        } else {
-            if (track._group_controller) {
-                renderer.hideGroup(track._group_under_control);                
-            }
-            renderer.hideLayer(track,true);            
-            track.disabled = true;
-            t_order.push(track.name);
-            t_order = t_order.concat(extra_to_push);
-        }
-        
-        renderer.trackOrder = t_order;
-    };
-
-
-    SVGCanvas(parent_canvas);
-
-    buildNavPane.call(this,parent_canvas);
-    
-    close_group = parent_canvas.lastChild;
-
-    track_group = parent_canvas.group();
-
-    parent_canvas.insertBefore(track_group,close_group);
-
-    track_canvas = document.createElementNS(svgns,'svg');    
-    buildTrackPane.call(this,track_canvas);
-    
-    track_group.appendChild(track_canvas);
-
-    track_group.setAttribute('clip-path','url(#nav_clipping)');
-
-    this.setRenderer = function(rend) {
-        renderer = rend;
-    };
-
-    this.demote = function() {
-        track_canvas.setAttribute('display','none');
-        return;
-    };
-
-    this.promote = function() {
-        track_canvas.setAttribute('display',this.visible() ? 'inline' : 'none');
-    };
-
-    
-    }
     return Navigation;
 })();
