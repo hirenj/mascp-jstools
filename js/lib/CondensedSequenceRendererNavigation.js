@@ -66,6 +66,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             (controller_buttons || []).forEach(function(button) {
                 button.setAttribute('visibility', edit_enabled ? 'hidden' : 'visible');
             });
+            if (edit_enabled) {
+                toggleMouseEvents.call(self,true);
+            } else {
+                toggleMouseEvents.call(self,false);
+            }
         };
 
         jQuery(self).bind('toggleEdit',function() {
