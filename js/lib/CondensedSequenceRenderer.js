@@ -262,65 +262,14 @@ MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
     var nav = this._Navigation;
     var self = this;
     
-    nav._spliceTrack = function(track,before,after){
-        // if (! (track && (before || after))) {
-        //     return;
-        // }
-
-        var t_order = self._track_order;
-
-        t_order.trackIndex = function(tr) {
-            if (! tr ) {
-                return this.length;
-            }
-            return this.indexOf(tr.name);
-        };
-        
-        if (after && ! before) {
-            before = MASCP.getLayer(t_order[t_order.trackIndex(after) + 1]);
-        }
-        
-        
-        t_order.splice(t_order.trackIndex(track),1);
-        var extra_to_push = [];
-        if (track._group_controller) {
-            var group_layers = track._group_under_control._layers;
-            for (var j = 0; j < group_layers.length; j++ ) {
-                extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
-            }
-        }
-        if (before) {
-            t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
-            for (var i = 0; i < extra_to_push.length; i++ ) {
-                if (extra_to_push[i]) {
-                    t_order.splice(t_order.trackIndex(before),0,extra_to_push[i]);
-                }
-            }
-        } else {
-            if (track._group_controller) {
-                self.hideGroup(track._group_under_control);                
-            }
-            self.hideLayer(track,true);            
-            track.disabled = true;
-            t_order.push(track.name);
-            t_order = t_order.concat(extra_to_push);
-        }
-        
-        self.trackOrder = t_order;
-        self._Navigation.hide();        
-        self.refresh();
-        self._Navigation.show();
-        
-    };
+    nav.setRenderer(this);
     
     var hide_chrome = function() {
         nav.demote(); 
-        nav.hideFilters();        
     };
     
     var show_chrome = function() {
         nav.promote(); 
-        nav.showFilters();        
     };
 
     if ( ! MASCP.IE ) {
@@ -1309,21 +1258,15 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         this._canvas.setAttribute('height',height);
         this._nav_canvas.setAttribute('width',width);
         this._nav_canvas.setAttribute('height',height);        
-        // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
-        // properly, and the drop shadow gets cut off
-        this._Navigation._nav_pane_back.setAttribute('height',this._nav_canvas.height.baseVal.value - 30);
         
         if (this.grow_container) {
             this._container_canvas.setAttribute('height',height);
             this._container.style.height = height+'px';        
-            // We need to explicitly set the value for the height of the back rectangle, since Firefox doesn't scale
-            // properly, and the drop shadow gets cut off
-            this._Navigation._nav_pane_back.setAttribute('height',this._container_canvas.height.baseVal.value - 30);
         } else {
             this._container_canvas.setAttribute('height','100%');
             this._container_canvas.setAttribute('width','100%');
-            this._Navigation.setZoom(this.zoom);
-        }
+            this._Navigation.setZoom(this._zoomLevel);
+        }        
     }
 };
 
@@ -1396,21 +1339,20 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
     }
-    
     var RS = this._RS;
     var track_heights = 0;
     var order = this._track_order || [];
     
     if (this._Navigation) {
-        this._Navigation.clearTracks();
+        this._Navigation.reset();
     }
-    
     for (var i = 0; i < order.length; i++ ) {
         
         var name = order[i];
         var container = this._layer_containers[name];
         if (! this.isLayerActive(name)) {
-            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
+            var attrs = { 'y' : (this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
+//            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
             if (MASCP.getLayer(name).group) {
                 var parent_group = MASCP.getLayer(name);
                 if (parent_group.controller_name && this.isLayerActive(parent_group.controller_name)) {
@@ -1420,7 +1362,7 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
             if (container.fixed_track_height) {
                 delete attrs.height;
             }
-            if (animated) {
+            if (animated) {                
                 container.animate(attrs);
             } else {
                 container.attr(attrs);
@@ -1472,11 +1414,10 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
     }
 
-    if (this._Navigation.edit_enabled) {
-        this._Navigation._toggleMouseEvents(true);
-    } else {
-        this._Navigation._toggleMouseEvents(false);
+    if (this._Navigation) {
+        this._Navigation.refresh();
     }
+
 
     var viewBox = [-1,0,0,0];
     viewBox[0] = -2*RS;
@@ -1504,14 +1445,12 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
 
         this._Navigation._width_shift = 100 * RS / this.zoom;
 
-        if (this._Navigation._is_open) {
+        if (this._Navigation.visible()) {
             this._canvas.style.GomapScrollLeftMargin = this._Navigation._width_shift;
         } else {
             this._canvas.style.GomapScrollLeftMargin = 1000;            
         }
-        this._Navigation._zoom_scale = this._zoomLevel;
         this._Navigation.setViewBox(viewBox.join(' '));
-        this._Navigation.setDimensions('100%','100%');//this._canvas.width.baseVal.value,'100%');
     }
 };
 

@@ -53,7 +53,6 @@ var SVGCanvas = SVGCanvas || (function() {
             setup_anim_clocks();
                         
             if (an_array.animating) {
-                console.log("Stopping anim early");
                 for (var i = 0; i < (anim_clock_funcs || []).length; i++ ) {                    
                     if (anim_clock_funcs[i].target_set != an_array) {
                         continue;
@@ -252,7 +251,8 @@ var SVGCanvas = SVGCanvas || (function() {
 
     var anim_clock_funcs = null, in_anim = false;
     var anim_clock = null;
-    var rate = 5;
+    var rate = 75;
+    var new_rate = null;
     
     var setup_anim_clocks = function() {
         if (anim_clock_funcs === null) {
@@ -292,13 +292,12 @@ var SVGCanvas = SVGCanvas || (function() {
             if (! start) {
                 start = (new Date()).getTime();
             }
-            var new_rate = null;
             
             for (var i = 0; i < (anim_clock_funcs || []).length; i++ ) {
                 var end = (new Date()).getTime();
                 var step_id = parseInt((end - start)/rate,10);
                 if ( new_rate === null && (step_id - anim_clock_funcs[i]._last_step) > 2) {
-                    new_rate = Math.round(1.2*rate);
+                    new_rate = Math.round(1.6*rate);
                 }
                 anim_clock_funcs[i].apply(null,[step_id - (anim_clock_funcs[i]._last_step || step_id)]);
                 if (anim_clock_funcs && anim_clock_funcs[i]) {
@@ -311,11 +310,12 @@ var SVGCanvas = SVGCanvas || (function() {
                 canv.unsuspendRedraw(suspended_ids.shift());
             });
             
-            if ((toc - tic) < rate) {
-                new_rate = new_rate? new_rate : toc - tic;
-            }
-
-            if (new_rate) {
+            var actual_speed = (toc - tic);
+            if (( actual_speed < rate) && (new_rate === null) && actual_speed >= 1 ) {
+                rate = Math.round(1.5*(toc - tic));
+                setup_anim_clocks();
+            } else if (new_rate !== null && new_rate != rate) {
+                rate = new_rate;
                 setup_anim_clocks();
             }
             
