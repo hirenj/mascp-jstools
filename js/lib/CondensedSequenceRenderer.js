@@ -258,11 +258,9 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
 };
 
 MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
-    this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas);
+    this._Navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas,this);
     var nav = this._Navigation;
     var self = this;
-    
-    nav.setRenderer(this);
     
     var hide_chrome = function() {
         nav.demote(); 

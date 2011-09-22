@@ -702,6 +702,12 @@ var SVGCanvas = SVGCanvas || (function() {
             extend_array(an_array,RS);
             return an_array;
         };
+        canvas.hide = function() {
+            this.setAttribute('display','none');
+        };
+        canvas.show = function() {
+            this.setAttribute('display','inline');
+        };
     });
 
 })();
