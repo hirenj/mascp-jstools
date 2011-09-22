@@ -1086,23 +1086,18 @@ var accessors = {
         for (var i = 0; i < order.length; i++) {
             if (MASCP.getLayer(order[i])) {
                 track_order.push(order[i]);
-                // if (this._track_order.indexOf(order[i]) >= 0) {
-                //     this._track_order.splice(this._track_order.indexOf(order[i]),1);
-                // }
             } else if (MASCP.getGroup(order[i])) {
                 var group_layers = MASCP.getGroup(order[i])._layers;
                 for (var j = 0; j < group_layers.length; j++ ) {
                     track_order.push(group_layers[j].name);
-                    // if (this._track_order.indexOf(group_layers[j].name) >= 0) {
-                    //     this._track_order.splice(this._track_order.indexOf(group_layers[j].name),1);
-                    // }
                 }
             }
         }
-        // while((this._track_order || []).length > 0) {
-        //     var a_track = this._track_order.shift();
-        //     this.hideLayer(a_track);
-        // }
+        for (i = ((this._track_order || []).length - 1); i >= 0; i--) {
+            if (track_order.indexOf(this._track_order[i]) < 0) {
+                this.hideLayer(this._track_order[i]);
+            }
+        }
         this._track_order = track_order;
         if (this.refresh) {
             this.refresh(true);
