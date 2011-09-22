@@ -15,8 +15,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     
     this.__class__ = MASCP.CondensedSequenceRenderer;
     
-    // Render Scale
-
 
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
@@ -226,23 +224,21 @@ MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
         };
         
 
-        renderer._nav_canvas.show = function() {
-
-            if (nav) {
-                canv.style.GomapScrollLeftMargin = nav._width_shift;
-            }
-            renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);            
-        };
-        
-        renderer._nav_canvas.hide = function() {
-            renderer._canvas.setCurrentTranslateXY(renderer._canvas.currentTranslate.x, renderer._canvas.currentTranslate.y);
-            canv.style.GomapScrollLeftMargin = 1000;
-        };
         
         renderer._addNav();
 
         var nav = renderer._Navigation;
-
+        var old_show = nav.show, old_hide = nav.hide;
+        nav.show = function() {
+            old_show.call(nav);
+            canv.style.GomapScrollLeftMargin = 100 * renderer._RS / renderer.zoom;
+        };
+        
+        nav.hide = function() {
+            old_hide.call(nav);
+            canv.style.GomapScrollLeftMargin = 1000;
+            console.log(canv.style.GomapScrollLeftMargin);
+        };
         
         renderer._container_canvas = container_canv;
         container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
@@ -1441,10 +1437,8 @@ MASCP.CondensedSequenceRenderer.prototype.refresh = function(animated) {
     viewBox[0] = 0;
     if (this._Navigation) {
 
-        this._Navigation._width_shift = 100 * RS / this.zoom;
-
         if (this._Navigation.visible()) {
-            this._canvas.style.GomapScrollLeftMargin = this._Navigation._width_shift;
+            this._canvas.style.GomapScrollLeftMargin = 100 * RS / this.zoom;
         } else {
             this._canvas.style.GomapScrollLeftMargin = 1000;            
         }
