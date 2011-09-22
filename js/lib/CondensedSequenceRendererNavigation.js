@@ -413,7 +413,13 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             rect.setAttribute('ry', (zoom*base_rounded_corner[1]).toString());
         };
 
-        close_group.addEventListener('click',toggler,false);
+        close_group.addEventListener('click',function() {
+            if (visible) {
+                self.hide();
+            } else {
+                self.show();
+            }
+        },false);
     };
 
     var buildTrackPane = function(track_canvas,draganddrop) {
