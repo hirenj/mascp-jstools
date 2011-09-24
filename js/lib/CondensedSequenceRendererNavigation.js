@@ -9,7 +9,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         parent_canvas.insertBefore(track_group,parent_canvas.lastChild);
 
         var track_canvas = document.createElementNS(svgns,'svg');    
-        buildTrackPane.call(this,track_canvas,connectRenderer(renderer));
+        buildTrackPane.call(this,track_canvas,connectRenderer.call(this,renderer));
 
         track_group.appendChild(track_canvas);
 
@@ -30,8 +30,84 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
     };
 
     var connectRenderer = function(renderer) {
+
+        /**
+         * Create a layer based controller for a group. Clicking on the nominated layer will animate out the expansion of the
+         * group.
+         * @param {Object} lay Layer to turn into a group controller
+         * @param {Object} grp Group to be controlled by this layer.
+         */
+        
+        var controller_map = {};
+        var expanded_map = {};
+        
+        
+        this.isController = function(layer) {
+            if (controller_map[layer.name]) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+        
+        this.getController = function(group) {
+            for (var lay in controller_map) {
+                if (controller_map.hasOwnProperty(lay) && controller_map[lay] == group) {
+                    return MASCP.getLayer(lay);
+                }
+            }
+            return null;
+        };
+        
+        this.isControllerExpanded = function(layer) {
+            return expanded_map[layer.name];
+        };
+        
+        renderer.createGroupController = function(lay,grp) {
+            var layer = MASCP.getLayer(lay);
+            var group = MASCP.getGroup(grp);
+
+            if ( ! layer || ! group) {
+                return;
+            }
+
+            if (controller_map[layer.name]) {
+                return;
+            }
+
+            controller_map[layer.name] = group;
+            
+            expanded_map[layer.name] = false;
+            
+            var self = this;
+
+            jQuery(layer).bind('removed',function(ev,rend) {
+                self.setGroupVisibility(group);
+            });
+
+            jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+                if (group.length > 0) {            
+                    self.setGroupVisibility(group, expanded && visible,true);
+                    renderer.refresh();
+                }
+            });
+            jQuery(group).bind('visibilityChange',function(ev,rend,visible) {
+                if (visible) {
+                    self.showLayer(layer,true);
+                    expanded_map[layer.name] = true;
+                }
+            });
+            jQuery(layer).bind('_expandevent',function(ev) {
+                expanded_map[layer.name] = ! expanded_map[layer.name];
+                self.withoutRefresh(function() {
+                    self.setGroupVisibility(group,expanded_map[layer.name]);
+                });
+                self.refresh(true);
+            });
+        };
+
         return DragAndDrop(function(track,before,after){
-            var t_order = renderer._track_order;
+            var t_order = renderer.trackOrder;
 
             t_order.trackIndex = function(tr) {
                 if (! tr ) {
@@ -46,11 +122,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         
             t_order.splice(t_order.trackIndex(track),1);
             var extra_to_push = [];
-            if (track._group_controller) {
-                var group_layers = track._group_under_control._layers;
-                for (var j = 0; j < group_layers.length; j++ ) {
-                    extra_to_push.push(t_order.splice(t_order.trackIndex(group_layers[j]),1)[0]);
-                }
+            if (controller_map[track.name]) {
+                MASCP.getGroup(controller_map[track.name]).eachLayer(function(lay) {
+                    extra_to_push.push(t_order.splice(t_order.trackIndex(lay),1)[0]);                    
+                });
             }
             if (before) {
                 t_order.splice(t_order.trackIndex(before),1,track.name, before ? before.name : undefined );
@@ -60,9 +135,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     }
                 }
             } else {
-                if (track._group_controller) {
-                    renderer.hideGroup(track._group_under_control);                
-                }
                 renderer.hideLayer(track,true);            
                 track.disabled = true;
                 t_order.push(track.name);
@@ -72,7 +144,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             renderer.trackOrder = t_order;
         });
     };
-
+    
     var DragAndDrop = function(spliceFunction) {    
         var targets = [];
         var in_drag = false, drag_el;
@@ -540,7 +612,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         
             var circ;
         
-            if (track.href && ! track._group_controller) {
+            if (track.href && ! this.isController(track) ) {
                 a_anchor = track_canvas.a(track.href);
                 var icon_name = null;
                 var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
@@ -629,8 +701,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 closer.setAttribute('visibility', 'hidden');
             
             })();
-        
-            if (track._group_controller) {
+            if (this.isController(track)) {
                 if ( ! controller_buttons) {
                     controller_buttons = [];
                 }
@@ -653,7 +724,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
             
                 var group_toggler = track_canvas.poly(''+t_metrics[0]+','+t_metrics[1]+' '+t_metrics[2]+','+t_metrics[3]+' '+t_metrics[4]+','+t_metrics[5]);
-                if (track._isExpanded()) {
+                if (this.isControllerExpanded(track)) {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');
                 } else {
                     expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');
@@ -670,7 +741,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 expander.addEventListener('click',function(e) {
                     e.stopPropagation();
                     jQuery(track).trigger('_expandevent');
-                    if (track._isExpanded()) {
+                    if (self.isControllerExpanded(track)) {
                         expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+') rotate(90,'+(1.5*t_height)+','+t_metrics[3]+')');                
                     } else {
                         expander.setAttribute('transform','translate(0,'+(y+0.5*height)+') scale('+text_scale+')');

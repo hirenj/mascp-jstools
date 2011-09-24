@@ -283,7 +283,7 @@ MASCP.Group.prototype.size = function() {
 MASCP.Group.prototype.eachLayer = function(func) {
     for (var i = 0 ; i < this._layers.length; i++ ) {
         if (! this._layers[i].disabled) {
-            func.apply(this._layers[i]);
+            func.call(this._layers[i],this._layers[i]);
         }
     }    
 };
@@ -1093,9 +1093,11 @@ var accessors = {
                 }
             }
         }
+
         for (i = ((this._track_order || []).length - 1); i >= 0; i--) {
             if (track_order.indexOf(this._track_order[i]) < 0) {
                 this.hideLayer(this._track_order[i]);
+                jQuery(MASCP.getLayer(this._track_order[i])).trigger('removed');
             }
         }
         this._track_order = track_order;

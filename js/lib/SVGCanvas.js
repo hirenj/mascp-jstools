@@ -29,7 +29,7 @@ var SVGCanvas = SVGCanvas || (function() {
                     a_y = a_y[2];
                 }
             }
-            return an_array[0] ? parseInt( a_y || an_array[0].getAttribute('y'),10) : 0;
+            return an_array[0] ? parseInt( a_y || an_array[0].getAttribute('y') || 0,10) : 0;
         };
         
         an_array.animate = function(hsh) {
@@ -74,6 +74,11 @@ var SVGCanvas = SVGCanvas || (function() {
 
             var curr_y = an_array.currenty();
 
+            if (isNaN(parseInt(curr_y))) {
+                throw "Error is "+curr_y;
+                return;
+            }
+
             var target_y = parseInt(hash.y,10);
 
             delete hash.y;
@@ -109,7 +114,7 @@ var SVGCanvas = SVGCanvas || (function() {
                         }
                         an_array.attr(hash);
                         counter += (step || 1);
-                        if ( hash.y != target_y) {
+                        if (hash.y != target_y) {
                             hash.y = curr_y + diff*(counter+1);
                             return;
                         }
@@ -184,6 +189,9 @@ var SVGCanvas = SVGCanvas || (function() {
                             var curr_path = an_array[i].getAttribute('d');
                             var re = /M\s*([\d\.]+) ([\d\.]+)/;
                             curr_path = curr_path.replace(re,'');
+                            if (isNaN(parseInt(value,10))) {
+                                throw "Error "+key+" is "+hash[key];
+                            }
                             an_array[i].setAttribute('d', 'M0 '+parseInt(value,10)+' '+curr_path);
                         }
                         if (key == 'y' && an_array[i].hasAttribute('cy')) {
