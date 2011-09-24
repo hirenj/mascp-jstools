@@ -186,7 +186,6 @@ jQuery(document).ready(function() {
 
         jQuery(MASCP.renderer).bind('sequenceChange', function() {
             var zoomFactor = 0.95 * window.innerWidth / (2 * MASCP.renderer.sequence.length);
-            MASCP.renderer.defaultZoom = zoomFactor;
             MASCP.renderer.zoom = zoomFactor;
             dragger.applyToElement(MASCP.renderer._canvas);
             GOMap.Diagram.addTouchZoomControls(MASCP.renderer, MASCP.renderer._canvas);
