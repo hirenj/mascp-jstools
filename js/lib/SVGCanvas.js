@@ -74,8 +74,8 @@ var SVGCanvas = SVGCanvas || (function() {
 
             var curr_y = an_array.currenty();
 
-            if (isNaN(parseInt(curr_y))) {
-                throw "Error is "+curr_y;
+            if (isNaN(parseInt(curr_y,10))) {
+                console.log("Have a NaN y value, skipping");
                 return;
             }
 
