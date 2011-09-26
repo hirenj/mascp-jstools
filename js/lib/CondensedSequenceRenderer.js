@@ -34,6 +34,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
         }
         self.zoom = self.zoom;
     });
+
     return this;
 };
 
@@ -46,655 +47,565 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     MASCP.CondensedSequenceRenderer._BASE_PATH = src;
 })();
 
-MASCP.CondensedSequenceRenderer.prototype._createCanvasObject = function() {
-    var renderer = this;
+(function(clazz) {
+    var createCanvasObject = function() {
+        var renderer = this;
 
-    if (this._object) {
-        if (typeof svgweb != 'undefined') {
-            svgweb.removeChild(this._object, this._object.parentNode);
-        } else {
-            this._object.parentNode.removeChild(this._object);
-        }
-        this._canvas = null;
-        this._object = null;
-    }
-
-    var canvas = document.createElement('object',true);
-
-
-    canvas.setAttribute('data',MASCP.CondensedSequenceRenderer._BASE_PATH+'blank.svg');
-//    canvas.setAttribute('data','data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcNCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciDQogICB2ZXJzaW9uPSIxLjEiDQogICB3aWR0aD0iMTAwJSINCiAgIGhlaWdodD0iMTAwJSINCj4NCjwvc3ZnPg==');
-
-    canvas.setAttribute('type','image/svg+xml');
-    canvas.setAttribute('width','100%');
-    canvas.setAttribute('height','100%');
-    canvas.style.display = 'block';
-    
-    if ( ! canvas.addEventListener ) {    
-        canvas.addEventListener = function(ev,func) {
-            this.attachEvent(ev,func);
-        };
-    }
-    
-
-    var has_svgweb = typeof svgweb != 'undefined';
-
-    if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
-        var native_canvas = document.createElementNS(svgns,'svg');
-        native_canvas.setAttribute('width','100%');
-        native_canvas.setAttribute('height','100%');
-        this._container.appendChild(native_canvas);
-        this._canvas = native_canvas;
-        canvas = {
-            'addEventListener' : function(name,load_func) {
-                native_canvas.contentDocument = { 'rootElement' : native_canvas };
-                load_func.call(native_canvas);
-            }            
-        };
-    }
-
-    canvas.addEventListener(has_svgweb ? 'SVGLoad' : 'load',function() {
-        var container_canv = (this.contentDocument || this.getAttribute('contentDocument')).rootElement;
-        
-        var nav_group = document.createElementNS(svgns,'g');
-        renderer._nav_canvas = document.createElementNS(svgns,'svg');
-        
-        var group = document.createElementNS(svgns,'g');        
-        renderer._canvas = document.createElementNS(svgns,'svg');
-
-        var canv = renderer._canvas;
-
-        var supports_events = true;
-
-        try {
-            var noop = canv.addEventListener;
-        } catch (err) {
-            supports_events = false;
-        }
-
-        if (supports_events) {
-            var oldAddEventListener = canv.addEventListener;
-        
-            // We need to track all the mousemove functions that are bound to this event
-            // so that we can switch off all the mousemove bindings during an animation event
-        
-            var mouse_moves = [];
-
-            canv.addEventListener = function(ev,func,bubbling) {
-                if (ev == 'mousemove') {
-                    if (mouse_moves.indexOf(func) < 0) {
-                        mouse_moves.push(func);
-                    } else {
-                        return;
-                    }
-                }
-                return oldAddEventListener.apply(canv,[ev,func,bubbling]);
-            };
-
-            jQuery(canv).bind('_anim_begin',function() {
-                for (var i = 0; i < mouse_moves.length; i++ ) {
-                    canv.removeEventListener('mousemove', mouse_moves[i], false );
-                }
-                jQuery(canv).bind('_anim_end',function() {
-                    for (var j = 0; j < mouse_moves.length; j++ ) {
-                        oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
-                    }                        
-                    jQuery(canv).unbind('_anim_end',arguments.callee);
-                });
-            });
-        }
-        
-        
-        var canvas_rect = document.createElementNS(svgns,'rect');
-        canvas_rect.setAttribute('x','-10%');
-        canvas_rect.setAttribute('y','-10%');
-        canvas_rect.setAttribute('width','120%');
-        canvas_rect.setAttribute('height','120%');
-        canvas_rect.setAttribute('style','fill: #ffffff;');
-        renderer._canvas.appendChild(canvas_rect);
-        
-                
-        container_canv.appendChild(group);        
-
-        group.appendChild(renderer._canvas);
-        
-        
-        var left_fade = document.createElementNS(svgns,'rect');
-        left_fade.setAttribute('x','0');
-        left_fade.setAttribute('y','0');
-        left_fade.setAttribute('width','50');
-        left_fade.setAttribute('height','100%');
-        left_fade.setAttribute('style','fill: url(#left_fade);');
-
-        var right_fade = document.createElementNS(svgns,'rect');
-        right_fade.setAttribute('x','100%');
-        right_fade.setAttribute('y','0');
-        right_fade.setAttribute('width','50');
-        right_fade.setAttribute('height','100%');
-        right_fade.setAttribute('style','fill: url(#right_fade);');
-        right_fade.setAttribute('transform','translate(-50,0)');
-
-        if (! MASCP.IE) {
-
-        jQuery(renderer._canvas).bind('pan',function() {
-            if (renderer._canvas.currentTranslate.x >= 0) {
-                left_fade.setAttribute('visibility','hidden');
+        if (this._object) {
+            if (typeof svgweb != 'undefined') {
+                svgweb.removeChild(this._object, this._object.parentNode);
             } else {
-                left_fade.setAttribute('visibility','visible');
+                this._object.parentNode.removeChild(this._object);
             }
-        });
-        
-        jQuery(renderer._canvas).bind('_anim_begin',function() {
-            left_fade.setAttribute('visibility','hidden');
-        });
-        
-        jQuery(renderer._canvas).bind('_anim_end',function() {
-            jQuery(renderer._canvas).trigger('pan');
-        });
+            this._canvas = null;
+            this._object = null;
+        }
+        var canvas;
+
+        if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
+            var native_canvas = document.createElementNS(svgns,'svg');
+            native_canvas.setAttribute('width','100%');
+            native_canvas.setAttribute('height','100%');
+            this._container.appendChild(native_canvas);
+            this._canvas = native_canvas;
+            canvas = {
+                'addEventListener' : function(name,load_func) {
+                    native_canvas.contentDocument = { 'rootElement' : native_canvas };
+                    load_func.call(native_canvas);
+                }            
+            };
+            console.log("Native svg");
         }
 
-        if (renderer._canvas.currentTranslate.x >= 0) {
-            left_fade.setAttribute('visibility','hidden');
-        }
+        canvas.addEventListener('load',function() {
+            var container_canv = this;
+            SVGCanvas(container_canv);
+            var group = container_canv.makeEl('g');
         
-        container_canv.appendChild(left_fade);
-        container_canv.appendChild(right_fade);
-        
-        
-        container_canv.appendChild(nav_group);
-        nav_group.appendChild(renderer._nav_canvas);
+            var canv = container_canv.makeEl('svg');
+            canv.RS = renderer._RS;
+            SVGCanvas(canv);
+            group.appendChild(canv);
+            container_canv.appendChild(group);
 
+            var supports_events = true;
 
-
-        renderer._canvas.setCurrentTranslateXY = function(x,y) {
-                var curr_transform = (group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
-                curr_transform = curr_transform + ' translate('+x+', '+y+') ';
-                group.setAttribute('transform',curr_transform);
-                this.currentTranslate.x = x;
-                this.currentTranslate.y = y;
-        };
-        
-        renderer._nav_canvas.setCurrentTranslateXY = function(x,y) {
-                var curr_transform = (nav_group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
-                curr_transform = curr_transform + ' translate('+x+', '+y+') ';
-                nav_group.setAttribute('transform',curr_transform);
-                this.currentTranslate.x = x;
-                this.currentTranslate.y = y;
-        };
-        
-
-        
-        renderer._addNav();
-
-        var nav = renderer.navigation;
-        var old_show = nav.show, old_hide = nav.hide;
-        nav.show = function() {
-            old_show.call(nav);
-            canv.style.GomapScrollLeftMargin = 100 * renderer._RS / renderer.zoom;
-        };
-        
-        nav.hide = function() {
-            old_hide.call(nav);
-            canv.style.GomapScrollLeftMargin = 1000;
-        };
-        
-        renderer._container_canvas = container_canv;
-        container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
-        container_canv.setAttribute('width','100%');
-        container_canv.setAttribute('height','100%');
-        
-        renderer._canvas._canvas_height = 0;
-        renderer._object = this;
-        jQuery(renderer).trigger('svgready');
-    },false);
-    
-    return canvas;
-};
-
-MASCP.CondensedSequenceRenderer.prototype._addNav = function() {
-    this.navigation = new MASCP.CondensedSequenceRenderer.Navigation(this._nav_canvas,this);
-    var nav = this.navigation;
-    var self = this;
-    
-    var hide_chrome = function() {
-        nav.demote(); 
-    };
-    
-    var show_chrome = function() {
-        nav.promote(); 
-    };
-
-    if ( ! MASCP.IE ) {
-    jQuery(this._canvas).bind('panstart',hide_chrome);
-    jQuery(this._canvas).bind('panend',show_chrome);
-    jQuery(this._canvas).bind('_anim_begin',hide_chrome);
-    jQuery(this._canvas).bind('_anim_end',show_chrome);
-    }
-};
-
-MASCP.CondensedSequenceRenderer.prototype._drawAminoAcids = function(canvas) {
-    var RS = this._RS;
-    var seq_chars = this.sequence.split('');
-    var renderer = this;
-    var aa_selection = document.createElement('div');
-    // We need to prepend an extra > to the sequence since there is a bug with Safari failing
-    // to select reliably when you set the start offset for the range to 0
-    aa_selection.appendChild(document.createTextNode(">"+this.sequence));
-    renderer._container.appendChild(aa_selection);
-    aa_selection.style.top = '110%';
-    aa_selection.style.height = '1px';
-    aa_selection.style.overflow = 'hidden';
-    
-    var amino_acids = canvas.set();
-    var amino_acids_shown = false;
-    var x = 0;
-    
-    var has_textLength = true;
-    var no_op = function() {};
-    try {
-        var test_el = document.createElementNS(svgns,'text');
-        test_el.setAttribute('textLength',10);
-        no_op(test_el.textLength);
-    } catch (e) {
-        has_textLength = false;
-    }
-    
-    if ("ontouchend" in document) {
-        has_textLength = false;
-    }
-    
-    renderer.select = function() {
-        var vals = Array.prototype.slice.call(arguments);
-        var from = vals[0];
-        var to = vals[1];
-        var sel = window.getSelection();
-        if(sel.rangeCount > 0) {
-            sel.removeAllRanges();
-        }
-        var range = document.createRange();
-        range.selectNodeContents(aa_selection.childNodes[0]);
-        sel.addRange(range);
-        sel.removeAllRanges();
-        range.setStart(aa_selection.childNodes[0],from+1);
-        range.setEnd(aa_selection.childNodes[0],to+1);
-        sel.addRange(range);
-        this.moveHighlight.apply(this,vals);
-    };
-    var a_text;
-    
-    if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-        a_text = canvas.text(0,12,document.createTextNode(this.sequence));
-        a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
-        a_text.setAttribute('lengthAdjust','spacing');
-        a_text.setAttribute('textLength',RS*this.sequence.length);
-        a_text.setAttribute('text-anchor', 'start');
-        a_text.setAttribute('dx',5);
-        a_text.setAttribute('font-size', RS);
-        a_text.setAttribute('fill', '#000000');
-        amino_acids.push(a_text);
-    } else {    
-        for (var i = 0; i < seq_chars.length; i++) {
-            a_text = canvas.text(x,12,seq_chars[i]);
-            amino_acids.push(a_text);
-            a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
-            x += 1;
-        }
-        amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000'});
-    }
-    canvas.addEventListener('panstart', function() {
-        amino_acids.attr( { 'y' : '-1000'});
-        jQuery(canvas).bind('panend', function() {
-            if (amino_acids_shown) {
-                amino_acids.attr( { 'y' : 12*RS});                
+            try {
+                var noop = canv.addEventListener;
+            } catch (err) {
+                supports_events = false;
             }
-            jQuery(canvas).unbind('panend',arguments.callee);
-        });
-    });
-    
-    canvas.addEventListener('zoomChange', function() {
-       if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
-           renderer.zoom = 4;
-           return;
-       }
-       if (renderer.zoom > 3.8 && renderer.zoom < 4 ) {
-           renderer.zoom = 3.5;
-           return;
-       }
-       
-       if (canvas.zoom > 3.5) {
-           renderer._axis_height = 14;
-           amino_acids.attr({'y': 12*RS});
-           amino_acids_shown = true;
-       } else {
-           renderer._axis_height = 30;
-           amino_acids.attr({'y':-1000});   
-           amino_acids_shown = false;        
-       }
-       renderer.refresh();
-   });
-   
-};
 
-MASCP.CondensedSequenceRenderer.prototype._drawAxis = function(canvas,lineLength) {
-    var RS = this._RS;
-    var x = 0, i = 0;
-    
-    
-    var axis = canvas.set();
-    axis.push(canvas.path('M0 '+15*RS+' l0 '+10*RS));
-
-    axis.push(canvas.path('M'+(lineLength*RS)+' '+14*RS+' l0 '+10*RS));
-
-    this._axis_height = 20;
-
-    axis.attr({'pointer-events' : 'none'});
-
-    var big_ticks = canvas.set();
-    var little_ticks = canvas.set();
-    var big_labels = canvas.set();
-    var little_labels = canvas.set();
-    
-    
-    for ( i = 0; i < (lineLength/5); i++ ) {
-
-        if ( (x % 10) === 0) {
-            big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
-        } else {
-            little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
-        }
-
-        if ( (x % 20) === 0 && x !== 0) {
-            big_labels.push(canvas.text(x,5,""+(x)));
-        } else if (( x % 10 ) === 0 && x !== 0) {
-            little_labels.push(canvas.text(x,7,""+(x)));
-        }
-
-        x += 5;
-    }
-    
-    for ( i = 0; i < big_labels.length; i++ ) {
-        big_labels[i].style.textAnchor = 'middle';
-        big_labels[i].setAttribute('text-anchor','middle');
-        big_labels[i].setAttribute('dominant-baseline','hanging');
-        big_labels[i].setAttribute('font-size',7*RS+'pt');
-    }
-
-    for ( i = 0; i < little_labels.length; i++ ) {
-        little_labels[i].style.textAnchor = 'middle';
-        little_labels[i].setAttribute('text-anchor','middle');
-        little_labels[i].setAttribute('dominant-baseline','hanging');
-        little_labels[i].setAttribute('font-size',2*RS+'pt');        
-        little_labels[i].style.fill = '#000000';
-    }
-    
-    big_ticks.attr({'pointer-events' : 'none'});
-    little_ticks.attr({'pointer-events' : 'none'});
-    big_labels.attr({'pointer-events' : 'none'});
-    little_labels.attr({'pointer-events' : 'none'});
-    
-    little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
-    little_ticks.hide();
-    little_labels.hide();
-
-    canvas.addEventListener('zoomChange', function() {
-           if (this.zoom > 3.6) {
-               little_ticks.hide();
-               big_ticks.show();
-               big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.1) translate(0,4500)' });
-               little_labels.attr({'font-size':2*RS+'pt'});
-               big_labels.attr({'font-size': 2*RS+'pt'});
-               axis.hide();
-               if (this._visibleTracers && this._visibleTracers()) {
-                   this._visibleTracers().show();
-               }
-           } else if (this.zoom > 1.8) {
-               axis.show();
-               big_ticks.show();
-               axis.attr({'stroke-width':0.5*RS+'pt'});
-               big_ticks.attr({'stroke-width':0.5*RS+'pt', 'stroke' : '#000000', 'transform' : ''});
-               big_labels.show();
-               big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
-               little_labels.attr({'font-size':4*RS+'pt'});
-               little_ticks.attr({'stroke-width':0.3*RS+'pt'});
-               little_ticks.show();
-               little_labels.show();
-               if (this.tracers) {
-                   this.tracers.hide();
-               }
-           } else {
-               if (this.tracers) {
-                   this.tracers.hide();
-               }
-               axis.show();
-               axis.attr({'stroke-width':RS+'pt'});
-               big_ticks.show();
-               big_ticks.attr({'stroke-width':RS+'pt', 'transform' : '', 'stroke' : '#000000'});
-               big_labels.show();
-               big_labels.attr({'font-size':7*RS+'pt','y':5*RS});
-               little_ticks.hide();
-               little_labels.hide();
-           }
-    });
-};
-
-MASCP.CondensedSequenceRenderer.prototype.setSequence = function(sequence) {
-    var new_sequence = this._cleanSequence(sequence);
-    if (new_sequence == this.sequence && new_sequence !== null) {
-        jQuery(this).trigger('sequenceChange');
-        return;
-    }
-    
-    if (! new_sequence) {
-        return;
-    }
-    
-    this.sequence = new_sequence;
-    
-    var seq_chars = this.sequence.split('');
-    var line_length = seq_chars.length;
-
-    if (line_length === 0) {
-        return;
-    }
-
-    var renderer = this;
-
-    var seq_els = [];
-    
-    jQuery(seq_chars).each( function(i) {
-        var el = {};
-        el._index = i;
-        el._renderer = renderer;
-        renderer._extendElement(el);
-        el.amino_acid = this;
-        seq_els.push(el);
-    });
-
-    this._sequence_els = seq_els;
-
-    var RS = this._RS;
-
-    jQuery(this).unbind('svgready').bind('svgready',function(cnv) {
-        var canv = renderer._canvas;
-        canv.RS = RS;
-        SVGCanvas(canv);
-        canv.setAttribute('background', '#000000');
-        canv.setAttribute('preserveAspectRatio','xMinYMin meet');
+            if (false && supports_events) {
+                var oldAddEventListener = canv.addEventListener;
         
-        var defs = canv.makeEl('defs');
-        renderer._container_canvas.appendChild(defs);
-
-
-        defs.appendChild(canv.make_gradient('track_shine','0%','100%',['#111111','#aaaaaa','#111111'], [0.5,0.5,0.5]));
-        defs.appendChild(canv.make_gradient('simple_gradient','0%','100%',['#aaaaaa','#888888'], [1,1]));
-        defs.appendChild(canv.make_gradient('left_fade','100%','0%',['#ffffff','#ffffff'], [1,0]));
-        defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
-        defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
+                // We need to track all the mousemove functions that are bound to this event
+                // so that we can switch off all the mousemove bindings during an animation event
         
-        var shadow = canv.makeEl('filter',{
-            'id':'drop_shadow',
-            'filterUnits':'objectBoundingBox',
-            'x': '0',
-            'y': '0',
-            'width':'150%',
-            'height':'130%'
-        });
+                var mouse_moves = [];
 
-        shadow.appendChild(canv.makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
-        shadow.appendChild(canv.makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'3','dy':'1'}));
-        shadow.appendChild(canv.makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
+                canv.addEventListener = function(ev,func,bubbling) {
+                    if (ev == 'mousemove') {
+                        if (mouse_moves.indexOf(func) < 0) {
+                            mouse_moves.push(func);
+                        } else {
+                            return;
+                        }
+                    }
+                    return oldAddEventListener.apply(canv,[ev,func,bubbling]);
+                };
+
+                jQuery(canv).bind('_anim_begin',function() {
+                    for (var i = 0; i < mouse_moves.length; i++ ) {
+                        canv.removeEventListener('mousemove', mouse_moves[i], false );
+                    }
+                    jQuery(canv).bind('_anim_end',function() {
+                        for (var j = 0; j < mouse_moves.length; j++ ) {
+                            oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
+                        }                        
+                        jQuery(canv).unbind('_anim_end',arguments.callee);
+                    });
+                });
+            }
         
-        defs.appendChild(shadow);
-
-        var link_icon = canv.makeEl('svg',{
-            'width' : '100%',
-            'height': '100%',
-            'id'    : 'new_link_icon',
-            'viewBox': '0 0 100 100',
-            'preserveAspectRatio' : 'xMinYMin meet'
-        });
-
-        defs.appendChild(link_icon);
-
-        link_icon.appendChild(canv.makeEl('rect', {
-            'x' : '5',
-            'y' : '10',
-            'stroke-width' : '1',
-            'width' : '70',
-            'height': '60',
-            'stroke': '#ffffff',
-            'fill'  : 'none'            
-        }));
-        link_icon.appendChild(canv.makeEl('rect', {
-            'x' : '5',
-            'y' : '10',
-            'stroke-width' : '0',
-            'width' : '70',
-            'height': '10',
-            'stroke': '#ffffff',
-            'fill'  : '#ffffff'            
-        }));
-
-
-        link_icon.appendChild(canv.makeEl('rect', {
-            'x' : '30',
-            'y' : '0',
-            'stroke-width' : '1',
-            'width' : '70',
-            'height': '60',
-            'stroke': '#ffffff',
-            'fill'  : '#bbbbbb',
-            'fill-opacity': '1'            
-        }));
         
-        link_icon.appendChild(canv.makeEl('rect', {
-            'x' : '30',
-            'y' : '0',
-            'stroke-width' : '1',
-            'width' : '70',
-            'height': '10',
-            'stroke': '#ffffff',
-            'fill'  : '#222222'            
-        }));
-
-
-        var plus_icon = canv.makeEl('svg',{
-            'width' : '100%',
-            'height': '100%',
-            'id'    : 'plus_icon',
-            'viewBox': '0 0 100 100',
-            'preserveAspectRatio' : 'xMinYMin meet'
-        });
-
-        defs.appendChild(plus_icon);
-
-        plus_icon.appendChild(canv.makeEl('rect', {
-            'x' : '40',
-            'y' : '10',
-            'stroke-width' : '1',
-            'width' : '20',
-            'height': '80',
-            'stroke': '#ffffff',
-            'fill'  : '#ffffff'            
-        }));
-
-        plus_icon.appendChild(canv.makeEl('rect', {
-            'x' : '10',
-            'y' : '40',
-            'stroke-width' : '1',
-            'width' : '80',
-            'height': '20',
-            'stroke': '#ffffff',
-            'fill'  : '#ffffff'            
-        }));
-
-        var minus_icon = canv.makeEl('svg',{
-            'width' : '100%',
-            'height': '100%',
-            'id'    : 'minus_icon',
-            'viewBox': '0 0 100 100',
-            'preserveAspectRatio' : 'xMinYMin meet'
-        });
-
-        defs.appendChild(minus_icon);
-
-        minus_icon.appendChild(canv.makeEl('rect', {
-            'x' : '10',
-            'y' : '40',
-            'stroke-width' : '1',
-            'width' : '80',
-            'height': '20',
-            'stroke': '#ffffff',
-            'fill'  : '#ffffff'            
-        }));
-        renderer._highlight = [];
-        renderer._createNewHighlight = function() {
-            var highlight = canv.rect(0,0,0,'100%');
-            highlight.setAttribute('fill','#ffdddd');
-            var pnode = highlight.parentNode;
-            pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
-            this._highlight.push(highlight);
-        };
-        renderer._createNewHighlight();
+            var canvas_rect = canv.makeEl('rect', {  'x':'-10%',
+                                                    'y':'-10%',
+                                                    'width':'120%',
+                                                    'height':'120%',
+                                                    'style':'fill: #ffffff;'});
         
-        renderer._drawAxis(canv,line_length);
-        renderer._drawAminoAcids(canv);
         
-        jQuery(renderer).trigger('sequenceChange');
-    });
-    
-    var canvas = this._createCanvasObject();
-    
-    if (this._canvas) {
-        has_canvas = true;
-    } else {
-        if (typeof svgweb != 'undefined') {
-            svgweb.appendChild(canvas,this._container);
-        } else {
-            this._container.appendChild(canvas);
-        }
-    }
-    
-    var rend = this;
-    
-    var seq_change_func = function(other_func) {
-        if ( ! rend._canvas ) {
-            rend.bind('sequenceChange',function() {
-                jQuery(rend).unbind('sequenceChange',arguments.callee);
-                other_func.apply();
+        
+            var left_fade = container_canv.makeEl('rect',{      'x':'0',
+                                                                'y':'0',
+                                                                'width':'50',
+                                                                'height':'100%',
+                                                                'style':'fill: url(#left_fade);'});
+
+            var right_fade = container_canv.makeEl('rect',{     'x':'100%',
+                                                                'y':'0',
+                                                                'width':'50',
+                                                                'height':'100%',
+                                                                'transform':'translate(-50,0)',
+                                                                'style':'fill: url(#right_fade);'});
+
+
+            jQuery(canv).bind('pan',function() {
+                if (canv.currentTranslate.x >= 0) {
+                    left_fade.setAttribute('visibility','hidden');
+                } else {
+                    left_fade.setAttribute('visibility','visible');
+                }
             });
-        } else {
-            other_func.apply();
+        
+            jQuery(canv).bind('_anim_begin',function() {
+                left_fade.setAttribute('visibility','hidden');
+            });
+        
+            jQuery(canv).bind('_anim_end',function() {
+                jQuery(canv).trigger('pan');
+            });
+
+            if (canv.currentTranslate.x >= 0) {
+                left_fade.setAttribute('visibility','hidden');
+            }
+            var nav_group = container_canv.makeEl('g');
+            container_canv.appendChild(nav_group);
+            var nav_canvas = container_canv.makeEl('svg');
+            nav_group.appendChild(nav_canvas);
+
+
+
+           canv.setCurrentTranslateXY = function(x,y) {
+                    var curr_transform = (group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
+                    curr_transform = curr_transform + ' translate('+x+', '+y+') ';
+                    group.setAttribute('transform',curr_transform);
+                    this.currentTranslate.x = x;
+                    this.currentTranslate.y = y;
+            };
+        
+            nav_canvas.setCurrentTranslateXY = function(x,y) {
+                    var curr_transform = (nav_group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
+                    curr_transform = curr_transform + ' translate('+x+', '+y+') ';
+                    nav_group.setAttribute('transform',curr_transform);
+                    this.currentTranslate.x = x;
+                    this.currentTranslate.y = y;
+            };
+        
+
+        
+            addNav.call(renderer,nav_canvas);
+
+            var nav = renderer.navigation;
+            var old_show = nav.show, old_hide = nav.hide;
+            nav.show = function() {
+                old_show.call(nav);
+                canv.style.GomapScrollLeftMargin = 100 * renderer._RS / renderer.zoom;
+            };
+        
+            nav.hide = function() {
+                old_hide.call(nav);
+                canv.style.GomapScrollLeftMargin = 1000;
+            };
+        
+            renderer._container_canvas = container_canv;
+            container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
+            container_canv.setAttribute('width','100%');
+            container_canv.setAttribute('height','100%');
+            canv.appendChild(canv.makeEl('rect', {'x':0,'y':0,'width':'100%','height':'100%','stroke-width':'0','fill':'#ffffff'}));
+            renderer._object = this;
+            renderer._canvas = canv;
+            renderer._canvas._canvas_height = 0;
+            jQuery(renderer).trigger('svgready');
+        },false);
+    
+        return canvas;
+    };
+
+    var addNav = function(nav_canvas) {
+        this.navigation = new MASCP.CondensedSequenceRenderer.Navigation(nav_canvas,this);
+        var nav = this.navigation;
+        var self = this;
+    
+        var hide_chrome = function() {
+            nav.demote(); 
+        };
+    
+        var show_chrome = function() {
+            nav.promote(); 
+        };
+
+        if ( ! MASCP.IE ) {
+        jQuery(this._canvas).bind('panstart',hide_chrome);
+        jQuery(this._canvas).bind('panend',show_chrome);
+        jQuery(this._canvas).bind('_anim_begin',hide_chrome);
+        jQuery(this._canvas).bind('_anim_end',show_chrome);
         }
     };
+
+    var drawAminoAcids = function(canvas) {
+        var RS = this._RS;
+        var seq_chars = this.sequence.split('');
+        var renderer = this;
+        var aa_selection = document.createElement('div');
+        // We need to prepend an extra > to the sequence since there is a bug with Safari failing
+        // to select reliably when you set the start offset for the range to 0
+        aa_selection.appendChild(document.createTextNode(">"+this.sequence));
+        renderer._container.appendChild(aa_selection);
+        aa_selection.style.top = '110%';
+        aa_selection.style.height = '1px';
+        aa_selection.style.overflow = 'hidden';
     
-    seq_change_func.ready = function(other_func) {
-        this.call(this,other_func);
+        var amino_acids = canvas.set();
+        var amino_acids_shown = false;
+        var x = 0;
+    
+        var has_textLength = true;
+        var no_op = function() {};
+        try {
+            var test_el = document.createElementNS(svgns,'text');
+            test_el.setAttribute('textLength',10);
+            no_op(test_el.textLength);
+        } catch (e) {
+            has_textLength = false;
+        }
+    
+        if ("ontouchend" in document) {
+            has_textLength = false;
+        }
+    
+        renderer.select = function() {
+            var vals = Array.prototype.slice.call(arguments);
+            var from = vals[0];
+            var to = vals[1];
+            var sel = window.getSelection();
+            if(sel.rangeCount > 0) {
+                sel.removeAllRanges();
+            }
+            var range = document.createRange();
+            range.selectNodeContents(aa_selection.childNodes[0]);
+            sel.addRange(range);
+            sel.removeAllRanges();
+            range.setStart(aa_selection.childNodes[0],from+1);
+            range.setEnd(aa_selection.childNodes[0],to+1);
+            sel.addRange(range);
+            this.moveHighlight.apply(this,vals);
+        };
+        var a_text;
+    
+        if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
+            a_text = canvas.text(0,12,document.createTextNode(this.sequence));
+            a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
+            a_text.setAttribute('lengthAdjust','spacing');
+            a_text.setAttribute('textLength',RS*this.sequence.length);
+            a_text.setAttribute('text-anchor', 'start');
+            a_text.setAttribute('dx',5);
+            a_text.setAttribute('font-size', RS);
+            a_text.setAttribute('fill', '#000000');
+            amino_acids.push(a_text);
+        } else {    
+            for (var i = 0; i < seq_chars.length; i++) {
+                a_text = canvas.text(x,12,seq_chars[i]);
+                amino_acids.push(a_text);
+                a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
+                x += 1;
+            }
+            amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000'});
+        }
+        canvas.addEventListener('panstart', function() {
+            amino_acids.attr( { 'y' : '-1000'});
+            jQuery(canvas).bind('panend', function() {
+                if (amino_acids_shown) {
+                    amino_acids.attr( { 'y' : 12*RS});                
+                }
+                jQuery(canvas).unbind('panend',arguments.callee);
+            });
+        });
+    
+        canvas.addEventListener('zoomChange', function() {
+           if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
+               renderer.zoom = 4;
+               return;
+           }
+           if (renderer.zoom > 3.8 && renderer.zoom < 4 ) {
+               renderer.zoom = 3.5;
+               return;
+           }
+       
+           if (canvas.zoom > 3.5) {
+               renderer._axis_height = 14;
+               amino_acids.attr({'y': 12*RS});
+               amino_acids_shown = true;
+           } else {
+               renderer._axis_height = 30;
+               amino_acids.attr({'y':-1000});   
+               amino_acids_shown = false;        
+           }
+           renderer.refresh();
+       });
+   
     };
+
+    var drawAxis = function(canvas,lineLength) {
+        var RS = this._RS;
+        var x = 0, i = 0;
     
-    return seq_change_func;
     
-};
+        var axis = canvas.set();
+        axis.push(canvas.path('M0 '+15*RS+' l0 '+10*RS));
+
+        axis.push(canvas.path('M'+(lineLength*RS)+' '+14*RS+' l0 '+10*RS));
+
+        this._axis_height = 20;
+
+        axis.attr({'pointer-events' : 'none'});
+
+        var big_ticks = canvas.set();
+        var little_ticks = canvas.set();
+        var big_labels = canvas.set();
+        var little_labels = canvas.set();
+    
+    
+        for ( i = 0; i < (lineLength/5); i++ ) {
+
+            if ( (x % 10) === 0) {
+                big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
+            } else {
+                little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
+            }
+
+            if ( (x % 20) === 0 && x !== 0) {
+                big_labels.push(canvas.text(x,5,""+(x)));
+            } else if (( x % 10 ) === 0 && x !== 0) {
+                little_labels.push(canvas.text(x,7,""+(x)));
+            }
+
+            x += 5;
+        }
+    
+        for ( i = 0; i < big_labels.length; i++ ) {
+            big_labels[i].style.textAnchor = 'middle';
+            big_labels[i].setAttribute('text-anchor','middle');
+            big_labels[i].setAttribute('dominant-baseline','hanging');
+            big_labels[i].setAttribute('font-size',7*RS+'pt');
+        }
+
+        for ( i = 0; i < little_labels.length; i++ ) {
+            little_labels[i].style.textAnchor = 'middle';
+            little_labels[i].setAttribute('text-anchor','middle');
+            little_labels[i].setAttribute('dominant-baseline','hanging');
+            little_labels[i].setAttribute('font-size',2*RS+'pt');        
+            little_labels[i].style.fill = '#000000';
+        }
+    
+        big_ticks.attr({'pointer-events' : 'none'});
+        little_ticks.attr({'pointer-events' : 'none'});
+        big_labels.attr({'pointer-events' : 'none'});
+        little_labels.attr({'pointer-events' : 'none'});
+    
+        little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
+        little_ticks.hide();
+        little_labels.hide();
+
+        canvas.addEventListener('zoomChange', function() {
+               if (this.zoom > 3.6) {
+                   little_ticks.hide();
+                   big_ticks.show();
+                   big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.1) translate(0,4500)' });
+                   little_labels.attr({'font-size':2*RS+'pt'});
+                   big_labels.attr({'font-size': 2*RS+'pt'});
+                   axis.hide();
+                   if (this._visibleTracers && this._visibleTracers()) {
+                       this._visibleTracers().show();
+                   }
+               } else if (this.zoom > 1.8) {
+                   axis.show();
+                   big_ticks.show();
+                   axis.attr({'stroke-width':0.5*RS+'pt'});
+                   big_ticks.attr({'stroke-width':0.5*RS+'pt', 'stroke' : '#000000', 'transform' : ''});
+                   big_labels.show();
+                   big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
+                   little_labels.attr({'font-size':4*RS+'pt'});
+                   little_ticks.attr({'stroke-width':0.3*RS+'pt'});
+                   little_ticks.show();
+                   little_labels.show();
+                   if (this.tracers) {
+                       this.tracers.hide();
+                   }
+               } else {
+                   if (this.tracers) {
+                       this.tracers.hide();
+                   }
+                   axis.show();
+                   axis.attr({'stroke-width':RS+'pt'});
+                   big_ticks.show();
+                   big_ticks.attr({'stroke-width':RS+'pt', 'transform' : '', 'stroke' : '#000000'});
+                   big_labels.show();
+                   big_labels.attr({'font-size':7*RS+'pt','y':5*RS});
+                   little_ticks.hide();
+                   little_labels.hide();
+               }
+        });
+    };
+
+    clazz.prototype.setSequence = function(sequence) {
+        var new_sequence = this._cleanSequence(sequence);
+        if (new_sequence == this.sequence && new_sequence !== null) {
+            jQuery(this).trigger('sequenceChange');
+            return;
+        }
+    
+        if (! new_sequence) {
+            return;
+        }
+    
+        this.sequence = new_sequence;
+    
+        var seq_chars = this.sequence.split('');
+        var line_length = seq_chars.length;
+
+        if (line_length === 0) {
+            return;
+        }
+
+        var renderer = this;
+
+        var seq_els = [];
+    
+        jQuery(seq_chars).each( function(i) {
+            var el = {};
+            el._index = i;
+            el._renderer = renderer;
+            renderer._extendElement(el);
+            el.amino_acid = this;
+            seq_els.push(el);
+        });
+
+        this._sequence_els = seq_els;
+
+        var RS = this._RS;
+
+        jQuery(this).unbind('svgready').bind('svgready',function(cnv) {
+            var canv = renderer._canvas;
+            canv.RS = RS;
+            canv.setAttribute('background', '#000000');
+            canv.setAttribute('preserveAspectRatio','xMinYMin meet');
+        
+            var defs = canv.makeEl('defs');
+            renderer._container_canvas.appendChild(defs);
+
+
+            defs.appendChild(canv.make_gradient('track_shine','0%','100%',['#111111','#aaaaaa','#111111'], [0.5,0.5,0.5]));
+            defs.appendChild(canv.make_gradient('simple_gradient','0%','100%',['#aaaaaa','#888888'], [1,1]));
+            defs.appendChild(canv.make_gradient('left_fade','100%','0%',['#ffffff','#ffffff'], [1,0]));
+            defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
+            defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
+        
+            var shadow = canv.makeEl('filter',{
+                'id':'drop_shadow',
+                'filterUnits':'objectBoundingBox',
+                'x': '0',
+                'y': '0',
+                'width':'150%',
+                'height':'130%'
+            });
+
+            shadow.appendChild(canv.makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
+            shadow.appendChild(canv.makeEl('feOffset',{'in':'blur_out', 'result':'the_shadow', 'dx':'3','dy':'1'}));
+            shadow.appendChild(canv.makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
+        
+            defs.appendChild(shadow);
+
+            var link_icon = canv.makeEl('svg',{
+                'width' : '100%',
+                'height': '100%',
+                'id'    : 'new_link_icon',
+                'viewBox': '0 0 100 100',
+                'preserveAspectRatio' : 'xMinYMin meet'
+            });
+
+            defs.appendChild(link_icon);
+
+            link_icon.appendChild(canv.makeEl('rect', {
+                'x' : '12.5',
+                'y' : '37.5',
+                'stroke-width' : '3',
+                'width' : '50',
+                'height': '50',
+                'stroke': '#ffffff',
+                'fill'  : 'none'            
+            }));
+            link_icon.appendChild(canv.makeEl('path', {
+                'd' : 'M 50.0,16.7 L 83.3,16.7 L 83.3,50.0 L 79.2,56.2 L 68.8,39.6 L 43.8,66.7 L 33.3,56.2 L 60.4,31.2 L 43.8,20.8 L 50.0,16.7 z',
+                'stroke-width' : '3',
+                'stroke': '#999999',
+                'fill'  : '#ffffff'            
+            }));
+
+            var plus_icon = canv.makeEl('svg',{
+                'width' : '100%',
+                'height': '100%',
+                'id'    : 'plus_icon',
+                'viewBox': '0 0 100 100',
+                'preserveAspectRatio' : 'xMinYMin meet'
+            });
+            plus_icon.appendChild(canv.plus(0,0,100/canv.RS));
+            
+            defs.appendChild(plus_icon);
+
+            var minus_icon = canv.makeEl('svg',{
+                'width' : '100%',
+                'height': '100%',
+                'id'    : 'minus_icon',
+                'viewBox': '0 0 100 100',
+                'preserveAspectRatio' : 'xMinYMin meet'
+            });
+            minus_icon.appendChild(canv.minus(0,0,100/canv.RS));
+
+            defs.appendChild(minus_icon);
+        
+            drawAxis.call(this,canv,line_length);
+            drawAminoAcids.call(this,canv);
+        
+            jQuery(renderer).trigger('sequenceChange');
+        });
+    
+        var canvas = createCanvasObject.call(this);
+    
+        if (this._canvas) {
+            has_canvas = true;
+        } else {
+            if (typeof svgweb != 'undefined') {
+                svgweb.appendChild(canvas,this._container);
+            } else {
+                this._container.appendChild(canvas);
+            }
+        }
+    
+        var rend = this;
+        this.EnableHighlights();
+    
+        var seq_change_func = function(other_func) {
+            if ( ! rend._canvas ) {
+                rend.bind('sequenceChange',function() {
+                    jQuery(rend).unbind('sequenceChange',arguments.callee);
+                    other_func.apply();
+                });
+            } else {
+                other_func.apply();
+            }
+        };
+    
+        seq_change_func.ready = function(other_func) {
+            this.call(this,other_func);
+        };
+    
+        return seq_change_func;
+    
+    };
+
+})(MASCP.CondensedSequenceRenderer);
 
 /**
  * Create a Hydropathy plot, and add it to the renderer as a layer.
@@ -962,10 +873,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         canvas.tracers.push(tracer);
     }
     
-    if ( ! this._renderer._pause_rescale_of_annotations ) {    
-        this._renderer.redrawAnnotations(layerName,height);
-    }
-    
+    this._renderer.redrawAnnotations(layerName,height);
 };
 
 MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
@@ -1111,28 +1019,40 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
   * @param   {Object}    e
   */
 
+MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
+    var renderer = this;
+    var highlights = [];
+    var createNewHighlight = function() {
+        var highlight = renderer._canvas.rect(0,0,0,'100%');
+        highlight.setAttribute('fill','#ffdddd');
+        var pnode = highlight.parentNode;
+        pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
+        highlights.push(highlight);
+    };
+    createNewHighlight();
 
-MASCP.CondensedSequenceRenderer.prototype.moveHighlight = function() {
-    var vals = Array.prototype.slice.call(arguments);
-    var RS = this._RS;
-    var i = 0, idx = 0;
-    for (i = 0; i < vals.length; i+= 2) {
-        var from = vals[i];
-        var to = vals[i+1];
-        var highlight = this._highlight[idx];
-        if ( ! highlight ) {
-            this._createNewHighlight();
-            highlight = this._highlight[idx];
-        }
+    renderer.moveHighlight = function() {
+        var vals = Array.prototype.slice.call(arguments);
+        var RS = this._RS;
+        var i = 0, idx = 0;
+        for (i = 0; i < vals.length; i+= 2) {
+            var from = vals[i];
+            var to = vals[i+1];
+            var highlight = highlights[idx];
+            if ( ! highlight ) {
+                createNewHighlight();
+                highlight = highlights[idx];
+            }
         
-        highlight.setAttribute('x',(from - 0.25) * RS );
-        highlight.setAttribute('width',(to - from) * RS );
-        highlight.setAttribute('visibility','visible');
-        idx += 1;
-    }
-    for (i = idx; i < this._highlight.length; i++){
-        this._highlight[i].setAttribute('visibility','hidden');
-    }
+            highlight.setAttribute('x',(from - 0.25) * RS );
+            highlight.setAttribute('width',(to - from) * RS );
+            highlight.setAttribute('visibility','visible');
+            idx += 1;
+        }
+        for (i = idx; i < highlights.length; i++){
+            highlights[i].setAttribute('visibility','hidden');
+        }
+    };
 };
 
 /*
@@ -1160,8 +1080,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         var height = (this.zoom || 1)*2*(this._canvas._canvas_height/this._RS);
         this._canvas.setAttribute('width', width);
         this._canvas.setAttribute('height',height);
-        this._nav_canvas.setAttribute('width',width);
-        this._nav_canvas.setAttribute('height',height);        
+        this.navigation.setDimensions(width,height);
         
         if (this.grow_container) {
             this._container_canvas.setAttribute('height',height);
@@ -1346,10 +1265,6 @@ clazz.prototype.refresh = function(animated) {
 
     }
 
-    if (this.navigation) {
-        this.navigation.refresh();
-    }
-
     var viewBox = [-1,0,0,0];
     viewBox[0] = -2*RS;
     viewBox[2] = (this.sequence.split('').length+(this.padding)+2)*RS;
@@ -1379,6 +1294,11 @@ clazz.prototype.refresh = function(animated) {
         }
         this.navigation.setViewBox(viewBox.join(' '));
     }
+
+    if (this.navigation) {
+        this.navigation.refresh();
+    }
+
 };
 
 })(MASCP.CondensedSequenceRenderer);

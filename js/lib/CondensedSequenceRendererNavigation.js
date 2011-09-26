@@ -27,6 +27,12 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 track_canvas.hide();
             }
         };
+        
+        this.setDimensions = function(width,height) {
+            parent_canvas.setAttribute('width',width);
+            parent_canvas.setAttribute('height',height);
+        };
+        
     };
 
     var connectRenderer = function(renderer) {
@@ -154,17 +160,20 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         var last_target;
 
         var timeouts = {};
+        
+        var nav_reset_set = null;
 
         var drag_func = function(handle,element,track,canvas) {
             var nav = this;
 
             var old_reset = nav.reset;
-
-            nav.reset = function() {
-                targets = [];
-                old_reset.call(this);
-            };
-
+            if (nav_reset_set === null) {
+                nav.reset = function() {
+                    targets = [];
+                    old_reset.call(this);
+                };
+                nav_reset_set = true;
+            }
             var resetDrag = function() {
                 window.clearTimeout(timeouts.anim);
                 window.clearTimeout(timeouts.hover);
@@ -455,6 +464,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 close_group.setAttribute('transform',close_transform);
 
                 scroll_controls.setAttribute('display','inline');
+                self.refresh();
             } else {
                 self.demote();
                 panel_back.setAttribute('visibility','hidden');
@@ -483,6 +493,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
             rect.setAttribute('transform','scale('+zoom+',1) ');
             rect.setAttribute('ry', (zoom*base_rounded_corner[1]).toString());
+            self.refresh();
         };
 
         close_group.addEventListener('click',function() {
@@ -496,9 +507,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
     var buildTrackPane = function(track_canvas,draganddrop) {
         var self = this;
-        
+
         var close_buttons, controller_buttons, edit_enabled;
-        
+
+        var nav_width_track_canvas_ctm = 0;
+
         SVGCanvas(track_canvas);
         track_canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
 
@@ -509,8 +522,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 track_canvas.removeChild(track_canvas.firstChild);
             }
             track_rects = [];
-            this.refresh();
+            ctm_refresh = [];
+//            self.refresh();
         };
+
+        var ctm_refresh = [];
 
         self.refresh = function() {
             (close_buttons || []).forEach(function(button) {
@@ -524,6 +540,25 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             } else {
                 toggleMouseEvents.call(this,false);
             }
+            var ctm = document.getElementById('nav_back').getTransformToElement(track_canvas);
+            var back_width = (document.getElementById('nav_back').getBBox().width + document.getElementById('nav_back').getBBox().x);
+            var point = track_canvas.createSVGPoint();
+            point.x = back_width;
+            point.y = 0;
+            nav_width_track_canvas_ctm = point.matrixTransform(ctm).x;
+            ctm_refresh.forEach(function(el) {
+                if (el.getBBox().width > 0) {
+                    var a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(el.getAttribute('transform') || '');
+                    if (typeof a_y != 'undefined') {
+                        a_y = a_y[2];
+                    } else {
+                        return;
+                    }
+                    
+                    var new_x = nav_width_track_canvas_ctm- 1.5*parseInt(el.getAttribute('width'));
+                    el.setAttribute('transform','translate('+new_x+','+a_y+')');
+                }
+            });
         };
 
         var toggleMouseEvents = function(on) {
@@ -612,7 +647,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         
             var circ;
         
-            if (track.href && ! this.isController(track) ) {
+            if (track.href ) {
                 a_anchor = track_canvas.a(track.href);
                 var icon_name = null;
                 var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
@@ -658,7 +693,9 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 var a_use = track_canvas.use(icon_name,icon_metrics[0],icon_metrics[1],icon_metrics[2],icon_metrics[2]);
                 a_use.style.cursor = 'pointer';
                 a_anchor.appendChild(a_use);
-                a_anchor.setAttribute('transform','translate(0,'+y+')');
+                a_anchor.setAttribute('transform','translate('+(nav_width_track_canvas_ctm - 1.5*icon_metrics[2])+','+y+')');
+                a_anchor.setAttribute('width',icon_metrics[2].toString());
+                ctm_refresh.push(a_anchor);
             }
         
             label_group.addEventListener('touchstart',function() {
