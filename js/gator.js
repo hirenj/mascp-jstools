@@ -186,31 +186,13 @@ jQuery(document).ready(function() {
         });
     }
 
-    var a_dialog = jQuery('#sequence_control').dialog({resizable: false, autoOpen: false, draggable: true, title: "Options", width: '300px', position:['50%','50%'], zIndex: 5000});
-    var control_el = MASCP.renderer._Navigation ? MASCP.renderer._Navigation : '#controls';            
-
-    jQuery(control_el).unbind('click').bind('click',function() {
-        if (! a_dialog.dialog('isOpen')) {
-            a_dialog.dialog('open');
-        } else {
-            a_dialog.dialog('close');
-        }
+    jQuery('#zoomin').click(function() {
+        MASCP.renderer.zoom *= 1.1;
     });
 
-    if ( MASCP.renderer._Navigation ) {
-        jQuery('#controls').hide();
-        var zoom_controls = GOMap.Diagram.addZoomControls(MASCP.renderer,1.5);
-        zoom_controls.id = 'zoom_controls';
-        if (zoom_controls.style.height == '100%') {
-            jQuery('#sequence_controllers').css('left','3em').css('position','relative');
-            zoom_controls.style.position = 'relative';
-            zoom_controls.style.height = '1em';
-            zoom_controls.style.width = '50%';
-            zoom_controls.style.top = '0px';                    
-        }
-        zoom_controls.style.zIndex = 2;
-        jQuery(MASCP.renderer._Navigation._scroll_control).append(zoom_controls);                
-    }
+    jQuery('#zoomout').click(function() {
+        MASCP.renderer.zoom *= 0.9;
+    });
     
     var search_func = function() {
         var pattern = this.value;
