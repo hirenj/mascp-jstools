@@ -167,6 +167,47 @@ MASCP.registerLayer = function(layerName, options)
 };
 
 /**
+ * @class
+ * Metadata for a group of layers to be rendered
+ */
+MASCP.Group = function() {
+    return;
+};
+
+/**
+ * Describe what this method does
+ * @private
+ * @param {String|Object|Array|Boolean|Number} paramName Describe this parameter
+ * @returns Describe what it returns
+ * @type String|Object|Array|Boolean|Number
+ */
+MASCP.Group.prototype.size = function() {
+    var counter = 0;
+    for (var i = 0 ; i < this._layers.length; i++ ) {
+        if (! this._layers[i].disabled) {
+            counter += 1;
+        }
+    }
+    return counter;
+};
+
+MASCP.Group.prototype.eachLayer = function(func) {
+    for (var i = 0 ; i < this._layers.length; i++ ) {
+        if (! this._layers[i].disabled) {
+            func.call(this._layers[i],this._layers[i]);
+        }
+    }    
+};
+
+/**
+ * @class
+ * Metadata for a single layer to be rendered
+ */
+MASCP.Layer = function() {
+    return;
+};
+
+/**
  * @class   Reformatter for sequences in html pages. The object retrieves the amino acid sequence from the 
  *          given element, and then reformats the display of the sequence so that rendering layers can be
  *          applied to it. 
@@ -175,24 +216,91 @@ MASCP.registerLayer = function(layerName, options)
  *                                      the container that data will be re-inserted into.
  * @requires jQuery
  */
-MASCP.SequenceRenderer = function(sequenceContainer) {
-    if (typeof sequenceContainer !== 'undefined') {
-        this._container = sequenceContainer;
-        this._container.style.position = 'relative';
-//        this._container.style.width = '100%';
+MASCP.SequenceRenderer = (function() {
 
-        jQuery(this).bind('sequenceChange', function(e){
-            jQuery(sequenceContainer).text("");
-            jQuery(sequenceContainer).append(this._sequence_els);
-            jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
-            sequenceContainer.style.width = (this._sequence_els.length)+'em';
-//            this.showRowNumbers();            
-        });
+    /**
+     *  @lends MASCP.SequenceRenderer.prototype
+     *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
+     */
+    var setupTrackOrder = function(renderer) {
+        var renderer_track_order = [];
 
-        this.setSequence(jQuery(sequenceContainer).text());
-    }
-    return this;
-};
+        var accessors = {
+
+            getTrackOrder: function() {
+                return renderer_track_order;
+            },
+
+            setTrackOrder: function(in_order) {
+                var track_order = [];
+                var order = in_order;
+                if ( ! order instanceof Array ) {
+                    order = [ in_order ];
+                }
+
+                for (var i = 0; i < order.length; i++) {
+                    if (MASCP.getLayer(order[i])) {
+                        track_order.push(order[i]);
+                    } else if (MASCP.getGroup(order[i])) {
+                        var group_layers = MASCP.getGroup(order[i])._layers;
+                        for (var j = 0; j < group_layers.length; j++ ) {
+                            track_order.push(group_layers[j].name);
+                        }
+                    }
+                }
+
+                for (i = ((this._track_order || []).length - 1); i >= 0; i--) {
+                    if (track_order.indexOf(this._track_order[i]) < 0) {
+                        this.hideLayer(this._track_order[i]);
+                        jQuery(MASCP.getLayer(this._track_order[i])).trigger('removed');
+                    }
+                }
+                renderer_track_order = track_order;
+                if (this.refresh) {
+                    this.refresh(true);
+                }
+            }
+        };
+
+        if (renderer.__defineSetter__) {    
+            renderer.__defineSetter__("trackOrder", accessors.setTrackOrder);
+            renderer.__defineGetter__("trackOrder", accessors.getTrackOrder);
+        }
+
+        if (MASCP.IE) {
+            renderer.setTrackOrder = accessors.setTrackOrder;
+        }
+
+        if (Object.defineProperty && MASCP.IE) {
+            Object.defineProperty(renderer,"trackOrder", {
+                get : accessors.getTrackOrder,
+                set : accessors.setTrackOrder
+            });
+        }
+    };
+
+    return function(sequenceContainer) {
+        if (typeof sequenceContainer !== 'undefined') {
+            this._container = sequenceContainer;
+            this._container.style.position = 'relative';
+    //        this._container.style.width = '100%';
+
+            jQuery(this).bind('sequenceChange', function(e){
+                jQuery(sequenceContainer).text("");
+                jQuery(sequenceContainer).append(this._sequence_els);
+                jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
+                sequenceContainer.style.width = (this._sequence_els.length)+'em';
+    //            this.showRowNumbers();            
+            });
+
+            this.setSequence(jQuery(sequenceContainer).text());
+        }
+        
+        setupTrackOrder(this);
+        
+        return this;
+    };
+})();
 
 /**
  * Event fired when a layer is registered with the global layer registry
@@ -255,46 +363,6 @@ if ( MASCP.IE ) {
     MASCP.SequenceRenderer.prototype.prototype = document.createElement('div');
 }
 
-/**
- * @class
- * Metadata for a group of layers to be rendered
- */
-MASCP.Group = function() {
-    return;
-};
-
-/**
- * Describe what this method does
- * @private
- * @param {String|Object|Array|Boolean|Number} paramName Describe this parameter
- * @returns Describe what it returns
- * @type String|Object|Array|Boolean|Number
- */
-MASCP.Group.prototype.size = function() {
-    var counter = 0;
-    for (var i = 0 ; i < this._layers.length; i++ ) {
-        if (! this._layers[i].disabled) {
-            counter += 1;
-        }
-    }
-    return counter;
-};
-
-MASCP.Group.prototype.eachLayer = function(func) {
-    for (var i = 0 ; i < this._layers.length; i++ ) {
-        if (! this._layers[i].disabled) {
-            func.call(this._layers[i],this._layers[i]);
-        }
-    }    
-};
-
-/**
- * @class
- * Metadata for a single layer to be rendered
- */
-MASCP.Layer = function() {
-    return;
-};
 
 /**
  * Set the sequence for this renderer. Fires the sequenceChange event when the sequence is set.
@@ -1040,12 +1108,12 @@ MASCP.SequenceRenderer.prototype.refresh = function()
     if ( ! this._z_indexes) {
         this._z_indexes = {};
     }
-    for (var i = 0; i < (this._track_order || []).length; i++ ) {
-        if (! this.isLayerActive(this._track_order[i])) {
+    for (var i = 0; i < (this.trackOrder || []).length; i++ ) {
+        if (! this.isLayerActive(this.trackOrder[i])) {
             continue;
         }
-        jQuery('.'+this._track_order[i]+'_overlay').css('z-index',z_index);
-        this._z_indexes[this._track_order[i]] = z_index;
+        jQuery('.'+this.trackOrder[i]+'_overlay').css('z-index',z_index);
+        this._z_indexes[this.trackOrder[i]] = z_index;
         z_index -= 1;
     }
 };
@@ -1065,64 +1133,4 @@ MASCP.SequenceRenderer.prototype.trigger = function(ev)
 {
     jQuery(this).trigger(ev);
 };
-
-/**
- *  @lends MASCP.SequenceRenderer.prototype
- *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
- */
-(function() {
-var accessors = { 
-    getTrackOrder: function() {
-        return this._track_order;
-    },
-
-    setTrackOrder: function(in_order) {
-        var track_order = [];
-        var order = in_order;
-        if ( ! order instanceof Array ) {
-            order = [ in_order ];
-        }
-        
-        for (var i = 0; i < order.length; i++) {
-            if (MASCP.getLayer(order[i])) {
-                track_order.push(order[i]);
-            } else if (MASCP.getGroup(order[i])) {
-                var group_layers = MASCP.getGroup(order[i])._layers;
-                for (var j = 0; j < group_layers.length; j++ ) {
-                    track_order.push(group_layers[j].name);
-                }
-            }
-        }
-
-        for (i = ((this._track_order || []).length - 1); i >= 0; i--) {
-            if (track_order.indexOf(this._track_order[i]) < 0) {
-                this.hideLayer(this._track_order[i]);
-                jQuery(MASCP.getLayer(this._track_order[i])).trigger('removed');
-            }
-        }
-        this._track_order = track_order;
-        if (this.refresh) {
-            this.refresh(true);
-        }
-    }
-};
-
-if (MASCP.SequenceRenderer.prototype.__defineSetter__) {    
-    MASCP.SequenceRenderer.prototype.__defineSetter__("trackOrder", accessors.setTrackOrder);
-    MASCP.SequenceRenderer.prototype.__defineGetter__("trackOrder", accessors.getTrackOrder);
-}
-
-if (MASCP.IE) {
-    MASCP.SequenceRenderer.prototype.setTrackOrder = accessors.setTrackOrder;
-}
-
-if (Object.defineProperty && MASCP.IE) {
-    Object.defineProperty(MASCP.SequenceRenderer.prototype,"trackOrder", {
-        get : accessors.getTrackOrder,
-        set : accessors.setTrackOrder
-    });
-}
-
-
-})();
 
