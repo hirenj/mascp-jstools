@@ -474,21 +474,21 @@ base.retrieve = function(agi,callback)
 
 })(MASCP.Service.prototype);
 
-(function() {
+(function(clazz) {
 
     var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_agis, begin_transaction, end_transaction;
     
     var max_age = 0, min_age = 0;
 
-    MASCP.Service.BeginCaching = function() {
-        MASCP.Service.CacheService(MASCP.Service.prototype);
+    clazz.BeginCaching = function() {
+        clazz.CacheService(clazz.prototype);
     };
 
     // To do 7 days ago, you do
     // var date = new Date();
     // date.setDate(date.getDate() - 1);
     // MASCP.Service.SetMinimumFreshnessAge(date);
-    MASCP.Service.SetMinimumAge = function(date) {
+    clazz.SetMinimumAge = function(date) {
         if (date === 0) {
             min_age = 0;
         } else {
@@ -496,7 +496,7 @@ base.retrieve = function(agi,callback)
         }
     };
 
-    MASCP.Service.SetMaximumAge = function(date) {
+    clazz.SetMaximumAge = function(date) {
         if (date === 0) {
             max_age = 0;
         } else {
@@ -504,14 +504,14 @@ base.retrieve = function(agi,callback)
         }
     };
 
-    MASCP.Service.SweepCache = function(date) {
+    clazz.SweepCache = function(date) {
         if (! date) {
             date = date.getTime();
         }
         sweep_cache(date.getTime());
     };
 
-    MASCP.Service.CacheService = function(reader) {
+    clazz.CacheService = function(reader) {
         if (reader.retrieve.caching) {
             return;
         }
@@ -564,30 +564,30 @@ base.retrieve = function(agi,callback)
         reader.retrieve.caching = true;
     };
 
-    MASCP.Service.FindCachedService = function(service,cback) {
+    clazz.FindCachedService = function(service,cback) {
         var serviceString = service.toString();
         search_service(serviceString,cback);
         return true;
     };
 
-    MASCP.Service.CachedAgis = function(service,cback) {
+    clazz.CachedAgis = function(service,cback) {
         var serviceString = service.toString();
         cached_agis(serviceString,cback);
         return true;
     };
 
-    MASCP.Service.ClearCache = function(service,agi) {
+    clazz.ClearCache = function(service,agi) {
         var serviceString = service.toString();
         clear_service(serviceString,agi);
         return true;
     };
 
-    MASCP.Service.HistoryForService = function(service,cback) {
+    clazz.HistoryForService = function(service,cback) {
         var serviceString = service.toString();
         data_timestamps(serviceString,null,cback);
     };
 
-    MASCP.Service.BulkOperation = function() {
+    clazz.BulkOperation = function() {
         begin_transaction();
         return function() {
             end_transaction();
@@ -823,7 +823,7 @@ base.retrieve = function(agi,callback)
                 }
             }
 
-            cback.call(MASCP.service,uniques);
+            cback.call(clazz,uniques);
 
             return uniques;
         };
@@ -848,7 +848,7 @@ base.retrieve = function(agi,callback)
                 }
             }
 
-            cback.call(MASCP.service,uniques);
+            cback.call(clazz,uniques);
         };
 
         get_db_data = function(agi,service,cback) {
@@ -891,7 +891,7 @@ base.retrieve = function(agi,callback)
     
     
 
-})();
+})(MASCP.Service);
 
 /**
  * Set the async parameter for this service.
