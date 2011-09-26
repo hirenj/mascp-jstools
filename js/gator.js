@@ -70,11 +70,7 @@ jQuery(document).ready(function() {
 
         reader.registerSequenceRenderer(MASCP.renderer);
         reader.bind('resultReceived',function() {
-            if ( jQuery('#'+datasetname).length <= 0) {
-                jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
-                jQuery('#'+datasetname).show();
-            }
-            jQuery('#sequence_controllers').trigger('sortupdate');
+            MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
             MASCP.renderer.showLayer(datasetname);
         });
 
@@ -147,11 +143,7 @@ jQuery(document).ready(function() {
                     if (! this.result || this.result.length === 0 ) {
                         return;
                     }
-                    if ( jQuery('#'+datasetname).length <= 0) {
-                        jQuery('#sequence_controllers').append('<li id='+datasetname+'><input type="checkbox"/> '+datasetname+'</li>');
-                        jQuery('#'+datasetname).show();
-                    }
-                    jQuery('#sequence_controllers').trigger('sortupdate');
+                    MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
                     MASCP.renderer.showLayer(datasetname);
                 });
                 reader.retrieve(agi);
@@ -344,22 +336,21 @@ jQuery(document).ready(function() {
         }
         return array;
     };
-            
-    MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable().sortable('toArray'));
-
-    jQuery('#sequence_controllers').bind('sortupdate',function(event, ui) {
-            if (MASCP.renderer.trackOrder) {
-                MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable('toArray'));
-            }
-            if (MASCP.renderer.setTrackOrder) {
-                MASCP.renderer.setTrackOrder(tweak_track_order(jQuery('#sequence_controllers').sortable('toArray')));
-            }
-    });
+                
+    // 
+    // jQuery('#sequence_controllers').bind('sortupdate',function(event, ui) {
+    //         if (MASCP.renderer.trackOrder) {
+    //             MASCP.renderer.trackOrder = tweak_track_order(jQuery('#sequence_controllers').sortable('toArray'));
+    //         }
+    //         if (MASCP.renderer.setTrackOrder) {
+    //             MASCP.renderer.setTrackOrder(tweak_track_order(jQuery('#sequence_controllers').sortable('toArray')));
+    //         }
+    // });
     
-    if (MASCP.renderer.setTrackOrder) {
-        MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
-    }
-
+    // if (MASCP.renderer.setTrackOrder) {
+    //     MASCP.renderer.setTrackOrder(MASCP.renderer.trackOrder);                
+    // }
+    
     var rrend = function(e,reader) {
         if (rendering_readers && rendering_readers.length > 0) {
             rendering_readers.splice(rendering_readers.indexOf(reader),1);
@@ -381,39 +372,8 @@ jQuery(document).ready(function() {
         if (document._screen) {
             document._screen.hide();
         }
-        var rdr,lay,i;
-        for (var rdr_id in READER_CONF) {
-            if (READER_CONF.hasOwnProperty(rdr_id)) {
-                rdr = READER_CONF[rdr_id];
-                if (rdr.placeholder) {
-                    for (i = 0; i < rdr.layers.length; i++ ) {
-                        lay = rdr.layers[i];
-                        var placeholder = lay+'';
-                        var controller = lay+'';
-                        placeholder = placeholder.replace(/_experimental/,'') + '_placeholder';
-                        controller = controller.replace(/_experimental/,'') + '_controller';
-                        var checkbox = jQuery('#'+placeholder+' input');
-                                
-                        if ( ! checkbox ) {
-                            continue;
-                        }
                 
-                        checkbox.attr('checked',true);
-                        if (MASCP.getGroup(lay) && MASCP.getGroup(lay).size() > 0) {
-                            MASCP.renderer.createLayerCheckbox(controller,checkbox[0],true);
-                        } else {
-                            MASCP.renderer.createGroupCheckbox(lay,checkbox[0],true);
-                        }
-                    }
-                } else {
-                    for (i = 0; i < rdr.layers.length; i++ ) {
-                        lay = rdr.layers[i];
-                        MASCP.renderer.createLayerCheckbox(lay,jQuery('#'+lay+' input')[0],true);
-                    }            
-                }
-            }
-        }
-        jQuery('#sequence_controllers').trigger('sortupdate');
+        MASCP.renderer.trackOrder = tweak_track_order([]);
 
         rendering_readers = null;
 
@@ -430,7 +390,6 @@ jQuery(document).ready(function() {
     
         if (MASCP.renderer.createHydropathyLayer) {
             MASCP.renderer.createHydropathyLayer(6);
-            MASCP.renderer.createLayerCheckbox('hydropathy',jQuery('#hydropathy input')[0],true);
             MASCP.renderer.showLayer('hydropathy');
             jQuery('#hydropathy').show();
         }

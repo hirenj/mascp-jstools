@@ -141,8 +141,14 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     }
                 }
             } else {
-                renderer.hideLayer(track,true);            
-                track.disabled = true;
+                renderer.hideLayer(track,true);
+                MASCP.getLayer(track).disabled = true;                
+
+                extra_to_push.forEach(function(lay) {
+                    
+                    renderer.hideLayer(lay,true);
+                    MASCP.getLayer(lay).disabled = true;                    
+                });
                 t_order.push(track.name);
                 t_order = t_order.concat(extra_to_push);
             }
@@ -390,6 +396,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             return drag_func.disabled;
         };
 
+        drag_func.spliceFunction = spliceFunction;
+        
         return drag_func;
     };
 
@@ -731,7 +739,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     nodes[i].setAttribute('stroke-width',(t_height/4).toString());
                 }
                 closer.addEventListener('click',function() {
-                    spliceTrack(track);
+                    draganddrop.spliceFunction(track);
                 },false);
                 label_group.push(closer);
                 close_buttons.push(closer);

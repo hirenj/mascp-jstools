@@ -1197,7 +1197,7 @@ clazz.prototype.refresh = function(animated) {
         var name = order[i];
         var container = layer_containers[name];
         if (! this.isLayerActive(name)) {
-            var attrs = { 'y' : (this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
+            var attrs = { 'y' : -1*(this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
 //            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
 
             if (MASCP.getLayer(name).group) {
