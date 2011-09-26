@@ -705,6 +705,46 @@ var SVGCanvas = SVGCanvas || (function() {
             this.appendChild(a_text);
             return a_text;
         };
+        canvas.plus = function(x,y,height) {
+            var g = this.group();
+            g.appendChild(this.makeEl('rect', {
+                'x' : Math.round((0.4)*height*RS).toString(),
+                'y' : Math.round((0.1)*height*RS).toString(),
+                'stroke-width' : '1',
+                'width' : Math.round((0.2)*height*RS).toString(),
+                'height': Math.round((0.8)*height*RS).toString(),
+                'stroke': '#ffffff',
+                'fill'  : '#ffffff'            
+            }));
+
+            g.appendChild(this.makeEl('rect', {
+                'x' : Math.round((0.1)*height*RS).toString(),
+                'y' : Math.round((0.4)*height*RS).toString(),
+                'stroke-width' : '1',
+                'width' : Math.round((0.8)*height*RS).toString(),
+                'height': Math.round((0.2)*height*RS).toString(),
+                'stroke': '#ffffff',
+                'fill'  : '#ffffff'            
+            }));
+            g.setAttribute('transform','translate('+x*RS+','+y*RS+')');
+            return g;
+        };
+        canvas.minus = function(x,y,height) {
+            var g = this.group();
+
+            g.appendChild(this.makeEl('rect', {
+                'x' : Math.round((0.1)*height*RS).toString(),
+                'y' : Math.round((0.4)*height*RS).toString(),
+                'stroke-width' : '1',
+                'width' : Math.round((0.8)*height*RS).toString(),
+                'height': Math.round((0.2)*height*RS).toString(),
+                'stroke': '#ffffff',
+                'fill'  : '#ffffff'            
+            }));
+            g.setAttribute('transform','translate('+x*RS+','+y*RS+')');
+            return g;
+        };
+        
         canvas.set = function() {
             var an_array = [];
             extend_array(an_array,RS);
