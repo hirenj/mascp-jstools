@@ -74,7 +74,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     load_func.call(native_canvas);
                 }            
             };
-            console.log("Native svg");
         }
 
         canvas.addEventListener('load',function() {
