@@ -99,7 +99,9 @@
         <concat destfile="build/maschup.renderers.js"
                   force="yes">
             <fileset dir="js/lib" includes="SequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="SVGCanvas.js" />
             <fileset dir="js/lib" includes="CondensedSequenceRenderer.js"/>
+            <fileset dir="js/lib" includes="CondensedSequenceRendererNavigation.js"/>
             <fileset dir="js/lib" includes="TagVisualisation.js"/>
         </concat>
 

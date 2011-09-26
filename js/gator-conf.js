@@ -182,12 +182,6 @@ var READER_CONF = (function() {
         'error_url'     : 'http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html',
         'success_url'   : 'http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html?refagi=',
         'result'        : function() {
-                                jQuery(MASCP.getLayer('atpeptide_controller')).each(function() {
-                                    if (MASCP.renderer.applyStyle) {
-                                        MASCP.renderer.applyStyle(this.name,'cursor: pointer');
-                                    }
-                                });
-
                                 var loc_key = null;
                                 for (loc_key in this.result.spectra) {
                                     if (this.result.spectra.hasOwnProperty(loc_key)) {
@@ -213,12 +207,6 @@ var READER_CONF = (function() {
                                 if (this.result === null) {
                                     return;
                                 }
-
-                                jQuery(MASCP.getLayer('atproteome_controller')).each(function() {
-                                    if (MASCP.renderer.applyStyle) {
-                                        MASCP.renderer.applyStyle(this.name,'cursor: pointer');
-                                    }
-                                });
 
                                 var loc_key = null;
                                 for (loc_key in this.result.spectra) {

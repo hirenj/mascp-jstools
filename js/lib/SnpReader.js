@@ -76,8 +76,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
         MASCP.registerGroup('insertions');
         MASCP.registerGroup('deletions');
 
-        renderer._pause_rescale_of_annotations = true;
-        
+        renderer.withoutRefresh(function() {        
         var insertions_layer;
         
         while (accessions.length > 0) {
@@ -144,9 +143,8 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
                 renderer.createGroupController('insertions_controller','insertions');
             }
         }
-        
+        });
         renderer.redrawAnnotations('insertions_controller');
-        renderer._pause_rescale_of_annotations = false;
         jQuery(renderer).trigger('resultsRendered',[reader]);
         
     });
