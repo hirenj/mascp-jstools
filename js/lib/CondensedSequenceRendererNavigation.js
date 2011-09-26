@@ -555,7 +555,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                         return;
                     }
                     
-                    var new_x = nav_width_track_canvas_ctm- 1.5*parseInt(el.getAttribute('width'));
+                    var new_x = nav_width_track_canvas_ctm- 1.5*parseInt(el.getAttribute('width'),10);
                     el.setAttribute('transform','translate('+new_x+','+a_y+')');
                 }
             });
