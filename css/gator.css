@@ -279,11 +279,19 @@ h1, h2 {
         height: 200px;
     }
 
-    #zoom_controls {
-        left: 0px;
-        bottom: 0px;
-        position: relative;
+    #zoomin, #zoomout {
+        background: none;
+        border: 0px;
+        font-weight: bolder;
+        font-family: Helvetica;
+        font-size: 11pt;
     }
+    
+    #search_box {
+        position: absolute;
+        right: 10px;
+    }
+    
     #suba {
         font-size: 12px;
         position: relative;
