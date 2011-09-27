@@ -285,6 +285,7 @@ h1, h2 {
         font-weight: bolder;
         font-family: Helvetica;
         font-size: 11pt;
+        cursor: pointer;
     }
     
     #search_box {
