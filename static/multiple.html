@@ -19,7 +19,57 @@
 
     <script type="text/javascript" src="js/jquery-ui-1.7.2.min.js"></script>
     <script type="text/javascript" src="js/jquery.masonry.min.js"></script>
-    <script type="text/javascript" src="js/table2CSV.js"></script>
+
+    <script type="text/javascript" src="js/gator-conf.js"></script>
+    <script type="text/javascript" src="js/gator-multiple.js"></script>
+    <!--
+    <script type="text/javascript" src="js/filetojson.js"></script> -->
+    
+
+    <script type="text/javascript">
+    /*
+    *jQuery table2csv plugin 0.1.0
+    *Converts table html element to csv string
+    *Copyright (c) 2009 Leonardo Rossetti motw.leo@gmail.com
+    * Licensed under the MIT license (http://www.opensource.org/licenses/mit-license.php)
+    *THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    *IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    *FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    *AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    *LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    *OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    *THE SOFTWARE.
+    */
+    //keeps closure
+        var table2CSV = function (options) {
+            var defaults = {
+                delimiter: ",",
+                callback: function (csv) {
+                    return csv;
+                }
+            };
+            var settings = jQuery.extend(defaults, options);
+
+            return (function () {
+                var csv = "";
+                //gets th to set column headers
+                jQuery(this).find("thead tr th").each(function() {
+                    csv += "\"" + jQuery(this).text().replace(/(\")/gim, "\\\"\\\"") + "\"" + settings.delimiter; 
+                });
+                csv += "\n";
+                //each td as a csv column
+                jQuery(this).find("tbody tr").each(function () {
+                    jQuery(this).find("td").each(function () {
+                        csv += "\"" + jQuery(this).text().replace(/(\")/gim, "\\\"\\\"") + "\"" + settings.delimiter;
+                    });
+                    csv += "\n";
+                });
+                //callback function containing csv string as parameter
+                settings.callback(csv);
+                return csv;
+            }).call(this);
+        };
+    </script>
 
     <style type="text/css">
 
@@ -218,7 +268,7 @@ At1g73450.1
           generator.document.write('<html><head><title>CSV</title>'); 
           generator.document.write('</head><body >'); 
           generator.document.write('<textArea cols=70 rows=15 wrap="off" >'); 
-          generator.document.write(jQuery('#results').table2CSV({delivery:'value'})); 
+          generator.document.write(table2CSV.call(jQuery('#results'),({delivery:'value'}))); 
           generator.document.write('</textArea>'); 
           generator.document.write('</body></html>'); 
           generator.document.close();
@@ -339,7 +389,7 @@ At1g73450.1
     var odd = false;
     
     function add_agi_row(agi) {
-        var agi_id = agi.replace(/\./, '|');
+        var agi_id = agi.replace(/\./, '|').toLowerCase();
         if (document.getElementById(agi_id)) {
             return;
         }
