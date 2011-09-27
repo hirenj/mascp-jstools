@@ -206,7 +206,6 @@ MASCP.Service.prototype._dataReceived = function(data,status)
         this.result._raw_data.retrieved = data.retrieved;
     }
 
-    this.result.reader = this;
     this.result.agi = this.agi;
     
     
