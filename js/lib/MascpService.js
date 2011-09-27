@@ -580,7 +580,7 @@ base.retrieve = function(agi,callback)
                         self._endpointURL = null;
                     }
                     _oldRetrieve.call(self,id,cback);
-                    self._endopointURL = old_url;
+                    self._endpointURL = old_url;
                 }             
             });
             return self;
