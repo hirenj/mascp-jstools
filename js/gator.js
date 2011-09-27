@@ -187,11 +187,25 @@ jQuery(document).ready(function() {
     }
 
     jQuery('#zoomin').click(function() {
-        MASCP.renderer.zoom *= 1.1;
+        var start_zoom = MASCP.renderer.zoom;
+        var curr_zoom = start_zoom;
+        var count = 0;
+        while (start_zoom === MASCP.renderer.zoom && count < 5) {
+            curr_zoom *= 1.1;
+            MASCP.renderer.zoom = curr_zoom;
+            count++;
+        }
     });
 
     jQuery('#zoomout').click(function() {
-        MASCP.renderer.zoom *= 0.9;
+        var start_zoom = MASCP.renderer.zoom;
+        var curr_zoom = start_zoom;
+        var count = 0;
+        while (start_zoom === MASCP.renderer.zoom && count < 5) {
+            curr_zoom *= 0.9;
+            MASCP.renderer.zoom = curr_zoom;
+            count++;
+        }
     });
     
     var search_func = function() {
