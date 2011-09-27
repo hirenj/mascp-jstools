@@ -15,9 +15,43 @@
  */
 var MASCP = MASCP || {};
 
+
+/** Default constructor for Services
+ *  @class      Super-class for all MASCP services to retrieve data from
+ *              proteomic databases. Sub-classes of this class override methods
+ *              to change how requests are built, and how the data is parsed.
+ *  @param      {String}    agi             AGI to retrieve data for
+ *  @param      {String}    endpointURL     Endpoint for the service
+ */
+MASCP.Service = function(agi,endpointURL)
+{
+};
+
+
 if (typeof module != 'undefined' && module.exports){
     var events = require('events');
-    var bean = require('./bean.js');
+    
+    MASCP.Service.prototype = new events.EventEmitter();
+    
+    var bean = {
+        'add' : function(targ,ev,cback) {
+            if (targ.addListener) {
+                targ.addListener(ev,cback);
+            }
+        },
+        'remove' : function(targ,ev,cback) {
+            if (cback && targ.removeListener) {
+                targ.removeListener(ev,cback);
+            } else if (targ.removeAllListeners && typeof cback == 'undefined') {
+                targ.removeAllListeners(ev);
+            }
+        },
+        'fire' : function(targ,ev) {
+            if (targ.emit) {
+                targ.emit(ev);
+            }
+        }
+    };
     
     MASCP.events = new events.EventEmitter();
     module.exports = MASCP;
@@ -113,29 +147,18 @@ MASCP.extend = function(in_hsh,hsh) {
     return in_hsh;        
 };
 
-/** Default constructor for Services
- *  @class      Super-class for all MASCP services to retrieve data from
- *              proteomic databases. Sub-classes of this class override methods
- *              to change how requests are built, and how the data is parsed.
- *  @param      {String}    agi             AGI to retrieve data for
- *  @param      {String}    endpointURL     Endpoint for the service
- */
-MASCP.Service = function(agi,endpointURL)
-{
-};
-
 /**
  *  @lends MASCP.Service.prototype
  *  @property   {String}  agi               AGI to retrieve data for
  *  @property   {MASCP.Service.Result}  result  Result from the query
  *  @property   {Boolean} async             Flag for using asynchronous requests - defaults to true
  */
-MASCP.Service.prototype = {
+MASCP.extend(MASCP.Service.prototype,{
   'agi'     : null,
   'result'  : null, 
   '__result_class' : null,
   'async'   : true
-};
+});
 
 
 /*
@@ -598,9 +621,9 @@ base.retrieve = function(agi,callback)
 
     if (typeof module != 'undefined' && module.exports) {
         console.log("Starting sqlite");
-        var sqlite = require('sqlite');
-        db = new sqlite.Database();
-        db.open("cached.db",function() {});
+        var sqlite = require('sqlite3');
+        db = new sqlite.Database("cached.db");
+        //db.open("cached.db",function() {});
         console.log("Opened db");
     } else if ("openDatabase" in window) {
         try {
@@ -608,8 +631,10 @@ base.retrieve = function(agi,callback)
         } catch (err) {
             throw err;
         }
-
-        db.execute = function(sql,args,callback) {
+        db.all = function(sql,args,callback) {
+            db.exec(sql,args,callback);
+        };
+        db.exec = function(sql,args,callback) {
             var self = this;
             self.transaction(function(tx) {
                 tx.executeSql(sql,args,function(tx,result) {
@@ -632,7 +657,7 @@ base.retrieve = function(agi,callback)
     if (typeof db != 'undefined') {
 
         if (! db.version || db.version == "") {
-            db.execute("CREATE TABLE if not exists datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",null,function(err) { if (err && err != "Error: not an error") { throw err; } });
+            db.exec("CREATE TABLE if not exists datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",function(err) { if (err && err != "Error: not an error") { throw err; } });
         }
         
         var old_get_db_data = get_db_data;
@@ -643,31 +668,31 @@ base.retrieve = function(agi,callback)
                      cback.call(null,null);
                  },0);
             };
-            db.execute("BEGIN TRANSACTION;",function() {});
+            db.exec("BEGIN TRANSACTION;",function() {});
         };
         
         end_transaction = function() {
             get_db_data = old_get_db_data;
-            db.execute("END TRANSACTION;",function() {});
+            db.exec("END TRANSACTION;",function() {});
         };
         
         sweep_cache = function(timestamp) {
-            db.execute("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
+            db.all("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
         };
         
         clear_service = function(service,agi) {
             var servicename = service;
             servicename += "%";
             if ( ! agi ) {
-                db.execute("DELETE from datacache where service like ? ",[servicename],function() {});
+                db.all("DELETE from datacache where service like ? ",[servicename],function() {});
             } else {
-                db.execute("DELETE from datacache where service like ? and agi = ?",[servicename,agi.toLowerCase()],function() {});
+                db.all("DELETE from datacache where service like ? and agi = ?",[servicename,agi.toLowerCase()],function() {});
             }
             
         };
         
         search_service = function(service,cback) {
-            db.execute("SELECT distinct service from datacache where service like ? ",[service+"%"],function(err,records) {
+            db.all("SELECT distinct service from datacache where service like ? ",[service+"%"],function(err,records) {
                 var results = {};
                 if (records && records.length > 0) {
                     records.forEach(function(record) {
@@ -686,7 +711,7 @@ base.retrieve = function(agi,callback)
         };
         
         cached_agis = function(service,cback) {
-            db.execute("SELECT distinct AGI from datacache where service = ?",[service],function(err,records) {
+            db.all("SELECT distinct AGI from datacache where service = ?",[service],function(err,records) {
                 var results = [];
                 for (var i = 0; i < records.length; i++ ){
                     results.push(records[i].agi);
@@ -725,13 +750,12 @@ base.retrieve = function(agi,callback)
             dateobj.setUTCMilliseconds(0);
             var datetime = dateobj.getTime();
             data = {};
-            db.execute("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
+            db.all("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
         };
-        
         find_latest_data = function(agi,service,timestamps,cback) {
             var sql = "SELECT * from datacache where agi=? and service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved DESC LIMIT 1";
-            var args = [agi,service,timestamps[0],timestamps[1]];
-            db.execute(sql,args,function(err,records) {
+            var args = [agi,service,timestamps[0],timestamps[1]];            
+            db.all(sql,args,function(err,records) {
                 if (records && records.length > 0 && typeof records[0] != "undefined") {
                     var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
                     if (data) {
@@ -750,7 +774,7 @@ base.retrieve = function(agi,callback)
             }
             var sql = "SELECT distinct retrieved from datacache where service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved ASC";
             var args = [service,timestamps[0],timestamps[1]];
-            db.execute(sql,args,function(err,records) {
+            db.all(sql,args,function(err,records) {
                 var result = [];
                 if (records && records.length > 0 && typeof records[0] != "undefined") {
                     for (var i = records.length - 1; i >= 0; i--) {
