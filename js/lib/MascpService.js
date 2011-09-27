@@ -169,7 +169,7 @@ MASCP.extend(MASCP.Service.prototype,{
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
-    if (data instanceof Array) {
+    if (Object.prototype.toString.call(data) === '[object Array]') {
         for (var i = 0; i < data.length; i++ ) {
             arguments.callee.call(this,data[i],status);
         }
@@ -633,22 +633,28 @@ base.retrieve = function(agi,callback)
             throw err;
         }
         db.all = function(sql,args,callback) {
-            db.exec(sql,args,callback);
+            this.exec(sql,args,callback);
         };
         db.exec = function(sql,args,callback) {
             var self = this;
+            var sqlargs = args;
+            var cback = callback;
+            if (typeof cback == 'undefined' && sqlargs && Object.prototype.toString.call(sqlargs) != '[object Array]') {
+                cback = args;
+                sqlargs = null;
+            }
             self.transaction(function(tx) {
-                tx.executeSql(sql,args,function(tx,result) {
+                tx.executeSql(sql,sqlargs,function(tx,result) {
                     var res = [];
                     for (var i = 0; i < result.rows.length; i++) {
                         res.push(result.rows.item(i));
                     }
-                    if (callback) {
-                        callback.call(db,null,res);
+                    if (cback) {
+                        cback.call(db,null,res);
                     }
                 },function(tx,err) {
-                    if (callback) {
-                        callback.call(db,err);
+                    if (cback) {
+                        cback.call(db,err);
                     }
                 });
             });
@@ -658,7 +664,7 @@ base.retrieve = function(agi,callback)
     if (typeof db != 'undefined') {
 
         if (! db.version || db.version == "") {
-            db.exec("CREATE TABLE if not exists datacache (agi TEXT,service TEXT,retrieved REAL,data TEXT)",function(err) { if (err && err != "Error: not an error") { throw err; } });
+            db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { console.log(err); throw err;  } });
         }
         
         var old_get_db_data = get_db_data;
