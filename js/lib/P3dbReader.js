@@ -150,13 +150,4 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
 MASCP.P3dbReader.Result.prototype.render = function()
 {
-    if (this.getPeptides().length > 0) {
-        var a_container = jQuery('<div>MS/MS spectra <input class="group_toggle" type="checkbox"/>P3db</div>');
-        jQuery(this.reader.renderers).each(function(i){
-            this.createGroupCheckbox('P3db_experimental',jQuery('input.group_toggle',a_container));
-        });
-        return a_container;
-    } else {
-        return null;
-    }
 };
