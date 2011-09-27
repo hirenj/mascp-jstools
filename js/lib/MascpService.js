@@ -320,8 +320,13 @@ var make_params = function(params) {
     return qpoints.join('&');
 };
 
+var global_request = null;
+
 var do_request = function(request_data) {
-    var request = new XMLHttpRequest();
+    var request = global_request || new XMLHttpRequest();
+    
+    global_request = request;
+    
     var datablock = null;
     
     if ( ! request_data.url ) {
