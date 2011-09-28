@@ -247,7 +247,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var icons = [];
 
         var exp_peptides = this.result.getAllExperimentalPhosphoPeptides();
-        if (exp_peptides.length == 0) {
+        if (exp_peptides.length === 0) {
             jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
             return;         
         }
