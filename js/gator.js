@@ -145,6 +145,7 @@ jQuery(document).ready(function() {
                     }
                     MASCP.renderer.trackOrder = MASCP.renderer.trackOrder.concat([datasetname]);
                     MASCP.renderer.showLayer(datasetname);
+                    MASCP.renderer.refresh();
                 });
                 reader.retrieve(agi);
             };
