@@ -237,7 +237,7 @@
         
         MASCP.renderer.refresh();
         
-        var reader = new MASCP.TairReader(agi);
+        var reader = new MASCP.TairReader(agi,'http://localhost:3000/data/latest/gator');
         reader.bind('resultReceived',function() {
             if (this.result.getSequence() == null || this.result.getSequence() == '') {
                 document._screen.hide();
