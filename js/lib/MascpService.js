@@ -66,6 +66,17 @@ if (typeof module != 'undefined' && module.exports){
     module.exports = MASCP;
     
     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+    XMLHttpRequest.prototype.__defineGetter__("responseXML", function() {
+        if (this._dom) {
+            return this._dom;
+        }
+        var parser = require("o3-xml");
+        var text = this.responseText;
+        text = text.replace(/&/g,'&amp;');
+        this._dom = parser.parseFromString(text);
+        return this._dom;
+    });
+    XMLHttpRequest.prototype.__defineSetter__("responseXML",function() {});
     MASCP.events.emit('ready');
 } else {
     window.MASCP = MASCP;
