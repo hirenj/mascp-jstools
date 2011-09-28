@@ -5,6 +5,7 @@ var READER_CONF = (function() {
             continue;
         }
         vals[arguments[i]] = arguments[i+1];
+        vals[arguments[i]].url = 'http://localhost:3000/data/latest/gator';
     }
     return vals;
 })(
