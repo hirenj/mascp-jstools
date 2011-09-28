@@ -15,7 +15,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.SnpReader = MASCP.buildService(function(data) {
-                        this._data = data || {};
+                        this._raw_data = data || {};
                         return this;
                     });
 
@@ -25,10 +25,10 @@ MASCP.SnpReader.prototype.requestData = function()
 {
     var self = this;
     return {
-        type: "POST",
+        type: "GET",
         dataType: "json",
         data: { 'agi'   : this.agi,
-                'service' : 'snps' 
+                'service' : 'nssnps' 
         }
     };
 };
@@ -69,7 +69,7 @@ MASCP.SnpReader.ALL_ACCESSIONS = ["AGU","BAK2","BAY","BUR0","CDM0","COL0","DEL10
 MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     
-    this.bind('resultReceived', function() {
+    reader.bind('resultReceived', function() {
         var accessions = (typeof reader.accession !== 'undefined') ? reader.accession.split(',') : [].concat(MASCP.SnpReader.ALL_ACCESSIONS);
         var a_result = reader.result;
 
@@ -151,7 +151,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
 };
 
 MASCP.SnpReader.Result.prototype.getSnp = function(accession) {
-    var snps_data = this._data[accession];
+    var snps_data = this._raw_data.data[accession];
     var results = [];
     for (var pos in snps_data) {
         if (snps_data.hasOwnProperty(pos)) {

@@ -91,7 +91,7 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
     var datablock = this._raw_data.data;
     for (var i = 0; i < datablock.length; i++ ) {
         var peptides = peptides_by_domain[datablock[i].interpro] || [];
-        peptides.push(this.reader.sequence.substring(datablock[i].start, datablock[i].end));
+        peptides.push(this.sequence.substring(datablock[i].start, datablock[i].end));
         domain_descriptions[datablock[i].interpro] = datablock[i].description;
         peptides_by_domain[datablock[i].interpro] = peptides;
     }
@@ -115,6 +115,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var agi = this.agi;
         
         MASCP.getLayer('interpro_controller').href = '';
+        this.result.sequence = sequenceRenderer.sequence;
         var domains = this.result.getDomains();
         for (var dom in domains) {            
             if (domains.hasOwnProperty(dom)) {
