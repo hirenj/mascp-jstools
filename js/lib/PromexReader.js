@@ -25,7 +25,8 @@ MASCP.PromexReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "json",
-        data: { 'ac'        : agi,
+        data: { 'agi'       : this.agi,
+                'ac'        : agi,
                 'service'   : 'promex' 
         }
     };
