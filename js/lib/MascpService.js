@@ -129,8 +129,7 @@ MASCP.buildService = function(dataExtractor)
 
     clazz.Result = function(data)
     {
-        var new_fields = dataExtractor.apply(this,[data]);
-        MASCP.extend(this,new_fields);
+        dataExtractor.apply(this,[data]);
         return this;
     };
     
@@ -207,22 +206,31 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             result = new clazz(data);
         } catch(err2) {
             bean.fire(this,'error',[err2]);
+            console.log(err2);
+            return false;
         }
-        result._raw_data = data;
+        if ( ! result._raw_data ) {
+            result._raw_data = data;
+        }
         this.result = result;
     } else {
-        var new_result = {};
+        // var new_result = {};
         try {
-            new_result = new clazz(data);
+            clazz.call(this.result,data);
         } catch(err3) {
             bean.fire(this,'error',[err3]);
+            console.log(err3);
+            return false;
         }
-        for(var field in new_result) {
-            if (new_result.hasOwnProperty(field)) {
-                this.result[field] = new_result[field];
-            }
+        // for(var field in new_result) {
+        //     if (true && new_result.hasOwnProperty(field)) {
+        //         this.result[field] = new_result[field];
+        //     }
+        // }
+        if (! this.result._raw_data) {
+            this.result._raw_data = data;
         }
-        this.result._raw_data = data;
+        // this.result._raw_data = data;
     }
 
     if (data && data.retrieved) {
@@ -591,10 +599,10 @@ base.retrieve = function(agi,callback)
                 } else {
                     var old_received = self._dataReceived;
                     self._dataReceived = (function() { return function(dat) {
-                        if (dat !== null) {
-                            store_db_data(id,this.toString(),dat || {});
-                        }
                         var res = old_received.call(this,dat);
+                        if (res && this.result._raw_data !== null) {
+                            store_db_data(id,this.toString(),this.result._raw_data || {});
+                        }
                         this._dataReceived = null;
                         this._dataReceived = old_received;
                         dat = {};
