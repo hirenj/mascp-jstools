@@ -364,11 +364,12 @@ var do_request = function(request_data) {
     }
     
     if (request_data.type == 'GET' && request_data.data) {
-        request_data.url = request_data.url.replace(/\?$/,'') + '?' + make_params(request_data.data);
+        var has_question = request_data.url.indexOf('?') >= 0 ? '&' : '?'
+        request_data.url = request_data.url.replace(/\?$/,'') + has_question + make_params(request_data.data);
     }
     request.open(request_data.type,request_data.url,request_data.async);
     if (request_data.type == 'POST') {
-        request.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+        request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
         datablock = make_params(request_data.data);
     }
     
@@ -784,6 +785,9 @@ base.retrieve = function(agi,callback)
                 return;
             }
             var dateobj = data.retrieved ? data.retrieved : (new Date());
+            if (typeof dateobj == 'string') {
+                dateobj = new Date();
+            }
             dateobj.setUTCHours(0);
             dateobj.setUTCMinutes(0);
             dateobj.setUTCSeconds(0);
