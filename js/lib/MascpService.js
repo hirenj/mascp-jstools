@@ -35,20 +35,29 @@ if (typeof module != 'undefined' && module.exports){
     
     var bean = {
         'add' : function(targ,ev,cback) {
+            if (ev == "error") {
+                ev = "MASCP.error";
+            }
             if (targ.addListener) {
                 targ.addListener(ev,cback);
             }
         },
         'remove' : function(targ,ev,cback) {
+            if (ev == "error") {
+                ev = "MASCP.error";
+            }
             if (cback && targ.removeListener) {
                 targ.removeListener(ev,cback);
             } else if (targ.removeAllListeners && typeof cback == 'undefined') {
                 targ.removeAllListeners(ev);
             }
         },
-        'fire' : function(targ,ev) {
+        'fire' : function(targ,ev,args) {
+            if (ev == "error") {
+                ev = "MASCP.error";
+            }
             if (targ.emit) {
-                targ.emit(ev);
+                targ.emit.apply(targ,[ev].concat(args));
             }
         }
     };
@@ -169,6 +178,10 @@ MASCP.extend(MASCP.Service.prototype,{
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
+    if (data.error && data.error != '' && data.error !== null ) {
+        bean.fire(this,'error',[data.error]);
+        return false;
+    }
     if (Object.prototype.toString.call(data) === '[object Array]') {
         for (var i = 0; i < data.length; i++ ) {
             arguments.callee.call(this,data[i],status);
@@ -350,13 +363,14 @@ var do_request = function(request_data) {
                     data_block = {};
                 }
                 try {
+                    var text = request.responseText;
                     data_block = request_data.dataType == 'xml' ? request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
                 } catch (e) {
                     if (e.type == 'unexpexted_eos') {
                         request_data.success.call(null,{},request.status,request);
                         return;
                     } else {
-                        request_data.error.call(null,request.responseText,request,request.status);
+                        request_data.error.call(null,request.responseText,request,e.type);
                         return;
                     }
                 }
