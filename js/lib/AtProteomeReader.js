@@ -46,7 +46,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
         type: "GET",
         dataType: "json",
         data: { 'agi'       : agi,
-                'service'   : 'atproteome-json' 
+                'service'   : 'pep2pro' 
         }
     };
 };

@@ -108,7 +108,9 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             for(var i = 0; i < peps.length; i++) {
                 var peptide = peps[i].sequence;
                 var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
-                                
+                if (peptide_bits.length == 0){
+                    continue;
+                }
                 peptide_bits.addToLayer(layer_name);
                 icons.push(peptide_bits.addToLayer('prippdb_experimental'));
 
