@@ -27,7 +27,6 @@ exports.find_motif = function(agi,motif) {
             result.push(pos+1);
             last_hit = pos;
         });
-        console.log(result);
         return result_struct.result = result;
     });
     return result_struct;

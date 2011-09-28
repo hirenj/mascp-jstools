@@ -473,7 +473,7 @@ jQuery(document).ready(function() {
             
         };
         
-        var error_function = function(resp,req,status) {
+        var error_function = function(status) {
             var rdr = READER_CONF[this.__class__];
             var an_agi = this.agi;
             jQuery('#links ul').append('<li class="error"><span class="timestamp data_reload">Error</span><a href="'+rdr.error_url+'">'+rdr.nicename+'</a></li>');
@@ -498,6 +498,7 @@ jQuery(document).ready(function() {
                     }
                 });
                 reader.bind('resultReceived', result_function);
+                reader.bind('error',error_function);
                 reader.retrieve();
             });
 
