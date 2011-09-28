@@ -386,7 +386,7 @@ var do_request = function(request_data) {
                     var text = request.responseText;
                     data_block = request_data.dataType == 'xml' ? request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
                 } catch (e) {
-                    if (e.type == 'unexpexted_eos') {
+                    if (e.type == 'unexpected_eos') {
                         request_data.success.call(null,{},request.status,request);
                         return;
                     } else {
