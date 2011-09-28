@@ -11,7 +11,56 @@
  */
  
 MASCP.PpdbReader = MASCP.buildService(function(data) {
+                        if (! data ) {
+                            return this;
+                        }
+                        var extractData = function()
+                        {
+                            var features = this._raw_data.getElementsByTagName('FEATURE');
+
+                            var peptides = [];
+
+                            var peps_by_seq = {};
+                            var all_experiments = {};
+                            for (var i = 0 ; i < features.length; i++ ) {
+                                var type = features[i].getElementsByTagName('TYPE')[0];
+                                var textcontent = type.textContent || type.text || type.nodeValue;
+                                if ( textcontent == 'Peptide') {
+                                    var seq = features[i].getAttribute('label');
+                                    if ( ! peps_by_seq[seq] ) {
+                                        peps_by_seq[seq] = { 'experiments' : [] };
+                                    }
+                                    var exp_id = parseInt(features[i].getElementsByTagName('GROUP')[0].getAttribute('id'),10);
+                                    peps_by_seq[seq].experiments.push(exp_id);
+                                    all_experiments[exp_id] = true;            
+                                }
+                            }
+                            for (var pep in peps_by_seq) {
+                                if (peps_by_seq.hasOwnProperty(pep)) {
+                                    var pep_obj =  { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments };
+                                    peptides.push(pep_obj);
+                                }
+                            }
+
+                            this._experiments = [];
+                            for (var expid in all_experiments) {
+                                if (all_experiments.hasOwnProperty(expid)) {
+                                    this._experiments.push(parseInt(expid,10));
+                                }
+                            }
+
+                            return peptides;
+                        };
                         this._raw_data = data;
+                        if (data.getElementsByTagName) {
+                            var peps = extractData.call(this);
+                            this._raw_data = {
+                                'experiments' : this._experiments,
+                                'peptides'    : peps
+                            };
+                        }
+                        this._experiments = this._raw_data.experiments;
+                        this._peptides    = this._raw_data.peptides;
                         return this;
                     });
 
@@ -19,17 +68,22 @@ MASCP.PpdbReader.prototype.requestData = function()
 {
     var self = this;
     var agi = (this.agi+"").replace(/\..*$/,'');
+    var dataType = 'json';
+    if (this._endpointURL.indexOf('xml') >= 0) {
+        dataType = 'xml';
+    }
     return {
         type: "GET",
-        dataType: "xml",
+        dataType: dataType,
         data: { 'segment'   : agi,
+                'agi'       : this.agi,
                 'service'   : 'ppdb'
         }
     };
 };
 
 
-MASCP.PpdbReader.SERVICE_URL = 'http://ppdb.tc.cornell.edu/das/arabidopsis/features/'; /* ?segment=locusnumber */
+MASCP.PpdbReader.SERVICE_URL = 'http://ppdb.tc.cornell.edu/das/arabidopsis/features/?output=xml'; /* ?segment=locusnumber */
 
 /**
  * @class   Container class for results from the Ppdb service
@@ -64,47 +118,17 @@ MASCP.PpdbReader.Result.prototype.getExperiments = function()
 
 MASCP.PpdbReader.Result.prototype.getPeptides = function()
 {
-    var features = this._raw_data.getElementsByTagName('FEATURE');
-    
-    var peptides = [];
-    
-    var peps_by_seq = {};
-    var all_experiments = {};
-    
-    for (var i = 0 ; i < features.length; i++ ) {
-        var type = features[i].getElementsByTagName('TYPE')[0];
-        var textcontent = type.textContent || type.text;
-        if ( textcontent == 'Peptide') {
-            var seq = features[i].getAttribute('label');
-            if ( ! peps_by_seq[seq] ) {
-                peps_by_seq[seq] = { 'experiments' : [] };
-            }
-            var exp_id = parseInt(features[i].getElementsByTagName('GROUP')[0].getAttribute('id'),10);
-            peps_by_seq[seq].experiments.push(exp_id);
-            all_experiments[exp_id] = true;            
-        }
-    }
-    for (var pep in peps_by_seq) {
-        if (peps_by_seq.hasOwnProperty(pep)) {
-            var pep_obj =  { 'sequence' : pep , 'experiments' : peps_by_seq[pep].experiments };
-            pep_obj.toString = function(p) {
-                return function() {
-                    return p.sequence;
-                };
-            }(pep_obj);
-            peptides.push(pep_obj);
-        }
-    }
-    
-    this._experiments = [];
-    for (var expid in all_experiments) {
-        if (all_experiments.hasOwnProperty(expid)) {
-            this._experiments.push(parseInt(expid,10));
-        }
-    }
-    
-    return peptides;
+    var peps = this._peptides || [];
+    peps.forEach(function(pep_obj) {
+        pep_obj.toString = function(p) {
+            return function() {
+                return p.sequence;
+            };
+        }(pep_obj);
+    });
+    return peps;
 };
+
 
 MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
@@ -127,7 +151,6 @@ MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         
         var peps = this.result.getPeptides();
         var experiments = this.result.getExperiments();
-        
         for(var i = 0; i < experiments.length; i++) {
             var layer_name = 'ppdb_experiment'+experiments[i];
             MASCP.registerLayer(layer_name, { 'fullname': 'Experiment '+experiments[i], 'group' : 'ppdb', 'color' : '#aa9900', 'css' : css_block });
