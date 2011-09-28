@@ -51,7 +51,7 @@ MASCP.InterproReader.prototype.retrieve = function(agi,func) {
         (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
             self.sequence = this.result.getSequence() || '';
             self_func.call(self,self.agi,cback);
-        }).bind('error',function() { console.log("Errored out"); self.trigger('error'); }).retrieve();
+        }).bind('error',function(err) { self.trigger('error',[err]); }).retrieve();
         return this;
     }
     if (old_retrieve !== MASCP.Service.prototype.retrieve) {

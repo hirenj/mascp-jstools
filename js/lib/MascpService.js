@@ -206,7 +206,6 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             result = new clazz(data);
         } catch(err2) {
             bean.fire(this,'error',[err2]);
-            console.log(err2);
             return false;
         }
         if ( ! result._raw_data ) {
@@ -219,7 +218,6 @@ MASCP.Service.prototype._dataReceived = function(data,status)
             clazz.call(this.result,data);
         } catch(err3) {
             bean.fire(this,'error',[err3]);
-            console.log(err3);
             return false;
         }
         // for(var field in new_result) {
@@ -390,7 +388,7 @@ var do_request = function(request_data) {
                         request_data.success.call(null,{},request.status,request);
                         return;
                     } else {
-                        request_data.error.call(null,request.responseText,request,e.type);
+                        request_data.error.call(null,{'error' : e.type || e.message, 'stack' : e });
                         return;
                     }
                 }
@@ -487,9 +485,9 @@ base.retrieve = function(agi,callback)
             bean.remove(self,"resultReceived",arguments.callee);
             callback.call(self);
         });
-        bean.add(self,"error",function(resp,req,status) {
+        bean.add(self,"error",function(err) {
             bean.remove(self,"error",arguments.callee);
-            callback.call(self,status);
+            callback.call(self,err);
         });
     }
     var request_data = this.requestData();
@@ -503,15 +501,18 @@ base.retrieve = function(agi,callback)
     timeout:    5000,
     error:      function(response,req,status) {
                     MASCP.Service._current_reqs -= 1;
-                    bean.fire(self,"error",[response,req,status]);
+                    if (typeof status == 'string') {
+                        status = { 'error' : status , 'request' : req };
+                    }
+                    bean.fire(self,"error",[status]);
                     bean.fire(MASCP.Service,'requestComplete');
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
                     MASCP.Service._current_reqs -= 1;
                     if ( xhr && xhr.status !== null && xhr.status === 0 ) {
-                        bean.fire(self,"error",[xhr,xhr,status]);
-                        throw "Error occurred retrieving data for service "+self._endpointURL;
+                        bean.fire(self,"error",[{"error": "Zero return status from request "}]);
+                        return;
                     }
                     if (self._dataReceived(data,status)) {
                         self.gotResult();
@@ -698,7 +699,7 @@ base.retrieve = function(agi,callback)
     if (typeof db != 'undefined') {
 
         if (! db.version || db.version == "") {
-            db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { console.log(err); throw err;  } });
+            db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { throw err; } });
         }
         
         var old_get_db_data = get_db_data;

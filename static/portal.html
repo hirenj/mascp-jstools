@@ -249,7 +249,7 @@
             jQuery('#description').text(this.result.getDescription());
             MASCP.renderer.setSequence(this.result.getSequence());
         });
-        reader.bind('error',function(response,req,status) {
+        reader.bind('error',function(err) {
             document._screen.hide();            
         });
         reader.retrieve();
