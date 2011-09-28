@@ -99,7 +99,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
             this._methods.shift();
         }
 
-        if (data.error && data.error.indexOf('SELECT') == 0) {
+        if (data.error && data.error.indexOf('SELECT') === 0) {
             data.error = null;
         }
         var res = defaultDataReceived.call(this,data,status);
