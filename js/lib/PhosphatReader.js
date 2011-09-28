@@ -246,13 +246,19 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
     this.bind('resultReceived', function() {
         var icons = [];
 
+        var exp_peptides = this.result.getAllExperimentalPhosphoPeptides();
+        if (exp_peptides.length == 0) {
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            return;         
+        }
+
         MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
         MASCP.registerGroup('phosphat_peptides', { 'fullname' : 'PhosPhAt peptides' });
 
         if (sequenceRenderer.createGroupController) {
             sequenceRenderer.createGroupController('phosphat_experimental','phosphat_peptides');
         }
-        jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
+        jQuery(exp_peptides).each(function(i) {
             MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
 
             var start = this.shift();
