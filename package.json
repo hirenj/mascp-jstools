@@ -10,7 +10,7 @@
    ],
    "maintainers": [
        {
-           "name": "Hiren Joshi"
+           "name": "Hiren Joshi",
            "email": "",
            "web": "" 
        } 
@@ -32,10 +32,10 @@
        "o3-xml": "1.0.x",
        "sqlite3": "2.0.x"
    },
-   "main" : "dist/js/maschup.services.js"
+   "main" : "dist/js/maschup.services.js",
    "bin" : {
        "cli" : "cli"
-   }
+   },
    "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
    "cpu": ["x86", "ppc", "x86_64"],
