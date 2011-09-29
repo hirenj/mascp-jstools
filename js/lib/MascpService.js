@@ -77,7 +77,6 @@ if (typeof module != 'undefined' && module.exports){
         return this._dom;
     });
     XMLHttpRequest.prototype.__defineSetter__("responseXML",function() {});
-    MASCP.events.emit('ready');
 } else {
     window.MASCP = MASCP;
     var ie = (function(){
@@ -535,7 +534,7 @@ base.retrieve = function(agi,callback)
 
 (function(clazz) {
 
-    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_agis, begin_transaction, end_transaction;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_accessions, begin_transaction, end_transaction;
     
     var max_age = 0, min_age = 0;
 
@@ -631,7 +630,7 @@ base.retrieve = function(agi,callback)
 
     clazz.CachedAgis = function(service,cback) {
         var serviceString = service.toString();
-        cached_agis(serviceString,cback);
+        cached_accessions(serviceString,cback);
         return true;
     };
 
@@ -665,6 +664,7 @@ base.retrieve = function(agi,callback)
         try {
             db = openDatabase("cached","","MASCP Gator cache",1024*1024);
         } catch (err) {
+            console.log(err);
             throw err;
         }
         db.all = function(sql,args,callback) {
@@ -694,14 +694,54 @@ base.retrieve = function(agi,callback)
                 });
             });
         };
+        
     }
         
     if (typeof db != 'undefined') {
 
-        if (! db.version || db.version == "") {
-            db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { throw err; } });
-        }
-        
+        db.all('SELECT version from versions where tablename = "datacache"',function(err,rows) { 
+            var version = rows ? rows[0].version : null;
+            console.log("Checking database version");
+            if (version == 1.2) {
+                if (MASCP.events) {
+                    MASCP.events.emit('ready');            
+                }
+                return;                
+            }
+            
+            if (! version || version == "" || version < 1.0 ) {
+                console.log("Upgrading DB to 1.1");
+                db.exec('CREATE TABLE if not exists versions (version REAL, tablename TEXT);');
+                db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { throw err; } });
+                db.exec('DELETE FROM versions where tablename = "datacache"');
+                db.exec('INSERT INTO versions(version,tablename) VALUES(1.1,"datacache");',function(err,rows) {
+                    if ( ! err ) {
+                        console.log("Upgrade to 1.1 completed");
+                    }
+                });
+                version = 1.1;
+            }
+            if (version < 1.2) {
+                console.log("Upgrading DB to 1.2");
+                db.exec('DROP TABLE if exists datacache_tmp;');
+                db.exec('CREATE TABLE if not exists datacache_tmp (acc TEXT,service TEXT,retrieved REAL,data TEXT);');
+                db.exec('INSERT INTO datacache_tmp(acc,service,retrieved,data) SELECT agi,service,retrieved,data FROM datacache;');
+                db.exec('DROP TABLE datacache;');
+                db.exec('ALTER TABLE datacache_tmp RENAME TO datacache;');
+                db.exec('CREATE INDEX accessions on datacache(acc);');
+                db.exec('DELETE FROM versions where tablename = "datacache"');
+                db.exec('INSERT INTO versions(version,tablename) VALUES(1.2,"datacache");',function(err,rows) {
+                    if ( ! err ) {
+                        console.log("Upgrade to 1.2 completed");
+                        if (MASCP.events) {
+                            MASCP.events.emit('ready');            
+                        }                        
+                    }
+                });
+                version = 1.2;
+            }
+        });
+
         var old_get_db_data = get_db_data;
         
         begin_transaction = function() {
@@ -722,13 +762,13 @@ base.retrieve = function(agi,callback)
             db.all("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
         };
         
-        clear_service = function(service,agi) {
+        clear_service = function(service,acc) {
             var servicename = service;
             servicename += "%";
-            if ( ! agi ) {
+            if ( ! acc ) {
                 db.all("DELETE from datacache where service like ? ",[servicename],function() {});
             } else {
-                db.all("DELETE from datacache where service like ? and agi = ?",[servicename,agi.toLowerCase()],function() {});
+                db.all("DELETE from datacache where service like ? and acc = ?",[servicename,acc.toLowerCase()],function() {});
             }
             
         };
@@ -752,30 +792,30 @@ base.retrieve = function(agi,callback)
             });
         };
         
-        cached_agis = function(service,cback) {
-            db.all("SELECT distinct AGI from datacache where service = ?",[service],function(err,records) {
+        cached_accessions = function(service,cback) {
+            db.all("SELECT distinct acc from datacache where service = ?",[service],function(err,records) {
                 var results = [];
                 for (var i = 0; i < records.length; i++ ){
-                    results.push(records[i].agi);
+                    results.push(records[i].acc);
                 }
                 cback.call(MASCP.Service,results);
             });
         };
         
-        get_db_data = function(agi,service,cback) {
+        get_db_data = function(acc,service,cback) {
             var timestamps = max_age ? [min_age,max_age] : [min_age, (new Date()).getTime()];
-            return find_latest_data(agi,service,timestamps,cback);
+            return find_latest_data(acc,service,timestamps,cback);
         };
 
-        var insert_report_func = function(agi,service) {
+        var insert_report_func = function(acc,service) {
             return function(err,rows) {
                 if ( ! err && rows) {
-                    console.log("Caching result for "+agi+" in "+service);
+                    console.log("Caching result for "+acc+" in "+service);
                 }
             };
         };
 
-        store_db_data = function(agi,service,data) {
+        store_db_data = function(acc,service,data) {
             if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
                 return;
             }
@@ -795,11 +835,11 @@ base.retrieve = function(agi,callback)
             dateobj.setUTCMilliseconds(0);
             var datetime = dateobj.getTime();
             data = {};
-            db.all("INSERT INTO datacache(agi,service,retrieved,data) VALUES(?,?,?,?)",[agi,service,datetime,str_rep],insert_report_func(agi,service));
+            db.all("INSERT INTO datacache(acc,service,retrieved,data) VALUES(?,?,?,?)",[acc,service,datetime,str_rep],insert_report_func(acc,service));
         };
-        find_latest_data = function(agi,service,timestamps,cback) {
-            var sql = "SELECT * from datacache where agi=? and service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved DESC LIMIT 1";
-            var args = [agi,service,timestamps[0],timestamps[1]];            
+        find_latest_data = function(acc,service,timestamps,cback) {
+            var sql = "SELECT * from datacache where acc=? and service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved DESC LIMIT 1";
+            var args = [acc,service,timestamps[0],timestamps[1]];            
             db.all(sql,args,function(err,records) {
                 if (records && records.length > 0 && typeof records[0] != "undefined") {
                     var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
@@ -853,7 +893,7 @@ base.retrieve = function(agi,callback)
             }
         };
         
-        clear_service = function(service,agi) {
+        clear_service = function(service,acc) {
             if ("localStorage" in window) {
                 var keys = [];
                 for (var i = 0, len = localStorage.length; i < len; i++) {
@@ -861,9 +901,9 @@ base.retrieve = function(agi,callback)
                 }
                 var key = keys.shift();
                 while (key) {
-                    if ((new RegExp("^"+service+".*"+(agi?agi+"$" : ""))).test(key)) {
+                    if ((new RegExp("^"+service+".*"+(acc?"#"+acc.toLowerCase()+"$" : ""))).test(key)) {
                         localStorage.removeItem(key);
-                        if (agi) {
+                        if (acc) {
                             return;
                         }
                     }
@@ -880,7 +920,7 @@ base.retrieve = function(agi,callback)
                 for (var i = 0, len = localStorage.length; i < len; i++){
                     key = localStorage.key(i);
                     if (re.test(key)) {                        
-                        results[key.replace(/\.at[\dcm].*$/g,'')] = true;
+                        results[key.replace(/\.#.*$/g,'')] = true;
                     }
                 }
             }
@@ -897,7 +937,7 @@ base.retrieve = function(agi,callback)
             return uniques;
         };
 
-        cached_agis = function(service,cback) {
+        cached_accessions = function(service,cback) {
             if ("localStorage" in window) {
                 var key;
                 var re = new RegExp("^"+service);
@@ -920,8 +960,8 @@ base.retrieve = function(agi,callback)
             cback.call(clazz,uniques);
         };
 
-        get_db_data = function(agi,service,cback) {
-            var data = localStorage[service.toString()+"."+(agi || '').toLowerCase()];
+        get_db_data = function(acc,service,cback) {
+            var data = localStorage[service.toString()+".#"+(acc || '').toLowerCase()];
             if (data && typeof data === 'string') {
                 var datablock = JSON.parse(data);
                 datablock.retrieved = new Date(datablock.retrieved);
@@ -932,17 +972,17 @@ base.retrieve = function(agi,callback)
             
         };
         
-        store_db_data = function(agi,service,data) {
+        store_db_data = function(acc,service,data) {
             if (data && (typeof data !== 'object' || data instanceof Document || data.nodeName)){
                 return;
             }
             data.retrieved = (new Date()).getTime();
-            localStorage[service.toString()+"."+(agi || '').toLowerCase()] = JSON.stringify(data);
+            localStorage[service.toString()+".#"+(acc || '').toLowerCase()] = JSON.stringify(data);
         };
 
-        find_latest_data = function(agi,service,timestamp,cback) {
+        find_latest_data = function(acc,service,timestamp,cback) {
             // We don't actually retrieve historical data for this
-            return get_db_data(agi,service,cback);
+            return get_db_data(acc,service,cback);
         };
 
         data_timestamps = function(service,timestamp,cback) {
