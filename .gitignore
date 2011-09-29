@@ -3,3 +3,4 @@ extlib
 js/jquery*.js
 js/json*.js
 cached.db
+node_modules
