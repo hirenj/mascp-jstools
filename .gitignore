@@ -1,5 +1,4 @@
 build
-dist
 extlib
 js/jquery*.js
 js/json*.js
