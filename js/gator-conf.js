@@ -5,7 +5,7 @@ var READER_CONF = (function() {
             continue;
         }
         vals[arguments[i]] = arguments[i+1];
-        vals[arguments[i]].url = arguments[i] === MASCP.AtChloroReader ? 'http://localhost:3000/data/latest/atchloro/' : 'http://localhost:3000/data/latest/gator';
+        vals[arguments[i]].url = arguments[i] === MASCP.AtChloroReader ? '/data/latest/atchloro/' : '/data/latest/gator';
     }
     return vals;
 })(
