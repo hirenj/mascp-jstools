@@ -81,7 +81,8 @@
                     <fileset dir="${project.java.extlib.dir}" includes="**/*.jar"/>
                 </classpath>                
         </taskdef>
-		<mkdir dir="build"/>
+        
+        <mkdir dir="build"/>
         
         <concat destfile="build/maschup.services.js"
                   force="yes">
@@ -129,29 +130,7 @@
         <copy todir="dist/js">
             <fileset dir="build" includes="maschup*.js"/>
         </copy>
-        
-        <copy file="js/lib/blank.svg" tofile="dist/js/blank.svg"/>
 
-        <copy todir="dist/js">
-            <fileset dir="build" includes="maschup*.js"/>
-        </copy>
-
-        <copy todir="dist/">
-            <fileset dir="static"/>
-        </copy>
-        
-        <copy todir="dist/css">
-            <fileset dir="css"/>
-        </copy>
-        
-        <copy todir="dist/js">
-            <fileset dir="js"/>
-        </copy>
-
-    </target>
-    
-    <target depends="dist" name="bundle">
-        <zip destfile="dist/maschup.zip" basedir="dist" excludes="**/*.zip" update="true"/>
     </target>
 
 </project>
