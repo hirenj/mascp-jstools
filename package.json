@@ -44,5 +44,6 @@
        "lib": "js/lib",
        "bin": "local/binaries",
        "jars": "extlib/java" 
-   } 
+   },
+   "private" : "true"
 }
