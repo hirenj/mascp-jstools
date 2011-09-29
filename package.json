@@ -40,12 +40,6 @@
    "os": ["linux", "macos", "win"],
    "cpu": ["x86", "ppc", "x86_64"],
    "engines": ["v8", "node >= 0.4.11"],
-   "scripts": {
-       "install": "install.js",
-       "uninstall": "uninstall.js",
-       "build": "build.js",
-       "test": "test.js" 
-   },
    "directories": {
        "lib": "js/lib",
        "bin": "local/binaries",
