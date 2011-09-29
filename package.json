@@ -29,12 +29,12 @@
    ],
    "dependencies": {
        "xmlhttprequest": "1.0.x",
-       "o3-xml": "1.0.x",
+       "o3-xml": "0.1.x",
        "sqlite3": "2.0.x"
    },
    "main" : "dist/js/maschup.services.js",
    "bin" : {
-       "cli" : "cli"
+       "gator-cli" : "cli"
    },
    "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
