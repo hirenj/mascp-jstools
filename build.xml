@@ -149,12 +149,6 @@
         <copy todir="dist/js">
             <fileset dir="js"/>
         </copy>
-                        
-        <copy file="filetojson.rb" tofile="dist/filetojson.rb"/>
-
-       <copy todir="dist">
-            <fileset dir="." includes="*-json.txt"/>
-        </copy>
 
     </target>
     
