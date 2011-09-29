@@ -32,11 +32,11 @@
        "o3-xml": "1.0.x",
        "sqlite3": "2.0.x"
    },
-   "main" : "cli"
+   "main" : "dist/js/maschup.services.js"
    "bin" : {
        "cli" : "cli"
    }
-   "implements": ["mascp-jstools-1.0","cli"],
+   "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
    "cpu": ["x86", "ppc", "x86_64"],
    "engines": ["v8", "node >= 0.4.11"],
