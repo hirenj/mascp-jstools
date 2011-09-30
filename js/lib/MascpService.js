@@ -757,6 +757,7 @@ base.retrieve = function(agi,callback)
                 db.exec('DROP TABLE datacache;');
                 db.exec('ALTER TABLE datacache_tmp RENAME TO datacache;');
                 db.exec('CREATE INDEX accessions on datacache(acc);');
+                db.exec('CREATE INDEX accessions_service on datacache(acc,service);');
                 db.exec('DELETE FROM versions where tablename = "datacache"');
                 db.exec('INSERT INTO versions(version,tablename) VALUES(1.2,"datacache");',function(err,rows) {
                     if ( ! err ) {
