@@ -23,15 +23,32 @@ var MASCP = MASCP || {};
  *  @param      {String}    agi             AGI to retrieve data for
  *  @param      {String}    endpointURL     Endpoint for the service
  */
-MASCP.Service = function(agi,endpointURL)
-{
-};
+MASCP.Service = function(agi,endpointURL) {};
 
 
 if (typeof module != 'undefined' && module.exports){
     var events = require('events');
     
     MASCP.Service.prototype = new events.EventEmitter();
+
+    var singletonService = new MASCP.Service();
+
+    MASCP.Service.emit = function(targ,args) {
+        singletonService.emit(targ,args);
+    };
+
+    MASCP.Service.removeAllListeners = function(ev,cback) {
+        if (cback) {
+            singletonService.removeListeners(ev,cback);
+        } else {
+            singletonService.removeAllListeners(ev);
+        }
+    };
+
+    MASCP.Service.addListener = function(ev,cback) {
+        singletonService.addListener(ev,cback);
+    };
+
     
     var bean = {
         'add' : function(targ,ev,cback) {
