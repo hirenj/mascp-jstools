@@ -678,16 +678,13 @@ base.retrieve = function(agi,callback)
     var db;
 
     if (typeof module != 'undefined' && module.exports) {
-        console.log("Starting sqlite");
         var sqlite = require('sqlite3');
         db = new sqlite.Database("cached.db");
         //db.open("cached.db",function() {});
-        console.log("Opened db");
     } else if ("openDatabase" in window) {
         try {
             db = openDatabase("cached","","MASCP Gator cache",1024*1024);
         } catch (err) {
-            console.log(err);
             throw err;
         }
         db.all = function(sql,args,callback) {
@@ -724,7 +721,6 @@ base.retrieve = function(agi,callback)
 
         db.all('SELECT version from versions where tablename = "datacache"',function(err,rows) { 
             var version = rows ? rows[0].version : null;
-            console.log("Checking database version");
             if (version == 1.2) {
                 if (MASCP.events) {
                     MASCP.events.emit('ready');            
@@ -733,19 +729,17 @@ base.retrieve = function(agi,callback)
             }
             
             if (! version || version == "" || version < 1.0 ) {
-                console.log("Upgrading DB to 1.1");
                 db.exec('CREATE TABLE if not exists versions (version REAL, tablename TEXT);');
                 db.exec('CREATE TABLE if not exists "datacache" (agi TEXT,service TEXT,retrieved REAL,data TEXT);',function(err) { if (err && err != "Error: not an error") { throw err; } });
                 db.exec('DELETE FROM versions where tablename = "datacache"');
                 db.exec('INSERT INTO versions(version,tablename) VALUES(1.1,"datacache");',function(err,rows) {
                     if ( ! err ) {
-                        console.log("Upgrade to 1.1 completed");
+//                        console.log("Upgrade to 1.1 completed");
                     }
                 });
                 version = 1.1;
             }
             if (version < 1.2) {
-                console.log("Upgrading DB to 1.2");
                 db.exec('DROP TABLE if exists datacache_tmp;');
                 db.exec('CREATE TABLE if not exists datacache_tmp (acc TEXT,service TEXT,retrieved REAL,data TEXT);');
                 db.exec('INSERT INTO datacache_tmp(acc,service,retrieved,data) SELECT agi,service,retrieved,data FROM datacache;');
@@ -755,7 +749,6 @@ base.retrieve = function(agi,callback)
                 db.exec('DELETE FROM versions where tablename = "datacache"');
                 db.exec('INSERT INTO versions(version,tablename) VALUES(1.2,"datacache");',function(err,rows) {
                     if ( ! err ) {
-                        console.log("Upgrade to 1.2 completed");
                         if (MASCP.events) {
                             MASCP.events.emit('ready');            
                         }                        
@@ -833,7 +826,7 @@ base.retrieve = function(agi,callback)
         var insert_report_func = function(acc,service) {
             return function(err,rows) {
                 if ( ! err && rows) {
-                    console.log("Caching result for "+acc+" in "+service);
+//                    console.log("Caching result for "+acc+" in "+service);
                 }
             };
         };
