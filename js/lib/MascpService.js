@@ -204,7 +204,7 @@ MASCP.extend(MASCP.Service.prototype,{
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
     var clazz = this.__result_class;
-    if (data.error && data.error != '' && data.error !== null ) {
+    if (data && data.error && data.error != '' && data.error !== null ) {
         bean.fire(this,'error',[data.error]);
         return false;
     }
