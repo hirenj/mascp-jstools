@@ -563,6 +563,8 @@ base.retrieve = function(agi,callback)
     // var date = new Date();
     // date.setDate(date.getDate() - 1);
     // MASCP.Service.SetMinimumFreshnessAge(date);
+    
+    // Set the minimum age if you want nothing OLDER than this date
     clazz.SetMinimumAge = function(date) {
         if (date === 0) {
             min_age = 0;
@@ -571,6 +573,7 @@ base.retrieve = function(agi,callback)
         }
     };
 
+    // Set the maximum age if you want nothing NEWER than this date
     clazz.SetMaximumAge = function(date) {
         if (date === 0) {
             max_age = 0;
@@ -627,7 +630,10 @@ base.retrieve = function(agi,callback)
                         return res;
                     };})();
                     var old_url = self._endpointURL;
-                    if ((max_age !== 0) || (min_age !== 0)) {
+                    // If we have a maximum age, i.e. we don't want anything newer than a date
+                    // we should not actually do a request that won't respect that.
+                    // We can set a minimum age, since the latest data will be, by definition be the latest!
+                    if ((max_age !== 0)) {
                         self._endpointURL = null;
                     }
                     _oldRetrieve.call(self,id,cback);
