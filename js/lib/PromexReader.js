@@ -16,7 +16,7 @@ MASCP.PromexReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.PromexReader.SERVICE_URL = 'http://131.130.57.242/json/';
+MASCP.PromexReader.SERVICE_URL = 'http://131.130.57.242/json/?';
 
 MASCP.PromexReader.prototype.requestData = function()
 {

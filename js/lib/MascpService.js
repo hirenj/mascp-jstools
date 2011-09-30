@@ -379,7 +379,13 @@ var do_request = function(request_data) {
     }
     
     if (request_data.type == 'GET' && request_data.data) {
-        var has_question = request_data.url.indexOf('?') >= 0 ? '&' : '?';
+        var index_of_quest = request_data.url.indexOf('?');
+
+        if (index_of_quest == (request_data.url.length - 1)) {
+            request_data.url = request_data.url.slice(0,-1);
+            index_of_quest = -1;
+        }
+        var has_question =  (index_of_quest >= 0) ? '&' : '?';
         request_data.url = request_data.url.replace(/\?$/,'') + has_question + make_params(request_data.data);
     }
     request.open(request_data.type,request_data.url,request_data.async);

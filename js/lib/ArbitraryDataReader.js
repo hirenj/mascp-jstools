@@ -15,7 +15,7 @@ MASCP.ArbitraryDataReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.ArbitraryDataReader.SERVICE_URL = 'http://gator.masc-proteomics.org/datasets.pl';
+MASCP.ArbitraryDataReader.SERVICE_URL = 'http://gator.masc-proteomics.org/datasets.pl?';
 
 MASCP.ArbitraryDataReader.prototype.requestData = function()
 {
