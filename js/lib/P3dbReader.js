@@ -15,16 +15,16 @@ MASCP.P3dbReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.P3dbReader.SERVICE_URL = 'http://p3db.org/gator.php';
+MASCP.P3dbReader.SERVICE_URL = 'http://p3db.org/gator.php?';
 
 MASCP.P3dbReader.prototype.requestData = function()
 {
-    var agi = this.agi;
+    var agi = this.agi.toLowerCase();
     
     return {
         type: "GET",
         dataType: "json",
-        data: { 'agi'       : agi.toLowerCase(),
+        data: { 'agi'       : agi,
                 'service'   : 'p3db' 
         }
     };

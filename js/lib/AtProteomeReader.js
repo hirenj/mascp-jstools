@@ -52,7 +52,7 @@ MASCP.AtProteomeReader.prototype.requestData = function()
 };
 
 
-MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-pep2pro.uzh.ch/mascp_gator.php';
+MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-pep2pro.uzh.ch/mascp_gator.php?';
 
 /**
  * @class   Container class for results from the AtProteome service

@@ -23,7 +23,7 @@ MASCP.InterproReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.InterproReader.SERVICE_URL = 'http://gator.masc-proteomics.org/interpro.pl';
+MASCP.InterproReader.SERVICE_URL = 'http://gator.masc-proteomics.org/interpro.pl?';
 
 MASCP.InterproReader.prototype.requestData = function()
 {    

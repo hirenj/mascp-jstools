@@ -22,7 +22,7 @@ MASCP.TairReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.TairReader.SERVICE_URL = 'http://gator.masc-proteomics.org/tair.pl';
+MASCP.TairReader.SERVICE_URL = 'http://gator.masc-proteomics.org/tair.pl?';
 
 MASCP.TairReader.prototype.requestData = function()
 {

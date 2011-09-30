@@ -19,7 +19,7 @@ MASCP.SubaReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.SubaReader.SERVICE_URL = 'http://suba.plantenergy.uwa.edu.au/services/byAGI.php';
+MASCP.SubaReader.SERVICE_URL = 'http://suba.plantenergy.uwa.edu.au/services/byAGI.php?';
 
 MASCP.SubaReader.prototype.requestData = function()
 {

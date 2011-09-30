@@ -56,7 +56,7 @@ MASCP.PhosphatReader =  MASCP.buildService(function(data) {
                             return this;
                         });
 
-MASCP.PhosphatReader.SERVICE_URL = 'http://gator.masc-proteomics.org/proxy.pl';
+MASCP.PhosphatReader.SERVICE_URL = 'http://gator.masc-proteomics.org/proxy.pl?';
 
 MASCP.PhosphatReader.prototype.requestData = function()
 {

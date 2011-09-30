@@ -19,7 +19,7 @@ MASCP.SnpReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.SnpReader.SERVICE_URL = 'http://gator.masc-proteomics.org/snps.pl';
+MASCP.SnpReader.SERVICE_URL = 'http://gator.masc-proteomics.org/snps.pl?';
 
 MASCP.SnpReader.prototype.requestData = function()
 {
