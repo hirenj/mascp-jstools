@@ -69,7 +69,7 @@ MASCP.PpdbReader.prototype.requestData = function()
     var self = this;
     var agi = (this.agi+"").replace(/\..*$/,'');
     var dataType = 'json';
-    if (this._endpointURL.indexOf('xml') >= 0) {
+    if ((this._endpointURL || '').indexOf('xml') >= 0) {
         dataType = 'xml';
     }
     return {
