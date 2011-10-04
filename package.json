@@ -29,7 +29,7 @@
    ],
    "dependencies": {
        "xmlhttprequest": "1.0.x",
-       "o3-xml": "0.1.x",
+       "jsdom": "0.2.x",
        "sqlite3": "2.0.x"
    },
    "main" : "dist/js/maschup.services.js",
