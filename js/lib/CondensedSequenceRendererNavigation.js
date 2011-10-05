@@ -1,4 +1,11 @@
 MASCP.CondensedSequenceRenderer.Navigation = (function() {
+
+    var touch_scale = 1, touch_enabled = false;
+    if ("ontouchend" in document) {
+        touch_scale = 2;
+        touch_enabled = true;
+    }
+
     var Navigation = function(parent_canvas,renderer) {
         SVGCanvas(parent_canvas);
 
@@ -254,7 +261,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     e.preventDefault();
                     return false;
                 };
-                if ("ontouchend" in document) {
+                if (touch_enabled) {
                     dragfn = single_touch_event(dragfn);
                 }
 
@@ -403,14 +410,15 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
     var buildNavPane = function(back_canvas) {
         var self = this;
-    
+        var nav_width = 200+(touch_scale - 1)*100;
         var panel_back = back_canvas.group();
         var button_group = back_canvas.group();
-        var rect = back_canvas.rect(-10,0,'200','100%');
-        var base_rounded_corner = [12,10];
+        
+        var rect = back_canvas.rect(-10,0,nav_width.toString(),'100%');
+        var base_rounded_corner = [12*touch_scale,10*touch_scale];
         rect.setAttribute('rx',base_rounded_corner[0].toString());
         rect.setAttribute('ry',base_rounded_corner[1].toString());    
-        if (! ("ontouchend" in document)) {
+        if (! touch_enabled) {
             rect.setAttribute('opacity','0.8');
         }
         rect.style.stroke = '#000000';
@@ -428,13 +436,13 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         back_canvas.insertBefore(clipping,back_canvas.firstChild);
         clipping.appendChild(rect2);
 
-        var close_group = back_canvas.crossed_circle('179','12','10');
+        var close_group = back_canvas.crossed_circle(nav_width-(10 + touch_scale*11),(12*touch_scale),(10*touch_scale));
 
         close_group.style.cursor = 'pointer';
 
         button_group.push(close_group);
 
-        var tracks_button = MASCP.IE ? back_canvas.svgbutton(100,5,65,25,'Edit') : back_canvas.button(100,5,65,25,'Edit');
+        var tracks_button = MASCP.IE ? back_canvas.svgbutton(10,5,65,25,'Edit') : back_canvas.button(10,5,65,25,'Edit');
         tracks_button.id = 'controls';
         tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
 
@@ -479,7 +487,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
                 close_group._button.setAttribute('filter','url(#drop_shadow)');            
                 close_transform = close_group.getAttribute('transform') || ' ';
-                close_transform = close_transform + ' translate(-150,0) rotate(45,179,12) ';
+                close_transform = close_transform + ' translate('+-0.75*nav_width+',0) rotate(45,'+(nav_width-(10 + touch_scale*11))+','+(12*touch_scale)+') ';
                 close_group.setAttribute('transform',close_transform);
                 scroll_controls.setAttribute('display','none');
             }
@@ -522,6 +530,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         SVGCanvas(track_canvas);
         track_canvas.setAttribute('preserveAspectRatio','xMinYMin meet');
+
+
 
         var track_rects = [];
 
@@ -572,7 +582,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         var toggleMouseEvents = function(on) {
             if (track_rects) {
                 (track_rects || []).forEach(function(el) {
-                    el.setAttribute('opacity',on ? '1': (("ontouchend" in document) ? "0.5" : "0.1") );
+                    el.setAttribute('opacity',on ? '1': (touch_enabled ? "0.5" : "0.1") );
                     el.setAttribute('pointer-events', on ? 'all' : 'none');
                 });
             }
@@ -603,14 +613,15 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         track_canvas.style.width = '100%';
         track_canvas.setAttribute('height','100%');        
         track_canvas.setAttribute('width','100%');
-    
+
+
         this.renderTrack = function(track,y,height,options) {
             var label_group = track_canvas.group();
             var a_rect = track_canvas.rect(0,y-1*height,'100%',3*height);
             a_rect.setAttribute('stroke','#000000');
             a_rect.setAttribute('stroke-width','2');
             a_rect.setAttribute('fill','url(#simple_gradient)');
-            a_rect.setAttribute('opacity',("ontouchend" in document) ? '0.5' : '0.1');
+            a_rect.setAttribute('opacity',touch_enabled ? '0.5' : '0.1');
             a_rect.setAttribute('pointer-events','none');
             track_rects = track_rects || [];
         
@@ -630,12 +641,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         
         
             var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
-            var text_left;
-            if ("ontouchend" in document) {
-                text_left = 8*height*text_scale;
-            } else {
-                text_left = 4*height*text_scale;            
-            }
+            var text_left = 4*touch_scale*height*text_scale;            
             var a_text = track_canvas.text(text_left,y+0.5*height,track.fullname);
             a_text.setAttribute('height', 2*height);
             a_text.setAttribute('width', 2*height);
@@ -658,10 +664,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             if (track.href ) {
                 a_anchor = track_canvas.a(track.href);
                 var icon_name = null;
-                var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale];
-                if ("ontouchend" in document) {
-                    icon_metrics[2] = icon_metrics[2] * 2;
-                }
+                var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale*touch_scale];
                 icon_metrics[1] = -0.5*(icon_metrics[2] - height);
 
                 circ = track_canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
@@ -724,10 +727,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     return;
                 }
             
-                var t_height = 1.5*height;            
-                if ("ontouchend" in document) {
-                    t_height = 3*height;
-                }
+                var t_height = 1.5*height*touch_scale;            
+
                 if ( ! close_buttons) {
                     close_buttons = [];
                 }
@@ -751,10 +752,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     controller_buttons = [];
                 }
 
-                var t_height = 1.5*height;            
-                if ("ontouchend" in document) {
-                    t_height = 3*height;
-                }
+                var t_height = 1.5*height*touch_scale;
                 var expander = track_canvas.group();
                 circ = track_canvas.circle(1.5*t_height,0,t_height);
                 circ.setAttribute('fill','#ffffff');
