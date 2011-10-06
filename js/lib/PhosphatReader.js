@@ -94,6 +94,9 @@ MASCP.PhosphatReader.prototype.requestData = function()
 
     mpr.prototype._dataReceived = function(data,status)
     {
+        if (data === null) {
+            return defaultDataReceived.call(this,null,status);
+        }
         data.request_method = this._methods ? this._methods[0] : null;
         if (this._methods) {
             this._methods.shift();
@@ -107,7 +110,9 @@ MASCP.PhosphatReader.prototype.requestData = function()
             this._methods = null;
             return res;
         } else {
-            this.retrieve();
+            if (res) {
+                this.retrieve();
+            }
         }
         return false;
     };

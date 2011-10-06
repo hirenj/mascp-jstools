@@ -198,6 +198,9 @@ MASCP.extend(MASCP.Service.prototype,{
 
 MASCP.Service.prototype._dataReceived = function(data,status)
 {
+    if (! data ) {
+        return false;
+    }
     var clazz = this.__result_class;
     if (data && data.error && data.error != '' && data.error !== null ) {
         bean.fire(this,'error',[data.error]);
@@ -275,6 +278,11 @@ MASCP.Service.prototype.gotResult = function()
     }
 
     bean.fire(MASCP.Service,"resultReceived");
+};
+
+MASCP.Service.prototype.requestComplete = function()
+{
+    bean.fire(this,'requestComplete');
     bean.fire(MASCP.Service,'requestComplete');
 };
 
@@ -503,13 +511,27 @@ base.retrieve = function(agi,callback)
 
     if (agi && callback) {
         this.agi = agi;
+        var done_result = false;
         bean.add(self,"resultReceived",function() {
             bean.remove(self,"resultReceived",arguments.callee);
-            callback.call(self);
+            if ( ! done_result ) {
+                callback.call(self);
+            }
+            done_result = true;
         });
         bean.add(self,"error",function(err) {
             bean.remove(self,"error",arguments.callee);
-            callback.call(self,err);
+            if ( ! done_result ) {
+                callback.call(self,err);
+            }
+            done_result = true;
+        });
+        bean.add(self,"requestComplete",function(err) {
+            bean.remove(self,"requestComplete",arguments.callee);
+            if ( ! done_result ) {
+                callback.call(self);
+            }
+            done_result = true;
         });
     }
     var request_data = this.requestData();
@@ -528,6 +550,7 @@ base.retrieve = function(agi,callback)
                     }
                     bean.fire(self,"error",[status]);
                     bean.fire(MASCP.Service,'requestComplete');
+                    self.requestComplete();
                     //throw "Error occurred retrieving data for service "+self._endpointURL;
                 },
     success:    function(data,status,xhr) {
@@ -539,6 +562,7 @@ base.retrieve = function(agi,callback)
                     if (self._dataReceived(data,status)) {
                         self.gotResult();
                     }
+                    self.requestComplete();
                 }
     };
     MASCP.extend(default_params,request_data);
@@ -623,11 +647,12 @@ base.retrieve = function(agi,callback)
                     if (self._dataReceived(data,"db")) {
                         self.gotResult();
                     }
+                    self.requestComplete();
                 } else {
                     var old_received = self._dataReceived;
                     self._dataReceived = (function() { return function(dat) {
                         var res = old_received.call(this,dat);
-                        if (res && this.result._raw_data !== null) {
+                        if (res && this.result && this.result._raw_data !== null) {
                             store_db_data(id,this.toString(),this.result._raw_data || {});
                         }
                         this._dataReceived = null;
