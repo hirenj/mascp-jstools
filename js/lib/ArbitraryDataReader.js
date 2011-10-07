@@ -140,6 +140,12 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
                 }
             });
         });
+        reader.bind('resultReceived',function() {
+            self.gotResult();
+        })
+        reader.bind('requestComplete',function() {
+            self.requestComplete();
+        });
         reader.retrieve(agi,cback);
     });
 };
