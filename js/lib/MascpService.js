@@ -283,7 +283,7 @@ MASCP.Service.prototype.gotResult = function()
 MASCP.Service.prototype.requestComplete = function()
 {
     bean.fire(this,'requestComplete');
-    bean.fire(MASCP.Service,'requestComplete');
+    bean.fire(MASCP.Service,'requestComplete',[this]);
 };
 
 MASCP.Service.registeredLayers = function(service) {
