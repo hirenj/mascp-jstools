@@ -557,6 +557,7 @@ base.retrieve = function(agi,callback)
                     MASCP.Service._current_reqs -= 1;
                     if ( xhr && xhr.status !== null && xhr.status === 0 ) {
                         bean.fire(self,"error",[{"error": "Zero return status from request "}]);
+                        self.requestComplete();
                         return;
                     }
                     if (self._dataReceived(data,status)) {
