@@ -125,6 +125,9 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
     }
     if (this._SERVER_DATASETS.length == 0){
         MASCP.Service.prototype.retrieve.call(self,"dummy",cback);
+        (self.renderers || []).forEach(function(rrend) {
+            jQuery(rrend).trigger('resultsRendered',[self]);
+        });
         return;
     }
     this._SERVER_DATASETS.forEach(function(set) {
