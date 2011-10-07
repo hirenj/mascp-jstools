@@ -49,10 +49,10 @@
     element[add ? attachEvent : detachEvent]('on' + type, fn);
   },
 
-  nativeHandler = function (element, fn, args) {
-    return function (event) {
+  nativeHandler = function (element, fn,args) {
+    return function (event,arg) {
       event = fixEvent(event || ((this.ownerDocument || this.document || this).parentWindow || context).event);
-      return fn.apply(element, [event].concat(args));
+      return fn.apply(element, [event].concat(args).concat(arg));
     };
   },
 
