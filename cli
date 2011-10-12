@@ -1,10 +1,18 @@
 #!/usr/bin/env node
 
+var argv =  require('optimist')
+            .usage('Usage:\n $0 --file [script file] --verbose')
+            .argv;
+
 repl = require('repl');
 tools = require('./script_tools.js');
 
 MASCP = require('./dist/js/maschup.services.js');
 MASCP.events.once('ready',function() {
+    if (argv.file)  {
+        require('./'+argv.file);
+        return;
+    }
     repl.start("MASCP tools> ");
     for (func in tools) {
         repl.repl.context[func] = tools[func];
