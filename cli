@@ -10,7 +10,8 @@ tools = require('./script_tools.js');
 MASCP = require('./dist/js/maschup.services.js');
 MASCP.events.once('ready',function() {
     if (argv.file)  {
-        require('./'+argv.file);
+        var path = argv.file.substr(0,1) == '/' ? argv.file : process.cwd()+'/'+argv.file ;        
+        require(path);
         return;
     }
     repl.start("MASCP tools> ");
