@@ -49,8 +49,8 @@ MASCP.SnpReader.prototype.showSnp = function(renderer,acc) {
 
     var i;
     for (i = diffs.length - 1 ; i >= 0 ; i-- ){
-        outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
-        ins.push( { 'insertBefore' : diffs[i][0] + 2, 'delta' : diffs[i][2] });
+        outs.push( { 'index' : diffs[i][0], 'delta' : diffs[i][1] });
+        ins.push( { 'insertBefore' : diffs[i][0] + 1, 'delta' : diffs[i][2] });
     }
 
     for (i = ins.length - 1; i >= 0 ; i-- ) {
@@ -155,7 +155,7 @@ MASCP.SnpReader.Result.prototype.getSnp = function(accession) {
     var results = [];
     for (var pos in snps_data) {
         if (snps_data.hasOwnProperty(pos)) {
-            var position = parseInt(pos,10);
+            var position = parseInt(pos,10)+1;
             var changes = snps_data[pos];
             var a_result = [ position, changes.charAt(0), changes.charAt(1)];
             results.push(a_result);
