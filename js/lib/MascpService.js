@@ -782,12 +782,22 @@ base.retrieve = function(agi,callback)
                 db.exec('DELETE FROM versions where tablename = "datacache"');
                 db.exec('INSERT INTO versions(version,tablename) VALUES(1.2,"datacache");',function(err,rows) {
                     if ( ! err ) {
+//                          console.log("Upgrade to 1.2 completed");
+                    }
+                });
+                version = 1.2;
+            }
+            if (version < 1.3) {
+                db.exec('CREATE INDEX if not exists services on datacache(service);');
+                db.exec('DELETE FROM versions where tablename = "datacache"');
+                db.exec('INSERT INTO versions(version,tablename) VALUES(1.2,"datacache");',function(err,rows) {
+                    if ( ! err ) {
                         if (MASCP.events) {
                             MASCP.events.emit('ready');            
                         }                        
                     }
                 });
-                version = 1.2;
+                version = 1.3;                
             }
         });
 
