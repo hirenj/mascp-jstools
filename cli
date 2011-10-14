@@ -14,7 +14,11 @@ console.log();
 MASCP.events.once('ready',function() {
     if (argv.file)  {
         var path = argv.file.substr(0,1) == '/' ? argv.file : process.cwd()+'/'+argv.file ;
-        (require(path))(argv);
+        global.argv = argv;
+        var evaled = require(path);
+        if (evaled instanceof Function) {
+            evaled.call(null,argv);            
+        }
         return;
     }
     if (! require('tty').isatty(process.stdin)) {
