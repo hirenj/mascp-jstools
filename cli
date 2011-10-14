@@ -21,9 +21,6 @@ MASCP.events.once('ready',function() {
         var vm = require('vm');
         var code_block = {'exports' : [] };
         vm.runInNewContext(fs.readFileSync('/dev/stdin').toString(), { require: require, console: console, module: code_block, MASCP: MASCP }, "<stdin>");
-        if (code_block.exports && code_block.exports instanceof Function) {
-            code_block.exports(argv);
-        }
         return;
     }
     repl.start("MASCP tools> ");
