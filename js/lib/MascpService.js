@@ -754,7 +754,6 @@ base.retrieve = function(agi,callback)
         db.all('SELECT version from versions where tablename = "datacache"',function(err,rows) { 
             var version = rows ? rows[0].version : null;
             if (version == 1.3) {
-                console.log("On current version");
                 if (MASCP.events) {
                     MASCP.events.emit('ready');            
                 }
@@ -793,7 +792,6 @@ base.retrieve = function(agi,callback)
                 db.exec('DELETE FROM versions where tablename = "datacache"');
                 db.exec('INSERT INTO versions(version,tablename) VALUES(1.3,"datacache");',function(err,rows) {
                     if ( ! err ) {
-                        console.log("Upgrade to 1.3 completed");
                         if (MASCP.events) {
                             MASCP.events.emit('ready');            
                         }                        
