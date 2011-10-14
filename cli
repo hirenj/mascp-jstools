@@ -8,10 +8,22 @@ repl = require('repl');
 tools = require('./script_tools.js');
 
 MASCP = require('./dist/js/maschup.services.js');
+
+console.log();
+
 MASCP.events.once('ready',function() {
     if (argv.file)  {
         var path = argv.file.substr(0,1) == '/' ? argv.file : process.cwd()+'/'+argv.file ;
         (require(path))(argv);
+        return;
+    }
+    if (! require('tty').isatty(process.stdin)) {
+        var vm = require('vm');
+        var code_block = {'exports' : [] };
+        vm.runInNewContext(fs.readFileSync('/dev/stdin').toString(), { require: require, console: console, module: code_block, MASCP: MASCP }, "<stdin>");
+        if (code_block.exports && code_block.exports instanceof Function) {
+            code_block.exports(argv);
+        }
         return;
     }
     repl.start("MASCP tools> ");
