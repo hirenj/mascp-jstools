@@ -21,7 +21,7 @@ MASCP.events.once('ready',function() {
     }
     if (! require('tty').isatty(process.stdin)) {
         var vm = require('vm');
-        vm.runInNewContext(fs.readFileSync('/dev/stdin').toString(), { require: require, console: console, MASCP: MASCP }, "<stdin>");
+        vm.runInNewContext(fs.readFileSync('/dev/stdin').toString(), { require: require, console: console, MASCP: MASCP, module: module }, "<stdin>");
         return;
     }
     repl.start("MASCP tools> ");
