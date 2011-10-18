@@ -873,6 +873,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     }
     
     this._renderer.redrawAnnotations(layerName,height);
+    return blob;
 };
 
 MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
