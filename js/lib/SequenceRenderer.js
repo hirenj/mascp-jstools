@@ -81,6 +81,14 @@ MASCP.registerGroup = function(groupName, options)
         group.color = options.color;
     }
 
+    if (options.group) {
+        group.group = this.getGroup(options.group);
+        if ( ! group.group ) {
+            throw "Cannot register this layer with the given group - the group has not been registered yet";
+        }
+        group.group._layers.push(group);
+    }
+
     group._layers = [];
 
     group.group_id = new Date().getMilliseconds();
@@ -239,13 +247,13 @@ MASCP.SequenceRenderer = (function() {
                 }
 
                 for (var i = 0; i < order.length; i++) {
-                    if (MASCP.getLayer(order[i])) {
-                        track_order.push(order[i]);
-                    } else if (MASCP.getGroup(order[i])) {
-                        var group_layers = MASCP.getGroup(order[i])._layers;
-                        for (var j = 0; j < group_layers.length; j++ ) {
-                            track_order.push(group_layers[j].name);
-                        }
+                    var a_track = order[i];
+                    if (MASCP.getLayer(a_track)) {
+                        track_order.push(a_track);                        
+                    } else if (MASCP.getGroup(a_track)) {
+                        MASCP.getGroup(order[i]).eachLayer(function(grp_lay) {
+                            order.splice(i+1,0,grp_lay.name);
+                        });
                     }
                 }
 
