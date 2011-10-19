@@ -101,6 +101,9 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
             if (['SALK','MPICAO','GMI','MPISCHNEE','MPICOLLAB'].indexOf(group_layer) < 0) {
                 group_layer = null;
             } else {
+                if (group_layer.match(/^MPI/)) {
+                    group_layer = 'MPI';
+                }
                 acc_fullname = acc.replace(/^[^_]+_/,'');
             }
 
