@@ -110,7 +110,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     expanded_map[layer.name] = true;
                 }
             });
-            jQuery(layer).bind('_expandevent',function(ev) {
+            jQuery(layer).unbind('_expandevent').bind('_expandevent',function(ev) {
                 expanded_map[layer.name] = ! expanded_map[layer.name];
                 self.withoutRefresh(function() {
                     self.setGroupVisibility(group,expanded_map[layer.name]);
