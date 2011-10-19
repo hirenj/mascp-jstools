@@ -565,7 +565,15 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             point.y = 0;
             nav_width_track_canvas_ctm = point.matrixTransform(ctm).x;
             ctm_refresh.forEach(function(el) {
-                if (el.getBBox().width > 0) {
+                var width = 0;
+                try {
+                    width = el.getBBox().width;
+                } catch (err) {
+                    // This is a bug with Firefox on some elements getting
+                    // the bounding box. We silently fail here, as I can't
+                    // figure out why the call to getBBox fails.
+                }
+                if ( width > 0) {
                     var a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(el.getAttribute('transform') || '');
                     if (typeof a_y != 'undefined') {
                         a_y = a_y[2];

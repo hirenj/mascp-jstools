@@ -320,7 +320,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 }
                 jQuery(canvas).unbind('panend',arguments.callee);
             });
-        });
+        },false);
     
         canvas.addEventListener('zoomChange', function() {
            if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
@@ -342,7 +342,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                amino_acids_shown = false;        
            }
            renderer.refresh();
-       });
+       },false);
    
     };
 
@@ -445,7 +445,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    little_ticks.hide();
                    little_labels.hide();
                }
-        });
+        },false);
     };
 
     clazz.prototype.setSequence = function(sequence) {
