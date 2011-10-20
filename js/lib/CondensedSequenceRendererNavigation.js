@@ -630,7 +630,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         this.renderTrack = function(track,y,height,options) {
             var label_group = track_canvas.group();
-            var a_rect = track_canvas.rect(0,y-1*height,'100%',3*height);
+            var a_rect = track_canvas.rect(0,y,'100%',height);
             a_rect.setAttribute('stroke','#000000');
             a_rect.setAttribute('stroke-width','2');
             a_rect.setAttribute('fill','url(#simple_gradient)');
@@ -654,11 +654,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         
         
             var text_scale = (options && options['font-scale']) ? options['font-scale'] : 1;
-            var text_left = 4*touch_scale*height*text_scale;            
+            var text_left = 4/3*touch_scale*height*text_scale;            
             var a_text = track_canvas.text(text_left,y+0.5*height,track.fullname);
-            a_text.setAttribute('height', 2*height);
-            a_text.setAttribute('width', 2*height);
-            a_text.setAttribute('font-size',2*height*text_scale);
+            a_text.setAttribute('height', height);
+            a_text.setAttribute('width', height);
+            a_text.setAttribute('font-size',0.6*height*text_scale);
             a_text.setAttribute('fill','#ffffff');
             a_text.setAttribute('stroke','#ffffff');
             a_text.setAttribute('stroke-width','1');
@@ -677,7 +677,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             if (track.href ) {
                 a_anchor = track_canvas.a(track.href);
                 var icon_name = null;
-                var icon_metrics = [0.5*height*text_scale,0,2.5*height*text_scale*touch_scale];
+                var icon_metrics = [0.5*height*text_scale,0,height*text_scale*touch_scale];
                 icon_metrics[1] = -0.5*(icon_metrics[2] - height);
 
                 circ = track_canvas.circle(icon_metrics[0]+0.5*icon_metrics[2],0.5*height,0.5*icon_metrics[2]);
@@ -740,7 +740,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     return;
                 }
             
-                var t_height = 1.5*height*touch_scale;            
+                var t_height = 0.5*height*touch_scale;            
 
                 if ( ! close_buttons) {
                     close_buttons = [];
@@ -765,7 +765,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     controller_buttons = [];
                 }
 
-                var t_height = 1.5*height*touch_scale;
+                var t_height = 0.5*height*touch_scale;
                 var expander = track_canvas.group();
                 circ = track_canvas.circle(1.5*t_height,0,t_height);
                 circ.setAttribute('fill','#ffffff');
