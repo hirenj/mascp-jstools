@@ -587,6 +587,9 @@ MASCP.SequenceRenderer.prototype.registerLayer = function(layer,options) {
  */
 MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,consumeChange) {
     var group = MASCP.getGroup(grp);
+    if ( ! group ) {
+        return;
+    }
     var groupName = group.name;
     
     var renderer = this;
