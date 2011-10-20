@@ -99,8 +99,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             });
 
             jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
-                if (group.length > 0) {            
-                    self.setGroupVisibility(group, expanded && visible,true);
+                if (group.size() > 0) {            
+                    self.setGroupVisibility(group, expanded_map[layer.name] && visible,true);
                     renderer.refresh();
                 }
             });
