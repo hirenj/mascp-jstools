@@ -153,12 +153,12 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     }
                 }
             } else {
-                renderer.hideLayer(track,true);
+                renderer.hideLayer(track);
                 MASCP.getLayer(track).disabled = true;                
 
                 extra_to_push.forEach(function(lay) {
                     
-                    renderer.hideLayer(lay,true);
+                    renderer.hideLayer(lay);
                     MASCP.getLayer(lay).disabled = true;                    
                 });
                 t_order.push(track.name);
