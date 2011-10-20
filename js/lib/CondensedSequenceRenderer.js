@@ -695,11 +695,11 @@ var addElementToLayer = function(layerName) {
     var bobble = canvas.circle(this._index+0.3,10,0.25);
     bobble.setAttribute('visibility','hidden');
     bobble.style.opacity = '0.4';
-    var tracer = canvas.rect(this._index+0.3,10,0.1,0);
-    tracer.style.strokeWidth = '0px';
+    var tracer = canvas.rect(this._index+0.3,10,0.05,0);
+    tracer.style.strokeWidth = '0';
     tracer.style.fill = MASCP.layers[layerName].color;
     tracer.setAttribute('visibility','hidden');
-    
+    canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     var renderer = this._renderer;
     
     if ( ! this._renderer._layer_containers[layerName].tracers) {
@@ -853,10 +853,15 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     
     blob._value += width;
     if ( ! blob_exists ) {
+        var bobble = canvas.circle(this._index+0.3,10+height,0.25);
+        bobble.setAttribute('visibility','hidden');
+        bobble.style.opacity = '0.4';
+
         var tracer = canvas.rect(this._index+0.25,10+height,0.05,0);
         tracer.style.strokeWidth = '0px';
-        tracer.style.fill = '#777777'; //MASCP.layers[layerName].color;
+        tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
+        canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     
         if ( ! this._renderer._layer_containers[layerName].tracers) {
             this._renderer._layer_containers[layerName].tracers = canvas.set();
@@ -869,6 +874,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         }
 
         this._renderer._layer_containers[layerName].tracers.push(tracer);
+        this._renderer._layer_containers[layerName].tracers.push(bobble);
         canvas.tracers.push(tracer);
     }
     
@@ -1101,21 +1107,16 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 
 var vis_change_event = function(e,renderer,visibility) {
     var self = this;
-    if (renderer != self) {
-        return;
-    }
-
-    if ( this._layer_containers[self.name].length <= 0 ) {
+    if ( renderer._layer_containers[self.name].length <= 0 ) {
         return;
     }
     
     if (! visibility) {
-        if (this._layer_containers[self.name].tracers) {
-            this._layer_containers[self.name].tracers.hide();
+        if (renderer._layer_containers[self.name].tracers) {
+            renderer._layer_containers[self.name].tracers.hide();
         }
-        containers[self.name].attr({ 'y': -1000 });
+        renderer._layer_containers[self.name].attr({ 'y': -1000 });
     }
-    self.refresh();
 };
 
 /**
@@ -1160,7 +1161,6 @@ clazz.prototype.addTrack = function(layer) {
 
 clazz.prototype.removeTrack = function(layer) {
     var layer_containers = this._layer_containers || [];
-
     if ( layer_containers[layer.name] ) {                
         layer_containers[layer.name].forEach(function(el) {
             el.parentNode.removeChild(el);
@@ -1219,6 +1219,8 @@ clazz.prototype.refresh = function(animated) {
                 container.animate(attrs);
             } else {
                 container.attr(attrs);
+            }
+            if (container.tracers) {
             }
             continue;
         } else {
