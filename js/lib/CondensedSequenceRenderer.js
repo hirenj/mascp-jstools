@@ -803,7 +803,7 @@ var addElementToLayerWithLink = function(layerName,url,width) {
 };
 
 var all_annotations = {};
-var default_annotation_height = 15;
+var default_annotation_height = 8;
 
 var addAnnotationToLayer = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
@@ -848,7 +848,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     if ( ! blob_exists ) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
-        this._renderer._layer_containers[layerName].fixed_track_height = height;
+        this._renderer._layer_containers[layerName].fixed_track_height = default_annotation_height;
     }
     
     blob._value += width;
@@ -922,6 +922,8 @@ MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
     }
     all_annotations[layerName] = null;
     delete all_annotations[layerName];
+    delete this._layer_containers[layerName].fixed_track_height;
+
 };
 
 MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
@@ -930,7 +932,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     
     var max_value = 0;
     var height = default_annotation_height;
-    var offset = this._RS * height / 2;
+    var offset = 0;
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             if ( all_annotations[layerName][blob_idx]._value > max_value ) {
@@ -947,10 +949,12 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             var a_blob = all_annotations[layerName][blob_idx];
-            var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 0.5);
+            var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 1);
+            offset = 0.5*((this._RS * height * 1) - size_val);
             var curr_transform = a_blob.getAttribute('transform');
             var transform_shift = ((-315.0/1000.0)*size_val);
             var rotate_shift = (1.0/3.0)*size_val;
+            a_blob.firstChild.setAttribute('y',offset);
             curr_transform = curr_transform.replace(/translate\(\s*(-?\d+\.?\d*)\s*\)/,'translate('+transform_shift+')');
             curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*\d+\.?\d*\s*\)/,','+rotate_shift+','+offset+')');
             a_blob.setAttribute('transform', curr_transform);
@@ -1196,6 +1200,7 @@ clazz.prototype.refresh = function(animated) {
         
         var name = order[i];
         var container = layer_containers[name];
+        var y_val;
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : -1*(this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
 //            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
@@ -1233,30 +1238,33 @@ clazz.prototype.refresh = function(animated) {
             }
         }
         if (container.fixed_track_height) {
-            
+
             var track_height = container.fixed_track_height;
-            var y_val = this._axis_height + (track_heights / this.zoom);
-            
+
+            y_val = this._axis_height + (track_heights  - track_height*0.3) / this.zoom;
+
             if (animated) {
-                container.animate({ 'visibility' : 'visible','y' : Math.round((y_val)*RS) });
+                container.animate({ 'visibility' : 'visible','y' : (y_val)*RS });
             } else {
-                container.attr({ 'visibility' : 'visible','y' : Math.round((y_val)*RS) });                
+                container.attr({ 'visibility' : 'visible','y' : (y_val)*RS });                
             }
             
             if (this.navigation) {
                 var grow_scale = this.grow_container ? 1 / this.zoom : 1;
-                this.navigation.renderTrack(MASCP.getLayer(name), (y_val+track_height/3)*RS , RS * track_height/3, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
+                this.navigation.renderTrack(MASCP.getLayer(name), (y_val)*RS , RS * track_height, { 'font-scale' : (container.track_height / track_height) * 3 * grow_scale } );
             }
             track_heights += (this.zoom * track_height) + this.trackGap;
         } else {
-            
+            y_val = this._axis_height + track_heights / this.zoom;
             if (animated) {
-                container.animate({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom });
+                container.animate({ 'visibility': 'visible', 'y' : y_val*RS, 'height' :  RS * container.track_height / this.zoom });
             } else {
-                container.attr({ 'visibility': 'visible', 'y' : (this._axis_height + track_heights / this.zoom )*RS, 'height' :  RS * container.track_height / this.zoom });                
+                container.attr({ 'visibility': 'visible', 'y' : y_val*RS, 'height' :  RS * container.track_height / this.zoom });                
             }
             if (this.navigation) {
-                this.navigation.renderTrack(MASCP.getLayer(name), (this._axis_height + track_heights / this.zoom )*RS , RS * container.track_height / this.zoom );
+                y_val -= 1*container.track_height/this.zoom;
+                this.navigation.renderTrack(MASCP.getLayer(name), y_val*RS , RS * 3 * container.track_height / this.zoom );
+                track_heights += container.track_height;
             }
             track_heights += container.track_height + this.trackGap;
         }
