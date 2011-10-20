@@ -137,7 +137,12 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             var extra_to_push = [];
             if (controller_map[track.name]) {
                 MASCP.getGroup(controller_map[track.name]).eachLayer(function(lay) {
-                    extra_to_push.push(t_order.splice(t_order.trackIndex(lay),1)[0]);                    
+                    if (MASCP.getGroup(lay) === lay) {
+                        MASCP.getGroup(lay).eachLayer(arguments.callee);
+                    }
+                    if (t_order.trackIndex(lay) >= 0) {
+                        extra_to_push = [t_order.splice(t_order.trackIndex(lay),1)[0]].concat(extra_to_push);
+                    }
                 });
             }
             if (before) {
