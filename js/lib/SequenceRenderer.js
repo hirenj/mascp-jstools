@@ -95,7 +95,7 @@ MASCP.registerGroup = function(groupName, options)
     
     this.groups[groupName] = group;
     
-    jQuery(MASCP).trigger('groupRegistered',[group]);
+    bean.fire(MASCP,'groupRegistered',[group]);
     
     return group;
 };
@@ -169,7 +169,7 @@ MASCP.registerLayer = function(layerName, options)
     }
     layer.layer_id = new Date().getMilliseconds();
     
-    jQuery(MASCP).trigger('layerRegistered',[layer]);
+    bean.fire(MASCP,'layerRegistered',[layer]);
     
     return layer;
 };
@@ -733,14 +733,14 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
     };
 
     
-    jQuery(MASCP).bind("layerRegistered",function(e,layer) {
+    bean.add(MASCP,"layerRegistered",function(e,layer) {
         if (layer.group && layer.group.hide_member_controllers) {
             return;
         }
         controller_box.add_layer(layer);
     });
 
-    jQuery(MASCP).bind("groupRegistered",function(e,group) {
+    bean.add(MASCP,"groupRegistered",function(e,group) {
         if (group.hide_group_controller) {
             return;
         }

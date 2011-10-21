@@ -54,7 +54,15 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         var controller_map = {};
         var expanded_map = {};
         
-        
+        var old_remove_track = renderer.removeTrack;
+
+        renderer.removeTrack = function(layer) {
+            old_remove_track.call(this,layer);
+            delete controller_map[layer.name];
+            delete expanded_map[layer.name];
+        };
+
+
         this.isController = function(layer) {
             if (controller_map[layer.name]) {
                 return true;

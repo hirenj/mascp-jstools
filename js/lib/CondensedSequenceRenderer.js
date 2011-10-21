@@ -17,7 +17,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     
     // When we have a layer registered with the global MASCP object
     // add a track within this rendererer.
-    jQuery(MASCP).bind('layerRegistered', function(e,layer) {
+    bean.add(MASCP,'layerRegistered', function(layer) {
         self.addTrack(layer);
     });
     
@@ -1127,8 +1127,6 @@ var vis_change_event = function(e,renderer,visibility) {
 clazz.prototype.addTrack = function(layer) {
     var RS = this._RS;
 
-    var order = this.trackOrder || [];
-    
     if ( ! this._canvas ) {
         this.bind('sequencechange',function() {
             this.addTrack(layer);
@@ -1141,7 +1139,6 @@ clazz.prototype.addTrack = function(layer) {
 
     if ( ! layer_containers[layer.name] ) {                
         layer_containers[layer.name] = this._canvas.set();
-        order = order.concat([layer.name]);
         if ( ! layer_containers[layer.name].track_height) {
             layer_containers[layer.name].track_height = 4;
         }
@@ -1167,6 +1164,7 @@ clazz.prototype.removeTrack = function(layer) {
         });
         this.removeAnnotations(layer);
         layer_containers[layer.name] = null;
+        delete layer_containers[layer.name];
         var order = this.trackOrder;
         if (order.indexOf(layer.name) >= 0) {
             order.splice(order.indexOf(layer.name),1);
