@@ -232,8 +232,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
                 var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
 
-                p_orig.x = ev.clientX || ev.touches[0].clientX;
-                p_orig.y = ev.clientY || ev.touches[0].clientY;
+                p_orig.x = ev.clientX || (window.pageXOffset + ev.touches[0].clientX);
+                p_orig.y = ev.clientY || (window.pageYOffset + ev.touches[0].clientY);
 
                 var rootCTM = lbl_grp.nearestViewportElement.getScreenCTM();
                 var matrix = rootCTM.inverse();
@@ -245,8 +245,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
                 var dragfn = function(e) {
                     var p = lbl_grp.nearestViewportElement.createSVGPoint();
-                    p.x = e.clientX || e.touches[0].clientX;
-                    p.y = e.clientY || e.touches[0].clientY;
+                    p.x = e.clientX || (window.pageXOffset + e.touches[0].clientX);
+                    p.y = e.clientY || (window.pageYOffset + e.touches[0].clientY);
                     p = p.matrixTransform(matrix);
 
                     var dX = (p.x - oX);
@@ -293,11 +293,12 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                         lbl_grp.removeAttribute('transform');
                         resetDrag();
                         in_drag = false;
+                        last_target = null;
                     }
                 };
                 lbl_grp.setAttributeNS(null, 'pointer-events', 'none');
                 lbl_grp.addEventListener('touchmove',dragfn,false);
-                lbl_grp.addEventListener('touchend',single_touch_event(dragfn),false);
+                lbl_grp.addEventListener('touchend',enddrag,false);
                 target.addEventListener('mousemove',dragfn,false);
                 target.addEventListener('mouseup',enddrag,false);
                 target.addEventListener('mouseout',enddrag,false);
