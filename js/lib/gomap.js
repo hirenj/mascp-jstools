@@ -1243,6 +1243,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     targetElement.addEventListener('touchstart',function(e) {
         var targ = self.targetElement ? self.targetElement : targetElement;
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+            self.momentum = null;
+        }
         if (e.touches.length == 1) {
             var positions = mousePosition(e.touches[0]);
             var p;
@@ -1300,6 +1304,11 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     // },false);
 
     targetElement.addEventListener('touchmove',function(e) {
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+            self.momentum = null;
+        }
+
         if (e.touches.length != 1) {
             self.dragging = false;
         }
@@ -1361,8 +1370,17 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         var start = targ.getPosition()[0];
         var start_delta = delta;
         self.dragging = false;
-        
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+        }
         self.momentum = window.setTimeout(function() {
+            start = targ.getPosition()[0];
+            if (self.dragging) {
+                start += self.oX - self.dX;
+            } else {
+                self.oX = 0;
+                self.dX = 0;
+            }
             targ.shiftPosition(start+delta,0);
             start = start+delta;
             delta = delta * 0.5;
