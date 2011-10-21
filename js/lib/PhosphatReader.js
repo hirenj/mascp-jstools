@@ -83,7 +83,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
         data: { 'id'        : 1,
                 'method'    : method,
                 'agi'       : this.agi,
-                'params'    : data.toJSON ? data.toJSON() : JSON.stringify(data),
+                'params'    : encodeURI(data.toJSON ? data.toJSON() : JSON.stringify(data)),
                 'service'   : 'phosphat' 
         }
     };
