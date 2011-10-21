@@ -261,7 +261,7 @@ MASCP.Service.prototype.gotResult = function()
 {
     var self = this;
     
-    var reader_cache = function(e,thing) {
+    var reader_cache = function(thing) {
         if ( ! thing.readers ) {
             thing.readers = [];
         }
