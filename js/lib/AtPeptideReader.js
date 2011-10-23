@@ -15,7 +15,7 @@ MASCP.AtPeptideReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.AtPeptideReader.SERVICE_URL = 'http://gator.masc-proteomics.org/atpeptide.pl';
+MASCP.AtPeptideReader.SERVICE_URL = 'http://gator.masc-proteomics.org/atpeptide.pl?';
 
 MASCP.AtPeptideReader.prototype.requestData = function()
 {
@@ -68,12 +68,16 @@ MASCP.AtPeptideReader.Result.prototype.getPeptides = function()
 
         
     var peptides = [];
+    var toString = function() {
+        return this.sequence;
+    };
     
-    for (var i = 0; i < this._raw_data.peptides.length; i++ ) {
+    for (var i = this._raw_data.peptides.length - 1; i >= 0; i-- ) {
         var a_peptide = this._raw_data.peptides[i];
         var the_pep = { 'sequence' : this._cleanSequence(a_peptide.sequence), 'tissues' : [] };
+        the_pep.toString = toString;
         peptides.push(the_pep);
-        for (var j = 0; j < a_peptide.tissues.length; j++ ) {
+        for (var j = a_peptide.tissues.length - 1; j >= 0 ; j-- ) {
             var a_tissue = a_peptide.tissues[j];
             if ( this._tissues.indexOf(a_tissue['PO:tissue']) < 0 ) {
                 var some_tiss = a_tissue['PO:tissue'];
@@ -101,19 +105,20 @@ MASCP.AtPeptideReader.Result.prototype._cleanSequence = function(sequence)
 MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
-    MASCP.registerGroup('atpeptide_experimental', {'fullname' : 'AtPeptide MS/MS', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff5533' });
-
-    var overlay_name = 'atpeptide_controller';
-
-    var css_block = '.active .overlay { background: #ff5533; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
-    
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtPeptide MS/MS', 'color' : '#ff5533', 'css' : css_block });
-
-    if (sequenceRenderer.createGroupController) {
-        sequenceRenderer.createGroupController('atpeptide_controller','atpeptide_experimental');
-    }
 
     this.bind('resultReceived', function() {
+
+        MASCP.registerGroup('atpeptide_experimental', {'fullname' : 'AtPeptide MS/MS', 'hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#ff5533' });
+
+        var overlay_name = 'atpeptide_controller';
+
+        var css_block = '.active .overlay { background: #ff5533; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
+
+        MASCP.registerLayer(overlay_name,{ 'fullname' : 'AtPeptide MS/MS', 'color' : '#ff5533', 'css' : css_block });
+
+        if (sequenceRenderer.createGroupController) {
+            sequenceRenderer.createGroupController('atpeptide_controller','atpeptide_experimental');
+        }
                 
         var peps = this.result.getPeptides();
         for (var j = 0; j < this.result.tissues().length; j++ ) {
@@ -131,7 +136,7 @@ MASCP.AtPeptideReader.prototype.setupSequenceRenderer = function(sequenceRendere
             }
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 

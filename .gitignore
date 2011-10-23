@@ -1,9 +1,6 @@
-.gitignore
 build
-data
-dist
 extlib
-js/*min.js
+js/jquery*.js
 js/json*.js
-static/css
-static/js
+cached.db
+node_modules

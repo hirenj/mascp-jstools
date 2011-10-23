@@ -2,28 +2,62 @@
  *  @fileOverview   Basic classes and defitions for a Gene Ontology ID based map
  */
 
+
+if ( typeof GOMap == 'undefined' ) {
+ /**
+  *  @namespace GOMap namespace
+  */
+  GOMap = {};
+}
+
+ /* 
+  * Convenience environment detection – see if the browser is Internet Explorer and set variables to mark browser
+  * version.
+  */
+ (function() {
+  var ie = (function(){
+
+      var undef,
+          v = 3,
+          div = document.createElement('div'),
+          all = div.getElementsByTagName('i');
+
+          do {
+              div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->';
+          } while (all[0]);
+
+      return v > 4 ? v : undef;
+
+  }());
+  if (ie) {
+      if (ie === 7) {
+          GOMap.IE = true;
+          GOMap.IE7 = true;
+      }
+      if (ie === 8) {
+          GOMap.IE = true;
+          GOMap.IE8 = true;
+      }
+  }
+ })();
+
+
 /*
  *  Include the svgweb library when we include this script. Set the SVGWEB_PATH environment variable if
  *  you wish to retrieve svgweb from a relative path other than ./svgweb/src
  */
-if (document.write && (typeof svgweb == 'undefined') && (typeof SVGWEB_LOADING == 'undefined') && ! window.svgns ) {
+if (GOMap.IE && (typeof svgweb === 'undefined') && (typeof SVGWEB_LOADING === 'undefined') && ! window.svgns ) {
 
-    // var svg_path = 'svgweb/';
-    // if (typeof SVGWEB_PATH != 'undefined') {
-    //     svg_path = SVGWEB_PATH;
-    // }
-    // var scriptTag = document.createElement("script");
-    // scriptTag.src = svg_path + 'svg.js';
-    // scriptTag.type="text/javascript";
-    // scriptTag.setAttribute('data-path',svg_path);
-    // document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
-
+    var svg_path = 'svgweb/';
     if (typeof SVGWEB_PATH != 'undefined') {
-        document.write('<script src="'+SVGWEB_PATH+'svg.js" data-path="'+SVGWEB_PATH+'"></script>');        
-    } else {
-        document.write('<script src="svgweb/svg.js" data-path="svgweb/"></script>');
+        svg_path = SVGWEB_PATH;
     }
-    
+    var scriptTag = document.createElement("script");
+    scriptTag.src = svg_path + 'svg.js';
+    scriptTag.type="text/javascript";
+    scriptTag.setAttribute('data-path',svg_path);
+    document.getElementsByTagName("head")[0].insertBefore(scriptTag, document.getElementsByTagName("head")[0].firstChild);
+
     SVGWEB_LOADING = true;
 }
 
@@ -42,22 +76,17 @@ log = (typeof log == 'undefined') ? (typeof console == 'undefined') ? function()
 } : log ;
 
 
-if ( typeof GOMap == 'undefined' ) {
-    /**
-     *  @namespace GOMap namespace
-     */
-    GOMap = {};
-}
-
-/* 
- * Convenience environment detection – see if the browser is Internet Explorer and set variables to mark browser
- * version.
- */
-
-if (document.write) {
-    document.write('<!--[if IE 7]><script type="text/javascript">GOMap.IE = true; GOMap.IE7 = true; GOMap.IELTE7 = true;</script><![endif]-->');
-    document.write('<!--[if IE 8]><script type="text/javascript">GOMap.IE = true; GOMap.IE8 = true; GOMap.IELTE8 = true;</script><![endif]-->');
-}
+// shim layer with setTimeout fallback
+window.requestAnimFrame = (function(){
+return  window.requestAnimationFrame       || 
+        window.webkitRequestAnimationFrame || 
+        window.mozRequestAnimationFrame    || 
+        window.oRequestAnimationFrame      || 
+        window.msRequestAnimationFrame     || 
+        function(/* function */ callback, /* DOMElement */ element){
+          window.setTimeout(callback, 1000 / 60);
+        };
+})();
 
 
 if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
@@ -77,11 +106,15 @@ if (window.attachEvent) { //&& svgweb.getHandlerType() == 'flash') {
  * @requires    svgweb
  */
 GOMap.Diagram = function(image,params) {
-    if (image == null) {
+    if (image === null) {
         return;
     }
     this._highlighted = {};
     this._styles_cache = {};
+    this.enabled = true;
+
+    var self = this;
+    
     var url = null;
     if (typeof image == 'string') {
         url = image;
@@ -89,7 +122,6 @@ GOMap.Diagram = function(image,params) {
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'object') {
         url = image.getAttribute('src') || image.getAttribute('data');
     } else if (image.nodeName && image.nodeName.toLowerCase() == 'svg') {        
-        var self = this;
         (function() {
             if ( ! GOMap.LOADED ) {
                 window.attachEvent('onload',arguments.callee);
@@ -99,8 +131,8 @@ GOMap.Diagram = function(image,params) {
             self.element = image;
             self._svgLoaded();
             self.loaded = true;
-            if (params['load']) {
-                params['load'].apply(self);
+            if (params.load) {
+                params.load.apply(self);
             }
             if ( self.onload ) {
                 self.onload.apply(self);
@@ -117,8 +149,6 @@ GOMap.Diagram = function(image,params) {
     this.element.setAttribute('height','100%');
     this.element.setAttribute('style','background: transparent;');
     
-    var self = this;
-
     if ( ! this.element.addEventListener ) {
         this.element.addEventListener = function(ev,func) {
             this.attachEvent(ev,func);
@@ -133,10 +163,10 @@ GOMap.Diagram = function(image,params) {
             console.log("The SVG hasn't been loaded properly");
             return;
         }
-        if (object_el.contentDocument != null) {
+        if (object_el.contentDocument !== null) {
             self.element = object_el.contentDocument.rootElement;
         } else {
-            self.element = object_el.getAttribute('contentDocument').rootElement
+            self.element = object_el.getAttribute('contentDocument').rootElement;
         }
         
         // Make the destroy function an anonymous function, so it can access this new
@@ -156,8 +186,8 @@ GOMap.Diagram = function(image,params) {
         self._svgLoaded();
 
         self.loaded = true;
-        if (params['load']) {
-            params['load'].apply(self);
+        if (params.load) {
+            params.load.apply(self);
         }
         if ( self.onload ) {
             self.onload.apply(self);
@@ -189,7 +219,7 @@ GOMap.Diagram.prototype.appendTo = function(parent) {
         parent.appendChild(this.element);
     }
     return this;
-}
+};
 
 
 /**
@@ -202,7 +232,7 @@ GOMap.Diagram.prototype.appendTo = function(parent) {
 GOMap.Diagram.prototype.showKeyword = function(keyword,color) {
     var els = this._elementsForKeyword(keyword);
     
-    if (els.length == 0) {
+    if (els.length === 0) {
         return false;
     }
     
@@ -275,9 +305,11 @@ GOMap.Diagram.prototype.zoomToKeyword = function(keyword) {
  */
 GOMap.Diagram.prototype.hideAllKeywords = function() {    
     for (var key in this._highlighted) {
-        this.hideKeyword(key);
+        if (this._highlighted.hasOwnProperty(key)) {
+            this.hideKeyword(key);
+        }
     }
-}
+};
 
 /**
  * Hide a given keyword on the diagram
@@ -290,14 +322,14 @@ GOMap.Diagram.prototype.hideKeyword = function(keyword,color) {
     this._highlighted[keyword] = false;
     
     this._recurse(els, function(el) {
-        if (color != null && el._highlighted) {
+        if (color !== null && el._highlighted) {
             el._highlighted[color] = false;
         } else {
             el._highlighted = {};
         }
 
         for (var col in el._highlighted) {
-            if (el._highlighted[col] == true) {
+            if (el._highlighted[col] === true) {
                 if (el.nodeName == 'path' || el.nodeName == 'circle' || el.nodeName == 'ellipse') {
                     self._outlineElement(el);
                 }
@@ -333,7 +365,9 @@ GOMap.Diagram.prototype.clearMarkers = function(keyword) {
         return;
     }
     for (var key in this.markers) {
-        this._clearMarkers(this.markers[key]);
+        if (this.markers.hasOwnProperty(key)) {
+            this._clearMarkers(this.markers[key]);
+        }
     }
     this.markers = {};
 };
@@ -345,7 +379,7 @@ GOMap.Diagram.prototype._clearMarkers = function(elements) {
     for (var i = 0 ; i < elements.length ; i++ ) {
         elements[i].parentNode.removeChild(elements[i]);
     }
-}
+};
 
 GOMap.Diagram.prototype.addMarker = function(keyword,value) {
     if ( ! this.markers ) {
@@ -356,11 +390,11 @@ GOMap.Diagram.prototype.addMarker = function(keyword,value) {
         value = 1;
     }
     
-    var root_svg = this.element;
+    var root_svg = this.element,i;
     
     if ( this.markers[keyword]) {
         this.markers[keyword].current_radius += value;
-        for (var i = 0; i < this.markers[keyword].length ; i++ ) {
+        for (i = 0; i < this.markers[keyword].length ; i++ ) {
             this.markers[keyword][i].setAttribute('r',this.markers[keyword].current_radius);
         }
         return;
@@ -371,8 +405,7 @@ GOMap.Diagram.prototype.addMarker = function(keyword,value) {
     this.markers[keyword] = [];
     
     this.markers[keyword].current_radius = value;
-    
-    for ( var i = 0 ; i < els.length; i++ ) {
+    for ( i = 0 ; i < els.length; i++ ) {
         var node = els[i];
         if ( node.nodeName != 'g' ) {
             continue;
@@ -424,11 +457,11 @@ GOMap.Diagram.prototype.addEventListener = function(evt,func) {
 (function() {
 
 var zoomChange = function() {
-    if ( ! this._events || ! this._events['zoomChange'] ) {
+    if ( ! this._events || ! this._events.zoomChange ) {
         return;
     }
-    for ( var i = 0; i < this._events['zoomChange'].length; i++ ) {
-        this._events['zoomChange'][i].apply(this,[{'type' : 'zoomChange'}]);
+    for ( var i = 0; i < this._events.zoomChange.length; i++ ) {
+        this._events.zoomChange[i].apply(this,[{'type' : 'zoomChange'}]);
     }        
 };
 
@@ -480,7 +513,7 @@ GOMap.Diagram.prototype.makeInteractive = function() {
         console.log("Browser does not support addEventListener");
         return;
     }
-    new GOMap.Diagram.Dragger().applyToElement(root);
+    (new GOMap.Diagram.Dragger()).applyToElement(root);
     var controls = GOMap.Diagram.addZoomControls(this,0.1,2,0.1,1);
     container.appendChild(controls);
     controls.style.position = 'absolute';
@@ -526,17 +559,16 @@ GOMap.Diagram.prototype._elementsForKeyword = function(keyword) {
  * @param {Document} document Parent document
  */
 GOMap.Diagram.prototype._execute_xpath = function(element, xpath, doc) {
-    var results = [];
+    var results = [],i=0;
     if (doc.evaluate) {
         xpath_result = doc.evaluate(xpath,element,null,XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE,null);
-        var i = 0;
-        while ( (a_result = xpath_result.snapshotItem(i)) != null ) {
+        while ( (a_result = xpath_result.snapshotItem(i)) !== null ) {
             results.push(a_result);
             i++;
         }
     } else {
         xpath_result = element.selectNodes(xpath);
-        for (var i = 0; i < xpath_result.length; i++ ){
+        for (i = 0; i < xpath_result.length; i++ ){
             results[i] = xpath_result.item(i);
         }
     }
@@ -569,7 +601,7 @@ GOMap.Diagram.prototype._cacheStyle = function(el) {
         el.setAttribute('id',an_id);
     }
 
-    if (this._styles_cache[el.id] != null || ! el.style || ! el.id ) {
+    if (this._styles_cache[el.id] !== null || ! el.style || ! el.id ) {
         return;
     }
     
@@ -597,13 +629,11 @@ GOMap.Diagram.prototype._restoreStyle = function(element) {
     }
     if (this._styles_cache[element.id]) {
         var cacher = this._styles_cache[element.id];
-        var properties = {'stroke-width':null,'opacity':null,'stroke':null,'fill-opacity':null,'stroke-opacity':null};
-        for (var prop in properties) {
+        for (var prop in {'stroke-width':null,'opacity':null,'stroke':null,'fill-opacity':null,'stroke-opacity':null}) {
             // We don't set null properties in IE because they cause the wrong styles to be displayed
-            if ( GOMap.IE && ! cacher[prop] ) {
-                continue;
+            if ( (! GOMap.IE) || cacher[prop] ) {
+                element.style.setProperty(prop,cacher[prop],null);
             }
-            element.style.setProperty(prop,cacher[prop],null);
         }
     }
 };
@@ -633,17 +663,17 @@ GOMap.Diagram.prototype._outlineElement = function(element) {
 
 GOMap.Diagram.prototype._calculateColorForElement = function(element) {
     var pattern = "pat";
-    var total_keywords = 0;
+    var total_keywords = 0,i;
     
     if (element._animates) {
-        for (var i = 0; i < element._animates.length; i++ ) {
+        for (i = 0; i < element._animates.length; i++ ) {
             element.removeChild(element._animates[i]);
         }
         element._animates = null;
     }
     
     for (var col in element._highlighted) {
-        if (element._highlighted && element._highlighted[col] == true) {
+        if (element._highlighted && element._highlighted[col] === true) {
             pattern += "_"+col;
             total_keywords++;
         }
@@ -659,7 +689,7 @@ GOMap.Diagram.prototype._calculateColorForElement = function(element) {
     } else {        
         if (animation_supported) {        
             var animates = this._buildAnimatedColor(pattern,element.id);
-            for (var i = 0 ; i < animates.length; i++ ) {            
+            for (i = 0 ; i < animates.length; i++ ) {            
                 element.appendChild(animates[i]);
             }
             animates[0].beginElement();
@@ -757,7 +787,7 @@ GOMap.Diagram.prototype._buildAnimatedColor = function(pattern_name,id_prefix) {
         }
         an_anim.setAttribute('to',to_string);
         var begin_string = '';
-        if ( i == 0 ) {
+        if ( i === 0 ) {
             begin_string = 'SVGLoad;indefinite;'+(cleaned_name+(pattern_els.length-1))+'.end';
         } else {
             begin_string = cleaned_name+(i-1)+'.end';
@@ -770,14 +800,14 @@ GOMap.Diagram.prototype._buildAnimatedColor = function(pattern_name,id_prefix) {
     }
 
     return animates;
-}
+};
 
 /* Highlight an element by making it opaque
  * @param {Element} element Element to make opaque
  */
 GOMap.Diagram.prototype._highlightElement = function(element) {
     // Skip this if we don't have a style or has no id and isn't a group
-    if (! element.style || (! element.id && ! element.nodeName == 'g') ) {
+    if ( (! element.style) || (element.nodeName != 'g' && element.id === null)) {
         return;
     }
     
@@ -854,8 +884,9 @@ GOMap.Diagram.Dragger = function() {
  */
 GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var self = this;
-
-    var momentum = null;
+    self.enabled = true;
+    
+    var momentum = [];
 
     if (targetElement.nodeName == 'svg') {
         targetElement.getPosition = function() {
@@ -872,15 +903,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
             var min_x,min_y,width,height;
 
-
-
             if (vbox) {
                 var viewBox = this.getAttribute('viewBox').split(' ');
                 viewBoxScale = parseFloat(this.width.baseVal.value) / parseFloat(viewBox[2]);
                 min_x = 0;
-                min_y = parseInt(viewBox[1]);
-                width = parseInt(viewBox[2]);
-                height = parseInt(viewBox[3]);
+                min_y = parseInt(viewBox[1],10);
+                width = parseInt(viewBox[2],10);
+                height = parseInt(viewBox[3],10);
             } else {
                 min_x = 0;
                 min_y = 0;
@@ -905,30 +934,33 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 clearTimeout(targetElement._snapback);
                 targetElement._snapback = null;
             }
+            
             if (p.x > viewBoxScale * min_x) {
                 targetElement._snapback = setTimeout(function() {
-                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 1 ) {
+                    var evObj;
+                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 35 ) {
                         var new_pos = 0.95*(targetElement.currentTranslate.x - (viewBoxScale * min_x));
                         if (new_pos < (viewBoxScale * min_x)) {
                             new_pos = (viewBoxScale * min_x);
                         }
                         
                         targetElement.setCurrentTranslateXY( new_pos, 0);
-                        targetElement._snapback = setTimeout(arguments.callee,10);
+                        window.requestAnimFrame(arguments.callee, targetElement);
+//                        targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('panstart',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                     } else {
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
                         if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                         if (document.createEvent && ! self.dragging) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('panend',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
@@ -939,33 +971,35 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             
             var min_val = viewBoxScale * ( width - 2 * min_x );
             
-            if (min_x == 0) {
-                min_val *= 0.75;
+            if (min_x === 0) {
+                min_val *= 0.90;
             }
-
             if (p.x < 0 && Math.abs(p.x) > min_val) {
                 targetElement._snapback = setTimeout(function() {
-                    if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 1 ) {
+                    var evObj;
+                    
+                    if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 35 ) {
                         var new_pos = 0.95*(targetElement.currentTranslate.x);
                         if (new_pos > (-1*min_val)) {
                             new_pos = -1*min_val;
                         }
                         targetElement.setCurrentTranslateXY( new_pos, 0);
-                        targetElement._snapback = setTimeout(arguments.callee,10);
+                        window.requestAnimFrame(arguments.callee, targetElement);
+//                        targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('panstart',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                     } else {
                         targetElement.setCurrentTranslateXY( -1*min_val, 0);                        
                         if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                         if (document.createEvent && ! self.dragging) {
-                            var evObj = document.createEvent('Events');
+                            evObj = document.createEvent('Events');
                             evObj.initEvent('panend',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
@@ -994,7 +1028,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 evObj.initEvent('pan',false,true);
                 this.dispatchEvent(evObj);
             }
-
         };
     } else {
         targetElement.getPosition = function() {
@@ -1009,10 +1042,16 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 evObj.initEvent('pan',false,true);
                 this.dispatchEvent(evObj);
             }
-        }
+        };
     }
 
+    var stationary;
+
     var svgMouseDown = function(evt) {
+      if ( ! self.enabled ) {
+          return true;
+      }
+
       var targ = self.targetElement ? self.targetElement : targetElement;
       var positions = mousePosition(evt);
       self.dragging = true;
@@ -1028,7 +1067,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       }
 
       var p = targetElement.createSVGPoint();
-      var positions = mousePosition(evt);
+      positions = mousePosition(evt);
       p.x = positions[0];
       p.y = positions[1];
 
@@ -1050,17 +1089,19 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
           evObj.initEvent('panstart',false,true);
           targ.dispatchEvent(evObj);
       }      
-      
+
     };
     
     var mousePosition = function(evt) {
         var posx = 0;
         var posy = 0;
-        if (!evt) var evt = window.event;
-        if (evt.pageX || evt.pageY) 	{
+        if (!evt) {
+            evt = window.event;
+        }
+        if (evt.pageX || evt.pageY)     {
             posx = evt.pageX;
             posy = evt.pageY;
-        } else if (evt.clientX || evt.clientY) 	{
+        } else if (evt.clientX || evt.clientY)  {
             posx = evt.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
             posy = evt.clientY + document.body.scrollTop + document.documentElement.scrollTop;
         }
@@ -1069,7 +1110,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             posy = evt.screenY;
         }
         return [ posx, posy ];
-    }
+    };
     
     var mouseMove = function(evt) {
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
@@ -1101,10 +1142,28 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
     
     var svgMouseMove = function(evt) {
+        if (!self.enabled) {
+            this.style.cursor = 'pointer';
+            return true;
+        }
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
         if (!self.dragging) {
             return;
         }
+
+        // if (stationary) {
+        //     clearTimeout(stationary);
+        //     stationary = null;
+        // }
+        // 
+        // stationary = window.setTimeout(function() {
+        //     self.dragging = false;
+        // },200);        
+        
+        doMouseMove.call(this,evt);
+    };
+
+    var doMouseMove = function(evt) {        
         var positions = mousePosition(evt);
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
 
@@ -1113,21 +1172,27 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return;
         }
 
-        var p = targetElement.createSVGPoint();
-        var positions = mousePosition(evt);
+        
+        var p = targetElement._cachedpoint || targetElement.createSVGPoint();
+        targetElement._cachedpoint = p;
+        
+        positions = mousePosition(evt);
 
         p.x = positions[0];
         p.y = positions[1];
 
-        var rootCTM = targetElement.getScreenCTM();
+        var rootCTM = targetElement._cachedrctm || targetElement.getScreenCTM();
+        targetElement._cachedrctm = rootCTM;
+        
         p = p.matrixTransform(self.matrix);
-        
         targetElement.shiftPosition(p.x,p.y);
-        momentum = p.x;
-        
+//        momentum = p.x;        
     };
 
     var mouseUp = function(evt) { 
+      if ( ! self.enabled ) {
+          return true;
+      }
       self.oX = 0;
       self.oY = 0;
       self.dX = null;
@@ -1145,8 +1210,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
 
     var mouseOut = function(e) {
-        if (!self.dragging) {
-            return;
+        if (!self.dragging || ! self.enabled) {
+            return true;
         }
         if (this == self.targetElement) {
             mouseUp(e);
@@ -1159,7 +1224,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
         var toTarget = e.relatedTarget ? e.relatedTarget : e.toElement;
         
-        while (toTarget != null) {
+        while (toTarget !== null) {
             if (toTarget == this) {
                 return;
             }
@@ -1173,11 +1238,15 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     if ( ! targetElement.addEventListener) {
         targetElement.addEventListener = function(name,func,bool) {
             this.attachEvent(name,func);
-        }
+        };
     }
     
     targetElement.addEventListener('touchstart',function(e) {
         var targ = self.targetElement ? self.targetElement : targetElement;
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+            self.momentum = null;
+        }
         if (e.touches.length == 1) {
             var positions = mousePosition(e.touches[0]);
             var p;
@@ -1199,36 +1268,46 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dX = targ.getPosition()[0];
             self.dY = targ.getPosition()[1];
             
+            self._momentum_shrinker = setInterval(function() {
+                momentum.shift();
+            },20);
+            
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
                 targ.dispatchEvent(evObj);
-            }            
-            
+            }
         }
     },false);
 
 
-    document.addEventListener('touchmove',function(e) {
-        if ( ! self.dragging ) {
-            return;
-        }
-        self.oX = 0;
-        self.oY = 0;
-        self.dX = null;
-        self.dY = null;
-        self.dragging = false;
-
-        var targ = self.targetElement ? self.targetElement : targetElement;      
-
-        if (document.createEvent) {
-            var evObj = document.createEvent('Events');
-            evObj.initEvent('panend',false,true);
-            targ.dispatchEvent(evObj);
-        }      
-    },false);
+    // document.addEventListener('touchmove',function(e) {
+    //     console.log('touchmove for the document');
+    //     console.log(self.dragging);
+    //     if ( ! self.dragging ) {
+    //         return;
+    //     }
+    //     console.log("Ending the drag for document move");
+    //     self.oX = 0;
+    //     self.oY = 0;
+    //     self.dX = null;
+    //     self.dY = null;
+    //     self.dragging = false;
+    // 
+    //     var targ = self.targetElement ? self.targetElement : targetElement;      
+    // 
+    //     if (document.createEvent) {
+    //         var evObj = document.createEvent('Events');
+    //         evObj.initEvent('panend',false,true);
+    //         targ.dispatchEvent(evObj);
+    //     }      
+    // },false);
 
     targetElement.addEventListener('touchmove',function(e) {
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+            self.momentum = null;
+        }
 
         if (e.touches.length != 1) {
             self.dragging = false;
@@ -1248,10 +1327,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             p.x = positions[0];
             p.y = positions[1];
         }
-
         
-        if ((6*Math.abs(self.oX - p.x)) < Math.abs(self.oY - p.y)) {
-            self.dragging = false;
+        if (self.dragging && ((6*Math.abs(self.oX - p.x)) > Math.abs(self.oY - p.y))) {
+            e.preventDefault();
         }
 
         if (!self.dragging) {
@@ -1261,35 +1339,58 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self.dY = null;
             return;
         }
-                
-        momentum = p.x;
-        
+        if (momentum.length > 3) {
+            momentum.splice(2);
+        }
         targ.shiftPosition(p.x,p.y);
-
-        e.preventDefault(true);        
+        momentum.push(targ.getPosition()[0] - self.dX);
     },false);
     
     var momentum_func = function(e) {
+        if ( ! self.enabled ) {
+            return true;
+        }
         if ( ! self.dragging ) {
             mouseUp(e);
             return;
         }
         var targ = self.targetElement ? self.targetElement : targetElement;
-
-        var delta = (targ.getPosition()[0] - self.dX);
+        var delta = 0;
+        
+        if (momentum.length > 0) {
+            var last_val = momentum[0];
+            momentum.forEach(function(m) {
+                if ((typeof last_val) != 'undefined') {
+                    delta += m - last_val;
+                }
+                last_val = m;
+            });
+            delta = delta / momentum.length;
+        }
         var start = targ.getPosition()[0];
         var start_delta = delta;
         self.dragging = false;
-        
+        if (self.momentum) {
+            window.clearTimeout(self.momentum);
+        }
         self.momentum = window.setTimeout(function() {
+            start = targ.getPosition()[0];
+            if (self.dragging) {
+                start += self.oX - self.dX;
+            } else {
+                self.oX = 0;
+                self.dX = 0;
+            }
             targ.shiftPosition(start+delta,0);
             start = start+delta;
             delta = delta * 0.5;
             
             if (Math.abs(start_delta / delta) < 10) {
-                window.setTimeout(arguments.callee,50);
+                window.requestAnimFrame(arguments.callee, targ);
+//                window.setTimeout(arguments.callee,50);
             } else {
                 self.momentum = null;
+                clearInterval(self._momentum_shrinker);
                 mouseUp(e);
             }
         },50);
@@ -1301,7 +1402,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     if (targetElement.nodeName == 'svg') {
         targetElement.addEventListener('mousedown', svgMouseDown, false);
         targetElement.addEventListener('mousemove', svgMouseMove, false);        
-        targetElement.addEventListener('mouseup',momentum_func,false);
+        targetElement.addEventListener('mouseup',mouseUp,false);
         targetElement.addEventListener('mouseout',mouseOut, false); 
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);
@@ -1321,11 +1422,13 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
     var mousePosition = function(evt) {
         var posx = 0;
         var posy = 0;
-        if (!evt) var evt = window.event;
-        if (evt.pageX || evt.pageY) 	{
+        if (!evt) {
+            evt = window.event;
+        }
+        if (evt.pageX || evt.pageY)     {
             posx = evt.pageX;
             posy = evt.pageY;
-        } else if (evt.clientX || evt.clientY) 	{
+        } else if (evt.clientX || evt.clientY)  {
             posx = evt.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
             posy = evt.clientY + document.body.scrollTop + document.documentElement.scrollTop;
         }
@@ -1335,7 +1438,6 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
         }
         return [ posx, posy ];
     };
-
     touchElement.addEventListener('touchstart',function(e) {
         if (e.touches.length == 2) {
             var positions = mousePosition(e.touches[0]);
@@ -1352,27 +1454,35 @@ GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
                 p.x = 0.5*(positions[0] + positions2[0]);
                 p.y = 0.5*(positions[1] + positions2[1]);
             }
-            zoomElement.zoomCenter = p;            
+            zoomElement.zoomCenter = p;  
+            e.preventDefault();
         }
     },false);
 
     touchElement.addEventListener('gesturestart',function(e) {
         zoomElement.zoomLeft = null;
         var zoomStart = zoomElement.zoom;
+
         var zoomscale = function(ev) {
-            zoomElement.zoom = zoomStart * ev.scale;
+            if ( zoomElement.zoomCenter ) {
+                zoomElement.zoom = zoomStart * ev.scale;
+            }
             ev.preventDefault();
         };
         this.addEventListener('gesturechange',zoomscale,false);
         this.addEventListener('gestureend',function(ev) {
             touchElement.removeEventListener('gesturechange',zoomscale);
-            touchElement.removeEventListener('gesturechange',arguments.callee);
+            touchElement.removeEventListener('gestureend',arguments.callee);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
-        },false);        
+            if (zoomElement.trigger) {
+                zoomElement.trigger('gestureend');
+            }
+        },false);  
+        e.preventDefault();
     },false);
 
-}
+};
 
 /**
  * Given an element that implements a zoom attribute, creates a div that contains controls for controlling the zoom attribute. The
@@ -1501,7 +1611,7 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
         element = document.getElementById(element);
       }
 
-      if (element == null) {
+      if (element === null) {
         return;
       }
 
@@ -1519,11 +1629,13 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
     var mousePosition = function(evt) {
           var posx = 0;
           var posy = 0;
-          if (!evt) var evt = window.event;
-          if (evt.pageX || evt.pageY) 	{
+          if (!evt) {
+              evt = window.event;
+          }
+          if (evt.pageX || evt.pageY)   {
               posx = evt.pageX;
               posy = evt.pageY;
-          } else if (evt.clientX || evt.clientY) 	{
+          } else if (evt.clientX || evt.clientY)    {
               posx = evt.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
               posy = evt.clientY + document.body.scrollTop + document.documentElement.scrollTop;
           }
@@ -1549,8 +1661,7 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
 
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
-
-      target.zoomCenter = mousePosition(e);            
+      target.zoomCenter = mousePosition(e);
       
       if (wheelData > 0) {
         target.zoom = target.zoom += precision;

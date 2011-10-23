@@ -93,7 +93,7 @@ MASCP.AtChloroReader.prototype.setupSequenceRenderer = function(sequenceRenderer
             peptide_bits.addToLayer('atchloro_experimental');
         }
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 

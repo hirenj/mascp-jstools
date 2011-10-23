@@ -12,11 +12,18 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.InterproReader = MASCP.buildService(function(data) {
-                        this._raw_data = data;                        
+                        if (data) {
+                            if (! this._raw_data && ! data.data ) {
+                                this._raw_data = { 'data' : [] };
+                                this._raw_data.data.push(data);
+                            } else {
+                                this._raw_data = data;
+                            }
+                        }
                         return this;
                     });
 
-MASCP.InterproReader.SERVICE_URL = 'http://gator.masc-proteomics.org/interpro.pl';
+MASCP.InterproReader.SERVICE_URL = 'http://gator.masc-proteomics.org/interpro.pl?';
 
 MASCP.InterproReader.prototype.requestData = function()
 {    
@@ -33,19 +40,26 @@ MASCP.InterproReader.prototype.requestData = function()
 
 (function() {
 var old_retrieve = MASCP.InterproReader.prototype.retrieve;
-MASCP.InterproReader.prototype.retrieve = function() {
+MASCP.InterproReader.prototype.retrieve = function(agi,func) {
     var self = this;
-    var self_func = arguments.callee;
-    var old_args = arguments;
-    if ( ! this.sequence ) {
-        (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
-            self.sequence = this.result.getSequence();
-            self_func.apply(self,old_args);
-        }).retrieve();
-        return;
+    if ( ! this.agi ) {
+        this.agi = agi;
     }
-    old_retrieve.apply(self,arguments);
-}
+    var self_func = arguments.callee;
+    var cback = func;
+    if ( this.sequence === null || typeof this.sequence == 'undefined' ) {
+        (new MASCP.TairReader(self.agi)).bind('resultReceived',function() {
+            self.sequence = this.result.getSequence() || '';
+            self_func.call(self,self.agi,cback);
+        }).bind('error',function(err) { self.trigger('error',[err]); }).retrieve();
+        return this;
+    }
+    if (old_retrieve !== MASCP.Service.prototype.retrieve) {
+        old_retrieve = MASCP.Service.prototype.retrieve;
+    }
+    old_retrieve.call(self,self.agi,cback);
+    return this;
+};
 })();
 
 /**
@@ -64,7 +78,7 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
 {
     var content = null;
     
-    if (! this._raw_data || this._raw_data.length == 0 ) {
+    if (! this._raw_data || this._raw_data.data.length === 0 ) {
         return {};
     }    
     
@@ -74,12 +88,12 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
     
     var peptides_by_domain = {};
     var domain_descriptions = {};
-    
-    for (var i = 0; i < this._raw_data.length; i++ ) {
-        var peptides = peptides_by_domain[this._raw_data[i].interpro] || [];
-        peptides.push(this.reader.sequence.substring(this._raw_data[i].start, this._raw_data[i].end));
-        domain_descriptions[this._raw_data[i].interpro] = this._raw_data[i].description;
-        peptides_by_domain[this._raw_data[i].interpro] = peptides;
+    var datablock = this._raw_data.data;
+    for (var i = 0; i < datablock.length; i++ ) {
+        var peptides = peptides_by_domain[datablock[i].interpro] || [];
+        peptides.push(this.sequence.substring(datablock[i].start, datablock[i].end));
+        domain_descriptions[datablock[i].interpro] = datablock[i].description;
+        peptides_by_domain[datablock[i].interpro] = peptides;
     }
     
     this._peptides_by_domain = peptides_by_domain;
@@ -101,17 +115,21 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         var agi = this.agi;
         
         MASCP.getLayer('interpro_controller').href = '';
-        
+        this.result.sequence = sequenceRenderer.sequence;
         var domains = this.result.getDomains();
-        for(domain in domains) {
-            var lay = MASCP.registerLayer('interpro_domain_'+domain, { 'fullname': domain, 'group' : 'interpro_domains', 'color' : '#000000', 'css' : css_block });
-            lay.href = "http://www.ebi.ac.uk/interpro/IEntry?ac="+domain;
-            var peptides = domains[domain];
-            for(var i = 0; i < peptides.length; i++ ) {
-                var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptides[i]);
-                var layer_name = 'interpro_domain_'+domain;
-                peptide_bits.addToLayer(layer_name,peptide_bits.length);
-                peptide_bits.addToLayer(overlay_name,peptide_bits.length);
+        for (var dom in domains) {            
+            if (domains.hasOwnProperty(dom)) {
+                var domain = null;
+                domain = dom;
+                var lay = MASCP.registerLayer('interpro_domain_'+domain, { 'fullname': domain, 'group' : 'interpro_domains', 'color' : '#000000', 'css' : css_block });
+                lay.href = "http://www.ebi.ac.uk/interpro/IEntry?ac="+domain;
+                var peptides = domains[domain];
+                for(var i = 0; i < peptides.length; i++ ) {
+                    var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptides[i]);
+                    var layer_name = 'interpro_domain_'+domain;
+                    peptide_bits.addToLayer(layer_name);
+                    peptide_bits.addToLayer(overlay_name);
+                }
             }
         }
         if (sequenceRenderer.createGroupController) {
@@ -120,7 +138,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
 
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
 
-    })
+    });
     return this;
 };
 
