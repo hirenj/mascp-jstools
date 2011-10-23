@@ -1334,8 +1334,9 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
     var start_x = null;
     var accessors = { 
         setZoom: function(zoomLevel) {
-            if (zoomLevel < 0.5) {
-                zoomLevel = 0.5;
+            var min_zoom_level = renderer.sequence ? (0.3 / 2) * window.innerWidth / renderer.sequence.length : 0.5;
+            if (zoomLevel < min_zoom_level) {
+                zoomLevel = min_zoom_level;
             }
             if (zoomLevel > 10) {
                 zoomLevel = 10;
