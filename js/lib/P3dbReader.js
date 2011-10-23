@@ -15,16 +15,16 @@ MASCP.P3dbReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.P3dbReader.SERVICE_URL = 'http://p3db.org/gator.php';
+MASCP.P3dbReader.SERVICE_URL = 'http://p3db.org/gator.php?';
 
 MASCP.P3dbReader.prototype.requestData = function()
 {
-    var agi = this.agi;
+    var agi = this.agi.toLowerCase();
     
     return {
         type: "GET",
         dataType: "json",
-        data: { 'agi'       : agi.toLowerCase(),
+        data: { 'agi'       : agi,
                 'service'   : 'p3db' 
         }
     };
@@ -113,7 +113,8 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     MASCP.registerGroup('p3db_experimental', {'fullname' : 'P3DB MS/MS', 'color' : color });
 
     this.bind('resultReceived', function() {
-        var peps = this.result.getPeptides();
+        var res = this.result;
+        var peps = res.getPeptides();
         if (peps.length > 0) {
             MASCP.registerLayer('p3db_controller',{ 'fullname' : 'P3DB MS/MS', 'color' : color });
         }
@@ -122,12 +123,12 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
             peptide_bits.addToLayer('p3db_controller');
         }
-        this.result.getOrganisms().forEach(function(organism) {
+        res.getOrganisms().forEach(function(organism) {
             if (organism.id === 3702) {
                 return;
             }
             var layer_name = 'p3db_tax_'+organism.id;
-            var peps = this.result.getOrthologousPeptides(organism.id);
+            var peps = res.getOrthologousPeptides(organism.id);
             if (peps.length > 0) {
                 MASCP.registerLayer(layer_name,{ 'fullname' : organism.name, 'group' : 'p3db_experimental', 'color' : color });
             }
@@ -143,19 +144,10 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         }        
         
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 
 MASCP.P3dbReader.Result.prototype.render = function()
 {
-    if (this.getPeptides().length > 0) {
-        var a_container = jQuery('<div>MS/MS spectra <input class="group_toggle" type="checkbox"/>P3db</div>');
-        jQuery(this.reader.renderers).each(function(i){
-            this.createGroupCheckbox('P3db_experimental',jQuery('input.group_toggle',a_container));
-        });
-        return a_container;
-    } else {
-        return null;
-    }
 };

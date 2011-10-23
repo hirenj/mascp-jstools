@@ -16,7 +16,7 @@ MASCP.PromexReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.PromexReader.SERVICE_URL = 'http://131.130.57.242/json/';
+MASCP.PromexReader.SERVICE_URL = 'http://131.130.57.242/json/?';
 
 MASCP.PromexReader.prototype.requestData = function()
 {
@@ -25,7 +25,8 @@ MASCP.PromexReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "json",
-        data: { 'ac'        : agi,
+        data: { 'agi'       : this.agi,
+                'ac'        : agi,
                 'service'   : 'promex' 
         }
     };
@@ -37,30 +38,6 @@ MASCP.PromexReader.prototype.requestData = function()
  */
 // We need this line for the JsDoc to pick up this class
 MASCP.PromexReader.Result = MASCP.PromexReader.Result;
-
-/* Retrieve the URLS for the spectra from the Promex service
- *  @returns    Array of urls for the spectra for this entry
- *  @type [String]
-MASCP.PromexReader.Result.prototype.getSpectraURLs = function()
-{
-    var bleh = this._raw_data;
-    var content = null;
-    if (this._raw_data.getElementById) {
-        content = this._raw_data.getElementById('contentArea');
-    } else {
-        content = this._raw_data.selectSingleNode("//*[@id = 'contentArea']");
-    }
-    if ( ! content ) {
-        return [];
-    }
-    var imgs = content.getElementsByTagName('img');
-    var urls  = [];
-    for (var i = 0; i < imgs.length; i++) {
-        urls.push(imgs[i].getAttribute('src'));
-    }
-    return urls;
-};
-*/
 
 /** Retrieve the peptides for this particular entry from the Promex service
  *  @returns Array of peptide strings
@@ -108,6 +85,9 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             MASCP.registerLayer('promex_experimental_spectrum_'+i, { 'fullname': 'Spectrum', 'group' : 'promex_experimental', 'color' : '#ff9900', 'css' : css_block });
             var peptide = peps[i];
             var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
+            if ( ! peptide_bits || peptide_bits.length === 0 ) {
+                continue;
+            }
             var layer_name = 'promex_experimental_spectrum_'+i;
             peptide_bits.addToLayer(layer_name);
             peptide_bits.addToLayer(overlay_name);
@@ -122,19 +102,10 @@ MASCP.PromexReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         }
 
 
-    })
+    });
     return this;
 };
 
 MASCP.PromexReader.Result.prototype.render = function()
 {
-    if (this.getPeptides().length > 0) {
-        var a_container = jQuery('<div>MS/MS spectra <input class="group_toggle" type="checkbox"/><a style="display: block; float: right;" href="http://www.promexdb.org/">ProMEX</a></div>');
-        jQuery(this.reader.renderers).each(function(i){
-            this.createGroupCheckbox('promex_experimental',jQuery('input.group_toggle',a_container));
-        });
-        return a_container;
-    } else {
-        return null;
-    }
 };

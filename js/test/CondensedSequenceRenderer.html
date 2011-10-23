@@ -43,20 +43,34 @@
             renderer.getAminoAcidsByPeptide('TQTS').addToLayer('test');
 
             renderer.showLayer('test');
-        
+            renderer.grow_container = true;
+            
             renderer.zoom = 1;
-/*        
-            window.setInterval(function() {
-//                console.log("Here");
+            renderer.zoomCenter = { 'x' : 2000, 'y' : 0};
+            var circ = renderer._canvas.circle(40,10,1);
+            circ.setAttribute('fill','#000000');
+            renderer._canvas.setCurrentTranslateXY(-60,0);
+            var wait = 50;
+            var counter = 0;
+            var steps = 20 + Math.floor(Math.random()*11);
+            (function() {
+                counter += 1;
                 renderer.zoom = renderer.zoom + delta;
-                if (renderer.zoom >= 10) {
-                    delta = -0.5;
+                if (renderer.zoom >= 2) {
+                    delta = -0.1;
                 }
-                if (renderer.zoom <= 1) {
-                    delta = 0.5;
+                if (renderer.zoom < 1) {
+                    delta = 0.1;
                 }
-            },10);
-*/            
+                if ((counter % steps) == 0) {
+                    steps = 20 + Math.floor(Math.random()*11);
+                    wait = 6000;
+                } else {
+                    wait = 50;
+                }
+                setTimeout(arguments.callee,wait);
+            })();
+            
             renderer._Navigation.hide();
             
         }

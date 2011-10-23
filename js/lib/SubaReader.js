@@ -19,7 +19,7 @@ MASCP.SubaReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.SubaReader.SERVICE_URL = 'http://suba.plantenergy.uwa.edu.au/services/byAGI.php';
+MASCP.SubaReader.SERVICE_URL = 'http://suba.plantenergy.uwa.edu.au/services/byAGI.php?';
 
 MASCP.SubaReader.prototype.requestData = function()
 {
@@ -79,8 +79,8 @@ MASCP.SubaReader.Result.prototype._getLocalisation = function(localisation)
 {
     var results = {};
     var any_data = false;
-    for (var i = 0; i < this._raw_data['observed'].length; i++) {
-        var obs = this._raw_data['observed'][i];
+    for (var i = 0; i < this._raw_data.observed.length; i++) {
+        var obs = this._raw_data.observed[i];
         if (obs[2] == localisation) {
             if (! results[obs[0]]) {
                 results[obs[0]] = [];
@@ -97,13 +97,14 @@ MASCP.SubaReader.Result.prototype._getLocalisation = function(localisation)
 
 MASCP.SubaReader.Result.prototype._parseLocalisation = function(localisation)
 {
-    if (localisation == null || localisation.length == 0 )
+    if (localisation === null || localisation.length === 0 )
     {
         return null;
     }
     var experiments = localisation.split(';');
-    var tissues = {}
-    for (var i = 0; i < experiments.length; i++) {
+    var tissues = {};
+    var i;
+    for (i = experiments.length - 1; i >= 0; i--) {
         var data = experiments[i].split(':');
         tissues[data[0]] = tissues[data[0]] || [];
         tissues[data[0]].push(data[1]);
@@ -115,7 +116,9 @@ MASCP.SubaReader.Result.prototype._sortLocalisation = function(loc_data)
 {
     var loc_keys = [];
     for (var i in loc_data) {
-        loc_keys.push(i);
+        if (loc_data.hasOwnProperty(i)) {
+            loc_keys.push(i);
+        }
     }
     loc_keys = loc_keys.sort(function(a,b) {
         return loc_data[a].length - loc_data[b].length;
@@ -147,7 +150,8 @@ MASCP.SubaReader.Result.prototype.getWinnerTakesAllGfp = function()
     var locs = (this._sortLocalisation(vals));
     var results = [];
     var last_val = -1;
-    for (var i = 0; i < locs.length; i++ ) {
+    var i;
+    for ( i = locs.length - 1; i >= 0; i-- ) {
         if (last_val && vals[locs[i]] == last_val) {
             results.push(locs[i]);
         } else if (last_val < 0) {
@@ -158,7 +162,7 @@ MASCP.SubaReader.Result.prototype.getWinnerTakesAllGfp = function()
         }
     }
     results._values = [];
-    for (var i = 0; i < results.length; i++ ) {
+    for (i = results.length - 1; i >= 0; i-- ) {
         results._values.push(vals[results[i]].length);
     }
     return results;
@@ -170,7 +174,8 @@ MASCP.SubaReader.Result.prototype.getWinnerTakesAllMassSpec = function()
     var locs = (this._sortLocalisation(vals));
     var results = [];
     var last_val = -1;
-    for (var i = 0; i < locs.length; i++ ) {
+    var i;
+    for (i = locs.length - 1; i >= 0; i-- ) {
         if (last_val && vals[locs[i]] == last_val) {
             results.push(locs[i]);
         } else if (last_val < 0) {
@@ -181,7 +186,7 @@ MASCP.SubaReader.Result.prototype.getWinnerTakesAllMassSpec = function()
         }
     }
     results._values = [];
-    for (var i = 0; i < results.length; i++ ) {
+    for ( i = results.length - 1; i >= 0; i-- ) {
         results._values.push(vals[results[i]].length);
     }
     return results;
@@ -215,15 +220,14 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
     } else {
         var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
         jQuery('input.ms', inputElement).unbind('change').bind('change', function() {
-            if (this.checked) {
-                for (var i in ms_loc) {
+            var i;
+            for ( i = ms_loc.length - 1; i >= 0; i--) {
+                if (this.checked) {
                     map.showKeyword(ms_loc[i], '#ff0000');
-                }                            
-            } else {
-                for (var i in ms_loc) {
-                    map.hideKeyword(ms_loc[i], '#ff0000');
-                }                
-            }
+                } else {
+                    map.hideKeyword(ms_loc[i], '#ff0000');                    
+                }
+            }                            
         }).attr('checked', (ms_loc.length > 0));
     }
     if ( ! this.getGfpLocalisation() )  {
@@ -231,15 +235,14 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
     } else {
         var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
         jQuery('input.gfp', inputElement).unbind('change').bind('change', function() {
-            if (this.checked) {
-                for (var i in gfp_loc) {
+            var i;
+            for ( i = gfp_loc.length - 1; i >= 0; i--) {
+                if (this.checked) {
                     map.showKeyword(gfp_loc[i], '#00ff00');
-                }                            
-            } else {
-                for (var i in gfp_loc) {
-                    map.hideKeyword(gfp_loc[i], '#00ff00');
-                }                
-            }
+                } else {
+                    map.hideKeyword(gfp_loc[i], '#00ff00');                    
+                }
+            }                            
         }).attr('checked', (gfp_loc.length > 0));
     }
 
@@ -248,38 +251,5 @@ MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
 
 MASCP.SubaReader.Result.prototype.render = function()
 {
-    var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
-    var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
-    var container = jQuery('<div><a style="display: block; float: right;" href="http://www.plantenergy.uwa.edu.au/applications/suba/flatfile.php?id='+this.reader.agi+'">SUBA</a></div>');
-    if ( ms_loc.length == 0 && gfp_loc.length == 0 ) {
-        return jQuery('<div>No data</div>');
-    }
-    if (ms_loc.length > 0) {
-        container.append('<div>Proteomics: '+ms_loc.join(', ')+'</div>');
-    }
-    if (gfp_loc.length > 0) {
-        container.append('<div>Flourescent Protein: '+gfp_loc.join(', ')+'</div>');
-    }
-    
-    if (typeof GOMap != 'undefined') {
-        container.text('');
-        var map_container = jQuery('<div style="position: relative; height: 0px; width: 100%; margin-bottom: 2px; overflow: hidden;"></div>');
-        container.append(map_container);
-
-        var map = new GOMap.Diagram('cell.svg',{ 'load' : (function() {
-            for (var i in ms_loc) {
-                this.showKeyword(ms_loc[i]);
-            }            
-            for (var i in gfp_loc) {
-                this.showKeyword(gfp_loc[i],'#00ff00');
-            }
-            map_container.css({'height': '100%','overflow':'visible'});
-//            this.makeInteractive();
-        })});
-
-        map.appendTo(map_container[0]);
-        container.append('<div style="height: 0px; width: 100%; clear: both; float: none;"></div>');
-        this._map = map;
-    }
-    return container[0];
+    return null;
 };

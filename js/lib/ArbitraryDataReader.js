@@ -15,7 +15,7 @@ MASCP.ArbitraryDataReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.ArbitraryDataReader.SERVICE_URL = 'http://gator.masc-proteomics.org/datasets.pl';
+MASCP.ArbitraryDataReader.SERVICE_URL = 'http://gator.masc-proteomics.org/datasets.pl?';
 
 MASCP.ArbitraryDataReader.prototype.requestData = function()
 {
@@ -34,15 +34,16 @@ MASCP.ArbitraryDataReader.prototype.requestData = function()
         return {
             type: "GET",
             dataType: "json",
-            data: {'service' : 'ArbitraryData'},
-        }
+            data: {'service' : 'ArbitraryData'}
+        };
     }
 };
 
 MASCP.ArbitraryDataReader.prototype._extend = function(setName)
 {
-    if(this == null || typeof(this) != 'object')
+    if (this === null || typeof(this) != 'object' || typeof(setName) === 'undefined' || ! setName ) {
         return this;
+    }
 
     var temp = new MASCP.ArbitraryDataReader(); // changed
 
@@ -50,18 +51,19 @@ MASCP.ArbitraryDataReader.prototype._extend = function(setName)
     temp.agi = this.agi;
     
     temp.toString = function() {
-        return setName+"Reader";
+        var curr_name = MASCP.Service.prototype.toString.call(temp);
+        return curr_name+"."+setName;
     };
     
     temp._dataset = function() {
         return setName;
-    }
+    };
     temp.layer = function() {
         return "arbitrary_"+setName;
-    }
+    };
     
     return temp;
-}
+};
 
 MASCP.ArbitraryDataReader.prototype._dataset = function()
 {
@@ -73,28 +75,76 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
     var self = this;
     var agi = this.agi || in_agi;
     
+    
     if (agi && this._dataset()) {
         MASCP.Service.prototype.retrieve.call(self,in_agi,cback);
         return;        
     }
     
-    if ((! this._SERVER_DATASETS) && agi) {
+    // If we are just doing a call, defer the rest of the retrieve
+    // until the server datasets are loaded.
+    
+    if ((! this._SERVER_DATASETS) && agi && agi != "dummy") {
         var read = new MASCP.ArbitraryDataReader("",self._endpointURL);
-        read.bind("resultReceived",function() {
-            self._SERVER_DATASETS = this.result._raw_data;
+        read.retrieve("dummy",function() {
+            self._SERVER_DATASETS = this.result._raw_data.data;
             self.retrieve(in_agi,cback);
         });
-        read.retrieve();
         return;
     }
+    
+    // Populate the server datasets if there is no accession given and
+    // we don't have the server datasets retrieved already for this object
+    
     if ( ! this._SERVER_DATASETS ) {
-        MASCP.Service.prototype.retrieve.call(self,in_agi,cback);
+        MASCP.Service.FindCachedService(self.toString(),function(services) {
+            // If we're on the server side, we should have the list
+            // of services cached.
+            if (services.length >= 0) {
+                var datasets = [];
+                services.forEach(function(service) {
+                    datasets.push(service.replace(self.toString()+".",""))
+                });
+                self._SERVER_DATASETS = datasets;
+                self.result = {};
+                self.result._raw_data = { 'data' : datasets };
+            }
+            
+            //If we are requesting from a remote source, remove the current
+            //cached results
+            if (self._endpointURL && self._endpointURL.length) {
+                MASCP.Service.ClearCache(self);
+            }
+            //Make the request to the server to get the datasets
+            //Put a dummy agi in so that the callback is called if
+            //this is being run on a server with no datasets.
+            //This will trigger the execution of the callback.
+            MASCP.Service.prototype.retrieve.call(self,"dummy",cback);
+        });
+        return;
+    }
+    if (this._SERVER_DATASETS.length == 0){
+        MASCP.Service.prototype.retrieve.call(self,"dummy",cback);
+        (self.renderers || []).forEach(function(rrend) {
+            jQuery(rrend).trigger('resultsRendered',[self]);
+        });
         return;
     }
     this._SERVER_DATASETS.forEach(function(set) {
         var reader = self._extend(set);
         (self.renderers || []).forEach(function(rrend) {
             reader.setupSequenceRenderer(rrend);
+            rrend.bind('resultsRendered',function(e,rdr) {
+                if (rdr == reader) {
+                    jQuery(rrend).trigger('resultsRendered',[self]);
+                }
+            });
+        });
+        reader.bind('resultReceived',function() {
+            self.gotResult();
+        })
+        reader.bind('requestComplete',function() {
+            self.requestComplete();
         });
         reader.retrieve(agi,cback);
     });
@@ -119,14 +169,11 @@ MASCP.ArbitraryDataReader.Result.prototype.getPeptides = function()
         return this._peptides;
     }
 
-    if (! this._raw_data || ! this._raw_data.peptides ) {
+    if (! this._raw_data || ! this._raw_data.data ) {
         return [];
     }
 
-        
-    var peptides = [];
-    
-    return this._raw_data.peptides;
+    return this._raw_data.data;
 };
 
 MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
@@ -145,18 +192,27 @@ MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRen
                 
         var peps = this.result.getPeptides();
         if (peps.length <= 0) {
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
             return;
         }
-        MASCP.registerGroup('arbitrary_datasets', {'fullname' : 'Misc data', 'color' : '#ff5533' });
-        MASCP.registerLayer('arbitrary_controller',{ 'fullname' : 'Misc data', 'color' : '#ff5533', 'css' : css_block });
+        MASCP.registerGroup('arbitrary_datasets', {'fullname' : 'Other data', 'color' : '#ff5533' });
+        MASCP.registerLayer('arbitrary_controller',{ 'fullname' : 'Other data', 'color' : '#ff5533', 'css' : css_block });
 
         var overlay_name = this.layer();
-        MASCP.registerLayer(overlay_name,{ 'group' : 'arbitrary_datasets', 'fullname' : this._dataset(), 'color' : '#ff5533', 'css' : css_block });
+        MASCP.registerLayer(overlay_name,{ 'group' : 'arbitrary_datasets', 'fullname' : this._dataset(), 'color' : this.result._raw_data.color || '#ff5533', 'css' : css_block });
+        
+        if (this.result._raw_data.url) {
+            MASCP.getLayer(overlay_name).href = this.result._raw_data.url;
+        }
         
         for(var i = 0; i < peps.length; i++) {
-            var peptide = peps[i];
-            var peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);
-            peptide_bits.addToLayer(overlay_name);
+            var peptide = peps[i], peptide_bits;
+            if (typeof peptide == 'string') {
+                peptide_bits = sequenceRenderer.getAminoAcidsByPeptide(peptide);                
+                peptide_bits.addToLayer(overlay_name);
+            } else if (peptide.length == 2) {
+                sequenceRenderer.getAA(peptide[0]).addBoxOverlay(overlay_name,peptide[1]-peptide[0]);
+            }
         }
         
         if (sequenceRenderer.createGroupController) {
@@ -164,7 +220,7 @@ MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRen
         }
         
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
-    })
+    });
     return this;
 };
 

@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Condensed Sequence Renderer</title>
+    <script type="text/javascript">
+    window.svgns = 'http://www.w3.org/2000/svg';
+    </script>
+
+    <script type="text/javascript" charset="utf-8" src="../../jsunit/app/jsUnitCore.js"></script>
+    <script type="text/javascript" src="../svgweb/svg-uncompressed.js" data-path="../svgweb/"></script>
+    <script type="text/javascript" src="../jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="../jquery-ui-1.7.2.min.js"></script>
+    <script type="text/javascript" src="../lib/MascpService.js"></script>
+    <script type="text/javascript" src="../lib/SequenceRenderer.js"></script>
+    <script type="text/javascript" src="../lib/CondensedSequenceRenderer.js"></script>
+    <script type="text/javascript" src="../lib/PhosphatReader.js"></script>
+    <script type="text/javascript" src="../lib/TairReader.js"></script>    
+    <script type="text/javascript" src="../lib/SnpReader.js"></script>
+    <script type="text/javascript" src="../lib/gomap.js"></script>
+    <script type="text/javascript" src="../json-2.js"></script>
+    <!-- <script type="text/javascript" src="../diff_match_patch.js"></script> -->
+    <style type="text/css">
+    #result {
+        width: 80%;
+    }
+    </style>
+</head>
+<body>
+    <div id="result">
+    </div>
+    <script type="text/javascript" charset="utf-8">
+
+        var renderer;
+        var tairreader;
+        var snpreader;
+        var delta = 1;
+        var agi = 'AT3G44540.1'; //290
+//        var agi = 'AT3G20810.1';
+
+        function get_data(acc) {
+            snpreader.showSnp(renderer,acc);
+            renderer.refresh();
+        };
+
+        function testSimpleDisplay() {
+
+            renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('result'));
+
+            renderer.setSequence(tairreader.result.getSequence());
+            renderer.grow_container = true;
+
+            snpreader = new MASCP.SnpReader(null,'../../../snps.pl');
+            
+            snpreader.agi = agi;
+            
+            snpreader.registerSequenceRenderer(renderer);
+
+            var accessions = ["AGU","BAK2","BAY","BUR0","CDM0","COL0","DEL10","DOG4","DON0","EY152","FEI0","HKT24","ICE1","ICE102","ICE104","ICE106","ICE107","ICE111","ICE112","ICE119","ICE120","ICE127","ICE130","ICE134","ICE138","ICE150","ICE152","ICE153","ICE163","ICE169","ICE173","ICE181","ICE21","ICE212","ICE213","ICE216","ICE226","ICE228","ICE29","ICE33","ICE36","ICE49","ICE50","ICE60","ICE61","ICE63","ICE7","ICE70","ICE71","ICE72","ICE73","ICE75","ICE79","ICE91","ICE92","ICE93","ICE97","ICE98","ISTISU1","KASTEL1","KOCH1","KRO0","LAG22","LEO1","LER1","LERIK13","MER6","NEMRUT1","NIE12","PED0","PRA6","QUI0","RI0","RUE3131","SHA","STAR8","TUESB303","TUESCHA9","TUEV13","TUEWA12","VASH1","VIE0","WALHAESB4","XAN1"];
+                        
+            snpreader.bind('resultReceived',function() {
+                renderer.showLayer('insertions');
+                for (var i = 0; i < accessions.length; i++) {
+                    var acc_name = accessions[i];
+                    var layer = MASCP.getLayer('all_'+acc_name);
+                    if ( ! layer ) {
+                        continue;
+                    }
+                    layer.href='javascript:get_data("'+acc_name+'")';
+                }
+                return;
+            });
+                        
+            snpreader.accession = accessions.join(',');
+            snpreader.retrieve();
+            renderer.hideLayer('insertions');
+            
+            var phosphat = new MASCP.PhosphatReader(agi,'../../../proxy.pl');
+            phosphat.registerSequenceRenderer(renderer).bind('resultReceived',function() {
+                renderer.showLayer('phosphat_experimental');
+            });
+            phosphat.retrieve();
+            
+            renderer.zoom = 5;
+            var dragger = (new GOMap.Diagram.Dragger()).applyToElement(renderer._canvas);
+        
+            renderer._Navigation.hide();
+        }
+
+        jQuery(document).ready(function() {
+            tairreader = new MASCP.TairReader(null,'../../../tair.pl');
+            tairreader.agi = agi;            
+            tairreader.async = false;
+            tairreader.retrieve();            
+            testSimpleDisplay(); 
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+#!/usr/bin/env node
+
+var argv =  require('optimist')
+            .usage('Usage:\n $0 --file [script file] --verbose')
+            .argv;
+
+repl = require('repl');
+tools = require('./script_tools.js');
+
+MASCP = require('./dist/js/maschup.services.js');
+
+MASCP.events.once('ready',function() {
+    if (argv.file)  {
+        var path = argv.file.substr(0,1) == '/' ? argv.file : process.cwd()+'/'+argv.file ;
+        global.argv = argv;
+        var evaled = require(path);
+        if (evaled instanceof Function) {
+            evaled.call(null,argv);            
+        }
+        return;
+    }
+    if (! require('tty').isatty(process.stdin)) {
+        var vm = require('vm');
+        vm.runInNewContext(fs.readFileSync('/dev/stdin').toString(), { require: require, console: console, MASCP: MASCP, module: module }, "<stdin>");
+        return;
+    }
+    repl.start("MASCP tools> ");
+    for (func in tools) {
+        repl.repl.context[func] = tools[func];
+    }
+    
+    var old_completer = repl.repl.complete;    
+    repl.repl.complete = function(line) {
+        var original_line = line;
+        if (line.match(/\([^\)]*$/)) {            
+            var func_parts = line.split(/\(/).reverse();
+            var variables = func_parts.shift();
+            var fname = func_parts.shift();
+            var set_vars = variables.split(/,/).filter(function(v) { if (v == '') { return false; } return true; });
+            if (tools[fname]) {
+                var func_def = tools[fname].toString();
+                var match = func_def.match(/function\s*\(([^\)]*)\)/);
+                if (match) {
+                    var args = match[1].split(/,/);
+                    var close_quote = '';
+                    if (set_vars.length > 0 && set_vars[set_vars.length - 1].match(/^['"][^'"]*$/)) {
+                        close_quote = set_vars[set_vars.length - 1][0];
+                    }
+                    var last_vars = set_vars.length > 0 ? old_completer.call(repl.repl,set_vars[set_vars.length - 1]) : [[]];
+                    if (last_vars[0].length > 1) {
+                        var lines = [];
+                        var a_line = line.replace(/[^\(,]*$/,'');
+                        last_vars[0].forEach(function(word) {
+                            lines.push(a_line+word);                            
+                        });
+                        return [lines,original_line];
+                    } else if (last_vars[0].length == 1) {
+                        var a_line = line.replace(/[^\(,]*$/,'');
+                        line = a_line + last_vars[0][0];
+                    }
+
+                    if (set_vars.length == args.length) {
+                        return [[line+close_quote+")"],original_line];
+                    }
+                    args.splice(0,set_vars.length);
+
+
+                    return [[line+close_quote+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],original_line];
+                }
+            }
+        }
+    
+        var comps = old_completer.call(repl.repl,line);
+        comps[0].forEach(function(k,i) {
+            if (tools[k]) {
+                comps[0][i] += '(';
+            }
+        });
+        return comps;
+    };
+});
+MASCP.events.emit('ready');

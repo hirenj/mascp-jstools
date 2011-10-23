@@ -14,64 +14,124 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
+
 MASCP.PhosphatReader =  MASCP.buildService(function(data) {
-                            if (data && data.request_method == 'getPredictedAa') {
+                            if (data && data.result && ! this._sequence) {
+                                for (var i = 0; i < data.result.length; i++) {
+                                    if (data.result[i].prot_sequence == 'Imported protein - no info') {
+                                        var agi = data.result[i].code;
+                                        agi = agi.replace(/\s+$/,'');
+                                        this._sequence = MASCP.getSequence(agi);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (data && data.experimental && data.relatives && data.predicted ) {
                                 this._raw_data = data;
+                                return this;
+                            }
+
+
+                            if (data && data.request_method == 'getPredictedAa') {
+                                if (! this._raw_data ) {
+                                    this._raw_data = {};
+                                }
+                                this._raw_data.predicted = data;
                             }
                             if (data && data.request_method == 'getExperimentsModAa') {
-                                this._raw_experimental_data = data;
+                                if (! this._raw_data ) {
+                                    this._raw_data = {};
+                                }
+                                this._raw_data.experimental = data;
                             }
                             if (data && data.request_method == 'getRelatives') {
-                                this._raw_relative_data = data;
+                                if (! this._raw_data ) {
+                                    this._raw_data = {};
+                                }
+                                this._raw_data.relatives = data;
                             }
-                            
+
+
                             return this;
                         });
+
+MASCP.PhosphatReader.SERVICE_URL = 'http://gator.masc-proteomics.org/proxy.pl?';
 
 MASCP.PhosphatReader.prototype.requestData = function()
 {
     var data = [null,this.agi];
 
-    var method = this._method ? this._method : 'getPredictedAa';
+        
+    if ( ! this.method && ! this._methods ) {
+        this._methods = ['getPredictedAa','getExperimentsModAa','getRelatives'];
+    }
+    if (this.combine) {
+        this._methods = [];
+    }
+
+    var method = this._methods[0];
+
+    
     if (method == 'getRelatives') {
         data = [this.agi];
     }
-    var self = this;
-    
+
     return {
         type: "POST",
         dataType: "json",
         data: { 'id'        : 1,
                 'method'    : method,
-                'params'    : data.toJSON ? data.toJSON() : JSON.stringify(data),
+                'agi'       : this.agi,
+                'params'    : encodeURI(data.toJSON ? data.toJSON() : JSON.stringify(data)),
                 'service'   : 'phosphat' 
-        },
-
-        /* http://phosphat.mpimp-golm.mpg.de/PhosPhAtHost30/productive/views/Prediction.php?start=0&limit=50&id=IAMINURDBHACKING&method=getRelatives&sort=sequence&dir=ASC&params=%5B%22atcg00480.1%22%5D */
-        success: function(data,status) {
-            data.request_method = method;
-            self._dataReceived(data,status);
-            if (self.result && self.result._raw_data && self.result._raw_experimental_data && self.result._raw_relative_data) {
-               jQuery(self).trigger('resultReceived'); 
-            }
         }
     };
 };
 
-MASCP.PhosphatReader.prototype._single_retrieve = MASCP.PhosphatReader.prototype.retrieve;
+(function(mpr) {
+    var defaultDataReceived = mpr.prototype._dataReceived;
 
-MASCP.PhosphatReader.prototype.retrieve = function()
-{
-    this._method = null;
-    this._single_retrieve();
-    this._method = 'getExperimentsModAa';
-    this._single_retrieve();
-    this._method = 'getRelatives';
-    this._single_retrieve();
-};
+    mpr.prototype._dataReceived = function(data,status)
+    {
+        if (data === null) {
+            return defaultDataReceived.call(this,null,status);
+        }
+        data.request_method = this._methods ? this._methods[0] : null;
+        if (this._methods) {
+            this._methods.shift();
+        }
+
+        if (data.error && data.error.indexOf('SELECT') === 0) {
+            data.error = null;
+        }
+        var res = defaultDataReceived.call(this,data,status);
+        if (this.result && this.result._raw_data && this.result._raw_data.experimental && this.result._raw_data.relatives && this.result._raw_data.predicted) {
+            this._methods = null;
+            return res;
+        } else {
+            if (res) {
+                this.retrieve();
+            }
+        }
+        return false;
+    };
+    
+    // var oldToString = mpr.prototype.toString;
+    // mpr.prototype.toString = function()
+    // {
+    //     if ( ! this._methods ) {
+    //         this._methods = ['getPredictedAa','getExperimentsModAa','getRelatives'];
+    //     }
+    //     var string = oldToString.call(this);
+    //     string += this._methods[0] ? "."+this._methods[0] : "";
+    //     return string;
+    // };
+    
+})(MASCP.PhosphatReader);
 
 /**
- *  @class   Container class for results from the AtProteome service
+ *  @class   Container class for results from the Phosphat service
  *  @extends MASCP.Service.Result
  */
 // We need this line for the JsDoc to pick up this class
@@ -83,11 +143,14 @@ MASCP.PhosphatReader.Result = MASCP.PhosphatReader.Result;
  */
 MASCP.PhosphatReader.Result.prototype.getAllPredictedPositions = function()
 {
-    var positions = []; 
-    for ( var prediction_idx in this._raw_data.result ) {
-        var prediction = this._raw_data.result[prediction_idx];
-        if (prediction.prd_score > 0) {
-            positions.push(prediction.prd_position);
+    var positions = [];
+    var result = this._raw_data.predicted.result;
+    for ( var prediction_idx in result ) {
+        if (result.hasOwnProperty(prediction_idx)) {
+            var prediction = this._raw_data.predicted.result[prediction_idx];
+            if (prediction.prd_score > 0) {
+                positions.push(prediction.prd_position);
+            }
         }
     }
     return positions;
@@ -99,21 +162,29 @@ MASCP.PhosphatReader.Result.prototype.getAllPredictedPositions = function()
 MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
 {
     var exp_sites = {};
-    for ( var site_idx in this._raw_experimental_data.result ) {
-        var site = this._raw_experimental_data.result[site_idx];
-        if (site['modificationType'] != 'phos') {
-            continue;
+    var result = this._raw_data.experimental.result;
+    for ( var site_idx in result ) {
+        if (result.hasOwnProperty(site_idx)) {
+            var site = this._raw_data.experimental.result[site_idx];
+            var pep_seq = site.pep_sequence || '';
+            pep_seq = pep_seq.replace(/[^A-Z]/g,'');
+            if (site.modificationType != 'phos') {
+                continue;
+            }
+            var prot_seq = this._sequence || site.prot_sequence;
+            var site_id = prot_seq.indexOf(pep_seq);
+            if (site_id < 0) {
+                continue;
+            }
+            site_id += site.position;
+            exp_sites[site_id] = 1;
         }
-        var site_id = site['prot_sequence'].indexOf(site['pep_sequence']);
-        if (site_id < 0) {
-            continue;
-        }
-        site_id += site['position'];
-        exp_sites[site_id] = 1;
     }
     var positions = [];
     for ( var i in exp_sites ) {
-        positions.push(parseInt(i));
+        if (exp_sites.hasOwnProperty(i)) {
+            positions.push(parseInt(i,10));
+        }
     }
     return positions;
 };
@@ -121,29 +192,43 @@ MASCP.PhosphatReader.Result.prototype.getAllExperimentalPositions = function()
 MASCP.PhosphatReader.Result.prototype.getAllExperimentalPhosphoPeptides = function()
 {
     var results = {};
-    for ( var site_idx in this._raw_experimental_data.result ) {
+    var result = this._raw_data.experimental.result;
+    for ( var site_idx in result ) {
+        if (result.hasOwnProperty(site_idx)) {
+            var site = this._raw_data.experimental.result[site_idx];
+            var pep_seq = site.pep_sequence || '';
+            pep_seq = pep_seq.replace(/[^A-Z]/g,'');
         
-        var site = this._raw_experimental_data.result[site_idx];
-        if (site['modificationType'] != 'phos') {
-            continue;
+            if (site.modificationType != 'phos') {
+                continue;
+            }
+            var prot_seq = this._sequence || site.prot_sequence;
+            var site_id = prot_seq.indexOf(pep_seq);
+            if (site_id >= 0) {
+                var id =''+site_id+"-"+pep_seq.length;
+                results[id] = results[id] || [site_id,pep_seq.length];
+                if (results[id].indexOf(site.position+site_id,2) <= 0) {
+                    results[id].push(site.position+site_id);
+                }
+            }
         }
-        var site_id = site['prot_sequence'].indexOf(site['pep_sequence']);
-        results[''+site_id+"-"+site['pep_sequence'].length] = [site_id,site['pep_sequence'].length];
     }
     var results_arr = [];
-    for (var a_side in results ) {
-        results_arr.push(results[a_side]);
+    for (var a_site in results ) {
+        if (results.hasOwnProperty(a_site)) {
+            results_arr.push(results[a_site]);
+        }
     }
     return results_arr;
 };
 
 MASCP.PhosphatReader.Result.prototype.getSpectra = function()
 {
-    if (! this._raw_relative_data || ! this._raw_relative_data.result) {
+    if (! this._raw_data.relatives || ! this._raw_data.relatives.result) {
         return {};
     }
     var results = {};
-    var experiments = this._raw_relative_data.result;
+    var experiments = this._raw_data.relatives.result;
     for (var i = 0; i < experiments.length; i++ ) {
         var tiss = experiments[i].Tissue;
         if ( ! results[tiss] ) {
@@ -156,67 +241,60 @@ MASCP.PhosphatReader.Result.prototype.getSpectra = function()
 
 MASCP.PhosphatReader.Result.prototype.render = function()
 {
-    var result_block;
-    
-    if (this.getAllExperimentalPositions().length > 0) {
-        result_block = jQuery(' <div>Phosphorylation (STY) \
-                                    <input type="checkbox" class="exp_toggle"/> <a style="display: block; float: right;" href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.reader.agi+'">PhosPhAt</a> \
-                                </div>');
-    } else if (this.getAllPredictedPositions().length > 0) {
-        result_block = jQuery(' <div>Theoretical phosphorylaytion <input type="checkbox" class="theoretical_toggle"/> \
-                                    <a style="display: block; float: right;" href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.reader.agi+'">PhosPhAt</a> \
-                                </div>');
-    } else {
-        result_block = jQuery(' <div>No phosphorylation \
-                                    <a style="display: block; float: right;" href="http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.reader.agi+'">PhosPhAt</a> \
-                                </div>');
-    }
-    
-    jQuery( this.reader.renderers ).each( function(i){
-        this.createLayerCheckbox('phosphat_experimental',jQuery('input.exp_toggle',result_block)[0]);
-        this.createLayerCheckbox('phosphat_theoretical',jQuery('input.theoretical_toggle',result_block)[0]);
-    });
-    return result_block;
+    return null;
 };
 
 MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
     
-    MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : true, 'hide_group_controller': true });
-    // MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
-    // MASCP.registerLayer('phosphat_experimental', { 'fullname': 'Phosphorylation', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
-
     this.bind('resultReceived', function() {
-        jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllPredictedPositions())).each(function(i) {
-            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-        	MASCP.registerLayer('phosphat_theoretical', { 'fullname': 'PhosPhAt theoretical data', 'group': 'phosphat', 'color' : '#3D907B', 'css' : '.active { background: #3D907B; color: #ffffff; } .tracks .active { background: #3D907B; fill: #3D907B; } .inactive { display: none; }' });
-            this.addToLayer('phosphat_theoretical');
-        });
-        
-        jQuery(this.result.getAllExperimentalPhosphoPeptides()).each(function(i) {
-            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerGroup('phosphat_peptides', { 'fullname' : 'PhosPhAt peptides' });
+        var icons = [];
+
+        var exp_peptides = this.result.getAllExperimentalPhosphoPeptides();
+        if (exp_peptides.length === 0) {
+            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            return;         
+        }
+
+        MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
+        MASCP.registerGroup('phosphat_peptides', { 'fullname' : 'PhosPhAt peptides' });
+
+        if (sequenceRenderer.createGroupController) {
+            sequenceRenderer.createGroupController('phosphat_experimental','phosphat_peptides');
+        }
+        jQuery(exp_peptides).each(function(i) {
             MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
-            var aa = sequenceRenderer.getAminoAcidsByPosition([this[0]+1])[0];
+
+            var start = this.shift();
+            var end = this.shift();
+            var aa = sequenceRenderer.getAminoAcidsByPosition([start+1])[0];
             if (aa) {
-        	    aa.addBoxOverlay('phosphat_peptide_'+i,this[1],0.5);
-    	    }
+                aa.addBoxOverlay('phosphat_peptide_'+i,end,0.5);
+                icons.push(aa.addBoxOverlay('phosphat_experimental',end,0.5));
+            }
+	        jQuery(sequenceRenderer.getAminoAcidsByPosition(this)).each(function() {
+	            this.addToLayer('phosphat_peptide_'+i);
+	            icons = icons.concat(this.addToLayer('phosphat_experimental'));
+	        });
         });
-        
-        jQuery(sequenceRenderer.getAminoAcidsByPosition(this.result.getAllExperimentalPositions())).each(function(i) {
-            MASCP.registerGroup('phosphat', {'fullname' : 'PhosPhAt data', 'hide_member_controllers' : false });
-            MASCP.registerLayer('phosphat_experimental', { 'fullname': 'PhosPhAt (mod)', 'group':'phosphat', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; font-weight: bolder; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
-            this.addToLayer('phosphat_experimental');
+
+
+        jQuery(MASCP.getGroup('phosphat_peptides')).bind('visibilityChange',function(e,rend,vis) {
+            if (rend != sequenceRenderer) {
+                return;
+            }
+            icons.forEach(function(el) {
+                if (! el.style ) {
+                    el.setAttribute('style','');
+                }
+                el.style.display = vis ? 'none' : 'inline';
+            });
         });
         
         if (MASCP.getLayer('phosphat_experimental')) {
             MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;        
         }
-        
-        if (sequenceRenderer.createGroupController) {
-            sequenceRenderer.createGroupController('phosphat_experimental','phosphat_peptides');
-        }        
         
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     });
