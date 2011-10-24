@@ -190,11 +190,9 @@
         })
       });
       window.sandbox.model.load(MASCP_URL);
-      exports = window;
-      require = function() {};
       window.sandbox.model.load(STOOLS_URL);
       
-      console.log = function(message) {
+      print_line = function(message) {
         window.sandbox.model.addHistory({'command' : 'log', 'result' : message });
       };
     });
