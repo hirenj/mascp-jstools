@@ -1,7 +1,7 @@
-var print;
+var print_line;
 if (typeof module !== 'undefined' && module.exports) {
     fs = require('fs');
-    print = function(message) {
+    print_line = function(message) {
         console.log(message);
     };
 } else if (typeof window !== 'undefined') {
@@ -47,7 +47,7 @@ exports.find_peptide = function(agi,seq) {
         if (err) {
             return;
         }
-        print(this.result.getSequence().indexOf(seq));
+        print_line(this.result.getSequence().indexOf(seq));
     })
 };
 
@@ -56,7 +56,7 @@ exports.find_sequence = function(agi) {
         if (err) {
             return;
         }
-        print(this.result.getSequence());
+        print_line(this.result.getSequence());
     })    
 };
 
@@ -73,13 +73,13 @@ exports.find_region = function(agi,region) {
         if (max > this.result.getSequence().length) {
             max = this.result.getSequence().length;
         }
-        print(this.result.getSequence().substring(region[0],region[1])+'xx'+this.result.getSequence().substring(min,region[0]-1)+'[1m'+this.result.getSequence().substring(region[0]-1,region[1]-1)+'[22m'+this.result.getSequence().substring(region[1]-1,max));
+        print_line(this.result.getSequence().substring(region[0],region[1])+'xx'+this.result.getSequence().substring(min,region[0]-1)+'[1m'+this.result.getSequence().substring(region[0]-1,region[1]-1)+'[22m'+this.result.getSequence().substring(region[1]-1,max));
         
     })    
 };
 
 exports.print_result = function() {
-    print(arguments);
+    print_line(arguments);
 };
 
 (function() {
