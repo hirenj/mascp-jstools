@@ -7,7 +7,7 @@ var argv =  require('optimist')
 repl = require('repl');
 tools = require('./script_tools.js');
 
-MASCP = require('./dist/js/maschup.services.js');
+MASCP = require('./dist/js/mascp-jstools.services.js');
 
 MASCP.events.once('ready',function() {
     if (argv.file)  {

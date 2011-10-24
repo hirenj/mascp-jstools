@@ -33,7 +33,7 @@
        "optimist": "0.2.x",
        "sqlite3": "2.0.x"
    },
-   "main" : "dist/js/maschup.services.js",
+   "main" : "dist/js/mascp-jstools.services.js",
    "bin" : {
        "gator-cli" : "cli"
    },
