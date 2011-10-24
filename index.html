@@ -1,0 +1,218 @@
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>MASCP js-tools</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- CSS concatenated and minified via ant build script-->
+  <link rel="stylesheet" href="css/sandbox.css">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- end CSS-->
+
+  <script src="js/libs/modernizr-2.0.6.min.js"></script>
+</head>
+
+<body>
+
+  <div id="container">
+    <header>
+      <h1>MASCP JavaScript tools</h1>
+      <h2 class="byline">Scripts and classes for manipulation of 
+        <em>Arabidopsis thaliana</em> proteomic data.
+      </h2>
+      <img height="100px" width="100px" src="img/mascp_logo.svg"/>
+    </header>
+    <div id="main" role="main">
+      <h2>Rationale</h2>
+      <p>
+        You're a bioinformatics researcher. You've got a list of proteins that
+        you're interested in. You want to find out which of these proteins 
+        have been localised to the cytosol. You also want to find out which of 
+        these have mass spec data. For that matter, you'd like to know where 
+        the experimental phosphorylation sites are. You can script that all up
+        with this.
+      </p>
+      <p>
+        You've got a sequence dataset with a bunch of annotations on it. 
+        You'd like to visualise the annotation on the proteins. You want to 
+        be able to publish this online somewhere easily. You can do all that 
+        with this.
+      </p>
+      <p>
+      </p>
+      <h2>Features</h2>
+      <ul>
+        <li>Command-line interface using nodejs</li>
+        <li>Local caching of data in-browser or on-disk</li>
+        <li>Ability to rate-limit calls to web-services</li>
+        <li>Internet Explorer 9+ support</li>
+        <li>Mobile safari support</li>
+      </ul>
+      <h2>Services and data available</h2>
+
+        <table>
+
+          <tr><th>Data type</th>
+          <th>Services</th>
+          <th>Class</th>
+          </tr><tr><td>Localisation</td><td>
+          <a href="http://suba.plantenergy.uwa.edu.au/" class="external text" title="http://suba.plantenergy.uwa.edu.au/" rel="nofollow">SUBA</a>
+          </td><td><code>MASCP.SubaReader</code>
+          </td></tr><tr><td rowspan="6">Mass<br/>spectrometric</td><td>
+          <a href="http://fgcz-pep2pro.uzh.ch/" class="external text" title="http://fgcz-pep2pro.uzh.ch/" rel="nofollow">pep2pro</a>
+          </td><td><code>MASCP.AtProteomeReader</code>
+          </td></tr><tr><td>
+          <a href="http://ppdb.tc.cornell.edu/" class="external text" title="http://ppdb.tc.cornell.edu/" rel="nofollow">PPDB</a>
+          </td><td><code>MASCP.PpdbReader</code>
+          </td></tr><tr><td>
+          <a href="http://promex.pph.univie.ac.at/promex/" class="external text" title="http://promex.pph.univie.ac.at/promex/" rel="nofollow">ProMEX</a>
+          </td><td><code>MASCP.PromexReader</code>
+          </td></tr><tr><td>
+          <a href="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html" class="external text" title="http://proteomics.ucsd.edu/Software/ArabidopsisProteogenomics.html" rel="nofollow">AtPeptide</a>
+          </td><td><code>MASCP.AtPeptideReader</code>
+          </td></tr><tr><td>
+          <a href="http://www.grenoble.prabi.fr/at_chloro/" class="external text" title="http://www.grenoble.prabi.fr/at_chloro/" rel="nofollow">AT_CHLORO</a>
+          </td><td><code>MASCP.AtChloroReader</code>
+          </td></tr><tr><td>
+          <a href="http://www.gelmap.de/arabidopsis/" class="external text" title="http://www.gelmap.de/arabidopsis/" rel="nofollow">At GelMap</a>
+          </td><td><code>MASCP.GelMapReader</code>
+          </td></tr><tr><td rowspan="3">Phosphorylation</td><td>
+          <a href="http://phosphat.mpimp-golm.mpg.de/" class="external text" title="http://phosphat.mpimp-golm.mpg.de/" rel="nofollow">PhosPhAt</a>
+          </td><td><code>MASCP.PhosphatReader</code>
+          </td></tr><tr><td>
+          <a href="http://phosphoproteome.psc.database.riken.jp/" class="external text" title="http://phosphoproteome.psc.database.riken.jp/" rel="nofollow">RIPP-DB</a>
+          </td><td><code>MASCP.RippdbReader</code>
+          </td></tr><tr><td>
+          <a href="http://p3db.org/" class="external text" title="http://p3db.org/" rel="nofollow">P3DB</a>
+          </td><td><code>MASCP.P3dbReader</code>
+          </td></tr><tr><td>nsSNP</td><td>
+          SNP data
+          </td><td><code>MASCP.SnpReader</code>
+          </td></tr>
+        </table>
+        <h2>Who?</h2>
+        <div class="who">
+          <div>Hiren Joshi<br/>
+            <em>beleaguered bioinformagician</em><br/>
+            <br/>
+            Working on ways to write decent code while getting decent
+            publications out of the door.
+          </div>
+          <a href="https://github.com/hirenj"><img src="http://gravatar.com/avatar/88eb3b7844acddc3d147223a8d21be20?size=100"/></a>
+        </div>
+        <h2>Get it</h2>
+        <p>Download the <a href="https://github.com/hirenj/mascp-jstools/zipball/master">Latest release</a>, or visit the 
+          <a href="https://github.com/hirenj/mascp-jstools/">project page</a> at GitHub.
+        <h2>Availability of documentation</h2>
+        <p>
+          Right now, official documentation is sparse. If anyone wishes 
+          to pitch in writing the documentation, please get in contact with 
+          me.
+        </p>
+        <h2>Sandbox</h2>
+        <p>
+          To do simple API calls, you can use the following sandbox.
+        </p>
+        <code>
+        <ul>
+          <li>find_sequence(<em>agi</em>)</li>
+          <li>res = get_data(<em>agi</em>,<em>SERVICE</em>)</li>
+          <li>res = find_peptide(<em>agi</em>,<em>peptide</em>)</li>
+          <li>res = find_motif(<em>agi</em>,<em>/regexp/</em>)</li>
+          <li>res = find_region(<em>agi</em>,[<em>start</em>,<em>end</em>])</li>
+        </ul>
+        </code>
+        <div id="sandbox">MASCP console loading...</div>
+    </div>
+
+
+    <!-- Templates -->
+
+    <!-- The sandbox template: -->
+    <script type="text/template" id="tplSandbox">
+      <pre class="output"></pre>
+      <div class="input">
+        <textarea rows="1" placeholder="<%= placeholder %>"></textarea>
+      </div>
+    </script>
+
+    <!-- The command/result template (NB whitespace/line breaks matter inside <pre> tag): -->
+    <script type="text/template" id="tplCommand"><% if (! _hidden) { %><span class="command"><%= command %></span>
+    <span class="prefix"><%= this.resultPrefix %></span><span class="<%= _class %>"><%= result %></span>
+    <% } %></script>
+
+
+    <footer>
+
+    </footer>
+  </div> <!--! end of #container -->
+
+
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="js/libs/jquery-1.6.2.min.js"><\/script>')</script>
+
+
+  <!-- scripts concatenated and minified via ant build script-->
+  <script defer src="js/plugins.js"></script>
+  <script defer src="js/script.js"></script>
+  <!-- end scripts-->
+
+  <script src="js/libs/underscore.min.js"></script>
+  <script src="js/libs/backbone.min.js"></script>
+  <script src="js/libs/backbone-localStorage.min.js"></script>
+
+
+  <!-- The JS Sandbox Console script (requires underscore, backbone and jquery): -->
+  <script src="js/libs/sandbox-console.js"></script>
+
+  <!-- When ready, create the model and view -->
+  <script type="text/javascript">
+  
+    var MASCP_URL = 'https://raw.github.com/hirenj/mascp-jstools/develop/dist/js/maschup.min.js';
+    var STOOLS_URL = 'https://raw.github.com/hirenj/mascp-jstools/develop/script_tools.js';
+  
+    jQuery(document).ready(function($) {
+      // Create the sandbox:
+      window.sandbox = new Sandbox.View({
+        el : $('#sandbox'),
+        model : new Sandbox.Model({
+          iframe : false,  // evaluate commands inside a hidden iframe (default: false)
+          fallback : true // use global eval if iframe isn't available (default: true)
+        })
+      });
+      window.sandbox.model.load(MASCP_URL);
+      exports = window;
+      require = function() {};
+      window.sandbox.model.load(STOOLS_URL);
+      
+      console.log = function(message) {
+        window.sandbox.model.addHistory({'command' : 'log', 'result' : message });
+      };
+    });
+  </script>
+
+
+  <script> // Change UA-XXXXX-X to be your site's ID
+    window._gaq = [['_setAccount','UAXXXXXXXX1'],['_trackPageview'],['_trackPageLoadTime']];
+    Modernizr.load({
+      load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
+    });
+  </script>
+
+
+  <!--[if lt IE 7 ]>
+    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+  <![endif]-->
+  
+</body>
+</html>
