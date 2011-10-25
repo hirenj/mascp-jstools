@@ -125,7 +125,27 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
     });
     return this;
 };
-
+/** Retrieve an array of positions that phosphorylation has been experimentally verified to occur upon
+ *  @returns {Array}    Phosphorylation positions upon the full protein
+ */
+MASCP.RippdbReader.Result.prototype.getAllExperimentalPositions = function()
+{
+    var specs = this.getSpectra();
+    var results = [];
+    var seen = {};
+    specs.forEach(function(spec) {
+        var peps = spec.peptides;
+        peps.forEach(function(pep) {
+            pep.positions.forEach(function(pos) {
+                if ( ! seen[pos] ) {
+                    results.push(pos);
+                    seen[pos] = true;
+                }
+            });
+        });
+    });
+    return results;
+}
 MASCP.RippdbReader.Result.prototype.render = function()
 {
 };
