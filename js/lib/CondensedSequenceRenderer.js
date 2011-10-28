@@ -28,7 +28,6 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     jQuery(this).bind('sequenceChange',function() {
         for (var layername in MASCP.layers) {
             if (MASCP.layers.hasOwnProperty(layername)) {
-                self.addTrack(MASCP.layers[layername]);
                 MASCP.layers[layername].disabled = true;
             }
         }
@@ -1107,7 +1106,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 
 var vis_change_event = function(e,renderer,visibility) {
     var self = this;
-    if ( renderer._layer_containers[self.name].length <= 0 ) {
+    if ( ! renderer._layer_containers[self.name] || renderer._layer_containers[self.name].length <= 0 ) {
         return;
     }
     
@@ -1115,7 +1114,6 @@ var vis_change_event = function(e,renderer,visibility) {
         if (renderer._layer_containers[self.name].tracers) {
             renderer._layer_containers[self.name].tracers.hide();
         }
-        renderer._layer_containers[self.name].attr({ 'y': -1000 });
     }
 };
 
@@ -1126,7 +1124,8 @@ var vis_change_event = function(e,renderer,visibility) {
  */
 clazz.prototype.addTrack = function(layer) {
     var RS = this._RS;
-
+    var renderer = this;
+    
     if ( ! this._canvas ) {
         this.bind('sequencechange',function() {
             this.addTrack(layer);
@@ -1135,9 +1134,10 @@ clazz.prototype.addTrack = function(layer) {
         console.log("No canvas, cannot add track, waiting for sequencechange event");
         return;
     }
+
     var layer_containers = this._layer_containers || [];
 
-    if ( ! layer_containers[layer.name] ) {                
+    if ( ! layer_containers[layer.name] || layer_containers[layer.name] === null) {
         layer_containers[layer.name] = this._canvas.set();
         if ( ! layer_containers[layer.name].track_height) {
             layer_containers[layer.name].track_height = 4;
@@ -1150,6 +1150,9 @@ clazz.prototype.addTrack = function(layer) {
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(layer_containers[layer.name]._event_proxy).bind(event_names[i],ev_function);
         }
+        jQuery(layer).unbind('removed').bind('removed',function() {
+            renderer.removeTrack(this);
+        });
     }
     
     this._layer_containers = layer_containers;
@@ -1157,22 +1160,18 @@ clazz.prototype.addTrack = function(layer) {
 };
 
 clazz.prototype.removeTrack = function(layer) {
+    if (! this._layer_containers ) {
+        return;
+    }
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {                
         layer_containers[layer.name].forEach(function(el) {
             el.parentNode.removeChild(el);
         });
         this.removeAnnotations(layer);
-        layer_containers[layer.name] = null;
-        delete layer_containers[layer.name];
-        var order = this.trackOrder;
-        if (order.indexOf(layer.name) >= 0) {
-            order.splice(order.indexOf(layer.name),1);
-        }
-        this.trackOrder = order;
+        this._layer_containers[layer.name] = null;
+        layer.disabled = true;
     }
-    
-    this._layer_containers = layer_containers;
     
 };
 
@@ -1198,21 +1197,24 @@ clazz.prototype.refresh = function(animated) {
         
         var name = order[i];
         var container = layer_containers[name];
+        if ( ! container ) {
+            continue;
+        }
         var y_val;
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : -1*(this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
 //            var attrs = { 'y' : (this._axis_height  + (track_heights - container.track_height )/ this.zoom)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };
-
             if (MASCP.getLayer(name).group) {
                 var controller_track = this.navigation.getController(MASCP.getLayer(name).group);
                 if (controller_track && this.isLayerActive(controller_track)) {
-//                    attrs.y = layer_containers[controller_track.name].currenty;
+                    attrs.y = layer_containers[controller_track.name].currenty();
                 }
             }
             
             if (container.fixed_track_height) {
                 delete attrs.height;
             }
+
             if (animated) {                
                 container.animate(attrs);
             } else {
