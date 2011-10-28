@@ -31,7 +31,7 @@ MASCP.AtPeptideReader.prototype.requestData = function()
 };
 
 /**
- * The list of tissue names that are used by AtProteome for this particular AGI
+ * The list of tissue names that are used by AtPeptide for this particular AGI
  *  @returns {[String]} Tissue names
  */
 MASCP.AtPeptideReader.Result.prototype.tissues = function()

@@ -103,17 +103,18 @@ MASCP.InterproReader.Result.prototype.getDomains = function()
 MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
     var reader = this;
-    MASCP.registerGroup('interpro_domains', {'fullname' : 'Interpro domains', 'color' : '#000000' });
-
-    var overlay_name = 'interpro_controller';
-
-    var css_block = '.active .overlay { background: #000000; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
-    
-    MASCP.registerLayer(overlay_name,{ 'fullname' : 'Interpro domains', 'color' : '#000000', 'css' : css_block });
 
     this.bind('resultReceived', function() {
         var agi = this.agi;
         
+        MASCP.registerGroup('interpro_domains', {'fullname' : 'Interpro domains', 'color' : '#000000' });
+
+        var overlay_name = 'interpro_controller';
+
+        var css_block = '.active .overlay { background: #000000; } .active a { color: #000000; text-decoration: none !important; }  :indeterminate { background: #ff0000; } .tracks .active { background: #0000ff; } .inactive a { text-decoration: none; } .inactive { display: none; }';
+
+        MASCP.registerLayer(overlay_name,{ 'fullname' : 'Interpro domains', 'color' : '#000000', 'css' : css_block });
+
         MASCP.getLayer('interpro_controller').href = '';
         this.result.sequence = sequenceRenderer.sequence;
         var domains = this.result.getDomains();

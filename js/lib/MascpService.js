@@ -370,7 +370,6 @@ var make_params = function(params) {
 };
 
 var do_request = function(request_data) {
-    var request = new XMLHttpRequest();
     
     
     var datablock = null;
@@ -379,6 +378,8 @@ var do_request = function(request_data) {
         request_data.success.call(null,null);
         return;
     }
+
+    var request = new XMLHttpRequest();
     
     if (request_data.type == 'GET' && request_data.data) {
         var index_of_quest = request_data.url.indexOf('?');
@@ -512,27 +513,22 @@ base.retrieve = function(agi,callback)
     if (agi && callback) {
         this.agi = agi;
         var done_result = false;
-        bean.add(self,"resultReceived",function() {
-            bean.remove(self,"resultReceived",arguments.callee);
+        var done_func = function(err) {
+            bean.remove(self,"resultReceived",done_func);
+            bean.remove(self,"error",done_func);
+            bean.remove(self,"requestComplete",done_func);
             if ( ! done_result ) {
-                callback.call(self);
+                if (err) {
+                    callback.call(self,err);
+                } else {
+                    callback.call(self);
+                }
             }
             done_result = true;
-        });
-        bean.add(self,"error",function(err) {
-            bean.remove(self,"error",arguments.callee);
-            if ( ! done_result ) {
-                callback.call(self,err);
-            }
-            done_result = true;
-        });
-        bean.add(self,"requestComplete",function(err) {
-            bean.remove(self,"requestComplete",arguments.callee);
-            if ( ! done_result ) {
-                callback.call(self);
-            }
-            done_result = true;
-        });
+        };
+        bean.add(self,"resultReceived",done_func);
+        bean.add(self,"error",done_func);
+        bean.add(self,"requestComplete",done_func);
     }
     var request_data = this.requestData();
     if (! request_data ) {

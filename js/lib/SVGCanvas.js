@@ -23,7 +23,7 @@ var SVGCanvas = SVGCanvas || (function() {
         an_array.currenty = function() {
             var a_y;
             
-            if (an_array[0].getAttribute('transform')) {                    
+            if (an_array[0] && an_array[0].getAttribute('transform')) {
                 a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
                 if (typeof a_y != 'undefined') {
                     a_y = a_y[2];
@@ -149,11 +149,7 @@ var SVGCanvas = SVGCanvas || (function() {
             var curr_disp = an_array.visibility();
             
             var targ_y = parseInt(hash.y,10);
-
             targ_disp = hash.visibility;
-            if (curr_disp == targ_disp && targ_disp == 'hidden' && targ_y > 0) {
-                return;
-            }
             
             for (key in hash) {
                 if (hash.hasOwnProperty(key)) {

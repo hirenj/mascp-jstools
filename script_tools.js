@@ -1,4 +1,14 @@
-fs = require('fs');
+var print_line;
+if (typeof module !== 'undefined' && module.exports) {
+    fs = require('fs');
+    print_line = function(message) {
+        console.log(message);
+    };
+} else if (typeof window !== 'undefined') {
+    exports = window;
+} else {
+    exports = {};
+}
 
 exports.get_data = function(agi,service) {
     var result = {};
@@ -37,7 +47,7 @@ exports.find_peptide = function(agi,seq) {
         if (err) {
             return;
         }
-        console.log(this.result.getSequence().indexOf(seq));
+        print_line(this.result.getSequence().indexOf(seq));
     })
 };
 
@@ -46,7 +56,7 @@ exports.find_sequence = function(agi) {
         if (err) {
             return;
         }
-        console.log(this.result.getSequence());
+        print_line(this.result.getSequence());
     })    
 };
 
@@ -63,16 +73,19 @@ exports.find_region = function(agi,region) {
         if (max > this.result.getSequence().length) {
             max = this.result.getSequence().length;
         }
-        console.log(this.result.getSequence().substring(region[0],region[1])+'xx'+this.result.getSequence().substring(min,region[0]-1)+'[1m'+this.result.getSequence().substring(region[0]-1,region[1]-1)+'[22m'+this.result.getSequence().substring(region[1]-1,max));
+        print_line(this.result.getSequence().substring(region[0],region[1])+'xx'+this.result.getSequence().substring(min,region[0]-1)+'[1m'+this.result.getSequence().substring(region[0]-1,region[1]-1)+'[22m'+this.result.getSequence().substring(region[1]-1,max));
         
     })    
 };
 
 exports.print_result = function() {
-    console.log(arguments);
+    print_line(arguments);
 };
 
 (function() {
+    if (typeof module === 'undefined' || ! module.exports ) {
+        return;
+    }
     var CSVToArray = function( strData, strDelimiter ){
         strDelimiter = (strDelimiter || ",");
 
@@ -108,14 +121,14 @@ exports.print_result = function() {
         return( arrData );
     };
     
-    var read_csv = function(filename) {
+    exports.read_csv = function(filename) {
         var data = fs.readFileSync(filename);
         return CSVToArray(data,",");
     };
     
     exports.load_data = function(filename,setname) {
         var reader = new MASCP.UserdataReader();
-        reader.setData(setname,read_csv(filename));
+        reader.setData(setname,exports.read_csv(filename));
         return reader;
     };
     
