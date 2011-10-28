@@ -84,17 +84,17 @@
         
         <mkdir dir="build"/>
         
-        <concat destfile="build/maschup.services.js"
+        <concat destfile="build/mascp-jstools.services.js"
                   force="yes">
             <fileset dir="js/lib" includes="MascpService.js"/>
             <fileset dir="js/lib" includes="*Reader.js"/>
             <fileset dir="js/lib" includes="MascotToJSON.js"/>
         </concat>
-        <concat destfile="build/maschup.map.js"
+        <concat destfile="build/mascp-jstools.map.js"
                   force="yes">
             <fileset dir="js/lib" includes="gomap.js"/>                  
         </concat>
-        <concat destfile="build/maschup.renderers.js"
+        <concat destfile="build/mascp-jstools.renderers.js"
                   force="yes">
             <fileset dir="js/lib" includes="SequenceRenderer.js"/>
             <fileset dir="js/lib" includes="SVGCanvas.js" />
@@ -103,11 +103,11 @@
             <fileset dir="js/lib" includes="TagVisualisation.js"/>
         </concat>
 
-        <concat destfile="build/maschup.js" force="yes">
+        <concat destfile="build/mascp-jstools.js" force="yes">
             <fileset dir="js" includes="bean.js"/>
-            <fileset dir="build" includes="maschup.services.js"/>
-            <fileset dir="build" includes="maschup.renderers.js"/>
-            <fileset dir="build" includes="maschup.map.js"/>
+            <fileset dir="build" includes="mascp-jstools.services.js"/>
+            <fileset dir="build" includes="mascp-jstools.renderers.js"/>
+            <fileset dir="build" includes="mascp-jstools.map.js"/>
         </concat>
 
     </target>
@@ -124,11 +124,11 @@
         <mkdir dir="dist/js" />
 
         <jsmin destdir="dist/js" suffix="true">
-            <fileset dir="build" includes="maschup*.js"/>
+            <fileset dir="build" includes="mascp-jstools*.js"/>
         </jsmin>
 
         <copy todir="dist/js">
-            <fileset dir="build" includes="maschup*.js"/>
+            <fileset dir="build" includes="mascp-jstools*.js"/>
         </copy>
 
     </target>
