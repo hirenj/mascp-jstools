@@ -1,7 +1,7 @@
 /*
-http://www.google.com/webfonts#UsePlace:use/Collection:Droid+Sans+Mono|Sorts+Mill+Goudy|Josefin+Sans:100italic,100
+http://www.google.com/webfonts#UsePlace:use/Collection:Droid+Sans+Mono|Sorts+Mill+Goudy|Josefin+Sans:400italic,400
 */
-@import url(http://fonts.googleapis.com/css?family=Droid+Sans+Mono|Sorts+Mill+Goudy|Josefin+Sans:100italic,100);
+@import url(http://fonts.googleapis.com/css?family=Droid+Sans+Mono|Sorts+Mill+Goudy|Josefin+Sans:400italic,400);
 
 /* HTML5 ✰ Boilerplate
  * ==|== normalize ==========================================================
@@ -92,26 +92,30 @@ h1 {
 
 h2.byline {
     font-family: 'Josefin Sans', sans-serif;
-    font-weight: lighter;
+    font-weight: normal;
 }
 
 header {
     position: relative;
 }
 
-header > h1 {
+header > div {
+    position: relative;
+    margin-left: 10%;
+}
+
+header div > h1 {
     font-size: 50px;
 }
 
-header > h2 {
+header div > h2 {
     font-size: 25px;
 }
 
-header > h1,
-header > h2 {
+header div > h1,
+header div > h2 {
     position: relative;
-    left: 10%;
-    width: 80%;
+    width: 100%;
 }
 
 header img {
@@ -183,14 +187,13 @@ table tr > *:first-child {
     header img {
         display: block;
     }
-    header > h1 {
-        width: auto;
-        font-size: 30px;
-        max-width: 300px;
+    header div {
+        margin-right: 200px;
     }
-    header > h2 {
-        width: auto;
-        max-width: 300px;
+    header div h1 {
+        font-size: 30px;
+    }
+    header div h2 {
         font-size: 15px;
     }
 }
@@ -198,13 +201,16 @@ table tr > *:first-child {
 @media only screen and (min-width: 768px) {
     header img {
         display: block;
+        width: 150px;
+        height: 150px;
     }
-    header > h1 {
-        max-width: 550px;
+    header div {
+        margin-right: 250px;
+    }
+    header div h1 {
         font-size: 50px;
     }
-    header > h2 {
-        max-width: 550px;
+    header div h2 {
         font-size: 25px;
     }
 
