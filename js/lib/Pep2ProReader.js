@@ -1,9 +1,9 @@
 /**
- *  @fileOverview Classes for reading data from the AtProteome database using JSON data
+ *  @fileOverview Classes for reading data from the Pep2Pro database using JSON data
  */
 
 /**
- * @class   Service class that will retrieve AtProteome data for this entry given an AGI.
+ * @class   Service class that will retrieve Pep2Pro data for this entry given an AGI.
  *          Data is received in JSON format.
  * @description Default class constructor
  * @param   {String} agi            Agi to look up
@@ -29,7 +29,7 @@
 | PO:0009025 | leaf            |
 +------------+-----------------+
 */ 
-MASCP.AtProteomeReader = MASCP.buildService(function(data) {
+MASCP.Pep2ProReader = MASCP.buildService(function(data) {
                         this._raw_data = data;
                         if (data) {
                             this._populate_spectra(data);
@@ -38,7 +38,7 @@ MASCP.AtProteomeReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.AtProteomeReader.prototype.requestData = function()
+MASCP.Pep2ProReader.prototype.requestData = function()
 {
     var self = this;
     var agi = this.agi;
@@ -52,32 +52,32 @@ MASCP.AtProteomeReader.prototype.requestData = function()
 };
 
 
-MASCP.AtProteomeReader.SERVICE_URL = 'http://fgcz-pep2pro.uzh.ch/mascp_gator.php?';
+MASCP.Pep2ProReader.SERVICE_URL = 'http://fgcz-pep2pro.uzh.ch/mascp_gator.php?';
 
 /**
- * @class   Container class for results from the AtProteome service
+ * @class   Container class for results from the Pep2Pro service
  * @extends MASCP.Service.Result
  */
 // We need this line for the JsDoc to pick up this class
-MASCP.AtProteomeReader.Result = MASCP.AtProteomeReader.Result;
+MASCP.Pep2ProReader.Result = MASCP.Pep2ProReader.Result;
 
 /**
- * The list of tissue names that are used by AtProteome for this particular AGI
+ * The list of tissue names that are used by Pep2Pro for this particular AGI
  *  @returns {[String]} Tissue names
  */
-MASCP.AtProteomeReader.Result.prototype.tissues = function()
+MASCP.Pep2ProReader.Result.prototype.tissues = function()
 {
     return this._tissues;
 };
 
-MASCP.AtProteomeReader.Result.prototype.getPeptides = function()
+MASCP.Pep2ProReader.Result.prototype.getPeptides = function()
 {
     return this._peptides;
 };
 
 
-MASCP.AtProteomeReader.Result.prototype = MASCP.extend(MASCP.AtProteomeReader.Result.prototype,
-/** @lends MASCP.AtProteomeReader.Result.prototype */
+MASCP.Pep2ProReader.Result.prototype = MASCP.extend(MASCP.Pep2ProReader.Result.prototype,
+/** @lends MASCP.Pep2ProReader.Result.prototype */
 {
     /** @field 
      *  @description Hash keyed by tissue name containing the number of spectra for each tissue for this AGI */
@@ -90,7 +90,7 @@ MASCP.AtProteomeReader.Result.prototype = MASCP.extend(MASCP.AtProteomeReader.Re
     sequence : null
 });
 
-MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
+MASCP.Pep2ProReader.Result.prototype._populate_spectra = function(data)
 {
     this.spectra = {};
     this._tissues = [];
@@ -107,7 +107,7 @@ MASCP.AtProteomeReader.Result.prototype._populate_spectra = function(data)
     }
 };
 
-MASCP.AtProteomeReader.Result.prototype._populate_peptides = function(data)
+MASCP.Pep2ProReader.Result.prototype._populate_peptides = function(data)
 {
     this.peptide_counts_by_tissue = {};
     if ( ! data || ! data.peptides ) {
@@ -131,7 +131,7 @@ MASCP.AtProteomeReader.Result.prototype._populate_peptides = function(data)
     }
 };
 
-MASCP.AtProteomeReader.Result.prototype.render = function()
+MASCP.Pep2ProReader.Result.prototype.render = function()
 {
     var params = jQuery.param(this.reader.requestData().data);
     var total = 0;
@@ -140,14 +140,14 @@ MASCP.AtProteomeReader.Result.prototype.render = function()
             total += parseInt(this.spectra[i],10);
         }
     }
-    var a_container = jQuery('<div>MS/MS spectra <input type="checkbox" class="group_toggle"/><a style="display: block; float: right;" href="http://fgcz-atproteome.unizh.ch/index.php?'+params+'">AtProteome</a></div>');
+    var a_container = jQuery('<div>MS/MS spectra <input type="checkbox" class="group_toggle"/><a style="display: block; float: right;" href="http://fgcz-pep2pro.unizh.ch/index.php?'+params+'">Pep2Pro</a></div>');
     jQuery(this.reader.renderers).each ( function(i){
-        this.createGroupCheckbox('atproteome',jQuery('input.group_toggle',a_container));
+        this.createGroupCheckbox('pep2pro',jQuery('input.group_toggle',a_container));
     });
     return a_container;
 };
 
-MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
+MASCP.Pep2ProReader.prototype._rendererRunner = function(sequenceRenderer) {
     var tissues = this.result? this.result.tissues() : [];
     for (var i = (tissues.length - 1); i >= 0; i-- ) {
         var tissue = tissues[i];
@@ -156,13 +156,13 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
         }
         var peptide_counts = this.result.peptide_counts_by_tissue[tissue];
 
-        var overlay_name = 'atproteome_by_tissue_'+tissue;
+        var overlay_name = 'pep2pro_by_tissue_'+tissue;
     
         // var css_block = ' .overlay { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
         var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
-        MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'atproteome', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
+        MASCP.registerLayer(overlay_name,{ 'fullname' : this.result._long_name_map[tissue], 'group' : 'pep2pro', 'color' : '#000099', 'css' : css_block, 'data' : { 'po' : tissue, 'count' : peptide_counts } });
             
         var positions = this._normalise(this._mergeCounts(peptide_counts));
         var index = 1;
@@ -182,7 +182,7 @@ MASCP.AtProteomeReader.prototype._rendererRunner = function(sequenceRenderer) {
     }
 };
 
-MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
+MASCP.Pep2ProReader.prototype._groupSummary = function(sequenceRenderer)
 {
     var tissues = this.result? this.result.tissues() : [];
     var positions = [];
@@ -222,7 +222,7 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
     var last_start = null;
     var last_tissue = null;
     
-    var overlay_name = 'atproteome_controller';
+    var overlay_name = 'pep2pro_controller';
 
     var css_block = ' .overlay { display: none; } .tracks .active { fill: #000099; } .inactive { display: none; } .active .overlay { display: block; top: 0px; background: #000099; } ';
     
@@ -232,7 +232,7 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
     var an_agi = this.result.agi;
     var a_locus = an_agi.replace(/\.\d/,'');
 
-    MASCP.getLayer('atproteome_controller').href = 'http://fgcz-pep2pro.uzh.ch/locus.php?'+a_locus;
+    MASCP.getLayer('pep2pro_controller').href = 'http://fgcz-pep2pro.uzh.ch/locus.php?'+a_locus;
     while (index <= positions.length) {
         if ( index <= 0 ) {
             index += 1;
@@ -254,17 +254,17 @@ MASCP.AtProteomeReader.prototype._groupSummary = function(sequenceRenderer)
     }
     
     if (sequenceRenderer.createGroupController) {
-        sequenceRenderer.createGroupController('atproteome_controller','atproteome');
+        sequenceRenderer.createGroupController('pep2pro_controller','pep2pro');
     }
 };
 
-MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
+MASCP.Pep2ProReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 {
 
     var reader = this;
 
     this.bind('resultReceived', function() {
-        MASCP.registerGroup('atproteome',{ 'fullname' : 'Pep2Pro data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
+        MASCP.registerGroup('pep2pro',{ 'fullname' : 'Pep2Pro data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
         if ( sequenceRenderer.sequence != this.result.sequence && this.result.sequence != '' ) {
             jQuery(sequenceRenderer).bind('sequenceChange',function() {
@@ -285,7 +285,7 @@ MASCP.AtProteomeReader.prototype.setupSequenceRenderer = function(sequenceRender
     return this;
 };
 
-MASCP.AtProteomeReader.prototype._normalise = function(array)
+MASCP.Pep2ProReader.prototype._normalise = function(array)
 {
     var max_val = 0, i = 0;
     for (i = 0; i < array.length; i++)
@@ -303,7 +303,7 @@ MASCP.AtProteomeReader.prototype._normalise = function(array)
     return array;
 };
 
-MASCP.AtProteomeReader.prototype._mergeCounts = function(hash)
+MASCP.Pep2ProReader.prototype._mergeCounts = function(hash)
 {
     var counts = [];
     for (var position in hash) {

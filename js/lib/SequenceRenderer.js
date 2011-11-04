@@ -126,7 +126,10 @@ MASCP.registerLayer = function(layerName, options)
         this.layers = {};
     }
     if (this.layers[layerName]) {
-        this.layers[layerName].disabled = false;
+        if (this.layers[layerName].disabled) {
+            this.layers[layerName].disabled = false;
+            bean.fire(MASCP,'layerRegistered',[this.layers[layerName]]);
+        }
         return this.layers[layerName];
     }
     
@@ -257,10 +260,12 @@ MASCP.SequenceRenderer = (function() {
                     }
                 }
 
-                for (i = ((this._track_order || []).length - 1); i >= 0; i--) {
-                    if (track_order.indexOf(this._track_order[i]) < 0) {
-                        this.hideLayer(this._track_order[i]);
-                        jQuery(MASCP.getLayer(this._track_order[i])).trigger('removed');
+                for (i = ((renderer_track_order || []).length - 1); i >= 0; i--) {
+                    if (track_order.indexOf(renderer_track_order[i]) < 0) {
+                        this.hideLayer(renderer_track_order[i]);
+                        this.hideGroup(renderer_track_order[i]);
+                        jQuery(MASCP.getLayer(renderer_track_order[i])).trigger('removed');
+                        jQuery(MASCP.getGroup(renderer_track_order[i])).trigger('removed');
                     }
                 }
                 renderer_track_order = track_order;
@@ -880,6 +885,9 @@ MASCP.getLayer = function(layer) {
  * @see MASCP.Group
  */
 MASCP.getGroup = function(group) {
+    if (typeof group == 'undefined') {
+        return;
+    }
     if ( ! MASCP.groups ) {
         return;
     }
