@@ -96,9 +96,9 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
 
 
             var in_layer = 'all'+acc;
-            var group_layer = acc.indexOf('_') >= 0 ? (acc.split('_')[0]) : null;
+            var group_layer = acc.indexOf('_') >= 0 ? (acc.split('_')[0]).toUpperCase() : null;
 
-            if (['SALK','MPICAO','GMI','MPISCHNEE','MPICOLLAB'].indexOf(group_layer) < 0) {
+            if (['SALK','MPICAO','GMI','MPISCHNEE','MPICOLLAB', 'JGI'].indexOf(group_layer) < 0) {
                 group_layer = null;
             } else {
                 if (group_layer.match(/^MPI/)) {
