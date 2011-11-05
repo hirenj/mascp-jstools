@@ -45,18 +45,12 @@ MASCP.RippdbReader.Result.prototype.getSpectra = function()
 {
     var content = null;
 
-    if (this._spectra) {
-        return this._spectra;
-    }
-
     if (! this._raw_data || ! this._raw_data.spectra ) {
         return [];
     }
 
 
-    this._spectra = this._raw_data.spectra;
-    
-    return this._spectra;
+    return this._raw_data.spectra;
 };
 
 MASCP.RippdbReader.Result.prototype._cleanSequence = function(sequence)
