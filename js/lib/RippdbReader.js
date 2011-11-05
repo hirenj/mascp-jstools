@@ -43,7 +43,6 @@ MASCP.RippdbReader.Result = MASCP.RippdbReader.Result;
  */
 MASCP.RippdbReader.Result.prototype.getSpectra = function()
 {
-    var content = null;
 
     if (! this._raw_data || ! this._raw_data.spectra ) {
         return [];
