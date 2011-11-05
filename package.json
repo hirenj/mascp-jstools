@@ -31,11 +31,14 @@
        "xmlhttprequest": "1.0.x",
        "jsdom": "0.2.x",
        "optimist": "0.2.x",
+       "carrier" : "0.1.x",
        "sqlite3": "2.0.x"
    },
    "main" : "dist/js/mascp-jstools.services.js",
    "bin" : {
-       "gator-cli" : "cli"
+       "gator-cli" : "bin/cli",
+       "gator-managedb" : "bin/data-manager.js",
+       "gator-loadcsv"  : "bin/load-csv.js"
    },
    "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
@@ -43,7 +46,7 @@
    "engines": ["v8", "node >= 0.4.11"],
    "directories": {
        "lib": "js/lib",
-       "bin": "local/binaries",
+       "bin": "bin",
        "jars": "extlib/java" 
    },
    "private" : "true"
