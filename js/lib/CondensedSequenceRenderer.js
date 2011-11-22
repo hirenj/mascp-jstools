@@ -837,11 +837,33 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     
     var blob_id = this._index+'_'+opts.angle;
 
+    if (opts.angle == 'auto') {
+        if ( ! all_annotations[layerName][blob_id] ) {
+            all_annotations[layerName][blob_id] = {};
+        }
+    }
+
     var blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
 
     var height = default_annotation_height;
     var offset = this._renderer._RS * height / 2;
     var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
+    
+    if (opts.angle == 'auto') {
+        if ( ! blob.contents ) {
+            blob.contents = [opts.content];
+        } else {
+            if (blob.contents.indexOf(opts.content) < 0) {
+                blob.contents.push(opts.content);
+            }
+        }
+
+        opts.angle = blob.contents.length == 1 ? 0 : (-45 + 90*((blob.contents.indexOf(opts.content))/(blob.contents.length-1)));
+        blob_id = this._index+'_'+opts.content;
+        blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
+        blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
+    }    
+    
     blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts.angle+',0.01,'+offset+')');
     all_annotations[layerName][blob_id] = blob;
     if ( ! blob_exists ) {
@@ -954,6 +976,9 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             var a_blob = all_annotations[layerName][blob_idx];
+            if ( ! a_blob.getAttribute ) {
+                continue;
+            }
             var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 1);
             offset = 0.5*((this._RS * height * 1) - size_val);
             var curr_transform = a_blob.getAttribute('transform');
@@ -971,6 +996,9 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             a_parent = all_annotations[layerName][blob_idx]._parent;
+            if ( ! a_parent ) {
+                continue;
+            }
             a_parent.appendChild(all_annotations[layerName][blob_idx]);
         }
     }
