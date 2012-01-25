@@ -1054,6 +1054,42 @@ base.retrieve = function(agi,callback)
         end_transaction = function() {
             // No support for transactions here. Do nothing.
         };
+    } else {
+        sweep_cache = function(timestamp) {
+        };
+        
+        clear_service = function(service,acc) {
+        };
+        
+        search_service = function(service,cback) {
+        };
+
+        cached_accessions = function(service,cback) {
+            cback.call(clazz,[]);
+        };
+
+        get_db_data = function(acc,service,cback) {
+            cback.call(null,null,null);
+        };
+        
+        store_db_data = function(acc,service,data) {
+        };
+
+        find_latest_data = function(acc,service,timestamp,cback) {
+            // We don't actually retrieve historical data for this
+            cback.call(null,[]);
+        };
+
+        data_timestamps = function(service,timestamp,cback) {
+            cback.call(null,[]);
+        };
+        
+        begin_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
+        end_transaction = function() {
+            // No support for transactions here. Do nothing.
+        };
     }
     
     
