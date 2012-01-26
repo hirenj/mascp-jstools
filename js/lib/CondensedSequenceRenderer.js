@@ -305,11 +305,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         } else {    
             for (var i = 0; i < seq_chars.length; i++) {
                 a_text = canvas.text(x,12,seq_chars[i]);
+                a_text.firstChild.setAttribute('dy','1.5ex');
                 amino_acids.push(a_text);
                 a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
                 x += 1;
             }
-            amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','dominant-baseline':'hanging','height': RS,'font-size':RS,'fill':'#000000'});
+            amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
         }
         canvas.addEventListener('panstart', function() {
             amino_acids.attr( { 'y' : '-1000'});
@@ -385,14 +386,14 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         for ( i = 0; i < big_labels.length; i++ ) {
             big_labels[i].style.textAnchor = 'middle';
             big_labels[i].setAttribute('text-anchor','middle');
-            big_labels[i].setAttribute('dominant-baseline','hanging');
+            big_labels[i].firstChild.setAttribute('dy','1.5ex');
             big_labels[i].setAttribute('font-size',7*RS+'pt');
         }
 
         for ( i = 0; i < little_labels.length; i++ ) {
             little_labels[i].style.textAnchor = 'middle';
             little_labels[i].setAttribute('text-anchor','middle');
-            little_labels[i].setAttribute('dominant-baseline','hanging');
+            little_labels[i].firstChild.setAttribute('dy','1.5ex');
             little_labels[i].setAttribute('font-size',2*RS+'pt');        
             little_labels[i].style.fill = '#000000';
         }

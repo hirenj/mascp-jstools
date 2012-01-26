@@ -671,7 +671,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             a_text.setAttribute('fill','#ffffff');
             a_text.setAttribute('stroke','#ffffff');
             a_text.setAttribute('stroke-width','1');
-            a_text.setAttribute('dominant-baseline', 'middle');
+            a_text.firstChild.setAttribute('dy', '0.5ex');
 
             // r = track_canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
             // r.setAttribute('fill','#00ff00');
@@ -797,7 +797,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 group_toggler.setAttribute('height', 1.75*t_height);
                 group_toggler.setAttribute('font-size',1.5*t_height);
                 group_toggler.setAttribute('fill','#ffffff');
-                group_toggler.setAttribute('dominant-baseline','central');
                 group_toggler.setAttribute('pointer-events','none');
             
                 expander.push(group_toggler);
