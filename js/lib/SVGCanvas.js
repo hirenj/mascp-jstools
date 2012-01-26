@@ -483,7 +483,7 @@ var SVGCanvas = SVGCanvas || (function() {
 
             var text = this.text(x+width/2,y+(height/3),txt);        
             text.setAttribute('text-anchor', 'middle');
-            text.setAttribute('dominant-baseline', 'hanging');
+            text.firstChild.setAttribute('dy', '1.5ex');
             text.setAttribute('font-size',0.5*height);
             text.setAttribute('fill','#ffffff');
             button.push(back);
@@ -629,8 +629,8 @@ var SVGCanvas = SVGCanvas || (function() {
             text.setAttribute('font-size',r*RS);
             text.setAttribute('font-weight','bolder');
             text.setAttribute('fill','#ffffff');
-            text.setAttribute('style','font-family: sans-serif; text-anchor: middle; dominant-baseline: hanging;');
-            text.setAttribute('dominant-baseline','hanging');
+            text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
+            text.firstChild.setAttribute('dy','1.5ex');
             text.setAttribute('text-anchor','middle');
             marker_group.push(text);
 
@@ -697,10 +697,13 @@ var SVGCanvas = SVGCanvas || (function() {
         };
         canvas.text = function(x,y,text) {
             var a_text = document.createElementNS(svgns,'text');
+            var a_tspan = document.createElementNS(svgns, 'tspan');
             if (typeof text != 'string') {
                 a_text.appendChild(text);
             } else {
-                a_text.textContent = text;
+                a_text.appendChild(a_tspan);
+                a_tspan.textContent = text;
+                a_tspan.setAttribute('dy','0');
             }
             a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
             a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
