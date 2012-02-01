@@ -1474,7 +1474,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
         renderer.__defineGetter__("zoom", accessors.getZoom);
     }
 
-    if (Object.defineProperty) {
+    if (Object.defineProperty && ! MASCP.IE8) {
         Object.defineProperty(renderer,"zoom", {
             get : accessors.getZoom,
             set : accessors.setZoom
@@ -1523,7 +1523,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
 
 
 
-    if (Object.defineProperty) {
+    if (Object.defineProperty && ! MASCP.IE8 ) {
         Object.defineProperty(clazz.prototype,"padding", {
             get : accessors.getPadding,
             set : accessors.setPadding
