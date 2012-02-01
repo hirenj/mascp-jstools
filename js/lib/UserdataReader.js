@@ -216,7 +216,9 @@ MASCP.UserdataReader.datasets = function(cback) {
         for (var i = 0, len = services.length; i < len; i++){
             result.push(services[i].replace(/MASCP.UserdataReader./,''));
         }
-        result.forEach(cback);
+        if (result.forEach) {
+            result.forEach(cback);
+        }
     });
 };
 
