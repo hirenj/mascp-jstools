@@ -284,7 +284,7 @@ MASCP.SequenceRenderer = (function() {
             renderer.setTrackOrder = accessors.setTrackOrder;
         }
 
-        if (Object.defineProperty && MASCP.IE) {
+        if ((typeof Object.defineProperty == 'function') && MASCP.IE && ! MASCP.IE8 ) {
             Object.defineProperty(renderer,"trackOrder", {
                 get : accessors.getTrackOrder,
                 set : accessors.setTrackOrder
