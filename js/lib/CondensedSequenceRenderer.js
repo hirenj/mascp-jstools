@@ -323,15 +323,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         },false);
     
         canvas.addEventListener('zoomChange', function() {
-           if (renderer.zoom < 3.8 && renderer.zoom > 3.5 ) {
-               renderer.zoom = 4;
-               return;
-           }
-           if (renderer.zoom > 3.8 && renderer.zoom < 4 ) {
-               renderer.zoom = 3.5;
-               return;
-           }
-       
            if (canvas.zoom > 3.5) {
                renderer._axis_height = 14;
                amino_acids.attr({'y': 12*RS});
