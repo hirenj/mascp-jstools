@@ -961,9 +961,12 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
             a_text.setAttribute('textLength',RS*this.sequence.length);
             a_text.setAttribute('text-anchor', 'start');
             a_text.setAttribute('dx',5);
-            a_text.setAttribute('dy',(i+0.75)*RS);
+            a_text.setAttribute('dy',(i+0.25)*RS);
             a_text.setAttribute('font-size', RS);
             a_text.setAttribute('fill', '#000000');
+            if (texts.length > 1) { 
+                a_text.setAttribute('rotate','90');
+            }
             container.push(a_text);
         }
         container.fixed_track_height = texts.length;
