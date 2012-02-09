@@ -168,6 +168,15 @@ MASCP.buildService = function(dataExtractor)
     return clazz;
 };
 
+MASCP.cloneService = function(service,name) {
+    var new_service = MASCP.buildService(function() { return this; });
+    new_service.Result = service.Result;
+    new_service.prototype = new service();
+    MASCP[name] = new_service;
+    new_service.prototype['__class__'] = new_service;
+    return new_service;
+};
+
 MASCP.extend = function(in_hsh,hsh) {
     for (var i in hsh) {
         if (true) {
