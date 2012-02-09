@@ -902,6 +902,86 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addAnnotation = addAnnotationToLayer;
 };
 
+
+MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
+    var layerName = lay;
+    if (typeof layerName !== 'string') {
+        layerName = lay.name;
+    }
+    var canvas = this._canvas;
+    if ( ! canvas || typeof layerName == 'undefined') {
+        return;
+    }
+    var RS = this._RS;
+
+    var rows = parseInt(in_text.length / this.sequence.length);
+    var texts = [];
+
+    if (rows > 1) {
+        var grps = in_text.match(new RegExp( ".{"+rows+"}", "g"));
+        for (var i = 0; i < grps.length; i++) {
+            var tot_length = grps[i].length - 1;
+            while (tot_length >= 0) {
+                if ( ! texts[tot_length] ) {
+                    texts[tot_length] = "";
+                }
+                texts[tot_length] += grps[i].charAt(tot_length);
+                tot_length -= 1;
+            }
+        }
+    } else {
+        texts = [in_text];
+    }
+
+    var container = this._layer_containers[layerName];
+
+    var x = 0;
+
+    var has_textLength = true;
+    var no_op = function() {};
+    try {
+        var test_el = document.createElementNS(svgns,'text');
+        test_el.setAttribute('textLength',10);
+        no_op(test_el.textLength);
+    } catch (e) {
+        has_textLength = false;
+    }
+
+    if ("ontouchend" in document) {
+        has_textLength = false;
+    }
+
+    var a_text;
+
+    if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
+        for (var i = 0 ; i < texts.length; i++) {
+            a_text = canvas.text(0,12,document.createTextNode(texts[i]));
+            a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
+            a_text.setAttribute('lengthAdjust','spacing');
+            a_text.setAttribute('textLength',RS*this.sequence.length);
+            a_text.setAttribute('text-anchor', 'start');
+            a_text.setAttribute('dx',5);
+            a_text.setAttribute('dy',(i+0.75)*RS);
+            a_text.setAttribute('font-size', RS);
+            a_text.setAttribute('fill', '#000000');
+            container.push(a_text);
+        }
+        container.fixed_track_height = texts.length;
+    } else {
+        var seq_chars = in_text.split('');
+        for (var i = 0; i < seq_chars.length; i++) {
+            a_text = canvas.text(x,12,seq_chars[i]);
+            a_text.firstChild.setAttribute('dy',(1.5*(i % texts.length))+'ex');
+            container.push(a_text);
+            a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
+            if ((i % texts.length) == 0 && i > 0) {
+                x += 1;
+            }
+        }
+        container.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
+    }
+};
+
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
     all_annotations = {};
 };
