@@ -913,6 +913,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
         return;
     }
     var RS = this._RS;
+    var renderer = this;
 
     var rows = parseInt(in_text.length / this.sequence.length);
     var texts = [];
@@ -983,6 +984,17 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
         }
         container.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
     }
+    
+     canvas.addEventListener('zoomChange', function() {
+        if (canvas.zoom > 3.5) {
+            renderer.showLayer(lay);
+        } else {
+            renderer.hideLayer(lay);
+        }
+        renderer.refresh();
+    },false);
+    
+    
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
