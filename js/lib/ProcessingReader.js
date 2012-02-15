@@ -70,7 +70,10 @@ MASCP.ProcessingReader.prototype.setupSequenceRenderer = function(sequenceRender
         }
         MASCP.registerLayer('processing',{ 'fullname' : 'N-Terminal (mod)', 'color' : '#ffEEEE', 'css' : css_block });
         sequenceRenderer.getAA(1).addBoxOverlay('processing',(pos+pep.length+0.5),1);
-        sequenceRenderer.getAA(pos+1+pep.length).addAnnotation('processing',1, { 'border' : 'rgb(150,0,0)', 'content' : 'M', 'angle': 0 });
+        var aa = sequenceRenderer.getAA(pos+1+pep.length);
+        if (aa) {
+            aa.addAnnotation('processing',1, { 'border' : 'rgb(150,0,0)', 'content' : 'M', 'angle': 0 });
+        }
 
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     });
