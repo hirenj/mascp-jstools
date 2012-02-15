@@ -272,7 +272,7 @@ MASCP.RnaEditReader.prototype.setupSequenceRenderer = function(renderer) {
 
             var ins = [];
             var outs = [];
-            var acc_layer = renderer.registerLayer(in_layer, {'fullname' : acc_fullname });
+            var acc_layer = renderer.registerLayer(in_layer, {'fullname' : 'RNA Edit (mod)' });
 
             MASCP.getLayer(in_layer).icon = null;
             var i;
