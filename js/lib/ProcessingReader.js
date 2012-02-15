@@ -68,9 +68,9 @@ MASCP.ProcessingReader.prototype.setupSequenceRenderer = function(sequenceRender
         if (pos < 0) {
             return;
         }
-        MASCP.registerLayer('processing',{ 'fullname' : 'Processing', 'color' : '#ffEEEE', 'css' : css_block });
+        MASCP.registerLayer('processing',{ 'fullname' : 'N-Terminal (mod)', 'color' : '#ffEEEE', 'css' : css_block });
         sequenceRenderer.getAA(1).addBoxOverlay('processing',(pos+pep.length+0.5),1);
-        sequenceRenderer.getAA(pos+1+pep.length).addAnnotation('processing',1, { 'border' : 'rgb(150,0,0)', 'content' : '➜', 'angle': 0 });
+        sequenceRenderer.getAA(pos+1+pep.length).addAnnotation('processing',1, { 'border' : 'rgb(150,0,0)', 'content' : 'M', 'angle': 0 });
 
         jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
     });
