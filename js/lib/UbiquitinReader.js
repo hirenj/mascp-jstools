@@ -11,7 +11,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.UbiquitinReader = MASCP.buildService(function(data) {
-                        this._raw_data = data ? data.data : null;
+                        this._raw_data = data;
                         return this;
                     });
 
@@ -44,11 +44,11 @@ MASCP.UbiquitinReader.Result = MASCP.UbiquitinReader.Result;
 MASCP.UbiquitinReader.Result.prototype.getPeptides = function()
 {
     var content = null;
-    if (! this._raw_data || ! this._raw_data.peptides ) {
+    if (! this._raw_data || ! this._raw_data.data  || ! this._raw_data.data.peptides ) {
         return [];
     }
 
-    return this._raw_data.peptides;
+    return this._raw_data.data.peptides;
 };
 
 MASCP.UbiquitinReader.Result.prototype._cleanSequence = function(sequence)
