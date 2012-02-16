@@ -236,7 +236,7 @@ MASCP.cloneService(MASCP.SnpReader,"RnaEditReader");
 
 MASCP.RnaEditReader.SERVICE_URL = '?';
 
-MASCP.SnpReader.prototype.requestData = function()
+MASCP.RnaEditReader.prototype.requestData = function()
 {
     var self = this;
     return {
