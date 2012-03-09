@@ -32,7 +32,7 @@
        "jsdom": "0.2.x",
        "optimist": "0.2.x",
        "carrier" : "0.1.x",
-       "sqlite3": "2.0.x"
+       "sqlite3": "2.1.x"
    },
    "main" : "dist/js/mascp-jstools.services.js",
    "bin" : {
@@ -43,7 +43,7 @@
    "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
    "cpu": ["x86", "ppc", "x86_64"],
-   "engines": ["v8", "node >= 0.4.11"],
+   "engines": ["v8", "node >= 0.6.x"],
    "directories": {
        "lib": "js/lib",
        "bin": "bin",
