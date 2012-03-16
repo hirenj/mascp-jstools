@@ -380,19 +380,25 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var little_ticks = canvas.set();
         var big_labels = canvas.set();
         var little_labels = canvas.set();
-    
+        var minor_mark = 10;
+        var major_mark = 20;
+        
+        if (this.sequence.length > 5000) {
+            minor_mark = 100;
+            major_mark = 200;
+        }
     
         for ( i = 0; i < (lineLength/5); i++ ) {
 
-            if ( (x % 10) === 0) {
+            if ( (x % minor_mark) === 0) {
                 big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
             } else {
                 little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
             }
 
-            if ( (x % 20) === 0 && x !== 0) {
+            if ( (x % major_mark) === 0 && x !== 0) {
                 big_labels.push(canvas.text(x,5,""+(x)));
-            } else if (( x % 10 ) === 0 && x !== 0) {
+            } else if (( x % minor_mark ) === 0 && x !== 0) {
                 little_labels.push(canvas.text(x,7,""+(x)));
             }
 
@@ -592,7 +598,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         
             drawAxis.call(this,canv,line_length);
             drawAminoAcids.call(this,canv);
-        
+            renderer._layer_containers = {};
             jQuery(renderer).trigger('sequenceChange');
         });
     
@@ -770,7 +776,21 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     }
 
 
-    var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);    
+    var rect =  canvas.rect(-0.25+this._index,60,width || 1,4);
+    var rect_x = parseFloat(rect.getAttribute('x'));
+    var rect_max_x = rect_x + parseFloat(rect.getAttribute('width'));
+    var container = this._renderer._layer_containers[layerName];
+    for (var i = 0; i < container.length; i++) {
+        var el_x = parseFloat(container[i].getAttribute('x'));
+        var el_max_x = el_x + parseFloat(container[i].getAttribute('width'));
+        if ((el_x <= rect_x && rect_x <= el_max_x) ||
+            (rect_x <= el_x && el_x <= rect_max_x)) {
+                container[i].setAttribute('x', ""+Math.min(el_x,rect_x));
+                container[i].setAttribute('width', ""+(Math.max(el_max_x,rect_max_x)-Math.min(el_x,rect_x)) );
+                rect.parentNode.removeChild(rect);
+                return container[i];
+            }
+    }
     this._renderer._layer_containers[layerName].push(rect);
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
