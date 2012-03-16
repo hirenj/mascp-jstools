@@ -246,14 +246,14 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var RS = this._RS;
         var seq_chars = this.sequence.split('');
         var renderer = this;
-        var aa_selection = document.createElement('div');
+        //var aa_selection = document.createElement('div');
         // We need to prepend an extra > to the sequence since there is a bug with Safari failing
         // to select reliably when you set the start offset for the range to 0
-        aa_selection.appendChild(document.createTextNode(">"+this.sequence));
-        renderer._container.appendChild(aa_selection);
-        aa_selection.style.top = '110%';
-        aa_selection.style.height = '1px';
-        aa_selection.style.overflow = 'hidden';
+        //aa_selection.appendChild(document.createTextNode(">"+this.sequence));
+        //renderer._container.appendChild(aa_selection);
+        //aa_selection.style.top = '110%';
+        //aa_selection.style.height = '1px';
+        //aa_selection.style.overflow = 'hidden';
     
         var amino_acids = canvas.set();
         var amino_acids_shown = false;
@@ -277,26 +277,32 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             var vals = Array.prototype.slice.call(arguments);
             var from = vals[0];
             var to = vals[1];
-            var sel = window.getSelection();
-            if(sel.rangeCount > 0) {
-                sel.removeAllRanges();
-            }
-            var range = document.createRange();
-            range.selectNodeContents(aa_selection.childNodes[0]);
-            sel.addRange(range);
-            sel.removeAllRanges();
-            range.setStart(aa_selection.childNodes[0],from+1);
-            range.setEnd(aa_selection.childNodes[0],to+1);
-            sel.addRange(range);
+        //     var sel = window.getSelection();
+        //     if(sel.rangeCount > 0) {
+        //         sel.removeAllRanges();
+        //     }
+        //     var range = document.createRange();
+        //     range.selectNodeContents(aa_selection.childNodes[0]);
+        //     sel.addRange(range);
+        //     sel.removeAllRanges();
+        //     range.setStart(aa_selection.childNodes[0],from+1);
+        //     range.setEnd(aa_selection.childNodes[0],to+1);
+        //     sel.addRange(range);
             this.moveHighlight.apply(this,vals);
         };
         var a_text;
     
         if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-            a_text = canvas.text(0,12,document.createTextNode(this.sequence));
+            if (this.sequence.length <= 1500) {
+                a_text = canvas.text(0,12,document.createTextNode(this.sequence));
+                a_text.setAttribute('textLength',RS*this.sequence.length);
+            } else {
+                a_text = canvas.text(0,12,document.createTextNode(this.sequence.substr(0,1500)));
+                console.log(this.sequence.substr(0,1500).length);
+                a_text.setAttribute('textLength',RS*1500);
+            }
             a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
             a_text.setAttribute('lengthAdjust','spacing');
-            a_text.setAttribute('textLength',RS*this.sequence.length);
             a_text.setAttribute('text-anchor', 'start');
             a_text.setAttribute('dx',5);
             a_text.setAttribute('font-size', RS);
@@ -312,24 +318,39 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             }
             amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
         }
+        var update_sequence = function() {
+            var start = parseInt(renderer.leftVisibleResidue());
+            start -= 50;
+            if (start < 0) { 
+                start = 0;
+            }
+            if ((start + 1500) >= renderer.sequence.length) {
+                start = renderer.sequence.length - 1500 - 1;
+            }
+            a_text.replaceChild(document.createTextNode(renderer.sequence.substr(start,1500)),a_text.firstChild);
+            a_text.setAttribute('dx',5+((start)*RS));
+        };
+        
         canvas.addEventListener('panstart', function() {
             amino_acids.attr( { 'y' : '-1000'});
             jQuery(canvas).bind('panend', function() {
                 if (amino_acids_shown) {
-                    amino_acids.attr( { 'y' : 12*RS});                
+                    amino_acids.attr( { 'y' : 12*RS});
+                    update_sequence();
                 }
                 jQuery(canvas).unbind('panend',arguments.callee);
             });
         },false);
-    
+           
         canvas.addEventListener('zoomChange', function() {
            if (canvas.zoom > 3.5) {
                renderer._axis_height = 14;
-               amino_acids.attr({'y': 12*RS});
+               amino_acids.attr({'y': 12*RS, 'visibility' : 'visible'});
                amino_acids_shown = true;
+               update_sequence();
            } else {
                renderer._axis_height = 30;
-               amino_acids.attr({'y':-1000});   
+               amino_acids.attr({'y':-1000, 'visibility' : 'hidden'});   
                amino_acids_shown = false;        
            }
            renderer.refresh();
@@ -437,6 +458,16 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    little_labels.hide();
                }
         },false);
+    };
+
+    clazz.prototype.leftVisibleResidue = function() {
+        var self = this;
+        return 20+self.sequence.length*(1-((self._canvas.width.baseVal.value + self._canvas.currentTranslate.x) / self._canvas.width.baseVal.value));
+    };
+
+    clazz.prototype.rightVisibleResidue = function() {
+        var self = this;
+        return self.leftVisibleResidue() + self.sequence.length*(self._container_canvas.width.baseVal.value / self._canvas.width.baseVal.value);
     };
 
     clazz.prototype.setSequence = function(sequence) {
