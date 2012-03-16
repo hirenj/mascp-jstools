@@ -87,7 +87,11 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
     if ((! this._SERVER_DATASETS) && agi && agi != "dummy") {
         var read = new MASCP.ArbitraryDataReader("",self._endpointURL);
         read.retrieve("dummy",function() {
-            self._SERVER_DATASETS = this.result._raw_data.data;
+            if (this.result) {
+                self._SERVER_DATASETS = this.result._raw_data.data;
+            } else {
+                self._SERVER_DATASETS = [];
+            }
             self.retrieve(in_agi,cback);
         });
         return;
