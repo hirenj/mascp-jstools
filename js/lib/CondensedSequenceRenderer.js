@@ -298,7 +298,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 a_text.setAttribute('textLength',RS*this.sequence.length);
             } else {
                 a_text = canvas.text(0,12,document.createTextNode(this.sequence.substr(0,1500)));
-                console.log(this.sequence.substr(0,1500).length);
                 a_text.setAttribute('textLength',RS*1500);
             }
             a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
@@ -335,10 +334,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         };
         
         canvas.addEventListener('panstart', function() {
-            amino_acids.attr( { 'y' : '-1000'});
+            if (amino_acids_shown) {
+                amino_acids.attr( { 'display' : 'none'});
+            }
             jQuery(canvas).bind('panend', function() {
                 if (amino_acids_shown) {
-                    amino_acids.attr( { 'y' : 12*RS});
+                    amino_acids.attr( {'display' : 'block'});
                     update_sequence();
                 }
                 jQuery(canvas).unbind('panend',arguments.callee);
@@ -1599,7 +1600,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 return;
             }
             if (self.zoomCenter == 'center') {
-                self.zoomCenter = {'x' : 0.5 * self.sequence.length * self._RS * ((self._canvas.width.baseVal.value + self._canvas.currentTranslate.x) / self._canvas.width.baseVal.value) };
+                self.zoomCenter = {'x' : self._RS*(self.leftVisibleResidue()+0.5*(self.rightVisibleResidue() - self.leftVisibleResidue())) };
             }
             
             if ( self.zoomCenter && ! center_residue ) {
