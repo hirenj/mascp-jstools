@@ -508,6 +508,35 @@ var SVGCanvas = SVGCanvas || (function() {
             return button;
         };
 
+        canvas.callout = function(x,y,content,opts) {
+            var callout = this.group();
+            var back = this.rect(-0.5*(opts.width+4),20,opts.width+4,opts.height+4);
+            back.setAttribute('fill','#000000');
+            var pres_box = this.rect(-0.5*(opts.width+1),22,opts.width+1,opts.height);
+            pres_box.setAttribute('fill','#eeeeee');
+            callout.push(back);
+            callout.push(pres_box);
+            var poly = this.poly('0,500 500,1000 -500,1000');
+            poly.setAttribute('fill','#000000');
+            callout.push(poly);
+            var fo = document.createElementNS(svgns,'foreignObject');
+            fo.setAttribute('x',-0.5*(opts.width+1)*RS);
+            fo.setAttribute('y',21*RS);
+            fo.setAttribute('width',opts.width*RS);
+            fo.setAttribute('height',opts.height*RS);
+            callout.push(fo);
+            var html = document.createElementNS('http://www.w3.org/1999/xhtml','html');
+            html.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+            var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
+            body.style.fontSize = (15*RS) +'px';
+            body.style.margin = (5*RS)+'px';
+            html.appendChild(body);
+            body.appendChild(content);
+            fo.appendChild(html);
+            callout.setAttribute('transform','translate('+(x*RS)+','+((y+20)*RS)+')');
+            return callout;
+        };
+
         canvas.growingMarker = function(x,y,symbol,opts) {
             var container = document.createElementNS(svgns,'svg');
             container.setAttribute('viewBox', '-50 -100 150 300');
