@@ -268,11 +268,16 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         } catch (e) {
             has_textLength = false;
         }
-    
-        if ("ontouchend" in document) {
-            has_textLength = false;
-        }
-    
+
+        /* We used to test to see if there was a touch event
+           when doing the textLength method of amino acid
+           layout, but iOS seems to support this now.
+           
+           Test case for textLength can be found here
+           
+           http://jsfiddle.net/nkmLu/11/embedded/result/
+        */
+
         renderer.select = function() {
             var vals = Array.prototype.slice.call(arguments);
             var from = vals[0];
