@@ -847,6 +847,42 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     return rect;
 };
 
+var addCalloutToLayer = function(layerName,element,opts) {
+    var canvas = this._renderer._canvas;
+
+    var renderer = this._renderer;
+    
+    if (typeof element == 'string') {
+        var a_el = document.createElement('div');
+        a_el.innerHTML = renderer.fillTemplate(element,opts);
+        element = a_el;
+    }
+    
+    if ( ! canvas ) {
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);            
+            orig_func.call(self,layerName,width,opts);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+    
+    var callout = canvas.callout(this._index+0.5,0.01,element,{'width' : opts.width || 100 ,'height': opts.height || 100 });
+    callout.setAttribute('height',10*this._renderer._RS);
+    this._renderer._canvas_callout_padding = Math.max((opts.height || 100),this._renderer._canvas_callout_padding||0);
+    this._renderer._layer_containers[layerName].push(callout);
+    callout.clear = function() {
+        var cont = renderer._layer_containers[layerName];
+        if (cont.indexOf(callout) > 0) {
+            cont.splice(cont.indexOf(callout),1);
+        }
+        callout.parentNode.removeChild(callout);
+    };
+    return callout;
+};
+
 var all_annotations = {};
 var default_annotation_height = 8;
 
@@ -954,6 +990,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addBoxOverlay = addBoxOverlayToElement;
     el.addToLayerWithLink = addElementToLayerWithLink;
     el.addAnnotation = addAnnotationToLayer;
+    el.callout = addCalloutToLayer;
 };
 
 
@@ -1146,6 +1183,42 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     canvas.unsuspendRedraw(susp_id);
 };
 
+// Simple JavaScript Templating
+// John Resig - http://ejohn.org/ - MIT Licensed
+(function(mpr){
+  var cache = {};
+  
+  mpr.fillTemplate = function tmpl(str, data){
+    // Figure out if we're getting a template, or if we need to
+    // load the template - and be sure to cache the result.
+    var fn = !/\W/.test(str) ?
+      cache[str] = cache[str] ||
+        tmpl(document.getElementById(str).innerHTML) :
+      
+      // Generate a reusable function that will serve as a template
+      // generator (and which will be cached).
+      new Function("obj",
+        "var p=[],print=function(){p.push.apply(p,arguments);};" +
+        
+        // Introduce the data as local variables using with(){}
+        "with(obj){p.push('" +
+        
+        // Convert the template into pure JavaScript
+        str
+          .replace(/[\r\t\n]/g, " ")
+          .split("<%").join("\t")
+          .replace(/((^|%>)[^\t]*)'/g, "$1\r")
+          .replace(/\t=(.*?)%>/g, "',$1,'")
+          .split("\t").join("');")
+          .split("%>").join("p.push('")
+          .split("\r").join("\\'")
+      + "');}return p.join('');");
+    
+    // Provide some basic currying to the user
+    return data ? fn( data ) : fn;
+  };
+})(MASCP.CondensedSequenceRenderer.prototype);
+
 })();
 
 /**
@@ -1256,6 +1329,9 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         
         var width = (this.zoom || 1)*2*this.sequence.length;
         var height = (this.zoom || 1)*2*(this._canvas._canvas_height/this._RS);
+        if (this._canvas_callout_padding) {
+            height += this._canvas_callout_padding;
+        }
         this._canvas.setAttribute('width', width);
         this._canvas.setAttribute('height',height);
         this.navigation.setDimensions(width,height);
