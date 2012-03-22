@@ -88,6 +88,7 @@
                   force="yes">
             <fileset dir="js/lib" includes="MascpService.js"/>
             <fileset dir="js/lib" includes="*Reader.js"/>
+            <fileset dir="js/lib" includes="*Runner.js"/>
             <fileset dir="js/lib" includes="MascotToJSON.js"/>
         </concat>
         <concat destfile="build/mascp-jstools.map.js"
