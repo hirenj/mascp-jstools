@@ -936,6 +936,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             }
             
             if (p.x > viewBoxScale * min_x) {
+                /* Element has shifted too far to the right
+                   Induce some gravity towards the left side
+                   of the screen
+                */
                 targetElement._snapback = setTimeout(function() {
                     var evObj;
                     if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 35 ) {
@@ -975,6 +979,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 min_val *= 0.90;
             }
             if (p.x < 0 && Math.abs(p.x) > min_val) {
+                /* Element has shifted too far to the left
+                   Induce some gravity to the right side of the screen
+                */
                 targetElement._snapback = setTimeout(function() {
                     var evObj;
                     
