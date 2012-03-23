@@ -241,130 +241,15 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         jQuery(this._canvas).bind('_anim_end',show_chrome);
         }
     };
-
-    var drawAminoAcids = function(canvas) {
-        var RS = this._RS;
-        var seq_chars = this.sequence.split('');
+    var drawAminoAcids = function() {
         var renderer = this;
-        //var aa_selection = document.createElement('div');
-        // We need to prepend an extra > to the sequence since there is a bug with Safari failing
-        // to select reliably when you set the start offset for the range to 0
-        //aa_selection.appendChild(document.createTextNode(">"+this.sequence));
-        //renderer._container.appendChild(aa_selection);
-        //aa_selection.style.top = '110%';
-        //aa_selection.style.height = '1px';
-        //aa_selection.style.overflow = 'hidden';
-    
-        var amino_acids = canvas.set();
-        var amino_acids_shown = false;
-        var x = 0;
-    
-        var has_textLength = true;
-        var no_op = function() {};
-        try {
-            var test_el = document.createElementNS(svgns,'text');
-            test_el.setAttribute('textLength',10);
-            no_op(test_el.textLength);
-        } catch (e) {
-            has_textLength = false;
-        }
-
-        /* We used to test to see if there was a touch event
-           when doing the textLength method of amino acid
-           layout, but iOS seems to support this now.
-           
-           Test case for textLength can be found here
-           
-           http://jsfiddle.net/nkmLu/11/embedded/result/
-        */
-
+        renderer.addTextTrack(this.sequence,this._canvas.set());
         renderer.select = function() {
             var vals = Array.prototype.slice.call(arguments);
             var from = vals[0];
             var to = vals[1];
-        //     var sel = window.getSelection();
-        //     if(sel.rangeCount > 0) {
-        //         sel.removeAllRanges();
-        //     }
-        //     var range = document.createRange();
-        //     range.selectNodeContents(aa_selection.childNodes[0]);
-        //     sel.addRange(range);
-        //     sel.removeAllRanges();
-        //     range.setStart(aa_selection.childNodes[0],from+1);
-        //     range.setEnd(aa_selection.childNodes[0],to+1);
-        //     sel.addRange(range);
             this.moveHighlight.apply(this,vals);
         };
-        var a_text;
-    
-        if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-            if (this.sequence.length <= 1500) {
-                a_text = canvas.text(0,12,document.createTextNode(this.sequence));
-                a_text.setAttribute('textLength',RS*this.sequence.length);
-            } else {
-                a_text = canvas.text(0,12,document.createTextNode(this.sequence.substr(0,1500)));
-                a_text.setAttribute('textLength',RS*1500);
-            }
-            a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
-            a_text.setAttribute('lengthAdjust','spacing');
-            a_text.setAttribute('text-anchor', 'start');
-            a_text.setAttribute('dx',5);
-            a_text.setAttribute('font-size', RS);
-            a_text.setAttribute('fill', '#000000');
-            amino_acids.push(a_text);
-        } else {    
-            for (var i = 0; i < seq_chars.length; i++) {
-                a_text = canvas.text(x,12,seq_chars[i]);
-                a_text.firstChild.setAttribute('dy','1.5ex');
-                amino_acids.push(a_text);
-                a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
-                x += 1;
-            }
-            amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
-        }
-        var update_sequence = function() {
-            if (renderer.sequence.length <= 1500) {
-                return;
-            }
-            var start = parseInt(renderer.leftVisibleResidue());
-            start -= 50;
-            if (start < 0) { 
-                start = 0;
-            }
-            if ((start + 1500) >= renderer.sequence.length) {
-                start = renderer.sequence.length - 1500 - 1;
-            }
-            a_text.replaceChild(document.createTextNode(renderer.sequence.substr(start,1500)),a_text.firstChild);
-            a_text.setAttribute('dx',5+((start)*RS));
-        };
-        
-        canvas.addEventListener('panstart', function() {
-            if (amino_acids_shown) {
-                amino_acids.attr( { 'display' : 'none'});
-            }
-            jQuery(canvas).bind('panend', function() {
-                if (amino_acids_shown) {
-                    amino_acids.attr( {'display' : 'block'});
-                    update_sequence();
-                }
-                jQuery(canvas).unbind('panend',arguments.callee);
-            });
-        },false);
-           
-        canvas.addEventListener('zoomChange', function() {
-           if (canvas.zoom > 3.6) {
-               renderer._axis_height = 14;
-               amino_acids.attr({'y': 12*RS, 'visibility' : 'visible'});
-               amino_acids_shown = true;
-               update_sequence();
-           } else {
-               renderer._axis_height = 30;
-               amino_acids.attr({'y':-1000, 'visibility' : 'hidden'});   
-               amino_acids_shown = false;        
-           }
-           renderer.refresh();
-       },false);
-   
     };
 
     var drawAxis = function(canvas,lineLength) {
@@ -1000,39 +885,14 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 };
 
 
-MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
-    var layerName = lay;
-    if (typeof layerName !== 'string') {
-        layerName = lay.name;
-    }
-    var canvas = this._canvas;
-    if ( ! canvas || typeof layerName == 'undefined') {
-        return;
-    }
+MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     var RS = this._RS;
     var renderer = this;
+    var canvas = renderer._canvas;
+    var seq_chars = seq.split('');
 
-    var rows = parseInt(in_text.length / this.sequence.length);
-    var texts = [];
-
-    if (rows > 1) {
-        var grps = in_text.match(new RegExp( ".{"+rows+"}", "g"));
-        for (var i = 0; i < grps.length; i++) {
-            var tot_length = grps[i].length - 1;
-            while (tot_length >= 0) {
-                if ( ! texts[tot_length] ) {
-                    texts[tot_length] = "";
-                }
-                texts[tot_length] += grps[i].charAt(tot_length);
-                tot_length -= 1;
-            }
-        }
-    } else {
-        texts = [in_text];
-    }
-
-    var container = this._layer_containers[layerName];
-
+    var amino_acids = container;
+    var amino_acids_shown = false;
     var x = 0;
 
     var has_textLength = true;
@@ -1045,53 +905,98 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
         has_textLength = false;
     }
 
-    if ("ontouchend" in document) {
-        has_textLength = false;
-    }
+    /* We used to test to see if there was a touch event
+       when doing the textLength method of amino acid
+       layout, but iOS seems to support this now.
+       
+       Test case for textLength can be found here
+       
+       http://jsfiddle.net/nkmLu/11/embedded/result/
+    */
 
     var a_text;
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-        for (var i = 0 ; i < texts.length; i++) {
-            a_text = canvas.text(0,12,document.createTextNode(texts[i]));
-            a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
-            a_text.setAttribute('lengthAdjust','spacing');
-            a_text.setAttribute('textLength',RS*this.sequence.length);
-            a_text.setAttribute('text-anchor', 'start');
-            a_text.setAttribute('dx',5);
-            a_text.setAttribute('dy',(i+0.25)*RS);
-            a_text.setAttribute('font-size', RS);
-            a_text.setAttribute('fill', '#000000');
-            if (texts.length > 1) { 
-                a_text.setAttribute('rotate','90');
-            }
-            container.push(a_text);
+        if (seq.length <= 1500) {
+            a_text = canvas.text(0,12,document.createTextNode(seq));
+            a_text.setAttribute('textLength',RS*seq.length);
+        } else {
+            a_text = canvas.text(0,12,document.createTextNode(seq.substr(0,1500)));
+            a_text.setAttribute('textLength',RS*1500);
         }
-        container.fixed_track_height = texts.length;
-    } else {
-        var seq_chars = in_text.split('');
+        a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
+        a_text.setAttribute('lengthAdjust','spacing');
+        a_text.setAttribute('text-anchor', 'start');
+        a_text.setAttribute('dx',5);
+        a_text.setAttribute('font-size', RS);
+        a_text.setAttribute('fill', '#000000');
+        amino_acids.push(a_text);
+    } else {    
         for (var i = 0; i < seq_chars.length; i++) {
             a_text = canvas.text(x,12,seq_chars[i]);
-            a_text.firstChild.setAttribute('dy',(1.5*(i % texts.length))+'ex');
-            container.push(a_text);
+            a_text.firstChild.setAttribute('dy','1.5ex');
+            amino_acids.push(a_text);
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
-            if ((i % texts.length) == 0 && i > 0) {
-                x += 1;
-            }
+            x += 1;
         }
-        container.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
+        amino_acids.attr( { 'y':-1000,'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
     }
+    var update_sequence = function() {
+        if (seq.length <= 1500) {
+            return;
+        }
+        var start = parseInt(renderer.leftVisibleResidue());
+        start -= 50;
+        if (start < 0) { 
+            start = 0;
+        }
+        if ((start + 1500) >= seq.length) {
+            start = seq.length - 1500 - 1;
+        }
+        a_text.replaceChild(document.createTextNode(seq.substr(start,1500)),a_text.firstChild);
+        a_text.setAttribute('dx',5+((start)*RS));
+    };
     
-    //  canvas.addEventListener('zoomChange', function() {
-    //     if (canvas.zoom > 3.5) {
-    //         renderer.showLayer(lay);
-    //     } else {
-    //         renderer.hideLayer(lay);
-    //     }
-    //     renderer.refresh();
-    // },false);
-    
-    
+    canvas.addEventListener('panstart', function() {
+        if (amino_acids_shown) {
+            amino_acids.attr( { 'display' : 'none'});
+        }
+        jQuery(canvas).bind('panend', function() {
+            if (amino_acids_shown) {
+                amino_acids.attr( {'display' : 'block'});
+                update_sequence();
+            }
+            jQuery(canvas).unbind('panend',arguments.callee);
+        });
+    },false);
+       
+    canvas.addEventListener('zoomChange', function() {
+       if (canvas.zoom > 3.5) {
+           renderer._axis_height = 14;
+           amino_acids.attr({'display' : 'block'});
+           amino_acids_shown = true;
+           update_sequence();
+       } else {
+           renderer._axis_height = 30;
+           amino_acids.attr({'display' : 'none'});   
+           amino_acids_shown = false;        
+       }
+   },false);
+
+};
+
+MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
+    var layerName = lay;
+    if (typeof layerName !== 'string') {
+        layerName = lay.name;
+    }
+    var canvas = this._canvas;
+    if ( ! canvas || typeof layerName == 'undefined') {
+        return;
+    }
+    var renderer = this;
+    var container = this._layer_containers[layerName];
+    this.addTextTrack(in_text,container);
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
@@ -1673,7 +1578,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                     }
                 }
                 jQuery(self).trigger('zoomChange');
-
+                self.refresh();
 
             };
         
