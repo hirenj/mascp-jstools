@@ -231,3 +231,68 @@ MASCP.SnpReader.Result.prototype.getSnpsForPosition = function(position) {
     this._cached[position] = results;
     return results;
 };
+
+MASCP.cloneService(MASCP.SnpReader,"RnaEditReader");
+
+MASCP.RnaEditReader.SERVICE_URL = '?';
+
+MASCP.RnaEditReader.prototype.requestData = function()
+{
+    var self = this;
+    return {
+        type: "GET",
+        dataType: "json",
+        data: { 'agi'   : this.agi,
+                'service' : 'rnaedit' 
+        }
+    };
+};
+
+MASCP.RnaEditReader.prototype.setupSequenceRenderer = function(renderer) {
+    var reader = this;
+    
+    reader.bind('resultReceived', function() {
+        var a_result = reader.result;
+        renderer.withoutRefresh(function() {        
+        var insertions_layer;
+
+        var accessions = a_result.getAccessions();
+        while (accessions.length > 0) {
+
+            var acc = accessions.shift();
+            var acc_fullname = acc;
+
+            var diffs = a_result.getSnp(acc);
+
+            if (diffs.length < 1) {
+                continue;
+            }
+
+            var in_layer = 'rnaedit';
+
+            var ins = [];
+            var outs = [];
+            var acc_layer = renderer.registerLayer(in_layer, {'fullname' : 'RNA Edit (mod)' });
+
+            MASCP.getLayer(in_layer).icon = null;
+            var i;
+
+            for (i = diffs.length - 1; i >= 0 ; i-- ){
+                outs.push( { 'index' : diffs[i][0] + 1, 'delta' : diffs[i][1] });
+                ins.push( { 'insertBefore' : diffs[i][0] + 1, 'delta' : diffs[i][2] });
+            }
+            
+            for (i = ins.length - 1; i >= 0 ; i-- ) {
+                var pos = ins[i].insertBefore - 1;
+                if (pos > renderer.sequence.length) {
+                    pos = renderer.sequence.length;
+                }
+                renderer.getAA(pos).addAnnotation('rnaedit',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta, 'angle': 'auto' });
+            }
+        }
+        
+        });
+        jQuery(renderer).trigger('resultsRendered',[reader]);
+    });
+};
+
