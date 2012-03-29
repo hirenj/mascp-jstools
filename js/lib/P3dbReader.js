@@ -110,13 +110,13 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
     var color = '#5533ff';
     
-    MASCP.registerGroup('p3db_experimental', {'fullname' : 'P3DB MS/MS', 'color' : color });
+    MASCP.registerGroup('p3db_experimental', {'fullname' : 'P3DB (mod)', 'color' : color });
 
     this.bind('resultReceived', function() {
         var res = this.result;
         var peps = res.getPeptides();
         if (peps.length > 0) {
-            MASCP.registerLayer('p3db_controller',{ 'fullname' : 'P3DB MS/MS', 'color' : color });
+            MASCP.registerLayer('p3db_controller',{ 'fullname' : 'P3DB (mod)', 'color' : color });
         }
         for(var i = 0; i < peps.length; i++) {
             var peptide = peps[i].sequence;
