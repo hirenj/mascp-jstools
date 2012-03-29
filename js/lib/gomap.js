@@ -1092,10 +1092,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       evt.preventDefault(true);
       
       if (document.createEvent) {
-          var evObj = document.createEvent('Events');
-          evObj.initEvent('panstart',false,true);
-          targ.dispatchEvent(evObj);
-      }      
+          self.clicktimeout = setTimeout(function() {
+              var evObj = document.createEvent('Events');
+              evObj.initEvent('panstart',false,true);
+              targ.dispatchEvent(evObj);
+          },200);
+      }
 
     };
     
@@ -1122,6 +1124,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     var mouseMove = function(evt) {
         this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
         var positions = mousePosition(evt);
+        if (self.clicktimeout && Math.abs(positions[0] - self.oX) < 10 ) {
+            mouseUp();
+        }
         if (!self.dragging) {
            return;
         }
@@ -1197,6 +1202,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
 
     var mouseUp = function(evt) { 
+      if (self.clicktimeout) {
+          clearTimeout(self.clicktimeout);
+          self.clicktimeout = null;
+      }
       if ( ! self.enabled ) {
           return true;
       }
