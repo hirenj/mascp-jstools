@@ -30,7 +30,7 @@ MASCP.events.once('ready',function() {
     }
     
     var old_completer = repl.repl.complete;    
-    repl.repl.complete = function(line) {
+    repl.repl.complete = function(line,callback) {
         var original_line = line;
         if (line.match(/\([^\)]*$/)) {            
             var func_parts = line.split(/\(/).reverse();
@@ -46,37 +46,52 @@ MASCP.events.once('ready',function() {
                     if (set_vars.length > 0 && set_vars[set_vars.length - 1].match(/^['"][^'"]*$/)) {
                         close_quote = set_vars[set_vars.length - 1][0];
                     }
-                    var last_vars = set_vars.length > 0 ? old_completer.call(repl.repl,set_vars[set_vars.length - 1]) : [[]];
-                    if (last_vars[0].length > 1) {
-                        var lines = [];
-                        var a_line = line.replace(/[^\(,]*$/,'');
-                        last_vars[0].forEach(function(word) {
-                            lines.push(a_line+word);                            
+
+                    var handle_set_vars = function(last_vars) {
+                        if (! last_vars ) {
+                            last_vars = [[]];
+                        }
+                        if (last_vars[0].length > 1) {
+                            var lines = [];
+                            var a_line = line.replace(/[^\(,]*$/,'');
+                            last_vars[0].forEach(function(word) {
+                                lines.push(a_line+word);
+                            });
+                            callback(null,[lines,original_line]);
+                            return;
+                        } else if (last_vars[0].length == 1) {
+                            var a_line = line.replace(/[^\(,]*$/,'');
+                            line = a_line + last_vars[0][0];
+                        }
+
+                        if (set_vars.length == args.length) {
+                            callback(null,[[line+close_quote+")"],original_line]);
+                            return;
+                        }
+                        args.splice(0,set_vars.length);
+
+                        callback(null,[[line+close_quote+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],original_line]);
+                    }
+
+                    if (set_vars.length > 0) {
+                        old_completer.call(repl.repl,set_vars[set_vars.length - 1],function(comps) {
+                            handle_set_vars(comps);
                         });
-                        return [lines,original_line];
-                    } else if (last_vars[0].length == 1) {
-                        var a_line = line.replace(/[^\(,]*$/,'');
-                        line = a_line + last_vars[0][0];
+                    } else {
+                        handle_set_vars([[]]);
                     }
-
-                    if (set_vars.length == args.length) {
-                        return [[line+close_quote+")"],original_line];
-                    }
-                    args.splice(0,set_vars.length);
-
-
-                    return [[line+close_quote+(line.match(/[\(,]$/) ? '' : ',')+args[0]+((args.length == 1) ? ")" : ",")],original_line];
+                    return;
                 }
             }
         }
-    
-        var comps = old_completer.call(repl.repl,line);
-        comps[0].forEach(function(k,i) {
-            if (tools[k]) {
-                comps[0][i] += '(';
-            }
+        old_completer.call(repl.repl,line,function(obj,comps) {
+            comps[0].forEach(function(k,i) {
+                if (tools[k]) {
+                    comps[0][i] += '(';
+                }
+            });
+            callback(null,comps);
         });
-        return comps;
     };
 });
 MASCP.events.emit('ready');
