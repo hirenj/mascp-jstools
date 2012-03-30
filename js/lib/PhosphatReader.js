@@ -114,7 +114,7 @@ MASCP.PhosphatReader.prototype.requestData = function()
                 this.retrieve();
             }
         }
-        return false;
+        return;
     };
     
     // var oldToString = mpr.prototype.toString;

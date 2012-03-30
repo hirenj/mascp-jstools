@@ -40,7 +40,7 @@ MASCP.ExomeReader.SERVICE_URL = 'http://localhost:3000/data/latest/gator';
         if (typeof data == "string" && data.match(/^NM/)) {
             this.agi = data.replace(/(\n|\r)+$/,'');
             this.retrieve(this.agi);
-            return false;
+            return;
         }
     };
 })(MASCP.ExomeReader);
