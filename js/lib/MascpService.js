@@ -410,8 +410,17 @@ var do_request = function(request_data) {
         request.setRequestHeader('User-Agent',request.customUA);
     }
     
+    var redirect_counts = 5;
+
     request.onreadystatechange = function(evt) {
         if (request.readyState == 4) {
+            if (request.status >= 300 && request.status < 400 && redirect_counts > 0) {
+                var loc = (request.getResponseHeader('location')).replace(/location:\s+/,'');
+                redirect_counts = redirect_counts - 1;
+                request.open('GET',loc,request_data.async);
+                request.send();
+                return;
+            }
             if (request.status == 200) {
                 var data_block;
                 if (request_data.dataType == 'xml') {
