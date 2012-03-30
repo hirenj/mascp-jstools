@@ -430,7 +430,8 @@ var do_request = function(request_data) {
                 }
                 try {
                     var text = request.responseText;
-                    data_block = request_data.dataType == 'xml' ? request.responseXML || MASCP.importNode(request.responseText) : JSON.parse(request.responseText);
+                    data_block = request_data.dataType == 'xml' ? request.responseXML || MASCP.importNode(request.responseText) :
+                                 request_data.dataType == 'txt' ? request.responseText : JSON.parse(request.responseText);
                 } catch (e) {
                     if (e.type == 'unexpected_eos') {
                         request_data.success.call(null,{},request.status,request);
