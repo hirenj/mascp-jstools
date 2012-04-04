@@ -572,7 +572,12 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             } else {
                 toggleMouseEvents.call(this,false);
             }
-            var ctm = document.getElementById('nav_back').getTransformToElement(track_canvas);
+            var ctm;
+            try {
+                ctm = document.getElementById('nav_back').getTransformToElement(track_canvas);
+            } catch(err) {
+                return;
+            }
             var back_width = (document.getElementById('nav_back').getBBox().width + document.getElementById('nav_back').getBBox().x);
             var point = track_canvas.createSVGPoint();
             point.x = back_width;
