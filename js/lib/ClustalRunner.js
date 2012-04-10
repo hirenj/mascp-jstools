@@ -12,7 +12,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 MASCP.ClustalRunner = MASCP.buildService(function(data) {
                         this._raw_data = data;
                         if (data && typeof data == 'string') {
-                            this._raw_data = { 'data' : { 'sequences' : this.getSequences() } };
+                            this._raw_data = { 'data' : { 'sequences' : this.getSequences(), 'alignment' : this.getAlignment() } };
                         }
                         return this;
                     });
@@ -110,4 +110,18 @@ MASCP.ClustalRunner.Result.prototype.getSequences = function() {
         results[seqbits[1]] += seqbits[2];
     }
     return results;
+};
+
+MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
+    console.log(this._raw_data);
+    this._text_data = this._raw_data;
+    var re = / {16}(.*)/g;
+    var result = "";
+    var match = re.exec(this._raw_data);
+    while (match !== null) {
+        result += match[1];
+        match = re.exec(this._raw_data);
+    }
+
+    return result;
 };
