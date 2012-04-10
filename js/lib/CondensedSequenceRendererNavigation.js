@@ -572,6 +572,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             } else {
                 toggleMouseEvents.call(this,false);
             }
+
             if (track_canvas.getAttribute('display') == 'none') {
                 return;
             }
