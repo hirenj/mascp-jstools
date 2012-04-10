@@ -477,12 +477,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
     clazz.prototype.leftVisibleResidue = function() {
         var self = this;
-        return 20+self.sequence.length*(1-((self._canvas.width.baseVal.value + self._canvas.currentTranslate.x) / self._canvas.width.baseVal.value));
+        return Math.floor((self.sequence.length+self.padding+2)*(1-((self._canvas.width.baseVal.value + self._canvas.currentTranslate.x) / self._canvas.width.baseVal.value)))-1;
     };
 
     clazz.prototype.rightVisibleResidue = function() {
         var self = this;
-        return self.leftVisibleResidue() + self.sequence.length*(self._container_canvas.width.baseVal.value / self._canvas.width.baseVal.value);
+        return Math.floor(self.leftVisibleResidue() + (self.sequence.length+self.padding+2)*(self._container_canvas.parentNode.getBoundingClientRect().width / self._canvas.width.baseVal.value));
     };
 
     clazz.prototype.setSequence = function(sequence) {
