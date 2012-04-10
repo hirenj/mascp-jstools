@@ -871,6 +871,18 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.callout = addCalloutToLayer;
 };
 
+var zoomFunctions = [];
+
+MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
+    if (zoomFunctions.length == 0) {
+        this.bind('zoomChange',function() {
+            for (var i = zoomFunctions.length - 1; i >=0; i--) {
+                zoomFunctions[i].call(this, this.zoom, this._canvas);
+            }
+        });
+    }
+    zoomFunctions.push(underlayFunc);
+};
 
 MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     var RS = this._RS;
