@@ -698,16 +698,6 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.position_start = this._index;
     rect.position_end = this._index + width;
-//    rect.setAttribute('pointer-events','none');
-    
-/*
-    var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
-    this._renderer._layer_containers[layerName].push(shine);    
-    shine.style.strokeWidth = '0px';
-    shine.style.fill = 'url(#track_shine)';
-    shine.setAttribute('display','none');
-    shine._is_shine = true;
-*/
     return rect;
 };
 
@@ -732,18 +722,6 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     rect.setAttribute('fill',MASCP.layers[layerName].color);
     rect.setAttribute('visibility', 'hidden');
     rect.setAttribute('class',layerName);
-
-    // BIG POTENTIAL PERFORMANCE HIT HERE?
-//    rect.setAttribute('pointer-events','none');
-    
-/*
-    var shine = canvas.rect(-0.25+this._index,60,width || 1,4);
-    this._renderer._layer_containers[layerName].push(shine);    
-    shine.style.strokeWidth = '0px';
-    shine.style.fill = 'url(#track_shine)';
-    shine.setAttribute('display','none');
-    shine._is_shine = true;
-*/
     return rect;
 };
 
