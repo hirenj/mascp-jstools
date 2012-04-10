@@ -1,4 +1,4 @@
-<project xmlns:ivy="antlib:org.apache.ivy.ant" >
+<project xmlns:ivy="antlib:org.apache.ivy.ant" default="dist">
 
     <property name="project.java.extlib.dir" value="${basedir}/extlib/java"/>
     
