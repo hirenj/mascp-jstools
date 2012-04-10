@@ -928,6 +928,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('text-anchor', 'start');
         a_text.setAttribute('dx',5);
+        a_text.setAttribute('dy','1.5ex');
         a_text.setAttribute('font-size', RS);
         a_text.setAttribute('fill', '#000000');
         amino_acids.push(a_text);
