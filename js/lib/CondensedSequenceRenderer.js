@@ -352,7 +352,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         },false);
            
         canvas.addEventListener('zoomChange', function() {
-           if (canvas.zoom > 3.5) {
+           if (canvas.zoom > 3.6) {
                renderer._axis_height = 14;
                amino_acids.attr({'y': 12*RS, 'visibility' : 'visible'});
                amino_acids_shown = true;
