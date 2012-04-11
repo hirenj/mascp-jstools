@@ -236,7 +236,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
         if ( ! MASCP.IE ) {
         jQuery(this._canvas).bind('panstart',hide_chrome);
-        jQuery(this._canvas).bind('panend',show_chrome);
+        bean.add(this._canvas,'panend',show_chrome);
         jQuery(this._canvas).bind('_anim_begin',hide_chrome);
         jQuery(this._canvas).bind('_anim_end',show_chrome);
         }
@@ -887,6 +887,7 @@ MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underla
 MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     var RS = this._RS;
     var renderer = this;
+    var max_length = 300;
     var canvas = renderer._canvas;
     var seq_chars = seq.split('');
 
@@ -916,12 +917,12 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
     var a_text;
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
-        if (seq.length <= 1500) {
+        if (seq.length <= max_length) {
             a_text = canvas.text(0,12,document.createTextNode(seq));
             a_text.setAttribute('textLength',RS*seq.length);
         } else {
-            a_text = canvas.text(0,12,document.createTextNode(seq.substr(0,1500)));
-            a_text.setAttribute('textLength',RS*1500);
+            a_text = canvas.text(0,12,document.createTextNode(seq.substr(0,max_length)));
+            a_text.setAttribute('textLength',RS*max_length);
         }
         a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
         a_text.setAttribute('lengthAdjust','spacing');
@@ -942,7 +943,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         amino_acids.attr( { 'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
     }
     var update_sequence = function() {
-        if (seq.length <= 1500) {
+        if (seq.length <= max_length) {
             return;
         }
         var start = parseInt(renderer.leftVisibleResidue());
@@ -950,10 +951,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         if (start < 0) { 
             start = 0;
         }
-        if ((start + 1500) >= seq.length) {
-            start = seq.length - 1500 - 1;
+        if ((start + max_length) >= seq.length) {
+            start = seq.length - max_length - 1;
         }
-        a_text.replaceChild(document.createTextNode(seq.substr(start,1500)),a_text.firstChild);
+        a_text.replaceChild(document.createTextNode(seq.substr(start,max_length)),a_text.firstChild);
         a_text.setAttribute('dx',5+((start)*RS));
     };
     
@@ -961,12 +962,12 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         if (amino_acids_shown) {
             amino_acids.attr( { 'display' : 'none'});
         }
-        jQuery(canvas).bind('panend', function() {
+        bean.add(canvas,'panend', function() {
             if (amino_acids_shown) {
-                amino_acids.attr( {'display' : 'block'});
+                amino_acids.attr( {'display' : 'block'} );
                 update_sequence();
             }
-            jQuery(canvas).unbind('panend',arguments.callee);
+            bean.remove(canvas,'panend',arguments.callee);
         });
     },false);
        
@@ -1561,11 +1562,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
                 self._canvas.parentNode.setAttribute('transform',curr_transform);
 
-                if (document.createEvent) {
-                    evObj = document.createEvent('Events');
-                    evObj.initEvent('panend',false,true);
-                    self._canvas.dispatchEvent(evObj);
-                }
+                bean.fire(self._canvas,'panend');
                 jQuery(self._canvas).trigger('_anim_end');
 
                 jQuery(self._canvas).one('zoomChange',function() {
