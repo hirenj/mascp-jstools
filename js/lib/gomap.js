@@ -963,10 +963,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                             evObj.initEvent('pan',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
-                        if (document.createEvent && ! self.dragging) {
-                            evObj = document.createEvent('Events');
-                            evObj.initEvent('panend',false,true);
-                            targetElement.dispatchEvent(evObj);
+                        if (! self.dragging) {
+                            bean.fire(targetElement,'panend');
                         }
                         targetElement._snapback = null;
                     }
@@ -1005,10 +1003,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                             evObj.initEvent('pan',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
-                        if (document.createEvent && ! self.dragging) {
-                            evObj = document.createEvent('Events');
-                            evObj.initEvent('panend',false,true);
-                            targetElement.dispatchEvent(evObj);
+                        if (! self.dragging) {
+                            bean.fire(targetElement,'panend');
                         }
                         targetElement._snapback = null;
                     }
@@ -1218,11 +1214,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       
       var targ = self.targetElement ? self.targetElement : targetElement;      
       
-      if (document.createEvent && ! targ._snapback) {
-          var evObj = document.createEvent('Events');
-          evObj.initEvent('panend',false,true);
-          targ.dispatchEvent(evObj);
-      }      
+      if (! targ._snapback) {
+        bean.fire(targ,'panend',true);
+      }
     };
 
     var mouseOut = function(e) {
@@ -1389,7 +1383,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (self.momentum) {
             window.clearTimeout(self.momentum);
         }
-        self.momentum = window.setTimeout(function() {
+        self.momentum = 1;
+        (function() {
             start = targ.getPosition()[0];
             if (self.dragging) {
                 start += self.oX - self.dX;
@@ -1409,7 +1404,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 clearInterval(self._momentum_shrinker);
                 mouseUp(e);
             }
-        },50);
+        })();
     };
     
     targetElement.addEventListener('touchend',momentum_func,false);
