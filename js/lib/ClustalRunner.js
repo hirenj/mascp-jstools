@@ -113,7 +113,6 @@ MASCP.ClustalRunner.Result.prototype.getSequences = function() {
 };
 
 MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
-    console.log(this._raw_data);
     this._text_data = this._raw_data;
     var re = / {16}(.*)/g;
     var result = "";
