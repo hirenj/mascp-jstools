@@ -338,10 +338,6 @@ MASCP.Service.registeredGroups = function(service) {
 
 MASCP.Service.prototype.bind = function(type,func)
 {
-    console.log("I am here");
-    if (this == MASCP.Service) {
-        console.log("Here!!");
-    }
     bean.add(this,type,func);
     return this;
 };
