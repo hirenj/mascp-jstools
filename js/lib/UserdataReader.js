@@ -16,22 +16,9 @@ MASCP.UserdataReader = MASCP.buildService(function(data) {
                         if ( ! data ) {
                             return this;
                         }
-                        this.data = data ? data.data : data;
-                        (function(self) {
-                            self.getPeptides = function() {
-                                return data.data;
-                            };
-                        })(this);
+                        this._raw_data = data;
                         return this;
                     });
-
-/* File formats
-
-ATXXXXXX.XX,123-456
-ATXXXXXX.XX,PSDFFDGFDGFDG
-ATXXXXXX.XX,123,456
-
-*/
 
 MASCP.UserdataReader.prototype.toString = function() {
     return 'MASCP.UserdataReader.'+this.datasetname;
@@ -168,6 +155,10 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
 
     var self = this;
     
+    // Call CacheService on this object/class
+    // just to make sure that it has access
+    // to the cache retrieval mechanisms
+
     MASCP.Service.CacheService(this);
     
     this.datasetname = name;
@@ -177,35 +168,41 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     inserter.datasetname = name;
     inserter.data = data;
     
-    inserter.retrieve = function(agi,cback) {
-        this.agi = agi;
-        this._dataReceived(find_peptide_cols(filter_agis(this.data,this.agi)));
+    inserter.retrieve = function(an_acc,cback) {
+        this.agi = an_acc;
+        this._dataReceived(data[this.agi]);
         cback.call(this);
     };
     
     MASCP.Service.CacheService(inserter);
-    
-    var agis = filter_agis(data);
+
+    var accs = [];
+    var acc;
+    for (acc in data) {
+        if (data.hasOwnProperty(acc)) {
+            accs.push(acc);
+        }
+    }
 
     var retrieve = this.retrieve;
 
-    this.retrieve = function(agi,cback) {
+    this.retrieve = function(id,cback) {
         console.log("Data not ready! Waiting for ready state");
         var self = this;        
         bean.add(self,'ready',function() {
             bend.remove(self,'ready',arguments.callee);
-            self.retrieve(agi,cback);
+            self.retrieve(id,cback);
         });
     };
 
     (function() {
-        if (agis.length === 0) {
+        if (accs.length === 0) {
             self.retrieve = retrieve;
             bean.fire(self,'ready');
             return;
         }
-        var agi = agis.shift();     
-        inserter.retrieve(agi,arguments.callee);
+        var acc = accs.shift();     
+        inserter.retrieve(acc,arguments.callee);
     })();
 
 };
