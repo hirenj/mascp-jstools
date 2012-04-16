@@ -23,7 +23,7 @@ var attach_google_scripts = function() {
     return;
 };
 
-if ( typeof google == 'undefined') {
+if ( typeof google == 'undefined' && typeof document != 'undefined') {
     attach_google_scripts();
 }
 
@@ -148,6 +148,35 @@ var get_document = function(doc,etag,callback) {
 
 };
 
+var render_site = function(renderer) {
+    var self = this;
+    var sites = self._raw_data.sites, i = 0, match = null;
+    MASCP.registerLayer(self.reader.datasetname,{ 'fullname' : self._raw_data.title });
+    for (i = sites.length - 1; i >= 0; i--) {
+        if (match = sites[i].match(/(\d+)/g)) {
+            renderer.getAminoAcidsByPosition(parseInt(match[0])).addToLayer(self.reader.datasetname);
+        }
+    }
+};
+
+var render_peptides = function(renderer) {
+    var self = this;
+    var peptides = self._raw_data.peptides, i = 0, match = null;
+    MASCP.registerLayer(self.reader.datasetname,{ 'fullname' : self._raw_data.title });
+    for (i = peptides.length - 1; i >= 0; i--) {
+        if (match = peptides [i].match(/(\d+)/g)) {
+            renderer.getAminoAcidsByPosition(parseInt(match[0])).addToLayer(self.reader.datasetname);
+        }
+    }
+};
+
+var setup = function(renderer) {
+    this.bind('resultReceived',function(renderer) {
+        render_peptides.call(this,renderer);
+        render_site.call(this,renderer);
+    });
+};
+
 MASCP.GoogledataReader.prototype.getDocumentList = documents;
 
 MASCP.GoogledataReader.prototype.getDocument = get_document;
@@ -162,6 +191,9 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     var self = this;
     var reader = new MASCP.UserdataReader();
     reader.datasetname = doc;
+    reader.setupSequenceRenderer = setup;
+
+    MASCP.Service.CacheService(reader);
 
     (function() {
         var a_temp_reader = new MASCP.UserdataReader();
@@ -234,6 +266,3 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
 };
 
 })();
-
-MASCP.GoogledataReader.prototype.setupSequenceRenderer = function(renderer) {
-};
