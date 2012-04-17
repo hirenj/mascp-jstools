@@ -32,6 +32,15 @@ MASCP.ClustalRunner.prototype.requestData = function()
 {   
     var sequences = [].concat(this.sequences || []);
     this.agi = MASCP.ClustalRunner.hash(this.sequences.join(','))+'';
+    if (! MASCP.ClustalRunner.SERVICE_URL.match(/ebi/)) {
+        return {
+            type: "POST",
+            dataType: "json",
+            data : {
+                'sequences' : sequences.join(",")
+            }
+        };
+    }
     if (this.job_id) {
         return {
             type: "GET",
@@ -98,8 +107,88 @@ MASCP.ClustalRunner.prototype.requestData = function()
     
 })(MASCP.ClustalRunner);
 
+(function() {
+var original_sequences = null;
+var original_alignment = null;
+var insertions = null;
+
+var normalise_insertions = function(inserts) {
+    var pos;
+    var positions = [];
+    var result_data = {};
+    for (pos in inserts) {
+        if (inserts.hasOwnProperty(pos)) {
+            positions.push(pos);
+        }
+    }
+    positions = positions.sort();
+    for (var i = positions.length - 1; i >= 0; i--) {
+        var j = i - 1;
+        pos = positions[i];
+        var value = inserts[pos];
+        while (j >= 0) {
+            pos -= inserts[positions[j]];
+            j--;
+        }
+        result_data[pos] = value;
+    }
+    return result_data;
+};
+
+var splice_char = function(seqs,index) {
+    for (var i = 0; i < seqs.length; i++) {
+        var seq = seqs[i];
+        if (seq.charAt(index) != '-') {
+            if ( ! insertions[i] ) {
+                insertions[i] = {};
+            }
+            insertions[i][index - 1] = 1;
+            if (insertions[i][index]) {
+                insertions[i][index-1] += insertions[i][index];
+                delete insertions[i][index];
+            }
+        }
+        seqs[i] = seq.slice(0,index) + seq.slice(index+1);
+    }
+}
+
+MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
+    if ( ! seq_index && original_sequences ) { 
+        this._raw_data.data.sequences = original_sequences;
+        this._raw_data.data.alignment = original_alignment;
+    }
+    if ( ! original_sequences ) {
+        original_sequences = this._raw_data.data.sequences;
+        original_alignment = this._raw_data.data.alignment;
+    }
+    var seqs = this._raw_data.data.sequences.concat([this._raw_data.data.alignment]);
+    insertions = [];
+    var aligning_seq = seqs[seq_index], i = aligning_seq.length;
+    for (i; i >= 0; i--) {
+        if (aligning_seq.charAt(i) == '-') {
+            splice_char(seqs,i);
+        }
+    }
+    for (i = 0; i < seqs.length; i++) {
+        if (insertions[i]) {
+            insertions[i] = normalise_insertions(insertions[i]);
+            var seq = seqs[i];
+            seqs[i] = { 'sequence' : seq, 'insertions' : insertions[i] };
+            seqs[i].toString = function() {
+                return this.sequence;
+            };
+        }
+    }
+    this._raw_data.data.alignment = seqs.pop();
+    this._raw_data.data.sequences = seqs;
+};
+
+})();
+
 MASCP.ClustalRunner.Result.prototype.getSequences = function() {
-    
+    if (this._raw_data.data.sequences) {
+        return [].concat(this._raw_data.data.sequences);
+    }
     var bits = this._raw_data.match(/seq\d+(.*)/g);
     var results = [];
     for (var i = 0; i < bits.length; i++) {
@@ -113,6 +202,9 @@ MASCP.ClustalRunner.Result.prototype.getSequences = function() {
 };
 
 MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
+    if (this._raw_data.data.alignment) {
+        return this._raw_data.data.alignment.toString();
+    }
     this._text_data = this._raw_data;
     var re = / {16}(.*)/g;
     var result = "";
