@@ -684,6 +684,9 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
         var el_max_x = el_x + parseFloat(container[i].getAttribute('width'));
         if ((el_x <= rect_x && rect_x <= el_max_x) ||
             (rect_x <= el_x && el_x <= rect_max_x)) {
+                if (container[i].style.opacity != fraction) {
+                    continue;
+                }
                 container[i].setAttribute('x', ""+Math.min(el_x,rect_x));
                 container[i].setAttribute('width', ""+(Math.max(el_max_x,rect_max_x)-Math.min(el_x,rect_x)) );
                 rect.parentNode.removeChild(rect);
@@ -891,7 +894,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
     var canvas = renderer._canvas;
     var seq_chars = seq.split('');
 
-    var amino_acids = container;
+    var amino_acids = canvas.set();
     var amino_acids_shown = false;
     var x = 0;
 
@@ -932,11 +935,13 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         a_text.setAttribute('font-size', RS);
         a_text.setAttribute('fill', '#000000');
         amino_acids.push(a_text);
+        container.push(a_text);
     } else {    
         for (var i = 0; i < seq_chars.length; i++) {
             a_text = canvas.text(x,12,seq_chars[i]);
             a_text.firstChild.setAttribute('dy','1.5ex');
             amino_acids.push(a_text);
+            container.push(a_text);
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
             x += 1;
         }
