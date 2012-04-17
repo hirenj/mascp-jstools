@@ -14,23 +14,20 @@ MASCP.GoogledataReader = MASCP.buildService(function(data) {
 
 (function() {
 
-var attach_google_scripts = function() {
-    var head = document.getElementsByTagName('head')[0];
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = "http://www.google.com/jsapi";
-    head.appendChild(script);
-    return;
-};
+if ( typeof google == 'undefined' && typeof document !== 'undefined') {
 
-if ( typeof google == 'undefined' && typeof document != 'undefined') {
-    attach_google_scripts();
+    // You need the scripts attached already. Writing the script tag
+    // doesn't seem to work
+
+    // http://www.google.com/jsapi?autoload=%7B%22modules%22%3A%5B%7B%22name%22%3A%22gdata%22%2C%22version%22%3A%222%22%7D%5D%7D
+    //return;
+    // attach_google_scripts();
 }
 
 var scope = "https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/";
 
 var authenticate = function() {
-    if (! google.accounts.user.checkLogin(scope)=='') {
+    if (! google.accounts || ! google.accounts.user.checkLogin(scope)=='') {
         return true;
     } else {
         // This kicks you out of the current page.. better way to do this?
@@ -150,28 +147,28 @@ var get_document = function(doc,etag,callback) {
 
 var render_site = function(renderer) {
     var self = this;
-    var sites = self._raw_data.sites, i = 0, match = null;
-    MASCP.registerLayer(self.reader.datasetname,{ 'fullname' : self._raw_data.title });
+    var sites = self.result._raw_data.sites || [], i = 0, match = null;
+    MASCP.registerLayer(self.datasetname,{ 'fullname' : self.result._raw_data.title });
     for (i = sites.length - 1; i >= 0; i--) {
         if (match = sites[i].match(/(\d+)/g)) {
-            renderer.getAminoAcidsByPosition(parseInt(match[0])).addToLayer(self.reader.datasetname);
+            renderer.getAminoAcidsByPosition([parseInt(match[0])])[0].addToLayer(self.datasetname);
         }
     }
 };
 
 var render_peptides = function(renderer) {
     var self = this;
-    var peptides = self._raw_data.peptides, i = 0, match = null;
-    MASCP.registerLayer(self.reader.datasetname,{ 'fullname' : self._raw_data.title });
+    var peptides = self.result._raw_data.peptides || [], i = 0, match = null;
+    MASCP.registerLayer(self.datasetname,{ 'fullname' : self.result._raw_data.title });
     for (i = peptides.length - 1; i >= 0; i--) {
         if (match = peptides [i].match(/(\d+)/g)) {
-            renderer.getAminoAcidsByPosition(parseInt(match[0])).addToLayer(self.reader.datasetname);
+            renderer.getAminoAcidsByPosition(parseInt(match[0])).addToLayer(self.datasetname);
         }
     }
 };
 
 var setup = function(renderer) {
-    this.bind('resultReceived',function(renderer) {
+    this.bind('resultReceived',function(e) {
         render_peptides.call(this,renderer);
         render_site.call(this,renderer);
     });
