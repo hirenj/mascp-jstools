@@ -453,6 +453,17 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         var close_group = back_canvas.crossed_circle(nav_width-(10 + touch_scale*11),(12*touch_scale),(10*touch_scale));
 
         close_group.style.cursor = 'pointer';
+        if (typeof matchMedia !== 'undefined') {
+            matchMedia('print').addListener(function(match) {
+                if (match.matches) {
+                    close_group.setAttribute('display','none');
+                    tracks_button.setAttribute('display','none');
+                } else {
+                    close_group.setAttribute('display','block'); 
+                    tracks_button.setAttribute('display','none');
+                }
+            });
+        }
 
         button_group.push(close_group);
 
@@ -675,7 +686,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             a_text.setAttribute('font-size',0.6*height*text_scale);
             a_text.setAttribute('fill','#ffffff');
             a_text.setAttribute('stroke','#ffffff');
-            a_text.setAttribute('stroke-width','1');
+            a_text.setAttribute('stroke-width','0');
             a_text.firstChild.setAttribute('dy', '0.5ex');
 
             // r = track_canvas.rect(3*height*text_scale,y+0.5*height,2*height,2*height);
