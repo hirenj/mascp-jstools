@@ -182,6 +182,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     this.currentTranslate.x = x;
                     this.currentTranslate.y = y;
             };
+            canv.setCurrentTranslateXY(0,0);
         
             nav_canvas.setCurrentTranslateXY = function(x,y) {
                     var curr_transform = (nav_group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
@@ -190,6 +191,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     this.currentTranslate.x = x;
                     this.currentTranslate.y = y;
             };
+            nav_canvas.setCurrentTranslateXY(0,0);
         
 
         
@@ -498,6 +500,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             drawAxis.call(this,canv,line_length);
             drawAminoAcids.call(this,canv);
             renderer._layer_containers = {};
+            renderer.enablePrintResizing();
             jQuery(renderer).trigger('sequenceChange');
         });
     
@@ -977,7 +980,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
     },false);
        
     canvas.addEventListener('zoomChange', function() {
-       if (canvas.zoom > 3.5) {
+       if (canvas.zoom > 3.6) {
            renderer._axis_height = 14;
            amino_acids.attr({'display' : 'block'});
            amino_acids_shown = true;
@@ -1338,6 +1341,56 @@ clazz.prototype.removeTrack = function(layer) {
     
 };
 
+clazz.prototype.enablePrintResizing = function() {
+    var self = this;
+    if (self._media_func) {
+        return;
+    }
+    var old_zoom;
+    var old_translate;
+    var old_viewbox;
+    self._media_func = function(match) {
+        if ( self.grow_container ) {
+            return;
+        }
+
+        if (! match.matches ) {
+            if (old_zoom) {
+                self.zoomCenter = null;
+                self.withoutRefresh(function() {
+                  self.zoom = old_zoom;
+                });
+                self._canvas.setCurrentTranslateXY(old_translate,0);
+                self._container_canvas.setAttribute('viewBox',old_viewbox);
+                self._container.style.height = 'auto';
+                old_zoom = null;
+                old_translate = null;
+                self.refresh();
+                bean.fire(widget_rend._canvas,'zoomChange');
+            }
+            return;
+        }
+        var container = self._container;
+        old_translate = self._canvas.currentTranslate.x;
+        self._canvas.setCurrentTranslateXY(0,0);
+        var zoomFactor = 0.95 * (container.clientWidth) / (widget_rend.sequence.length);
+        if ( ! old_zoom ) {
+          old_zoom = self.zoom;
+          old_viewbox = self._container_canvas.getAttribute('viewBox');
+        }
+        self.zoomCenter = null;
+        self._container_canvas.removeAttribute('viewBox');
+
+        self.withoutRefresh(function() {
+            self.zoom = zoomFactor;
+        });
+        self.grow_container = true;
+        self.refresh();
+        self.grow_container = false;
+    };
+    window.matchMedia('print').addListener(self._media_func);
+};
+
 /**
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
@@ -1521,7 +1574,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
 
             if (self.zoomCenter == 'center') {
                 no_touch_center = true;
-                self.zoomCenter = {'x' : self._RS*(self.leftVisibleResidue()+0.5*(self.rightVisibleResidue() - self.leftVisibleResidue())) };
+                self.zoomCenter = {'x' : self._RS*0.5*(self.leftVisibleResidue()+self.rightVisibleResidue()) };
             }
             
             if ( self.zoomCenter && ! center_residue ) {
@@ -1606,7 +1659,11 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 jQuery(self).one('gestureend',end_function);
                 timeout = 1;
             } else {
-                timeout = setTimeout(end_function,100);
+                if (! this.refresh.suspended) {
+                    timeout = setTimeout(end_function,100);
+                } else {
+                    end_function();
+                }
             }
         },
 
