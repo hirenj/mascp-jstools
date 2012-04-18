@@ -108,10 +108,6 @@ MASCP.ClustalRunner.prototype.requestData = function()
 })(MASCP.ClustalRunner);
 
 (function() {
-var original_sequences = null;
-var original_alignment = null;
-var insertions = null;
-
 var normalise_insertions = function(inserts) {
     var pos;
     var positions = [];
@@ -135,7 +131,7 @@ var normalise_insertions = function(inserts) {
     return result_data;
 };
 
-var splice_char = function(seqs,index) {
+var splice_char = function(seqs,index,insertions) {
     for (var i = 0; i < seqs.length; i++) {
         var seq = seqs[i];
         if (seq.charAt(index) != '-') {
@@ -153,20 +149,12 @@ var splice_char = function(seqs,index) {
 }
 
 MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
-    if ( ! seq_index && original_sequences ) { 
-        this._raw_data.data.sequences = original_sequences;
-        this._raw_data.data.alignment = original_alignment;
-    }
-    if ( ! original_sequences ) {
-        original_sequences = this._raw_data.data.sequences;
-        original_alignment = this._raw_data.data.alignment;
-    }
     var seqs = this._raw_data.data.sequences.concat([this._raw_data.data.alignment]);
-    insertions = [];
+    var insertions = [];
     var aligning_seq = seqs[seq_index], i = aligning_seq.length;
     for (i; i >= 0; i--) {
         if (aligning_seq.charAt(i) == '-') {
-            splice_char(seqs,i);
+            splice_char(seqs,i,insertions);
         }
     }
     for (i = 0; i < seqs.length; i++) {
