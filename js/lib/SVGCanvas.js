@@ -650,6 +650,9 @@ var SVGCanvas = SVGCanvas || (function() {
 
             var back = this.circle(0,dim.CY,9/10*dim.R);
             back.setAttribute('fill','url(#simple_gradient)');
+            window.matchMedia('print').addListener(function(match) {
+                back.setAttribute('fill',match.matches ? '#aaaaaa': 'url(#simple_gradient)');
+            });
             back.setAttribute('stroke', opts.border || '#000000');
             back.setAttribute('stroke-width', (r/10)*RS);
 
