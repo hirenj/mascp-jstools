@@ -1113,6 +1113,7 @@ MASCP.SequenceRenderer.prototype.withoutRefresh = function(func)
 {
     var curr_refresh = this.refresh;
     this.refresh = function() {};
+    this.refresh.suspended = true;
     func.apply(this);
     this.refresh = curr_refresh;
 };
