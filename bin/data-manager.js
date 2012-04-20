@@ -112,7 +112,7 @@ if (argv.fasta) {
     })();
 }
 
-MASCP = require('mascp-jstools');
+MASCP = require('../dist/js/mascp-jstools.services.js');
 MASCP.events.once('ready',function() {
     var date = argv.date ? new Date(Date.parse(argv.date + " 0:00 GMT")) : new Date();
     var classname = argv.reader;
