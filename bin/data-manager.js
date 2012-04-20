@@ -16,9 +16,15 @@ In UTF8 format
 var argv =  require('optimist')
             .usage('Load data into the cache\n'+
                    'Usage:\n'+
-                   ' cat [file] | $0 --reader [Reader class] --date YYYY/MM/DD --verbose\n'+
+                   ' cat [file] | $0 --reader [Reader class] --date YYYY/MM/DD --verbose --test\n'+
                    'OR\n '+
-                   '$0 --file [file] --reader [Reader class] --date YYYY/MM/DD --verbose\n\n'+
+                   '$0 --file [file] --reader [Reader class] --date YYYY/MM/DD --verbose --test\n'+
+                   'OR\n '+
+                   'To load data directly from a FASTA file\n'+
+                   '$0 --file [file] --reader [Reader class] --date YYYY/MM/DD --fasta\n'+
+                   'OR\n '+
+                   'To load up data with an alternative class\n'+
+                   '$0 --file [file] --reader [Reader class] --writeclass [Class] --date YYYY/MM/DD --verbose\n\n'+
                    'For large data loading, use the pipe format, which runs a lot faster.\n\n'+
                    'Write data from the cache\n'+
                    '$0 --reader [Reader class] --date YYYY/MM/DD --write --verbose\n')
@@ -41,21 +47,80 @@ var read_csv = function(filename) {
 
 var get_stdin = function(cback,endcback) {
     process.stdin.resume();
-    process.stdin.on('end',function() {
-        endcback();
+    process.stdin.on('end',function(line) {
+        setTimeout(endcback,100);
     });
     carrier.carry(process.stdin,function(line) {
         cback.call(null,line.split(/,(.+)/));
-    })
+    });
 };
-MASCP = require('../dist/js/mascp-jstools.services.js');
+
+if (argv.fasta) {
+    (function() {
+        var normal_read_csv = read_csv;
+        var normal_get_stdin = get_stdin;
+        var seq = "";
+        var id;
+        var handle_line = function(line) {
+            var match = line.match(/^>(.*)/);
+            var dat;
+            if (match) {
+                if (id) {
+                    dat = [id, JSON.stringify({ 'data' : [ seq+"", "" ] }) ];
+                    seq = "";
+                }
+                id = match[1];
+                return dat;
+            } else {
+                seq += line;
+            }
+        };
+        read_csv = function(filename) {
+            var lines = fs.readFileSync(filename,"utf8").split("\n").reverse();
+            lines.unshift(">");
+            var data = [];
+            var block;
+            for (var i = lines.length - 1; i >= 0; i-- ) {
+                block = handle_line(lines[i]);
+                if (block) {
+                    data.push(block);
+                }
+            }
+            return data;
+        };
+
+        get_stdin = function(cback,endcback) {
+            process.stdin.resume();
+            process.stdin.on('end',function(line) {
+                if (! line) {
+                    line = ">";
+                }
+                var block = handle_line(line);
+                if (block) {
+                    cback.call(null,block);
+                }
+                setTimeout(endcback,100);
+            });
+            carrier.carry(process.stdin,function(line) {
+                var block = handle_line(line);
+                if (block) {
+                    cback.call(null,block);
+                }
+            });
+        };
+
+    })();
+}
+
+MASCP = require('mascp-jstools');
 MASCP.events.once('ready',function() {
     var date = argv.date ? new Date(Date.parse(argv.date + " 0:00 GMT")) : new Date();
     var classname = argv.reader;
 
     var retrieve_func = function(current_agi,cback) {
-        if (current_agi === null || typeof current_agi == 'undefined') {
-            cback.call(this);
+        if (current_agi === null || current_agi == '' || typeof current_agi == 'undefined') {
+            this.requestComplete();
+            return;
         }
         var current_data = this._data;
         var data_block = JSON.parse(current_data);
@@ -66,7 +131,10 @@ MASCP.events.once('ready',function() {
         this._dataReceived(data_block);
         data_block = {};
         this.result = {};
-        cback.call(this);
+        if (cback) {
+            cback.call(this);
+        }
+        this.requestComplete();
     };
 
     var make_new_reader = function(clazz) {
@@ -75,7 +143,9 @@ MASCP.events.once('ready',function() {
         rdr._dataReceived = function() {
             return true;
         };
-        MASCP.Service.CacheService(rdr);
+        if ( ! argv.test ) {
+            MASCP.Service.CacheService(rdr);
+        }
         return rdr;
     }
 
@@ -90,15 +160,17 @@ MASCP.events.once('ready',function() {
         var end_func = MASCP.Service.BulkOperation();
         if (argv.file) {
             var data = read_csv(argv.file);
-            reader.retrieve(null, function() {
-                if (data.length > 0) {
+            var request_complete = function() {
+                if (data.length > 0 && data[0][0] != '') {
                     var row = data.shift();
                     this._data = row[1];
-                    this.retrieve(row[0],arguments.callee);
-                } else if (data.length == 0) {
+                    this.retrieve(row[0]);
+                } else if (data.length == 0 || data[0][0] == '') {
                     end_func();
                 }
-            });
+            };
+            reader.bind('requestComplete',request_complete);
+            request_complete.call(reader);
         } else {
             get_stdin(function(line) {
                 var rdr = make_new_reader(clazz);
@@ -135,6 +207,11 @@ MASCP.events.once('ready',function() {
         if (MASCP.hasOwnProperty(reader_class) && classname == MASCP[reader_class].toString()) {
 
             var clazz = MASCP[reader_class];
+            
+            if (argv.writeclass) {
+                clazz = MASCP.cloneService(clazz,argv.writeclass);
+            }
+
             if (argv.write) {
                 write_out_data(clazz);
             } else {
