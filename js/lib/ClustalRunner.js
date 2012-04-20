@@ -174,7 +174,7 @@ MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
 })();
 
 MASCP.ClustalRunner.Result.prototype.getSequences = function() {
-    if (this._raw_data.data.sequences) {
+    if (this._raw_data && this._raw_data.data && this._raw_data.data.sequences) {
         return [].concat(this._raw_data.data.sequences);
     }
     var bits = this._raw_data.match(/seq\d+(.*)/g);
@@ -190,7 +190,7 @@ MASCP.ClustalRunner.Result.prototype.getSequences = function() {
 };
 
 MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
-    if (this._raw_data.data.alignment) {
+    if (this._raw_data && this._raw_data.data && this._raw_data.data.alignment) {
         return this._raw_data.data.alignment.toString();
     }
     this._text_data = this._raw_data;
