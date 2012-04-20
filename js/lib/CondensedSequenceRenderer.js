@@ -960,7 +960,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
             start = 0;
         }
         if ((start + max_length) >= seq.length) {
-            start = seq.length - max_length - 1;
+            start = seq.length - max_length;
         }
         a_text.replaceChild(document.createTextNode(seq.substr(start,max_length)),a_text.firstChild);
         a_text.setAttribute('dx',5+((start)*RS));
