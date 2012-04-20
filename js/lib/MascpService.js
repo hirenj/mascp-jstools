@@ -673,10 +673,13 @@ base.retrieve = function(agi,callback)
                 if (data) {
                     if (cback) {
                         self.result = null;
-                        bean.add(self,"resultReceived",function() {
-                            bean.remove(self,"resultReceived",arguments.callee);
-                            cback.call(self);
-                        });
+                        var done_func = function(err) {
+                            bean.remove(self,"resultRecieved",arguments.callee);
+                            bean.remove(self,"error",arguments.callee);
+                            cback.call(self,err);
+                        };
+                        bean.add(self,"resultReceived",done_func);
+                        bean.add(self,"error", done_func);
                     }
 
                     var received_flag = self._dataReceived(data,"db");
