@@ -123,11 +123,12 @@ var normalise_insertions = function(inserts) {
         pos = positions[i];
         var value = inserts[pos];
         while (j >= 0) {
-            pos -= inserts[positions[j]];
+            pos -= inserts[positions[j]].length;
             j--;
         }
         result_data[pos] = value;
     }
+    delete result_data[-1];
     return result_data;
 };
 
@@ -137,11 +138,16 @@ var splice_char = function(seqs,index,insertions) {
         if (seq.charAt(index) != '-') {
             if ( ! insertions[i] ) {
                 insertions[i] = {};
+                insertions[i][-1] = '';
             }
-            insertions[i][index - 1] = 1;
+            insertions[i][index - 1] = seq.charAt(index);
             if (insertions[i][index]) {
                 insertions[i][index-1] += insertions[i][index];
                 delete insertions[i][index];
+            }
+        } else {
+            if ( insertions[i] ) {
+                insertions[i][-1] += ' ';
             }
         }
         seqs[i] = seq.slice(0,index) + seq.slice(index+1);
@@ -151,7 +157,7 @@ var splice_char = function(seqs,index,insertions) {
 MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
     var seqs = this._raw_data.data.sequences.concat([this._raw_data.data.alignment]);
     var insertions = [];
-    var aligning_seq = seqs[seq_index], i = aligning_seq.length;
+    var aligning_seq = seqs[seq_index], i = aligning_seq.length - 1;
     for (i; i >= 0; i--) {
         if (aligning_seq.charAt(i) == '-') {
             splice_char(seqs,i,insertions);
