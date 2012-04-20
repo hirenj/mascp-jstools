@@ -120,15 +120,15 @@ var normalise_insertions = function(inserts) {
     positions = positions.sort();
     for (var i = positions.length - 1; i >= 0; i--) {
         var j = i - 1;
-        pos = positions[i];
+        pos = parseInt(positions[i]);
         var value = inserts[pos];
         while (j >= 0) {
             pos -= inserts[positions[j]].length;
             j--;
         }
-        result_data[pos] = value;
+        result_data[pos+1] = value;
     }
-    delete result_data[-1];
+    delete result_data[0];
     return result_data;
 };
 
