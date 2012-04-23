@@ -1391,6 +1391,54 @@ clazz.prototype.enablePrintResizing = function() {
     window.matchMedia('print').addListener(self._media_func);
 };
 
+clazz.prototype.wireframe = function() {
+    var order = this.trackOrder || [];
+    var y_val = 0;
+    var track_heights = 0;
+    if ( ! this.wireframes ) {
+        return;
+    }
+    while (this.wireframes.length > 0) {
+        this._canvas.removeChild(this.wireframes.shift());
+    }
+    for (var i = 0; i < order.length; i++ ) {
+        
+        var name = order[i];
+        var container = this._layer_containers[name];
+        if (! this.isLayerActive(name)) {
+            continue;
+        }
+        if (container.fixed_track_height) {
+
+            var track_height = container.fixed_track_height;
+
+            y_val = this._axis_height + (track_heights  - track_height*0.3) / this.zoom;
+            var a_rect = this._canvas.rect(0,y_val,10000,0.5*track_height);
+            a_rect.setAttribute('stroke','#ff0000');
+            a_rect.setAttribute('fill','none');
+            this.wireframes.push(a_rect);
+            var a_rect = this._canvas.rect(0,y_val,10000,track_height);
+            a_rect.setAttribute('stroke','#ff0000');
+            a_rect.setAttribute('fill','none');
+            this.wireframes.push(a_rect);
+
+            track_heights += (this.zoom * track_height) + this.trackGap;
+        } else {
+            y_val = this._axis_height + track_heights / this.zoom;
+            var a_rect = this._canvas.rect(0,y_val,10000,0.5*container.track_height / this.zoom );
+            a_rect.setAttribute('stroke','#ff0000');
+            a_rect.setAttribute('fill','none');
+            this.wireframes.push(a_rect);
+            a_rect = this._canvas.rect(0,y_val,10000,container.track_height / this.zoom);
+            a_rect.setAttribute('stroke','#ff0000');
+            a_rect.setAttribute('fill','none');
+            this.wireframes.push(a_rect);
+            track_heights += container.track_height + this.trackGap;
+        }
+
+    }    
+};
+
 /**
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
@@ -1490,7 +1538,8 @@ clazz.prototype.refresh = function(animated) {
         container.refresh_zoom();
 
     }
-
+    this.wireframe();
+    
     var viewBox = [-1,0,0,0];
     viewBox[0] = -2*RS;
     viewBox[2] = (this.sequence.split('').length+(this.padding)+2)*RS;
