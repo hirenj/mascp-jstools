@@ -163,29 +163,9 @@ var SVGCanvas = SVGCanvas || (function() {
                             curr_style += '; '+hash[key];
                             value = curr_style;
                         }
-                        if (key == 'height' && an_array[i].hasAttribute('transform')) {
-                            curr_transform = an_array[i].getAttribute('transform');
-
-                            var curr_scale = /scale\((-?\d+\.?\d*)\)/.exec(an_array[i].getAttribute('transform'));
-                        
-                            var curr_height = parseFloat(an_array[i].getAttribute('height') || 1);
-                        
-                            var new_scale = 1;
-                            if (curr_scale === null) {
-                                curr_transform += ' scale(1) ';
-                                curr_scale = 1;
-                            } else {
-                                curr_scale = parseFloat(curr_scale[1]);
-                            }
-                        
-                        
-                            new_scale = ( parseFloat(hash[key]) / curr_height ) * curr_scale;
-                        
-                            curr_transform = curr_transform.replace(/scale\((-?\d+\.?\d*)\)/,'scale('+new_scale+')');
-
-                            an_array[i].setAttribute('transform',curr_transform);
-                        }
-                        if  (! (an_array[i].hasAttribute('transform') && (key == 'y' || key == 'x'))) {
+                        if (key == 'height' && an_array[i].setHeight ) { //hasAttribute('transform') && ! an_array[i].no_scale) {
+                            an_array[i].setHeight(hash[key]);
+                        } else if  (! (an_array[i].hasAttribute('transform') && (key == 'y' || key == 'x'))) {
                             an_array[i].setAttribute(key, value);                        
                         }
                         if (key == 'y' && an_array[i].hasAttribute('d')) {
@@ -333,7 +313,33 @@ var SVGCanvas = SVGCanvas || (function() {
             
         },rate);
     };
+    var scale_re = /scale\((-?\d+\.?\d*)\)/;
+    var setHeight = function(height) {
+        var curr_transform = this.getAttribute('transform').toString();
+
+        var curr_scale = scale_re.exec(curr_transform);
     
+        var curr_height = parseFloat(this.getAttribute('height') || 1);
+        console.log("curr height is "+curr_height);
+        console.log("target height is "+height);
+        console.log("current scale is "+curr_scale[1]);
+        console.log(curr_transform);
+        var new_scale = 1;
+        if (curr_scale === null) {
+            curr_transform += ' scale(1) ';
+            curr_scale = 1;
+        } else {
+            curr_scale = parseFloat(curr_scale[1]);
+        }
+        new_scale = ( parseFloat(height) / curr_height ) * curr_scale;
+        curr_transform = curr_transform.replace(scale_re,'scale('+new_scale+')');
+        console.log(curr_transform);
+
+        this.setAttribute('transform',curr_transform);
+        this.setAttribute('height',height);
+        return new_scale;
+    };
+
     return (function(canvas) {
         
         var RS = canvas.RS || DEFAULT_RS;
@@ -539,15 +545,40 @@ var SVGCanvas = SVGCanvas || (function() {
 
         canvas.growingMarker = function(x,y,symbol,opts) {
             var container = document.createElementNS(svgns,'svg');
-            container.setAttribute('viewBox', '-50 -100 150 300');
+            container.setAttribute('viewBox', '-50 -100 200 250');
             container.setAttribute('preserveAspectRatio', 'xMinYMin meet');
             container.setAttribute('x',x);
             container.setAttribute('y',y);
-            var the_marker = this.marker(50/RS,50/RS,50/RS,symbol,opts);
+            var the_marker = this.marker(50/RS,(50)/RS,50/RS,symbol,opts);
             container.appendChild(the_marker);
             container.contentElement = the_marker.contentElement;
             var result = this.group();
-            result.appendChild(container);
+            var positioning_group = this.group();
+            result.appendChild(positioning_group);
+            positioning_group.appendChild(container);
+            container.setAttribute('width','200');
+            container.setAttribute('height','250');
+            result.setAttribute('height','250');
+            result.setAttribute('transform','scale(1)');
+            result.setHeight = function(height) {
+                // this.setAttribute('height',height);
+                var scale_val = setHeight.call(this,height);
+                this.setAttribute('height',height);
+                var top_offset = this.offset;                
+                var widget_width = this.firstChild.firstChild.getBBox().width;
+                var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
+                var centering_offset = 3/5*widget_height;
+                if (this.angle > 10) {
+                    centering_offset = 0;
+                }
+                if (top_offset == 0) {
+                    centering_offset = 0;
+                }
+                if (this.setHeight != arguments.callee ) {
+                    scale_val = 1;
+                }
+                this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*RS/scale_val - centering_offset)+') rotate('+this.angle+',100,0)');
+            };
             return result;
         };
 
@@ -598,6 +629,7 @@ var SVGCanvas = SVGCanvas || (function() {
             arrow.setAttribute('style','fill:'+fill_color+';stroke-width: 0;');
             marker.push(arrow);
             marker.setAttribute('transform','translate('+((cx)*RS)+','+0.5*cy*RS+') scale(1)');
+            marker.setHeight = setHeight;
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
                 marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
@@ -668,6 +700,7 @@ var SVGCanvas = SVGCanvas || (function() {
 
             marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1) scale(1)');
             marker_group.setAttribute('height', (dim.R/2)*RS );
+            marker_group.setHeight = setHeight;
             return marker_group;
         };
 

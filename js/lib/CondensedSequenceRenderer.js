@@ -645,7 +645,7 @@ var addElementToLayer = function(layerName) {
             return renderer._visibleTracers();
         };
     }
-    var tracer_marker = canvas.marker(this._index+0.3,10,0.5,layerName.charAt(0).toUpperCase());
+    var tracer_marker = canvas.marker(this._index+0.5,10,0.5,layerName.charAt(0).toUpperCase());
     
     // tracer_marker.zoom_level = 'text';
     tracer_marker.setAttribute('visibility','hidden');
@@ -811,10 +811,11 @@ var addAnnotationToLayer = function(layerName,width,opts) {
 
     var blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
 
-    var height = default_annotation_height;
-    var offset = this._renderer._RS * height / 2;
-    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
-    
+    var height = opts.height || this._renderer._layer_containers[layerName].track_height;
+
+    var offset = this._renderer._RS * height / 2; //this._renderer._RS * height / 2;
+    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,0,opts.content,opts);
+
     if (opts.angle == 'auto') {
         if ( ! blob.contents ) {
             blob.contents = [opts.content];
@@ -830,21 +831,41 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
     }    
     
-    blob.setAttribute('transform','translate('+((this._index + 0.25 - 0.1) * this._renderer._RS) +',0.01) scale(1,1) translate(0) rotate('+opts.angle+',0.01,'+offset+')');
+    blob.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale(1)');
+    blob.setAttribute('height','250');
+    blob.firstChild.setAttribute('transform', 'translate(-100,0) rotate('+opts.angle+',100,0.001)');
+
+    blob.angle = opts.angle;
     all_annotations[layerName][blob_id] = blob;
     if ( ! blob_exists ) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
-        this._renderer._layer_containers[layerName].fixed_track_height = default_annotation_height;
+        if (typeof opts.offset == 'undefined' || opts.offset === null) {
+           opts.offset = height / 2;
+        }
+        blob.offset = opts.offset;
+
+        blob.height = height;
+        if ( ! opts.height ) {
+           this._renderer._layer_containers[layerName].fixed_track_height = height;
+        } else {
+            var old_set_height = blob.setHeight;
+            blob.setHeight = function(height) { 
+                if (arguments.callee.caller != renderer.redrawAnnotations) {
+                    return;
+                }
+                return old_set_height.call(this,height);
+            };
+        }
     }
     
     blob._value += width;
     if ( ! blob_exists ) {
-        var bobble = canvas.circle(this._index+0.3,10+height,0.25);
+        var bobble = canvas.circle(this._index+0.5,10+height,0.25);
         bobble.setAttribute('visibility','hidden');
         bobble.style.opacity = '0.4';
 
-        var tracer = canvas.rect(this._index+0.25,10+height,0.05,0);
+        var tracer = canvas.rect(this._index+0.5,10+height,0.05,0);
         tracer.style.strokeWidth = '0px';
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
@@ -1057,7 +1078,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     var susp_id = canvas.suspendRedraw(10000);
     
     var max_value = 0;
-    var height = default_annotation_height;
+    // var height = this._layer_containers[layerName].fixed_track_height || this._layer_containers[layerName].track_height;
     var offset = 0;
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
@@ -1075,20 +1096,15 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             var a_blob = all_annotations[layerName][blob_idx];
-            if ( ! a_blob.getAttribute ) {
+
+            var height = a_blob.height;
+            var track_height = this._layer_containers[layerName].fixed_track_height || this._layer_containers[layerName].track_height;
+
+            if ( ! a_blob.setHeight ) {
                 continue;
             }
-            var size_val = (0.3 + (0.6 * a_blob._value) / max_value)*(this._RS * height * 1);
-            offset = 0.5*((this._RS * height * 1) - size_val);
-            var curr_transform = a_blob.getAttribute('transform');
-            var transform_shift = ((-315.0/1000.0)*size_val);
-            var rotate_shift = (1.0/3.0)*size_val;
-            a_blob.firstChild.setAttribute('y',offset);
-            curr_transform = curr_transform.replace(/translate\(\s*(-?\d+\.?\d*)\s*\)/,'translate('+transform_shift+')');
-            curr_transform = curr_transform.replace(/,\s*(-?\d+\.?\d*)\s*,\s*\d+\.?\d*\s*\)/,','+rotate_shift+','+offset+')');
-            a_blob.setAttribute('transform', curr_transform);
-            a_blob.firstChild.setAttribute('width',size_val);
-            a_blob.firstChild.setAttribute('height',size_val);
+            var size_val = (0.4 + ((0.6 * a_blob._value) / max_value))*(this._RS * height * 1);
+            a_blob.setHeight(size_val);
         }
     }
     
