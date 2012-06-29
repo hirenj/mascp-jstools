@@ -39,8 +39,7 @@
    },
    "implements": ["mascp-jstools","cli"],
    "os": ["linux", "macos", "win"],
-   "cpu": ["x86", "ppc", "x86_64"],
-   "engines": ["v8", "node >= 0.4.11"],
+   "engines": ["v8", "node >= 0.6.x"],
    "directories": {
        "lib": "js/lib",
        "bin": "local/binaries",
