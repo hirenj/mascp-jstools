@@ -1143,7 +1143,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
         // Convert the template into pure JavaScript
         str
           .replace(/[\r\t\n]/g, " ")
-          .split("<%").join("\t")
+          .split(/\x3c\%/g).join("\t")
           .replace(/((^|%>)[^\t]*)'/g, "$1\r")
           .replace(/\t=(.*?)%>/g, "',$1,'")
           .split("\t").join("');")
