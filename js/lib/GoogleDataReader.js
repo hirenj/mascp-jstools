@@ -8,9 +8,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 
 /** Default class constructor
  */
-MASCP.GoogledataReader = MASCP.buildService(function(data) {
-                        return this;
-                    });
+MASCP.GoogledataReader =    MASCP.buildService(function(data) {
+                                return this;
+                            });
 
 (function() {
 
@@ -34,28 +34,6 @@ var authenticate = function() {
         google.accounts.user.login(scope);
     }
     return;
-};
-
-var documents = function(callback) {
-    
-    authenticate();
-
-    var feedUrl = "https://docs.google.com/feeds/documents/private/full";
-    var service = new google.gdata.client.GoogleService('writely','gator');
-    service.getFeed(feedUrl,function(data) {
-        var results = [];
-        if (data) {
-            var entries = data.feed.entry;
-            var i;
-            for ( i = entries.length - 1; i >= 0; i-- ) {
-                results.push( [ entries[i].title.$t,
-                                entries[i]['gd$resourceId'].$t,
-                                new Date(entries[i]['updated'].$t) ]
-                            );
-            }
-        }
-        callback.call(null,null,results);
-    },callback);
 };
 
 var parsedata = function ( data ){
@@ -117,33 +95,135 @@ var get_document_using_script = function(doc_id,callback) {
     head.appendChild(script);
 }
 
-var get_document = function(doc,etag,callback) {
-    if ( ! doc.match(/^spreadsheet/ ) ) {
-        console.log("No support for retrieving things that aren't spreadsheets yet");
-        return;
-    }
-    var doc_id = doc.replace(/^spreadsheet:/,'');
-    
+var get_document, get_document_list;
 
-    get_document_using_script(doc_id,function(err,dat){
-        if (err) {
-            authenticate();
-            var feedUrl = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/private/basic";
-            var service = new google.gdata.client.GoogleService('wise','gator');
-            var headers_block = {'GData-Version':'2.0'};
-            if (etag) {
-                headers_block["If-None-Match"] = etag;
-            }
-            service.setHeaders(headers_block);
-            service.getFeed(feedUrl,function(data) {
-                callback.call(null,null,parsedata(data));
-            },callback,google.gdata.Feed);
+if (typeof module != 'undefined' && module.exports){
+    get_document_list = function(callback) {    
+
+        var headers_block = { 'GData-Version' : '3.0' };
+
+        if (MASCP.GOOGLE_AUTH_TOKEN) {
+            headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
         } else {
-            callback.call(null,null,dat);
+            callback.call(null,"Not authorized");
+            return;
         }
-    });
 
-};
+        var req = require('https').get(
+            {
+                host: "docs.google.com",
+                path: "/feeds/default/private/full/-/spreadsheet?alt=json",
+                headers: headers_block,
+            },function(res) {
+                res.setEncoding('utf8');
+                var response = "";
+                res.on('data',function(chunk) {
+                    response += chunk;
+                });
+                res.on('end',function() {
+                    var data = JSON.parse(response);
+                    var results = [];
+                    if (data) {
+                        var entries = data.feed.entry;
+                        var i;
+                        for ( i = entries.length - 1; i >= 0; i-- ) {
+                            results.push( [ entries[i].title.$t,
+                                            entries[i]['gd$resourceId'].$t,
+                                            new Date(entries[i]['updated'].$t) ]
+                                        );
+                        }
+                    }
+                    callback.call(null,null,results);
+                });
+            }
+        );
+    };
+
+
+    get_document = function(doc,etag,callback) {
+        var headers_block = { 'GData-Version' : '3.0' };
+
+        var feed_type = 'public';
+
+        if (MASCP.GOOGLE_AUTH_TOKEN) {
+            headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
+            feed_type = 'private';
+        }
+
+        if (etag) {
+            headers_block["If-None-Match"] = etag;
+        }
+
+        var req = require('https').get(
+            {
+                host: "spreadsheets.google.com",
+                path: "/feeds/cells/"+doc+"/1/"+feed_type+"/basic?alt=json",
+                headers: headers_block,
+            },function(res) {
+                res.setEncoding('utf8');
+                var data = "";
+                res.on('data',function(chunk) {
+                    data += chunk;
+                });
+                res.on('end',function() {
+                    var response = JSON.parse(data);
+                    callback.call(null,null,parsedata(response));
+                });
+            }
+        );
+    };
+} else {
+
+    get_document_list = function(callback) {    
+
+        authenticate();
+
+        var feedUrl = "https://docs.google.com/feeds/default/private/full/-/spreadsheet";
+        var service = new google.gdata.client.GoogleService('writely','gator');
+        service.getFeed(feedUrl,function(data) {
+            var results = [];
+            if (data) {
+                var entries = data.feed.entry;
+                var i;
+                for ( i = entries.length - 1; i >= 0; i-- ) {
+                    results.push( [ entries[i].title.$t,
+                                    entries[i]['gd$resourceId'].$t,
+                                    new Date(entries[i]['updated'].$t) ]
+                                );
+                }
+            }
+            callback.call(null,null,results);
+        },callback);
+    };
+
+    get_document = function(doc,etag,callback) {
+        if ( ! doc.match(/^spreadsheet/ ) ) {
+            console.log("No support for retrieving things that aren't spreadsheets yet");
+            return;
+        }
+        var doc_id = doc.replace(/^spreadsheet:/,'');
+        
+
+        get_document_using_script(doc_id,function(err,dat){
+            if (err) {
+                authenticate();
+                var feedUrl = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/private/basic";
+                var service = new google.gdata.client.GoogleService('wise','gator');
+                var headers_block = {'GData-Version':'3.0'};
+                if (etag) {
+                    headers_block["If-None-Match"] = etag;
+                }
+                service.setHeaders(headers_block);
+                service.getFeed(feedUrl,function(data) {
+                    callback.call(null,null,parsedata(data));
+                },callback,google.gdata.Feed);
+            } else {
+                callback.call(null,null,dat);
+            }
+        });
+    };
+}
+
 
 var render_site = function(renderer) {
     var self = this;
@@ -174,7 +254,7 @@ var setup = function(renderer) {
     });
 };
 
-MASCP.GoogledataReader.prototype.getDocumentList = documents;
+MASCP.GoogledataReader.prototype.getDocumentList = get_document_list;
 
 MASCP.GoogledataReader.prototype.getDocument = get_document;
 /*
