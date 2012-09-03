@@ -84,10 +84,11 @@ if (typeof module != 'undefined' && module.exports){
     var parser = require('jsdom').jsdom;
     
     var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-    XMLHttpRequest.prototype.__defineGetter__("responseXML", function() {
-        return parser((this.responseText || '').replace(/&/g,'&amp;'));
+    Object.defineProperty(XMLHttpRequest.prototype,"responseXML", {
+        get: function() { return parser((this.responseText || '').replace(/&/g,'&amp;')); },
+        set: function() {}
+
     });
-    XMLHttpRequest.prototype.__defineSetter__("responseXML",function() {});
     XMLHttpRequest.prototype.customUA = 'MASCP Gator crawler (+http://gator.masc-proteomics.org/)';
 } else {
     window.MASCP = MASCP;
