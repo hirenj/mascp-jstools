@@ -275,16 +275,11 @@ MASCP.SequenceRenderer = (function() {
             }
         };
 
-        if (renderer.__defineSetter__) {    
-            renderer.__defineSetter__("trackOrder", accessors.setTrackOrder);
-            renderer.__defineGetter__("trackOrder", accessors.getTrackOrder);
-        }
-
         if (MASCP.IE) {
             renderer.setTrackOrder = accessors.setTrackOrder;
         }
 
-        if ((typeof Object.defineProperty == 'function') && MASCP.IE && ! MASCP.IE8 ) {
+        if ((typeof Object.defineProperty == 'function') && ! MASCP.IE8 ) {
             Object.defineProperty(renderer,"trackOrder", {
                 get : accessors.getTrackOrder,
                 set : accessors.setTrackOrder

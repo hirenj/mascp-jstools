@@ -490,9 +490,11 @@ var accessors = {
 
 
 
-if (GOMap.Diagram.prototype.__defineSetter__) {
-    GOMap.Diagram.prototype.__defineSetter__("zoom", accessors.setZoom);
-    GOMap.Diagram.prototype.__defineGetter__("zoom", accessors.getZoom);
+if (Object.defineProperty && ! MASCP.IE8) {
+    Object.defineProperty(GOMap.Diagram.prototype,"zoom", {
+        get : accessors.getZoom,
+        set : accessors.setZoom
+    });
 }
 
 })();
