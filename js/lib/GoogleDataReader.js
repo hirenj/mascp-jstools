@@ -141,6 +141,12 @@ if (typeof module != 'undefined' && module.exports){
 
 
     get_document = function(doc,etag,callback) {
+        if ( ! doc.match(/^spreadsheet/ ) ) {
+            console.log("No support for retrieving things that aren't spreadsheets yet");
+            return;
+        }
+        var doc_id = doc.replace(/^spreadsheet:/,'');
+
         var headers_block = { 'GData-Version' : '3.0' };
 
         var feed_type = 'public';
@@ -157,10 +163,14 @@ if (typeof module != 'undefined' && module.exports){
         var req = require('https').get(
             {
                 host: "spreadsheets.google.com",
-                path: "/feeds/cells/"+doc+"/1/"+feed_type+"/basic?alt=json",
+                path: "/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",
                 headers: headers_block,
             },function(res) {
                 res.setEncoding('utf8');
+                if (res.statusCode != 200) {
+                    callback.call(null,{ 'cause' : { 'status' : res.statusCode } } );
+                    return;
+                }
                 var data = "";
                 res.on('data',function(chunk) {
                     data += chunk;
