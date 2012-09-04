@@ -1187,6 +1187,7 @@ MASCP.Service.prototype.registerSequenceRenderer = function(sequenceRenderer)
         this.setupSequenceRenderer(sequenceRenderer);        
         this.renderers.push(sequenceRenderer);
     }
+    sequenceRenderer.trigger('readerRegistered',[this]);
     return this;
 };
 
