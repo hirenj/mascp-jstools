@@ -280,6 +280,10 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     reader.datasetname = doc;
     reader.setupSequenceRenderer = setup;
 
+    if ( typeof google == 'undefined' && typeof document !== 'undefined') {
+        return reader;
+    }
+
     MASCP.Service.CacheService(reader);
 
     (function() {

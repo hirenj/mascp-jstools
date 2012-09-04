@@ -24,6 +24,19 @@ MASCP.UserdataReader.prototype.toString = function() {
     return 'MASCP.UserdataReader.'+this.datasetname;
 };
 
+MASCP.UserdataReader.prototype.requestData = function()
+{
+    var agi = this.agi.toUpperCase();
+    return {
+        type: "GET",
+        dataType: "json",
+        data: { 'agi'       : agi,
+                'service'   : this.datasetname 
+        }
+    };
+};
+
+
 MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
     var reader = this;
     
