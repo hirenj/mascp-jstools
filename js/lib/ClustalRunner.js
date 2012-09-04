@@ -236,6 +236,36 @@ MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx
 
 })();
 
+MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
+    var self = this;
+
+    jQuery(renderer).bind('readerRegistered',function(ev,reader) {
+        if (self == reader) {
+            return;
+        }
+        var old = reader.gotResult;
+        reader.gotResult = function() {
+            var index = 0;
+            for (var i = 0; i < self.sequences.length; i++) {
+                if (self.sequences[i].agi && self.sequences[i].agi == reader.agi) {
+                    console.log(reader.agi);
+                    index = i;
+                }
+            }
+            var old_get_aas = widget_rend.getAminoAcidsByPosition;
+            var old_get_pep = widget_rend.getAminoAcidsByPeptide;
+            widget_rend.getAminoAcidsByPosition = function(aas) {
+                var new_aas = aas.map(function(aa) { return Math.abs(self.result.calculatePositionForSequence(index,aa)); });
+                return old_get_aas.call(this,new_aas);
+            };
+            widget_rend.getAminoAcidsByPeptide = function() {};
+            old.call(reader);
+            widget_rend.getAminoAcidsByPosition = old_get_aas;
+            widget_rend.getAminoAcidsByPeptide = old_get_pep;
+        }
+    });
+}
+
 MASCP.ClustalRunner.Result.prototype.getSequences = function() {
     if (this._raw_data && this._raw_data.data && this._raw_data.data.sequences) {
         return [].concat(this._raw_data.data.sequences);
