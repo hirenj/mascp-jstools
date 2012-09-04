@@ -113,7 +113,7 @@ var normalise_insertions = function(inserts) {
     var positions = [];
     var result_data = {};
     for (pos in inserts) {
-        if (inserts.hasOwnProperty(pos) && parseInt(pos) >= 0) {
+        if (inserts.hasOwnProperty(pos) && parseInt(pos) >= -1) {
             positions.push(parseInt(pos));
         }
     }
@@ -137,7 +137,7 @@ var normalise_insertions = function(inserts) {
             result_data[pos+1] = value + (result_data[pos+1] || '');
         }
     }
-    delete result_data[0];
+//    delete result_data[0];
     return result_data;
 };
 
@@ -189,6 +189,50 @@ MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
     this._raw_data.data.alignment = seqs.pop();
     this._raw_data.data.sequences = seqs;
 };
+
+/*
+
+Test suite for calculating positions
+
+var aligner = 0;
+foo = new MASCP.ClustalRunner.Result();
+foo._raw_data = {"data" : { "alignment" : "****************" , "sequences" : [ "----12345678----", "XXXXXXXXXXXXXXXX", "ABCDABC---ABCDAB" ] }};
+foo.alignToSequence(aligner);
+console.log(foo.getSequences());
+console.log(foo.calculatePositionForSequence(0,1));
+console.log(foo.calculatePositionForSequence(0,2));
+console.log(foo.calculatePositionForSequence(0,3));
+console.log(foo.calculatePositionForSequence(0,4));
+console.log(foo.calculatePositionForSequence(0,5));
+console.log(foo.calculatePositionForSequence(0,6));
+console.log(foo.calculatePositionForSequence(0,7));
+console.log(foo.calculatePositionForSequence(0,8));
+
+*/
+MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx,pos) {
+    var inserts = this._raw_data.data.sequences[idx].insertions || {};
+    var result = pos;
+    var actual_position = 0;
+    var seq = this._raw_data.data.sequences[idx].toString();
+    for (var i = 0 ; i < seq.length; i++ ) {
+        if (inserts[i]) {
+            actual_position += inserts[i].length;
+        }
+        actual_position += 1;
+        if (seq.charAt(i) == '-') {
+            actual_position -= 1;
+        }
+        if (pos <= actual_position) {
+            if (pos == actual_position) {
+                return (i+1);
+            } else {
+                return -1 * i;
+            }
+        }
+    }
+    return -1 * seq.length;
+};
+
 
 })();
 
