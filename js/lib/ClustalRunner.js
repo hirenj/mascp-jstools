@@ -113,11 +113,18 @@ var normalise_insertions = function(inserts) {
     var positions = [];
     var result_data = {};
     for (pos in inserts) {
-        if (inserts.hasOwnProperty(pos)) {
-            positions.push(pos);
+        if (inserts.hasOwnProperty(pos) && parseInt(pos) >= 0) {
+            positions.push(parseInt(pos));
         }
     }
-    positions = positions.sort();
+    positions = positions.sort(function sortfunction(a, b){
+        return (a - b);
+    });
+    
+    // From highest to lowest position, loop through and 
+    // subtract the lengths of previous subtratctions from
+    // the final position value.
+
     for (var i = positions.length - 1; i >= 0; i--) {
         var j = i - 1;
         pos = parseInt(positions[i]);
@@ -126,7 +133,9 @@ var normalise_insertions = function(inserts) {
             pos -= inserts[positions[j]].length;
             j--;
         }
-        result_data[pos+1] = value;
+        if (! value.match(/^\s+$/)) {
+            result_data[pos+1] = value + (result_data[pos+1] || '');
+        }
     }
     delete result_data[0];
     return result_data;
@@ -141,13 +150,17 @@ var splice_char = function(seqs,index,insertions) {
                 insertions[i][-1] = '';
             }
             insertions[i][index - 1] = seq.charAt(index);
-            if (insertions[i][index]) {
+            if (insertions[i][index] && insertions[i][index].match(/\w/)) {
                 insertions[i][index-1] += insertions[i][index];
                 delete insertions[i][index];
             }
         } else {
             if ( insertions[i] ) {
-                insertions[i][-1] += ' ';
+                insertions[i][index - 1] = ' ';
+                if ((insertions[i][index] || '').match(/^\s+$/)) {
+                    insertions[i][index-1] += insertions[i][index];
+                    delete insertions[i][index];
+                }
             }
         }
         seqs[i] = seq.slice(0,index) + seq.slice(index+1);
@@ -164,7 +177,7 @@ MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
         }
     }
     for (i = 0; i < seqs.length; i++) {
-        if (insertions[i]) {
+        if (insertions[i] && i != seq_index) {
             insertions[i] = normalise_insertions(insertions[i]);
             var seq = seqs[i];
             seqs[i] = { 'sequence' : seq, 'insertions' : insertions[i] };
