@@ -537,6 +537,24 @@ var SVGCanvas = SVGCanvas || (function() {
             body.appendChild(content);
             fo.appendChild(html);
             callout.setAttribute('transform','translate('+(x*RS)+','+((y+20)*RS)+')');
+            callout.setHeight = setHeight;
+            if ( ! opts.align ) {
+                var currVbox = parseFloat(this.getAttribute('viewBox').split(/\s+/)[2]);
+                if (((x + 10) + 0.5*opts.width)*RS > currVbox ) {
+                    opts.align = 'right';
+                }
+                if ((x - 0.5*opts.width)*RS < 0) {
+                    opts.align = 'left';
+                }
+            }
+            if (opts.align) {
+                var shifter = opts.align == "right" ? -0.5 : 0.5;
+                back.setAttribute('transform', 'translate('+(shifter*opts.width*RS)+',0)');
+                pres_box.setAttribute('transform', 'translate('+(shifter*opts.width*RS)+',0)');
+                poly.setAttribute('transform', 'translate('+(0*shifter*opts.width*RS)+',0)');
+                poly.setAttribute('points', shifter > 0 ? "0,500 500,1000 0,1000" : "0,500 0,1000 -500,1000");
+                fo.setAttribute('transform', 'translate('+(shifter*opts.width*RS)+',0)');
+            }
             return callout;
         };
 
