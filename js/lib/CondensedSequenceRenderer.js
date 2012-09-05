@@ -959,6 +959,8 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
             a_text = canvas.text(0,12,document.createTextNode(seq.substr(0,max_length)));
             a_text.setAttribute('textLength',RS*max_length);
         }
+        canvas.insertBefore(a_text,canvas.firstChild.nextSibling);
+
         a_text.style.fontFamily = "'Lucida Console', 'Courier New', Monaco, monospace";
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('text-anchor', 'start');
