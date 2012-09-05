@@ -280,7 +280,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             minor_mark = 100;
             major_mark = 200;
         }
-    
+        if (this.sequence.length > 1000) {
+            minor_mark = 20;
+            major_mark = 40;
+        }
         for ( i = 0; i < (lineLength/5); i++ ) {
 
             if ( (x % minor_mark) === 0) {
