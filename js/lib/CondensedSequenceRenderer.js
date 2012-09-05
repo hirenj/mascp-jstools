@@ -626,10 +626,10 @@ var addElementToLayer = function(layerName) {
         return;
     }
 
-    var bobble = canvas.circle(this._index+0.3,10,0.25);
+    var bobble = canvas.circle(this._index+0.5,10,0.25);
     bobble.setAttribute('visibility','hidden');
     bobble.style.opacity = '0.4';
-    var tracer = canvas.rect(this._index+0.3,10,0.05,0);
+    var tracer = canvas.rect(this._index+0.5,10,0.05,0);
     tracer.style.strokeWidth = '0';
     tracer.style.fill = MASCP.layers[layerName].color;
     tracer.setAttribute('visibility','hidden');
@@ -869,6 +869,9 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         tracer.style.strokeWidth = '0px';
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
+        tracer.setHeight = function(hght) {
+            tracer.setAttribute('height', hght+offset);
+        }
         canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     
         if ( ! this._renderer._layer_containers[layerName].tracers) {
@@ -1516,7 +1519,7 @@ clazz.prototype.refresh = function(animated) {
             if(animated) {
                 container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
             } else {
-                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });                
+                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
             }
         }
         if (container.fixed_track_height) {
