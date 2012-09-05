@@ -561,20 +561,16 @@ var SVGCanvas = SVGCanvas || (function() {
                 // this.setAttribute('height',height);
                 var scale_val = setHeight.call(this,height);
                 this.setAttribute('height',height);
-                var top_offset = this.offset;                
+                var top_offset = this.offset;
                 var widget_width = this.firstChild.firstChild.getBBox().width;
                 var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
-                var centering_offset = 3/5*widget_height;
                 if (this.angle > 10) {
                     centering_offset = 0;
                 }
                 if (top_offset == 0) {
                     centering_offset = 0;
                 }
-                if (this.setHeight != arguments.callee ) {
-                    scale_val = 1;
-                }
-                this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*RS/scale_val - centering_offset)+') rotate('+this.angle+',100,0)');
+                this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*10/scale_val)+') rotate('+this.angle+',100,0)');
             };
             return result;
         };

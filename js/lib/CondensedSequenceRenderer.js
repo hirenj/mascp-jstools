@@ -829,7 +829,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         blob_id = this._index+'_'+opts.content;
         blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
         blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
-    }    
+    }
     
     blob.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale(1)');
     blob.setAttribute('height','250');
@@ -841,20 +841,21 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
         if (typeof opts.offset == 'undefined' || opts.offset === null) {
-           opts.offset = height / 2;
+            blob.offset = height / 2;
+        } else {
+            blob.offset = opts.offset;
         }
-        blob.offset = opts.offset;
 
         blob.height = height;
         if ( ! opts.height ) {
            this._renderer._layer_containers[layerName].fixed_track_height = height;
         } else {
             var old_set_height = blob.setHeight;
-            blob.setHeight = function(height) { 
+            blob.setHeight = function(hght) {
                 if (arguments.callee.caller != renderer.redrawAnnotations) {
                     return;
                 }
-                return old_set_height.call(this,height);
+                return old_set_height.call(this,hght);
             };
         }
     }
@@ -869,8 +870,10 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         tracer.style.strokeWidth = '0px';
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
+        var theight = this._renderer._layer_containers[layerName].track_height;
+
         tracer.setHeight = function(hght) {
-            tracer.setAttribute('height', hght+offset);
+            tracer.setAttribute('height', hght+(10*blob.offset));
         }
         canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     
@@ -1082,7 +1085,6 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     
     var max_value = 0;
     // var height = this._layer_containers[layerName].fixed_track_height || this._layer_containers[layerName].track_height;
-    var offset = 0;
     for (blob_idx in all_annotations[layerName]) {
         if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
             if ( all_annotations[layerName][blob_idx]._value > max_value ) {
