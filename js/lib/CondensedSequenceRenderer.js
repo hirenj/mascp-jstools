@@ -841,14 +841,14 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
         if (typeof opts.offset == 'undefined' || opts.offset === null) {
-            blob.offset = height / 2;
+            blob.offset = 2.5*height;
         } else {
             blob.offset = opts.offset;
         }
 
         blob.height = height;
         if ( ! opts.height ) {
-           this._renderer._layer_containers[layerName].fixed_track_height = height;
+            this._renderer._layer_containers[layerName].fixed_track_height = height;
         } else {
             var old_set_height = blob.setHeight;
             blob.setHeight = function(hght) {
@@ -871,9 +871,12 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
         var theight = this._renderer._layer_containers[layerName].track_height;
-
+        var height_offset = (10*blob.offset);
+        if (! opts.height && ! opts.offset) {
+            height_offset = this._renderer._layer_containers[layerName].fixed_track_height * 0.5 * this._renderer._RS;
+        }
         tracer.setHeight = function(hght) {
-            tracer.setAttribute('height', hght+(10*blob.offset));
+            tracer.setAttribute('height', hght+height_offset);
         }
         canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     
@@ -1515,9 +1518,6 @@ clazz.prototype.refresh = function(animated) {
             var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'visible' : 'hidden';
             var height = (1.5 + track_heights / this.zoom )*RS;
             
-            if (container.fixed_track_height) {
-                height += 0.5*container.fixed_track_height * RS;
-            }
             if(animated) {
                 container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
             } else {
