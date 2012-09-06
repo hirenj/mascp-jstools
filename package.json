@@ -30,6 +30,7 @@
    "dependencies": {
        "xmlhttprequest": "1.0.x",
        "jsdom": "0.2.x",
+       "nconf"   : "0.6.x",
        "optimist": "0.2.x",
        "carrier" : "0.1.x",
        "sqlite3": "2.1.x"

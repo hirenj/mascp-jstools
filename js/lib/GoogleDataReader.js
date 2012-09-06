@@ -26,16 +26,6 @@ if ( typeof google == 'undefined' && typeof document !== 'undefined') {
 
 var scope = "https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/";
 
-var authenticate = function() {
-    if (! google.accounts || ! google.accounts.user.checkLogin(scope)=='') {
-        return true;
-    } else {
-        // This kicks you out of the current page.. better way to do this?
-        google.accounts.user.login(scope);
-    }
-    return;
-};
-
 var parsedata = function ( data ){
     /* the content of this function is not important to the question */
     var entryidRC = /.*\/R(\d*)C(\d*)/;
@@ -76,28 +66,177 @@ var parsedata = function ( data ){
     return retdata;                                                                       
 };
 
-var get_document_using_script = function(doc_id,callback) {
-    var head = document.getElementsByTagName('head')[0];
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.setAttribute('id','ssheet-'+doc_id);
-    script.src = "http://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/public/basic?alt=json-in-script&callback=gotData";
-    script.addEventListener('error', function() {
-        if (script.parentNode) {
-            script.parentNode.removeChild(script);
-        }
-        callback.call(null,"error",doc_id);
-    });
-    window["cback"+doc_id] = function(dat) {
-        delete window["cback"+doc_id];
-        callback.call(null,null,parsedata(dat));
-    }
-    head.appendChild(script);
-}
-
-var get_document, get_document_list;
+var get_document, get_document_list, authenticate;
 
 if (typeof module != 'undefined' && module.exports){
+
+    var nconf = require('nconf');
+    nconf.env().argv();
+    nconf.file('config.json');
+
+    var google_client_id = nconf.get('google:client_id');
+    var google_client_secret = nconf.get('google:client_secret');
+
+    var access_token = null;
+    var refresh_token = nconf.get('google:refresh_token');
+
+    var with_google_authentication = function(callback) {
+        if (access_token) {
+            if (access_token.expiration < (new Date()) ) {
+                access_token = null;
+            }
+        }
+
+        if (access_token) {
+            callback(access_token);
+            return;
+        }
+        if (refresh_token) {
+            refresh_authenticate(refresh_token,function(auth_details) {
+                if ( ! auth_details ) {
+                    callback(null);
+                    return;
+                }
+                var expiration = new Date();
+                expiration.setSeconds(expiration.getSeconds() + auth_details.expires_in);
+                access_token = {
+                    "token": auth_details.access_token,
+                    "expiration": expiration
+                };
+                callback(access_token);
+            });
+            return;
+        }
+        new_authenticate(function(auth_details) {
+            if ( ! auth_details ) {
+                callback(null);
+                return;
+            }
+            var expiration = new Date();
+            expiration.setSeconds(expiration.getSeconds() + auth_details.expires_in);
+            access_token = {
+                "token": auth_details.access_token,
+                "expiration": expiration
+            };
+            refresh_token = auth_details.refresh_token;
+            nconf.set('google:refresh_token',refresh_token);
+            nconf.save(function(err) {
+                if (err) {
+                    console.log("Could not write config");
+                }
+            });
+            callback(access_token);
+        });
+    };
+
+    var new_authenticate = function(auth_done) {
+        var base = "https://accounts.google.com/o/oauth2/auth?";
+        var enc_scope = encodeURIComponent(scope);
+        var redirect_uri = encodeURIComponent("urn:ietf:wg:oauth:2.0:oob");
+        var client_id = encodeURIComponent(google_client_id);
+        var state = "login";
+        console.log("Go to this URL:");
+        console.log(base+"scope="+enc_scope+"&redirect_uri="+redirect_uri+"&response_type=code&client_id="+client_id);
+        if ( ! repl || ! repl.repl ) {
+            console.log("Not running in an interactive session - returning");
+            auth_done(null);
+            return;
+        }
+        var old_eval = repl.repl.eval;
+        repl.repl.prompt = "Authentication code : ";
+        repl.repl.eval = function(cmd,context,filename,callback) {
+            repl.repl.prompt = "Gator data server > ";
+            repl.repl.eval = old_eval;
+
+            var re = /\n.*/m;
+            cmd = cmd.replace(/\(/,'');
+            cmd = cmd.replace(re,'');
+            var querystring = require('querystring');
+            var post_data = querystring.stringify({
+                'code' : cmd,
+                'client_id' : google_client_id,
+                'client_secret' : google_client_secret,
+                'redirect_uri' : "urn:ietf:wg:oauth:2.0:oob",
+                'grant_type' : 'authorization_code'
+            });
+            var req = require('https').request(
+                {
+                    host: "accounts.google.com",
+                    path: "/o/oauth2/token",
+                    method: "POST",
+
+                    headers: {
+                      'Content-Type': 'application/x-www-form-urlencoded',
+                      'Content-Length': post_data.length
+                    }
+                },function(res) {
+                    res.setEncoding('utf8');
+                    var data = "";
+                    res.on('data',function(chunk) {
+                        data += chunk;
+                    });
+                    res.on('end',function() {
+                        var response = JSON.parse(data);
+
+                        callback(null,"Authentication code validated");
+
+                        auth_done(response);
+                    });
+                }
+            );
+            req.write(post_data);
+            req.end();
+        }
+    };
+
+    var refresh_authenticate = function(refresh_token,auth_done) {
+        var querystring = require('querystring');
+        var post_data = querystring.stringify({
+            'client_id' : google_client_id,
+            'client_secret' : google_client_secret,
+            'refresh_token' : refresh_token,
+            'grant_type' : 'refresh_token'
+        });
+        var req = require('https').request(
+            {
+                host: "accounts.google.com",
+                path: "/o/oauth2/token",
+                method: "POST",
+
+                headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                  'Content-Length': post_data.length
+                }
+            },function(res) {
+                res.setEncoding('utf8');
+                var data = "";
+                res.on('data',function(chunk) {
+                    data += chunk;
+                });
+                res.on('end',function() {
+                    var response = JSON.parse(data);
+                    auth_done(response);
+                });
+            }
+        );
+        req.write(post_data);
+        req.end();
+    };
+
+
+    authenticate = function(cback) {
+        with_google_authentication(function(auth_details) {
+            if (auth_details) {
+                MASCP.GOOGLE_AUTH_TOKEN = auth_details.token;
+                if (cback) {
+                    cback();
+                }
+            } else {
+                console.log("Could not authorize");
+            }
+        });
+    }
+
     get_document_list = function(callback) {    
 
         var headers_block = { 'GData-Version' : '3.0' };
@@ -105,7 +244,10 @@ if (typeof module != 'undefined' && module.exports){
         if (MASCP.GOOGLE_AUTH_TOKEN) {
             headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
         } else {
-            callback.call(null,"Not authorized");
+            var self_func = arguments.callee;
+            authenticate(function() {
+                self_func.call(null,callback);
+            });
             return;
         }
 
@@ -154,12 +296,22 @@ if (typeof module != 'undefined' && module.exports){
         if (MASCP.GOOGLE_AUTH_TOKEN) {
             headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
             feed_type = 'private';
+        } else {
+            var self_func = arguments.callee;
+            authenticate(function() {
+                self_func.call(null,doc,etag,callback);
+            });
+            return;
+        }
+
+        if (MASCP.GOOGLE_AUTH_TOKEN) {
+            headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
+            feed_type = 'private';
         }
 
         if (etag) {
             headers_block["If-None-Match"] = etag;
         }
-
         var req = require('https').get(
             {
                 host: "spreadsheets.google.com",
@@ -182,7 +334,40 @@ if (typeof module != 'undefined' && module.exports){
             }
         );
     };
+
+    MASCP.GoogledataReader.authenticate = authenticate;
+
 } else {
+
+    var get_document_using_script = function(doc_id,callback) {
+        var head = document.getElementsByTagName('head')[0];
+        var script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.setAttribute('id','ssheet-'+doc_id);
+        script.src = "http://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/public/basic?alt=json-in-script&callback=gotData";
+        script.addEventListener('error', function() {
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+            callback.call(null,"error",doc_id);
+        });
+        window["cback"+doc_id] = function(dat) {
+            delete window["cback"+doc_id];
+            callback.call(null,null,parsedata(dat));
+        }
+        head.appendChild(script);
+    };
+
+    authenticate = function() {
+        if (! google.accounts || ! google.accounts.user.checkLogin(scope)=='') {
+            return true;
+        } else {
+            // This kicks you out of the current page.. better way to do this?
+            google.accounts.user.login(scope);
+        }
+        return;
+    };
+
 
     get_document_list = function(callback) {    
 
@@ -314,43 +499,11 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 bean.fire(reader,"error",[e]);
                 return;
             }
-
             // Clear out the cache since we have new data coming in
             console.log("Wiping out data");
             MASCP.Service.ClearCache(reader);
-
-            var headers = data.data.shift();
-            var dataset = {};
-            var id_col = headers.indexOf(map.id);
-            var databits = data.data;
-            var cols_to_add = [];
-            for (var col in map) {
-                if (col == "id") {
-                    continue;
-                }
-                if (map.hasOwnProperty(col)) {
-                    cols_to_add.push({ "name" : col, "index" : headers.indexOf(map[col]) });
-                }
-            }
-            while (databits.length > 0) {
-                var row = databits.shift();
-                var id = row[id_col].toLowerCase();
-                if ( ! dataset[id] ) {
-                    dataset[id] = {};
-                }
-                var obj = dataset[id];
-                var i;
-                for (i = cols_to_add.length - 1; i >= 0; i--) {
-                    if ( ! obj[cols_to_add[i].name] ) {
-                        obj[cols_to_add[i].name] = [];
-                    }
-                    obj[cols_to_add[i].name] = obj[cols_to_add[i].name].concat((row[cols_to_add[i].index] || '').split(','));
-                }
-                obj.retrieved = data.retrieved;
-                obj.title = data.title;
-                obj.etag = data.etag;
-            }
-            reader.setData(doc,dataset);
+            reader.map = map;
+            reader.setData(doc,data);
         });
     }
     return reader;
