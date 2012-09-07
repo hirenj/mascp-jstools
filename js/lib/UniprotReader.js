@@ -43,3 +43,29 @@ MASCP.UniprotReader.Result.prototype.getDescription = function() {
 MASCP.UniprotReader.Result.prototype.getSequence = function() {
     return this._data.data[0];
 };
+
+MASCP.UniprotReader.readFastaFile = function(datablock) {
+    var chunks = (datablock.split('>'));
+    var datas = {};
+    chunks.forEach(function(entry) {
+        var lines = entry.split(/\n/);
+        if (lines.length <= 1) {
+            return;
+        }
+        var header = lines.shift();
+        var seq = lines.join("\n");
+        var header_data = header.split('|');
+        var acc = header_data[1];
+        var desc = header_data[2];
+        datas[acc] = [seq,desc];
+    });
+    var writer = new MASCP.UserdataReader();
+    writer.toString = function() {
+        return "MASCP.UniprotReader";
+    };
+    writer.map = function(dat) {
+        return dat.data;
+    };
+    writer.datasetname = "UniprotReader";
+    writer.setData("UniprotReader",{"data" : datas});
+};
