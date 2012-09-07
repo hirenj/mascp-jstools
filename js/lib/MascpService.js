@@ -648,7 +648,7 @@ base.retrieve = function(agi,callback)
 
     clazz.SweepCache = function(date) {
         if (! date) {
-            date = date.getTime();
+            date = (new Date());
         }
         sweep_cache(date.getTime());
     };
@@ -753,49 +753,240 @@ base.retrieve = function(agi,callback)
         };
     };
 
-    var db;
+    var db,idb;
 
     if (typeof module != 'undefined' && module.exports) {
         var sqlite = require('sqlite3');
         db = new sqlite.Database("cached.db");
         //db.open("cached.db",function() {});
     } else if ("openDatabase" in window) {
-        try {
-            db = openDatabase("cached","","MASCP Gator cache",1024*1024);
-        } catch (err) {
-            throw err;
-        }
-        db.all = function(sql,args,callback) {
-            this.exec(sql,args,callback);
-        };
-        db.exec = function(sql,args,callback) {
-            var self = this;
-            var sqlargs = args;
-            var cback = callback;
-            if (typeof cback == 'undefined' && sqlargs && Object.prototype.toString.call(sqlargs) != '[object Array]') {
-                cback = args;
-                sqlargs = null;
+
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+
+        if ("indexedDB" in window) {
+            // Handle the prefix of Chrome to IDBTransaction/IDBKeyRange.
+            if ('webkitIndexedDB' in window) {
+                window.IDBTransaction = window.webkitIDBTransaction;
+                window.IDBKeyRange = window.webkitIDBKeyRange;
+                window.IDBCursor = window.webkitIDBCursor;
             }
-            self.transaction(function(tx) {
-                tx.executeSql(sql,sqlargs,function(tx,result) {
-                    var res = [];
-                    for (var i = 0; i < result.rows.length; i++) {
-                        res.push(result.rows.item(i));
+
+            /* Versioning of DB schema */
+            idb = true;
+            var req = indexedDB.open("datacache");
+            req.onsuccess = function(e) {
+                idb = e.target.result;
+                var version = "1.3";
+                if (idb.version != version) {
+                    var set_version = idb.setVersion(version);
+                    set_version.onsuccess = function(e) {
+                        if (idb.objectStoreNames.contains("cached")) {
+                            idb.deleteObjectStore("cached");
+                        }
+                        var store = idb.createObjectStore("cached", { keyPath: "id"});
+                        store.createIndex("entries", [ "acc" , "service" ], { unique : false });
+                        store.createIndex("timestamps", [ "service" , "retrieved" ], { unique : false });
+                        store.createIndex("services", "service", { unique : false });
                     }
-                    if (cback) {
-                        cback.call(db,null,res);
-                    }
-                },function(tx,err) {
-                    if (cback) {
-                        cback.call(db,err);
-                    }
+                }
+                if (MASCP.events) {
+                    MASCP.events.emit("ready");
+                }
+            };
+        } else {
+            try {
+                db = openDatabase("cached","","MASCP Gator cache",1024*1024);
+            } catch (err) {
+                throw err;
+            }
+            db.all = function(sql,args,callback) {
+                this.exec(sql,args,callback);
+            };
+            db.exec = function(sql,args,callback) {
+                var self = this;
+                var sqlargs = args;
+                var cback = callback;
+                if (typeof cback == 'undefined' && sqlargs && Object.prototype.toString.call(sqlargs) != '[object Array]') {
+                    cback = args;
+                    sqlargs = null;
+                }
+                self.transaction(function(tx) {
+                    tx.executeSql(sql,sqlargs,function(tx,result) {
+                        var res = [];
+                        for (var i = 0; i < result.rows.length; i++) {
+                            res.push(result.rows.item(i));
+                        }
+                        if (cback) {
+                            cback.call(db,null,res);
+                        }
+                    },function(tx,err) {
+                        if (cback) {
+                            cback.call(db,err);
+                        }
+                    });
                 });
-            });
-        };
-        
+            };
+        }
     }
-        
-    if (typeof db != 'undefined') {
+    if (typeof idb != 'undefined') {
+        /* The following two should be no-ops */
+        begin_transaction = function() {};
+        end_transaction = function() {};
+
+        var insert_report_func = function(acc,service) {
+            return function(err,rows) {
+                if ( ! err && rows) {
+//                    console.log("Caching result for "+acc+" in "+service);
+                }
+            };
+        };
+
+        store_db_data = function(acc,service,data) {
+            var trans = idb.transaction(["cached"], "readwrite");
+            var store = trans.objectStore("cached");
+            if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
+                return;
+            }
+            var dateobj = data.retrieved ? data.retrieved : (new Date());
+            if (typeof dateobj == 'string') {
+                dateobj = new Date(dateobj);
+            }
+            dateobj.setUTCHours(0);
+            dateobj.setUTCMinutes(0);
+            dateobj.setUTCSeconds(0);
+            dateobj.setUTCMilliseconds(0);
+            var reporter = insert_report_func(acc,service);
+            var datetime = dateobj.getTime();
+            data.id = [acc,service,datetime];
+            data.acc = acc;
+            data.service = service;
+            data.retrieved = datetime;
+            var req = store.put(data);
+            // req.onsuccess = reporter;
+            req.onerror = reporter;
+        };
+
+        get_db_data = function(acc,service,cback) {
+            var timestamps = max_age ? [min_age,max_age] : [min_age, (new Date()).getTime()];
+            return find_latest_data(acc,service,timestamps,cback);
+        };
+
+        find_latest_data = function(acc,service,timestamps,cback) {
+            var trans = idb.transaction(["cached"],"readonly");
+            var store = trans.objectStore("cached");
+            var idx = store.index("entries");
+            var max_stamp = -1;
+            var result = null;
+            idx.openCursor().onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.primaryKey[2] >= timestamps[0] && cursor.primaryKey[2] <= timestamps[1] ) {
+                        if (cursor.primaryKey[2] > max_stamp && cursor.primaryKey[0] == acc && cursor.primaryKey[1] == service) {
+                            result = cursor.value;
+                            max_stamp = cursor.primaryKey.retrieved;
+                            result.retrieved = new Date(cursor.primaryKey.retrieved);
+                        }
+                    }
+                    cursor.continue();
+                } else {
+                    if (result) {
+                        // result = result.data
+                    }
+                    cback.call(null,null,result);
+                }
+            };
+        };
+
+        sweep_cache = function(timestamp) {
+            var trans = idb.transaction(["cached"],"readwrite");
+            var store = trans.objectStore("cached");
+            var idx = store.index("timestamps");
+            var results = [];
+            idx.openKeyCursor(null, "nextunique").onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if ( timestamp >= cursor.key[1] ) {
+                        store.delete(cursor.primaryKey);
+                    }
+                    cursor.continue();
+                }
+            };
+        };
+
+        data_timestamps = function(service,timestamps,cback) {
+
+            if (! timestamps || typeof timestamps != 'object' || ! timestamps.length ) {
+                timestamps = [0,(new Date()).getTime()];
+            }
+
+            var trans = idb.transaction(["cached"],"readonly");
+            var store = trans.objectStore("cached");
+            var idx = store.index("timestamps");
+            var results = [];
+            idx.openKeyCursor(null, "nextunique").onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.key[0] == service && timestamps[0] <= cursor.key[1] && timestamps[1] >= cursor.key[1] ) {
+                        results.push(new Date(cursor.key[1]));
+                    }
+                    cursor.continue();
+                } else {
+                    cback.call(null,results);
+                }
+            };
+        };
+
+        clear_service = function(service,acc) {
+            var trans = idb.transaction(["cached"],"readwrite");
+            var store = trans.objectStore("cached");
+            var idx = store.index("services");
+            idx.openCursor().onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if ((cursor.value.service.indexOf(service) >= 0) && (! acc || (cursor.value.acc == acc) )) {
+                        store.delete(cursor.value.id);
+                    }
+                    cursor.continue();
+                }
+            };
+        };
+
+        search_service = function(service,cback) {
+            var trans = idb.transaction(["cached"],"readonly");
+            var store = trans.objectStore("cached");
+            var idx = store.index("services");
+            var results = [];
+            idx.openKeyCursor(null, "nextunique").onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.key.indexOf(service) >= 0) {
+                        results.push(cursor.key);
+                    }
+                    cursor.continue();
+                } else {
+                    cback.call(MASCP.Service,results);
+                }
+            };
+        };
+
+        cached_accessions = function(service,cback) {
+            var trans = idb.transaction(["cached"],"readonly");
+            var store = trans.objectStore("cached");
+            var idx = store.index("entries");
+            var results = [];
+            idx.openKeyCursor(null, "nextunique").onsuccess = function(event) {
+                var cursor = event.target.result;
+                if (cursor) {
+                    if (cursor.key[1] == service) {
+                        results.push(cursor.key[0]);
+                    }
+                    cursor.continue();
+                } else {
+                    cback.call(MASCP.Service,results);
+                }
+            };
+        };
+    } else if (typeof db != 'undefined') {
 
         db.all('SELECT version from versions where tablename = "datacache"',function(err,rows) { 
             var version = rows ? rows[0].version : null;
@@ -942,6 +1133,7 @@ base.retrieve = function(agi,callback)
             data = {};
             db.all("INSERT INTO datacache(acc,service,retrieved,data) VALUES(?,?,?,?)",[acc,service,datetime,str_rep],insert_report_func(acc,service));
         };
+
         find_latest_data = function(acc,service,timestamps,cback) {
             var sql = "SELECT * from datacache where acc=? and service=? and retrieved >= ? and retrieved <= ? ORDER BY retrieved DESC LIMIT 1";
             var args = [acc,service,timestamps[0],timestamps[1]];            
@@ -976,7 +1168,6 @@ base.retrieve = function(agi,callback)
         };
         
     } else if ("localStorage" in window) {
-        
         sweep_cache = function(timestamp) {
             if ("localStorage" in window) {
                 var keys = [];
@@ -1101,6 +1292,7 @@ base.retrieve = function(agi,callback)
             // No support for transactions here. Do nothing.
         };
     } else {
+
         sweep_cache = function(timestamp) {
         };
         
