@@ -1360,7 +1360,9 @@ clazz.prototype.removeTrack = function(layer) {
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {                
         layer_containers[layer.name].forEach(function(el) {
-            el.parentNode.removeChild(el);
+            if (el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
         });
         this.removeAnnotations(layer);
         this._layer_containers[layer.name] = null;
