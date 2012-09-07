@@ -162,7 +162,11 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.data = dataset;
     
     var inserter = new MASCP.UserdataReader();
-    inserter.datasetname = name;
+
+    inserter.toString = function() {
+        return self.toString();
+    };
+
     inserter.data = dataset;
     
     inserter.retrieve = function(an_acc,cback) {
