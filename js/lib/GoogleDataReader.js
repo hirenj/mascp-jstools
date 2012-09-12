@@ -14,16 +14,6 @@ MASCP.GoogledataReader =    MASCP.buildService(function(data) {
 
 (function() {
 
-if ( typeof google == 'undefined' && typeof document !== 'undefined') {
-
-    // You need the scripts attached already. Writing the script tag
-    // doesn't seem to work
-
-    // http://www.google.com/jsapi?autoload=%7B%22modules%22%3A%5B%7B%22name%22%3A%22gdata%22%2C%22version%22%3A%222%22%7D%5D%7D
-    //return;
-    // attach_google_scripts();
-}
-
 var scope = "https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/";
 
 var parsedata = function ( data ){
@@ -342,9 +332,15 @@ if (typeof module != 'undefined' && module.exports){
     var get_document_using_script = function(doc_id,callback) {
         var head = document.getElementsByTagName('head')[0];
         var script = document.createElement('script');
+        var type = "public";
+        var auth = "";
         script.type = 'text/javascript';
         script.setAttribute('id','ssheet-'+doc_id);
-        script.src = "http://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/public/basic?alt=json-in-script&callback=cback"+doc_id;
+        if (MASCP.GOOGLE_AUTH_TOKEN) {
+            auth = "&access_token="+MASCP.GOOGLE_AUTH_TOKEN;
+            type = "private";
+        }
+        script.src = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/"+type+"/basic?alt=json-in-script&callback=cback"+doc_id+""+auth;
         script.addEventListener('error', function() {
             if (script.parentNode) {
                 script.parentNode.removeChild(script);
@@ -358,37 +354,56 @@ if (typeof module != 'undefined' && module.exports){
         head.appendChild(script);
     };
 
-    authenticate = function() {
-        if (! google.accounts || ! google.accounts.user.checkLogin(scope)=='') {
-            return true;
-        } else {
-            // This kicks you out of the current page.. better way to do this?
-            google.accounts.user.login(scope);
+    authenticate = function(cback) {
+        if (! gapi || ! gapi.auth.authorize) {
+            cback.call(null,{ "cause" : "No google auth library"});
+            return;
         }
+        if ( ! MASCP.GOOGLE_CLIENT_ID ) {
+            cback.call(null, { "cause" : "No client ID set (MASCP.GOOGLE_CLIENT_ID)"});
+            return;
+        }
+        var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : scope, immediate : true };
+        gapi.auth.authorize(auth_settings,function(result) {
+            if (result && ! result.error) {
+                MASCP.GOOGLE_AUTH_TOKEN = result.access_token;
+                cback();
+            } else {
+                if ( auth_settings.immediate ) {
+                    auth_settings.immediate = false;
+                    gapi.auth.authorize(auth_settings,arguments.callee);
+                }
+            }
+        });
         return;
     };
 
 
     get_document_list = function(callback) {    
 
-        authenticate();
-
-        var feedUrl = "https://docs.google.com/feeds/default/private/full/-/spreadsheet";
-        var service = new google.gdata.client.GoogleService('writely','gator');
-        service.getFeed(feedUrl,function(data) {
-            var results = [];
-            if (data) {
-                var entries = data.feed.entry;
-                var i;
-                for ( i = entries.length - 1; i >= 0; i-- ) {
-                    results.push( [ entries[i].title.$t,
-                                    entries[i]['gd$resourceId'].$t,
-                                    new Date(entries[i]['updated'].$t) ]
-                                );
-                }
+        authenticate(function(err) {
+            if (err) {
+                callback.call(null,err);
+                return;
             }
-            callback.call(null,null,results);
-        },callback);
+            var feedUrl = "https://docs.google.com/feeds/default/private/full/-/spreadsheet";
+            var service = new google.gdata.client.GoogleService('writely','gator');
+            service.getFeed(feedUrl,function(data) {
+                var results = [];
+                if (data) {
+                    var entries = data.feed.entry;
+                    var i;
+                    for ( i = entries.length - 1; i >= 0; i-- ) {
+                        results.push( [ entries[i].title.$t,
+                                        entries[i]['gd$resourceId'].$t,
+                                        new Date(entries[i]['updated'].$t) ]
+                                    );
+                    }
+                }
+                callback.call(null,null,results);
+            },callback);
+        });
+
     };
 
     get_document = function(doc,etag,callback) {
@@ -401,17 +416,14 @@ if (typeof module != 'undefined' && module.exports){
 
         get_document_using_script(doc_id,function(err,dat){
             if (err) {
-                authenticate();
-                var feedUrl = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/private/basic";
-                var service = new google.gdata.client.GoogleService('wise','gator');
-                var headers_block = {'GData-Version':'3.0'};
-                if (etag) {
-                    headers_block["If-None-Match"] = etag;
-                }
-                service.setHeaders(headers_block);
-                service.getFeed(feedUrl,function(data) {
-                    callback.call(null,null,parsedata(data));
-                },callback,google.gdata.Feed);
+                console.log("Retrying with authentication");
+                authenticate(function(err) {
+                    if (err) {
+                        callback.call(null,err);
+                        return;
+                    }
+                    get_document_using_script(doc_id,callback);
+                });
             } else {
                 callback.call(null,null,dat);
             }
@@ -464,10 +476,6 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     var reader = new MASCP.UserdataReader();
     reader.datasetname = doc;
     reader.setupSequenceRenderer = setup;
-
-    if ( typeof google == 'undefined' && typeof document !== 'undefined') {
-        return reader;
-    }
 
     MASCP.Service.CacheService(reader);
 
