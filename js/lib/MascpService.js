@@ -792,6 +792,9 @@ base.retrieve = function(agi,callback)
                 if (MASCP.events) {
                     MASCP.events.emit("ready");
                 }
+                if (MASCP.ready) {
+                    MASCP.ready();
+                }
             };
         } else {
             try {
