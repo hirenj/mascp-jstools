@@ -422,7 +422,24 @@ if (typeof module != 'undefined' && module.exports){
                         callback.call(null,err);
                         return;
                     }
-                    get_document_using_script(doc_id,callback);
+                    var request = new XMLHttpRequest();
+                    request.open("GET","https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/"+"private"+"/basic?alt=json");
+                    request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
+                    request.setRequestHeader('GData-Version','3.0');
+                    if (etag) {
+                        request.setRequestHeader('If-None-Match',etag);
+                    }
+                    request.onreadystatechange = function(evt) {
+                        if (request.readyState == 4) {
+                            if (request.status == 200) {
+                                callback.call(null,null,parsedata(JSON.parse(request.responseText)));
+                            } else {
+                                callback.call(null,{'cause' : { 'status' : request.status }});
+                            }
+                        }
+                    };
+                    request.send();
+                    //get_document_using_script(doc_id,callback);
                 });
             } else {
                 callback.call(null,null,dat);
