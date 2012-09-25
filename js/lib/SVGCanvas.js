@@ -433,6 +433,42 @@ var SVGCanvas = SVGCanvas || (function() {
           return a_rect;
         };
 
+        canvas.roundRect = function(x,y,width,height,r) {
+            var a_rect = this.rect(x,y,width,height);
+            if (typeof r != 'object' || ! r.x ) {
+                r = { 'x' : r, 'y' : r };
+            }
+            a_rect.setAttribute('rx',r.x*RS);
+            a_rect.setAttribute('ry',r.y*RS);
+            return a_rect;
+        };
+
+        canvas.ellipticalRect = function(x,y,width,height) {
+            return this.roundRect(x,y,width,height,{'x' : 0.25*width, 'y' : 0.5*height});
+        };
+        canvas.pentagon = function(x,y,width,height,rotate) {
+            return this.nagon(x,y,width,height,5,rotate);
+        }
+        canvas.hexagon = function(x,y,width,height,rotate) {
+            return this.nagon(x,y,width,height,6,rotate);
+        }
+        canvas.nagon = function(x,y,width,height,n,rotate) {
+            var a = 0.5*width*RS;
+            var shape = this.poly("");
+            shape.setAttribute('transform','translate('+(x*RS)+','+(RS*y)+')');
+            shape.setHeight = function(hght) {
+                var b = 0.5*hght;
+                var points = [];
+                for (var i = 0 ; i < n; i++) {
+                    var angle = (rotate/360 * 2*Math.PI) + 2/n*Math.PI*i;
+                    points.push( (a+a*Math.cos(angle))+","+(b+b*Math.sin(angle))   );
+                }
+                this.setAttribute('points',points.join(" "));
+            };
+            shape.setHeight(height*RS);
+            return shape;
+        };
+
         canvas.use = function(ref,x,y,width,height) {
             var a_use = document.createElementNS(svgns,'use');
             a_use.setAttribute('x', typeof x == 'string' ? x : x * RS);
