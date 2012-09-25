@@ -437,6 +437,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
             defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
         
+            renderer.add3dGradient = function(color) {
+                defs.appendChild(canv.make_gradient('grad_'+color,'0%','100%',[color,'#ffffff',color],[1,1,1] ));
+            };
+
             var shadow = canv.makeEl('filter',{
                 'id':'drop_shadow',
                 'filterUnits':'objectBoundingBox',
@@ -710,6 +714,48 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     return rect;
 };
 
+var addShapeToElement = function(layerName,width,opts) {
+    var canvas = this._renderer._canvas;
+
+    if ( ! canvas ) {
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);
+            orig_func.call(self,layerName,width,opts);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
+    var methods = {
+        "pentagon" : canvas.pentagon,
+        "hexagon"  : canvas.hexagon,
+        "rectangle": canvas.rect,
+        "ellipse"  : canvas.ellipticalRect,
+        "roundrect": function(x,y,width,height) {
+            return canvas.roundRect(x,y,width,height,0.25*height);
+        }
+    }
+    if ( ! opts.rotate ) {
+        opts.rotate = 0;
+    }
+    var shape = null;
+    if (opts.shape in methods) {
+        shape = methods[opts.shape].call(canvas,this._index,60,width || 1,opts.height || 4,opts.rotate);
+    } else {
+        return;
+    }
+    this._renderer._layer_containers[layerName].push(shape);
+    shape.setAttribute('class',layerName);
+    shape.style.strokeWidth = '0px';
+    shape.setAttribute('visibility', 'hidden');
+    shape.setAttribute('fill',opts.fill || MASCP.layers[layerName].color);
+    shape.position_start = this._index;
+    shape.position_end = this._index + width;
+    return shape;
+};
+
 var addElementToLayerWithLink = function(layerName,url,width) {
     var canvas = this._renderer._canvas;
 
@@ -904,6 +950,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
 MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addToLayer = addElementToLayer;
     el.addBoxOverlay = addBoxOverlayToElement;
+    el.addShapeOverlay = addShapeToElement;
     el.addToLayerWithLink = addElementToLayerWithLink;
     el.addAnnotation = addAnnotationToLayer;
     el.callout = addCalloutToLayer;
