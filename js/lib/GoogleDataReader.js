@@ -412,7 +412,7 @@ if (typeof module != 'undefined' && module.exports){
             request.onreadystatechange = function(evt) {
                 if (request.readyState == 4) {
                     if (request.status == 200) {
-                        callback.call(null,null,parsedata(JSON.parse(request.responseText)));
+                        callback.call(null,null,JSON.parse(request.responseText));
                     } else {
                         callback.call(null,{'cause' : { 'status' : request.status }});
                     }
@@ -434,7 +434,7 @@ if (typeof module != 'undefined' && module.exports){
         get_document_using_script(doc_id,function(err,dat){
             if (err) {
                 console.log("Retrying with authentication");
-                basic_get_document(doc_id,etag,callback);
+                basic_get_document(doc,etag,callback);
             } else {
                 callback.call(null,null,dat);
             }
