@@ -44,7 +44,7 @@ MASCP.UniprotReader.Result.prototype.getSequence = function() {
     return this._data.data[0];
 };
 
-MASCP.UniprotReader.readFastaFile = function(datablock) {
+MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
     var chunks = (datablock.split('>'));
     var datas = {};
     chunks.forEach(function(entry) {
@@ -67,5 +67,9 @@ MASCP.UniprotReader.readFastaFile = function(datablock) {
         return dat.data;
     };
     writer.datasetname = "UniprotReader";
-    writer.setData("UniprotReader",{"data" : datas});
+    callback(writer);
+    setTimeout(function() {
+        writer.setData("UniprotReader",{"data" : datas});
+    },0);
+    return writer;
 };
