@@ -188,6 +188,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             accs.push(acc);
         }
     }
+    var total = accs.length;
 
     var retrieve = this.retrieve;
 
@@ -207,6 +208,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             return;
         }
         var acc = accs.shift();
+        bean.fire(self,'progress',[100 * ((total - accs.length) / total), total - accs.length, total]);
         inserter.retrieve(acc,arguments.callee);
     })();
 
