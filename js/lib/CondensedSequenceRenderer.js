@@ -787,7 +787,9 @@ var addCalloutToLayer = function(layerName,element,opts) {
     
     if (typeof element == 'string') {
         var a_el = document.createElement('div');
-        a_el.innerHTML = renderer.fillTemplate(element,opts);
+        renderer.fillTemplate(element,opts,function(err,el) {
+            a_el.innerHTML = el;
+        });
         element = a_el;
     }
     
@@ -1182,36 +1184,61 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
 // Simple JavaScript Templating
 // John Resig - http://ejohn.org/ - MIT Licensed
 (function(mpr){
-  var cache = {};
-  
-  mpr.fillTemplate = function tmpl(str, data){
-    // Figure out if we're getting a template, or if we need to
-    // load the template - and be sure to cache the result.
-    var fn = !/\W/.test(str) ?
-      cache[str] = cache[str] ||
-        tmpl(document.getElementById(str).innerHTML) :
-      
-      // Generate a reusable function that will serve as a template
-      // generator (and which will be cached).
-      new Function("obj",
-        "var p=[],print=function(){p.push.apply(p,arguments);};" +
+    var cache = {};
+    var needs_sandbox = false;
+
+    var template_func = function tmpl(str, data){
+        // Figure out if we're getting a template, or if we need to
+        // load the template - and be sure to cache the result.
+        var fn = !/\W/.test(str) ?
+          cache[str] = cache[str] ||
+            tmpl(document.getElementById(str).innerHTML) :
+
+          // Generate a reusable function that will serve as a template
+          // generator (and which will be cached).
+          new Function("obj",
+            "var p=[],print=function(){p.push.apply(p,arguments);};" +
+
+            // Introduce the data as local variables using with(){}
+            "with(obj){p.push('" +
+
+            // Convert the template into pure JavaScript
+            str
+              .replace(/[\r\t\n]/g, " ")
+              .split(/\x3c\%/g).join("\t")
+              .replace(/((^|%>)[^\t]*)'/g, "$1\r")
+              .replace(/\t=(.*?)%>/g, "',$1,'")
+              .split("\t").join("');")
+              .split("%>").join("p.push('")
+              .split("\r").join("\\'")
+          + "');}return p.join('');");
         
-        // Introduce the data as local variables using with(){}
-        "with(obj){p.push('" +
-        
-        // Convert the template into pure JavaScript
-        str
-          .replace(/[\r\t\n]/g, " ")
-          .split(/\x3c\%/g).join("\t")
-          .replace(/((^|%>)[^\t]*)'/g, "$1\r")
-          .replace(/\t=(.*?)%>/g, "',$1,'")
-          .split("\t").join("');")
-          .split("%>").join("p.push('")
-          .split("\r").join("\\'")
-      + "');}return p.join('');");
-    
-    // Provide some basic currying to the user
-    return data ? fn( data ) : fn;
+        // Provide some basic currying to the user
+        return data ? fn( data ) : fn;
+    };
+
+    try {
+        var foo = new Function("return;");
+    } catch (exception) {
+        needs_sandbox = true;
+    }
+    if (needs_sandbox) {
+        mpr.fillTemplate = function tmpl(str,data,callback) {
+            MASCP.SANDBOX.contentWindow.postMessage({ "template" : document.getElementById(str).innerHTML, "data" : data },"*");
+            var return_func = function(event) {
+                bean.remove(window,'message',return_func);
+                if (event.data.html) {
+                    callback.call(null,null,event.data.html);
+                }
+            };
+            bean.add(window,'message',return_func);
+
+        }
+        return;
+    }
+
+  mpr.fillTemplate = function(str,data,callback) {
+    callback.call(null,template_func(str,data));
   };
 })(MASCP.CondensedSequenceRenderer.prototype);
 
