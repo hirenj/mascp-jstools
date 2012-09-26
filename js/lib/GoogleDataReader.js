@@ -56,7 +56,83 @@ var parsedata = function ( data ){
     return retdata;                                                                       
 };
 
-var get_document, get_document_list, authenticate;
+var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request;
+
+get_document_list = function(callback) {
+    do_request("docs.google.com", "/feeds/default/private/full/-/spreadsheet?alt=json",null,function(err,data) {
+        var results = [];
+        if (data) {
+            var entries = data.feed.entry;
+            var i;
+            for ( i = entries.length - 1; i >= 0; i-- ) {
+                results.push( [ entries[i].title.$t,
+                                entries[i]['gd$resourceId'].$t,
+                                new Date(entries[i]['updated'].$t) ]
+                            );
+            }
+        }
+        callback.call(null,null,results);
+    });
+};
+
+get_permissions_id = function(callback) {
+    do_request("www.googleapis.com","/drive/v2/about",null,function(err,data) {
+        callback.call(null,err,data.permissionId);
+    });
+}
+
+get_permissions = function(doc,callback) {
+    if ( ! doc.match(/^spreadsheet/ ) ) {
+        console.log("No support for retrieving things that aren't spreadsheets yet");
+        return;
+    }
+    var doc_id = doc.replace(/^spreadsheet:/,'');
+
+    get_permissions_id(function(err,permissionId) {
+        if ( err ) {
+            callback.call(null,err);
+            return;
+        }
+        do_request("www.googleapis.com","/drive/v2/files/"+doc_id+"/permissions",null,function(e,data){
+            if (err) {
+                if (err.cause && err.cause.status == '400') {
+                    callback.call(null,null,{"write" : false, "read" : false});
+                    return;
+                }
+                callback.call(null,err);
+                return;
+            }
+            var writable = false;
+            if ( ! data ) {
+                callback.call(null,null,{"write" : false, "read" : false});
+                return;
+            }
+            data.items.forEach(function(item) {
+                if (item.id == permissionId && (item.role == 'owner' || item.role == 'writer')) {
+                    writable = true;
+                }
+            });
+            callback.call(null,null,{"write": writable, "read" : true});
+        });
+    });
+};
+
+get_document = function(doc,etag,callback) {
+    if ( ! doc.match(/^spreadsheet/ ) ) {
+        console.log("No support for retrieving things that aren't spreadsheets yet");
+        return;
+    }
+    var doc_id = doc.replace(/^spreadsheet:/,'');
+
+    var headers_block = { 'GData-Version' : '3.0' };
+
+    var feed_type = 'private';
+
+    do_request("spreadsheets.google.com","/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",etag,function(err,json) {
+        callback.call(null,null,parsedata(json));
+    });
+};
+
 
 if (typeof module != 'undefined' && module.exports){
 
@@ -227,8 +303,7 @@ if (typeof module != 'undefined' && module.exports){
         });
     }
 
-    get_document_list = function(callback) {    
-
+    do_request = function(host,path,etag,callback) {
         var headers_block = { 'GData-Version' : '3.0' };
 
         if (MASCP.GOOGLE_AUTH_TOKEN) {
@@ -236,15 +311,18 @@ if (typeof module != 'undefined' && module.exports){
         } else {
             var self_func = arguments.callee;
             authenticate(function() {
-                self_func.call(null,callback);
+                self_func.call(null,host,path,etag,callback);
             });
             return;
         }
+        if (etag) {
+            headers_block["If-None-Match"] = etag;
+        }
 
-        var req = require('https').get(
+        require('https').get(
             {
-                host: "docs.google.com",
-                path: "/feeds/default/private/full/-/spreadsheet?alt=json",
+                host: host,
+                path: path,
                 headers: headers_block,
             },function(res) {
                 res.setEncoding('utf8');
@@ -253,73 +331,12 @@ if (typeof module != 'undefined' && module.exports){
                     response += chunk;
                 });
                 res.on('end',function() {
-                    var data = JSON.parse(response);
-                    var results = [];
-                    if (data) {
-                        var entries = data.feed.entry;
-                        var i;
-                        for ( i = entries.length - 1; i >= 0; i-- ) {
-                            results.push( [ entries[i].title.$t,
-                                            entries[i]['gd$resourceId'].$t,
-                                            new Date(entries[i]['updated'].$t) ]
-                                        );
-                        }
+                    if (res.statusCode != 200) {
+                        callback.call(null,{ 'cause' : { 'status' : res.statusCode } } );
+                        return;
                     }
-                    callback.call(null,null,results);
-                });
-            }
-        );
-    };
-
-
-    get_document = function(doc,etag,callback) {
-        if ( ! doc.match(/^spreadsheet/ ) ) {
-            console.log("No support for retrieving things that aren't spreadsheets yet");
-            return;
-        }
-        var doc_id = doc.replace(/^spreadsheet:/,'');
-
-        var headers_block = { 'GData-Version' : '3.0' };
-
-        var feed_type = 'public';
-
-        if (MASCP.GOOGLE_AUTH_TOKEN) {
-            headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
-            feed_type = 'private';
-        } else {
-            var self_func = arguments.callee;
-            authenticate(function() {
-                self_func.call(null,doc,etag,callback);
-            });
-            return;
-        }
-
-        if (MASCP.GOOGLE_AUTH_TOKEN) {
-            headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
-            feed_type = 'private';
-        }
-
-        if (etag) {
-            headers_block["If-None-Match"] = etag;
-        }
-        var req = require('https').get(
-            {
-                host: "spreadsheets.google.com",
-                path: "/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",
-                headers: headers_block,
-            },function(res) {
-                res.setEncoding('utf8');
-                if (res.statusCode != 200) {
-                    callback.call(null,{ 'cause' : { 'status' : res.statusCode } } );
-                    return;
-                }
-                var data = "";
-                res.on('data',function(chunk) {
-                    data += chunk;
-                });
-                res.on('end',function() {
-                    var response = JSON.parse(data);
-                    callback.call(null,null,parsedata(response));
+                    var data = JSON.parse(response);
+                    callback.call(null,null,data);
                 });
             }
         );
@@ -378,33 +395,34 @@ if (typeof module != 'undefined' && module.exports){
         return;
     };
 
-
-    get_document_list = function(callback) {    
-
+    do_request = function(host,path,etag,callback) {
         authenticate(function(err) {
             if (err) {
                 callback.call(null,err);
                 return;
             }
-            var feedUrl = "https://docs.google.com/feeds/default/private/full/-/spreadsheet";
-            var service = new google.gdata.client.GoogleService('writely','gator');
-            service.getFeed(feedUrl,function(data) {
-                var results = [];
-                if (data) {
-                    var entries = data.feed.entry;
-                    var i;
-                    for ( i = entries.length - 1; i >= 0; i-- ) {
-                        results.push( [ entries[i].title.$t,
-                                        entries[i]['gd$resourceId'].$t,
-                                        new Date(entries[i]['updated'].$t) ]
-                                    );
+
+            var request = new XMLHttpRequest();
+            request.open("GET","https://"+host+path);
+            request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
+            request.setRequestHeader('GData-Version','3.0');
+            if (etag) {
+                request.setRequestHeader('If-None-Match',etag);
+            }
+            request.onreadystatechange = function(evt) {
+                if (request.readyState == 4) {
+                    if (request.status == 200) {
+                        callback.call(null,null,parsedata(JSON.parse(request.responseText)));
+                    } else {
+                        callback.call(null,{'cause' : { 'status' : request.status }});
                     }
                 }
-                callback.call(null,null,results);
-            },callback);
+            };
+            request.send();
         });
-
     };
+
+    var basic_get_document = get_document;
 
     get_document = function(doc,etag,callback) {
         if ( ! doc.match(/^spreadsheet/ ) ) {
@@ -412,35 +430,11 @@ if (typeof module != 'undefined' && module.exports){
             return;
         }
         var doc_id = doc.replace(/^spreadsheet:/,'');
-        
 
         get_document_using_script(doc_id,function(err,dat){
             if (err) {
                 console.log("Retrying with authentication");
-                authenticate(function(err) {
-                    if (err) {
-                        callback.call(null,err);
-                        return;
-                    }
-                    var request = new XMLHttpRequest();
-                    request.open("GET","https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/"+"private"+"/basic?alt=json");
-                    request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
-                    request.setRequestHeader('GData-Version','3.0');
-                    if (etag) {
-                        request.setRequestHeader('If-None-Match',etag);
-                    }
-                    request.onreadystatechange = function(evt) {
-                        if (request.readyState == 4) {
-                            if (request.status == 200) {
-                                callback.call(null,null,parsedata(JSON.parse(request.responseText)));
-                            } else {
-                                callback.call(null,{'cause' : { 'status' : request.status }});
-                            }
-                        }
-                    };
-                    request.send();
-                    //get_document_using_script(doc_id,callback);
-                });
+                basic_get_document(doc_id,etag,callback);
             } else {
                 callback.call(null,null,dat);
             }
@@ -481,6 +475,9 @@ var setup = function(renderer) {
 MASCP.GoogledataReader.prototype.getDocumentList = get_document_list;
 
 MASCP.GoogledataReader.prototype.getDocument = get_document;
+
+MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
+
 /*
 map = {
     "peptides" : "column_a",
