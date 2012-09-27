@@ -77,7 +77,11 @@ get_document_list = function(callback) {
 
 get_permissions_id = function(callback) {
     do_request("www.googleapis.com","/drive/v2/about",null,function(err,data) {
-        callback.call(null,err,data.permissionId);
+        if (err) {
+            callback.call(null,err);
+            return;
+        }
+        callback.call(null,null,data.permissionId);
     });
 }
 
@@ -87,13 +91,12 @@ get_permissions = function(doc,callback) {
         return;
     }
     var doc_id = doc.replace(/^spreadsheet:/,'');
-
-    get_permissions_id(function(err,permissionId) {
-        if ( err ) {
-            callback.call(null,err);
+    get_permissions_id(function(error,permissionId) {
+        if ( error ) {
+            callback.call(null,error);
             return;
         }
-        do_request("www.googleapis.com","/drive/v2/files/"+doc_id+"/permissions",null,function(e,data){
+        do_request("www.googleapis.com","/drive/v2/files/"+doc_id+"/permissions",null,function(err,data){
             if (err) {
                 if (err.cause && err.cause.status == '400') {
                     callback.call(null,null,{"write" : false, "read" : false});
@@ -299,7 +302,7 @@ if (typeof module != 'undefined' && module.exports){
             if (auth_details) {
                 MASCP.GOOGLE_AUTH_TOKEN = auth_details.token;
                 if (cback) {
-                    cback();
+                    cback.call(null);
                 }
             } else {
                 console.log("Could not authorize");
@@ -374,9 +377,18 @@ if (typeof module != 'undefined' && module.exports){
         }
         head.appendChild(script);
     };
+    var initing_auth = false;
+    var waiting_callbacks = [];
 
     authenticate = function(cback) {
-        if (! gapi || ! gapi.auth.authorize) {
+        if (MASCP.GOOGLE_AUTH_TOKEN) {
+            cback.call(null);
+            return;
+        }
+        if (initing_auth) {
+            waiting_callbacks.push(cback);
+        }
+        if (! gapi || ! gapi.auth || ! gapi.auth.authorize) {
             cback.call(null,{ "cause" : "No google auth library"});
             return;
         }
@@ -385,14 +397,35 @@ if (typeof module != 'undefined' && module.exports){
             return;
         }
         var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : scope, immediate : true };
+        gapi.auth.authorize({immediate: true},function(){
+        });
+        initing_auth = true;
         gapi.auth.authorize(auth_settings,function(result) {
             if (result && ! result.error) {
                 MASCP.GOOGLE_AUTH_TOKEN = result.access_token;
-                cback();
+                window.setTimeout(function(){
+                    console.log("Google token has timed out, forcing refresh");
+                    delete MASCP["GOOGLE_AUTH_TOKEN"];
+                },parseInt(result.expires_in)*1000);
+                initing_auth = false;
+                cback.call(null);
+                waiting_callbacks.forEach(function(cb){
+                    cb.call(null);
+                });
+                waiting_callbacks = [];
+                return;
+            } else if (result && result.error) {
+                initing_auth = false;
+                var error = { "cause" : result.error };
+                cback.call(null,error);
+                waiting_callbacks.forEach(function(cb){
+                    cb.call(null,error);
+                });
             } else {
                 if ( auth_settings.immediate ) {
                     auth_settings.immediate = false;
                     gapi.auth.authorize(auth_settings,arguments.callee);
+                    return;
                 }
             }
         });
