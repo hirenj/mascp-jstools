@@ -549,9 +549,9 @@ var SVGCanvas = SVGCanvas || (function() {
 
         canvas.callout = function(x,y,content,opts) {
             var callout = this.group();
-            var back = this.rect(-0.5*(opts.width+4),20,opts.width+4,opts.height+4);
+            var back = this.roundRect(-0.5*(opts.width+4),20,opts.width+4,opts.height+4,4);
             back.setAttribute('fill','#000000');
-            var pres_box = this.rect(-0.5*(opts.width+1),22,opts.width+1,opts.height);
+            var pres_box = this.roundRect(-0.5*(opts.width+1),22,opts.width+1,opts.height,4);
             pres_box.setAttribute('fill','#eeeeee');
             callout.push(back);
             callout.push(pres_box);
@@ -560,7 +560,7 @@ var SVGCanvas = SVGCanvas || (function() {
             callout.push(poly);
             var fo = document.createElementNS(svgns,'foreignObject');
             fo.setAttribute('x',-0.5*(opts.width+1)*RS);
-            fo.setAttribute('y',21*RS);
+            fo.setAttribute('y',22*RS);
             fo.setAttribute('width',opts.width*RS);
             fo.setAttribute('height',opts.height*RS);
             callout.push(fo);
