@@ -56,7 +56,62 @@ var parsedata = function ( data ){
     return retdata;                                                                       
 };
 
-var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request;
+var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row;
+
+update_or_insert_row = function(doc,query,new_data,callback) {
+    if ( ! doc.match(/^spreadsheet/ ) ) {
+        console.log("No support for retrieving things that aren't spreadsheets yet");
+        return;
+    }
+    var doc_id = doc.replace(/^spreadsheet:/,'');
+    do_request("spreadsheets.google.com","/feeds/list/"+doc_id+"/1/private/full?sq="+encodeURIComponent(query)+"&alt=json",null,function(err,json) {
+        if (json.feed.entry) {
+            var last_entry = json.feed.entry.reverse().shift();
+            var edit_url;
+            last_entry.link.forEach(function(link) {
+                if (link.rel == 'edit') {
+                    edit_url = link.href;
+                }
+            });
+            var reg = /.+?\:\/\/.+?(\/.+?)(?:#|\?|$)/;
+            var path = reg.exec(edit_url)[1];
+            do_request("spreadsheets.google.com",path+"?alt=json",last_entry['gd$etag'],function(err,json) {
+                if (! err) {
+                    insert_row(doc,new_data,callback);
+                }
+            },"DELETE");
+        } else {
+            insert_row(doc,new_data,callback);
+        }
+    });
+};
+
+insert_row = function(doc,new_data,callback) {
+    if ( ! doc.match(/^spreadsheet/ ) ) {
+        console.log("No support for retrieving things that aren't spreadsheets yet");
+        return;
+    }
+    var doc_id = doc.replace(/^spreadsheet:/,'');
+
+    var data = ['<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gsx="http://schemas.google.com/spreadsheets/2006/extended">'];
+    for (var key in new_data) {
+        data.push("<gsx:"+key+">");
+        if (new_data[key] === null) {
+            data.push('');
+        } else {
+            data.push(new_data[key]);
+        }
+        data.push("</gsx:"+key+">");
+    }
+    data.push("</entry>");
+    do_request("spreadsheets.google.com","/feeds/list/"+doc_id+"/1/private/full",null,function(err,json) {
+        if ( ! err ) {
+            callback.call(null);
+        } else {
+            callback.call(null,err);
+        }
+    },"POST",data.join(''));
+};
 
 get_document_list = function(callback) {
     do_request("docs.google.com", "/feeds/default/private/full/-/spreadsheet?alt=json",null,function(err,data) {
@@ -310,9 +365,15 @@ if (typeof module != 'undefined' && module.exports){
         });
     }
 
-    do_request = function(host,path,etag,callback) {
+    do_request = function(host,path,etag,callback,method,data) {
         var headers_block = { 'GData-Version' : '3.0' };
-
+        var req_method = method || 'GET';
+        if (req_method != 'GET') {
+            headers_block = {};
+        }
+        if (req_method == "POST") {
+            headers_block["Content-Type"] = "application/atom+xml";
+        }
         if (MASCP.GOOGLE_AUTH_TOKEN) {
             headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
         } else {
@@ -325,12 +386,13 @@ if (typeof module != 'undefined' && module.exports){
         if (etag) {
             headers_block["If-None-Match"] = etag;
         }
-
-        require('https').get(
+        var https = require('https');
+        var req = https.request(
             {
                 host: host,
                 path: path,
                 headers: headers_block,
+                method: req_method
             },function(res) {
                 res.setEncoding('utf8');
                 var response = "";
@@ -338,15 +400,22 @@ if (typeof module != 'undefined' && module.exports){
                     response += chunk;
                 });
                 res.on('end',function() {
-                    if (res.statusCode != 200) {
+                    if (res.statusCode > 300) {
                         callback.call(null,{ 'cause' : { 'status' : res.statusCode } } );
                         return;
                     }
-                    var data = JSON.parse(response);
+                    var data = response.length > 0 ? (res.headers['content-type'].match(/json/) ? JSON.parse(response) : response ) : null;
                     callback.call(null,null,data);
                 });
             }
         );
+        if (data) {
+            req.write(data);
+        }
+        req.end();
+        req.on('error',function(err) {
+            callback.call(null,{cause: err});
+        });
     };
 
     MASCP.GoogledataReader.authenticate = authenticate;
@@ -432,7 +501,7 @@ if (typeof module != 'undefined' && module.exports){
         return;
     };
 
-    do_request = function(host,path,etag,callback) {
+    do_request = function(host,path,etag,callback,method,data) {
         authenticate(function(err) {
             if (err) {
                 callback.call(null,err);
@@ -440,22 +509,29 @@ if (typeof module != 'undefined' && module.exports){
             }
 
             var request = new XMLHttpRequest();
-            request.open("GET","https://"+host+path);
+            var req_method = method || 'GET';
+            request.open(req_method,"https://"+host+path);
             request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
-            request.setRequestHeader('GData-Version','3.0');
+            if (req_method == 'GET') {
+                request.setRequestHeader('GData-Version','3.0');
+            }
+            if (req_method == 'POST') {
+                request.setRequestHeader('Content-Type','application/atom+xml');
+            }
             if (etag) {
                 request.setRequestHeader('If-None-Match',etag);
             }
             request.onreadystatechange = function(evt) {
                 if (request.readyState == 4) {
-                    if (request.status == 200) {
-                        callback.call(null,null,JSON.parse(request.responseText));
+                    if (request.status < 300) {
+                        var datablock = request.responseText.length > 0 ? (request.getResponseHeader('Content-Type').match(/json/) ? JSON.parse(request.responseText) : request.responseText) : null;
+                        callback.call(null,null,datablock);
                     } else {
                         callback.call(null,{'cause' : { 'status' : request.status }});
                     }
                 }
             };
-            request.send();
+            request.send(data);
         });
     };
 
@@ -517,6 +593,8 @@ MASCP.GoogledataReader.prototype.getDocumentList = get_document_list;
 MASCP.GoogledataReader.prototype.getDocument = get_document;
 
 MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
+
+MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
 
 /*
 map = {
