@@ -129,7 +129,11 @@ get_document = function(doc,etag,callback) {
     var feed_type = 'private';
 
     do_request("spreadsheets.google.com","/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",etag,function(err,json) {
-        callback.call(null,null,parsedata(json));
+        if ( ! err ) {
+            callback.call(null,null,parsedata(json));
+        } else {
+            callback.call(null,err);
+        }
     });
 };
 
@@ -431,14 +435,17 @@ if (typeof module != 'undefined' && module.exports){
         }
         var doc_id = doc.replace(/^spreadsheet:/,'');
 
-        get_document_using_script(doc_id,function(err,dat){
-            if (err) {
-                console.log("Retrying with authentication");
-                basic_get_document(doc,etag,callback);
-            } else {
-                callback.call(null,null,dat);
-            }
-        });
+        if (etag || MASCP.GOOGLE_AUTH_TOKEN) {
+            basic_get_document(doc,etag,callback);
+        } else {
+            get_document_using_script(doc_id,function(err,dat){
+                if (err) {
+                    basic_get_document(doc,etag,callback);
+                } else {
+                    callback.call(null,null,dat);
+                }
+            });
+        }
     };
 }
 
@@ -522,7 +529,7 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 return;
             }
             // Clear out the cache since we have new data coming in
-            console.log("Wiping out data");
+            console.log("Wiping out data on "+data.title+" ("+doc+")");
             MASCP.Service.ClearCache(reader);
             reader.map = map;
             reader.setData(doc,data);
