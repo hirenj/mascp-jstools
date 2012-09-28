@@ -459,10 +459,29 @@ var SVGCanvas = SVGCanvas || (function() {
             shape.setHeight = function(hght) {
                 var b = 0.5*hght;
                 var points = [];
+                var min_x = null;
+                var max_x = null;
                 for (var i = 0 ; i < n; i++) {
                     var angle = (rotate/360 * 2*Math.PI) + 2/n*Math.PI*i;
-                    points.push( (a+a*Math.cos(angle))+","+(b+b*Math.sin(angle))   );
+                    var a_x = parseInt(a+a*Math.cos(angle));
+                    var a_y = parseInt(b+b*Math.sin(angle));
+                    points.push( [a_x, a_y] );
+                    if (min_x === null || a_x < min_x ) {
+                        min_x = a_x;
+                    }
+                    if (max_x === null || a_x > max_x) {
+                        max_x = a_x;
+                    }
                 }
+                points.map(function(points) {
+                    if (points[0] == min_x) {
+                        points[0] = 0;
+                    }
+                    if (points[0] == max_x) {
+                        points[0] = (width)*RS;
+                    }
+                    return points.join(",");
+                });
                 this.setAttribute('points',points.join(" "));
             };
             shape.setHeight(height*RS);
