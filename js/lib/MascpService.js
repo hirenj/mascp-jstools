@@ -917,7 +917,8 @@ base.retrieve = function(agi,callback)
             var idx = store.index("entries");
             var max_stamp = -1;
             var result = null;
-            idx.openCursor().onsuccess = function(event) {
+            var range = IDBKeyRange.only([acc,service]);
+            idx.openCursor(range).onsuccess = function(event) {
                 var cursor = event.target.result;
                 if (cursor) {
                     if (cursor.primaryKey[2] >= timestamps[0] && cursor.primaryKey[2] <= timestamps[1] ) {
