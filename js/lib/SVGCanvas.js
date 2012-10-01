@@ -702,7 +702,9 @@ var SVGCanvas = SVGCanvas || (function() {
                 marker.push(marker.contentElement);
             } else {
                 marker.contentElement = this.group();
+                marker.contentElement.push(this.text_circle(0,0.5*r,1.75*r,"",opts));
                 if (symbol) {
+                    symbol.setAttribute('transform','translate(0,'+(0.5*r*RS)+')');
                     marker.contentElement.push(symbol);
                 }
                 marker.push(marker.contentElement);
