@@ -833,13 +833,50 @@ base.retrieve = function(agi,callback)
     }
     if (typeof idb != 'undefined') {
         /* The following two should be no-ops */
-        begin_transaction = function() {};
-        end_transaction = function() {};
+        var transaction_store_db;
+        var transaction_find_latest;
+        var transaction_data = [];
+        begin_transaction = function() {
+            transaction_store_db = store_db_data;
+            store_db_data = function(acc,service,data) {
+                transaction_data.push([acc,service,data]);
+            };
+        };
+
+        end_transaction = function() {
+            store_db_data = transaction_store_db;
+            var trans = idb.transaction(["cached"], "readwrite");
+            var store = trans.objectStore("cached");
+            while (transaction_data.length > 0) {
+                var row = transaction_data.shift();
+                var acc = row[0];
+                var service = row[1];
+                var data = row[2];
+                if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
+                    continue;
+                }
+                var dateobj = data.retrieved ? data.retrieved : (new Date());
+                if (typeof dateobj == 'string') {
+                    dateobj = new Date(dateobj);
+                }
+                dateobj.setUTCHours(0);
+                dateobj.setUTCMinutes(0);
+                dateobj.setUTCSeconds(0);
+                dateobj.setUTCMilliseconds(0);
+                var reporter = insert_report_func(acc,service);
+                var datetime = dateobj.getTime();
+                data.id = [acc,service,datetime];
+                data.acc = acc;
+                data.service = service;
+                data.retrieved = datetime;
+                var req = store.put(data);
+                req.onerror = reporter;
+            }
+        };
 
         var insert_report_func = function(acc,service) {
             return function(err,rows) {
                 if ( ! err && rows) {
-//                    console.log("Caching result for "+acc+" in "+service);
                 }
             };
         };
