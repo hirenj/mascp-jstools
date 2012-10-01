@@ -596,6 +596,8 @@ MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
 
 MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
 
+var update_timestamps = {};
+
 /*
 map = {
     "peptides" : "column_a",
@@ -620,13 +622,20 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 get_data(null);
                 return;
             }
+            if (update_timestamps[doc] && ((new Date()) - update_timestamps[doc]) < 1000*60*30) {
+                bean.fire(reader,'ready');
+                return;
+            }
             a_temp_reader.retrieve(accs[0],function() {
                 get_data(this.result._raw_data.etag);
             });
         });
     })();
 
+    var trans;
+
     var get_data = function(etag) {
+        update_timestamps[doc] = new Date();
         self.getDocument(doc,etag,function(e,data) {
             if (e) {
                 if (e.cause.status == 304) {
