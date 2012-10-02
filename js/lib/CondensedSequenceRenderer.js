@@ -734,6 +734,38 @@ var addBoxOverlayToElement = function(layerName,width,fraction) {
     return rect;
 };
 
+var addTextToElement = function(layerName,width,opts) {
+    var canvas = this._renderer._canvas;
+    if ( ! canvas ) {
+        var orig_func = arguments.callee;
+        var self = this;
+        this._renderer.bind('sequencechange',function() {
+            this._renderer.unbind('sequencechange',arguments.callee);
+            orig_func.call(self,layerName,width,opts);
+        });
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+    if ( ! opts ) {
+        opts = {};
+    }
+    var height = this._renderer._layer_containers[layerName].trackHeight || 4;
+    var text = canvas.text(this._index,0,opts.txt || "Text");
+    text.setAttribute('font-size',0.75*height*this._renderer._RS);
+    text.setAttribute('font-weight','bolder');
+    text.setAttribute('fill','#ffffff');
+    text.setAttribute('stroke','#000000');
+    text.setAttribute('stroke-width','5');
+    text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
+    text.firstChild.setAttribute('dy','2ex');
+    text.setAttribute('text-anchor','middle');
+    text.setHeight = function(height) {
+        text.setAttribute('font-size', 0.75*height);
+    }
+    this._renderer._layer_containers[layerName].push(text);
+    return text;
+}
+
 var addShapeToElement = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
 
@@ -973,6 +1005,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addToLayer = addElementToLayer;
     el.addBoxOverlay = addBoxOverlayToElement;
     el.addShapeOverlay = addShapeToElement;
+    el.addTextOverlay = addTextToElement;
     el.addToLayerWithLink = addElementToLayerWithLink;
     el.addAnnotation = addAnnotationToLayer;
     el.callout = addCalloutToLayer;
