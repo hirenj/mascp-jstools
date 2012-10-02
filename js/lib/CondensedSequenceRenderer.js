@@ -43,6 +43,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 (function(clazz) {
     var createCanvasObject = function() {
         var renderer = this;
+        this.win = function() {
+            if (this._container && this._container.ownerDocument && this._container.ownerDocument.defaultView) {
+                return this._container.ownerDocument.defaultView;
+            }
+            return null;
+        };
 
         if (this._object) {
             if (typeof svgweb != 'undefined') {
@@ -1493,7 +1499,7 @@ clazz.prototype.enablePrintResizing = function() {
         self.refresh();
         self.grow_container = false;
     };
-    window.matchMedia('print').addListener(self._media_func);
+    (self.win() || window).matchMedia('print').addListener(self._media_func);
 };
 
 clazz.prototype.wireframe = function() {
