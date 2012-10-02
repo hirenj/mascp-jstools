@@ -588,6 +588,7 @@ var SVGCanvas = SVGCanvas || (function() {
             var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
             body.style.fontSize = (15*RS) +'px';
             body.style.margin = (5*RS)+'px';
+            body.style.height = opts.height*RS*10+'px';
             html.appendChild(body);
             body.appendChild(content);
             fo.appendChild(html);
@@ -634,9 +635,12 @@ var SVGCanvas = SVGCanvas || (function() {
                 // this.setAttribute('height',height);
                 var scale_val = setHeight.call(this,height);
                 this.setAttribute('height',height);
-                var top_offset = this.offset;
+                var top_offset = this.offset || 0;
                 var widget_width = this.firstChild.firstChild.getBBox().width;
                 var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
+                if ( ! this.angle ) {
+                    this.angle = 0;
+                }
                 if (this.angle > 10) {
                     centering_offset = 0;
                 }
