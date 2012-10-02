@@ -9,6 +9,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
     var Navigation = function(parent_canvas,renderer) {
         SVGCanvas(parent_canvas);
 
+        this.win = function() {
+            return renderer.win();
+        };
+
         buildNavPane.call(this,parent_canvas);
 
         var track_group = parent_canvas.group();
@@ -454,7 +458,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         close_group.style.cursor = 'pointer';
         if (typeof matchMedia !== 'undefined') {
-            matchMedia('print').addListener(function(match) {
+            (this.win() || window).matchMedia('print').addListener(function(match) {
                 if (match.matches) {
                     close_group.setAttribute('display','none');
                     tracks_button.setAttribute('display','none');
