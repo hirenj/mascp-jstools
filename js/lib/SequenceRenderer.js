@@ -120,15 +120,19 @@ MASCP.registerGroup = function(groupName, options)
  * @see MASCP.Layer
  * @see MASCP.event:layerRegistered
  */
-MASCP.registerLayer = function(layerName, options)
+MASCP.registerLayer = function(layerName, options, renderers)
 {
     if ( ! this.layers ) {
         this.layers = {};
     }
+    if ( ! renderers ) {
+        renderers = [];
+    }
+
     if (this.layers[layerName]) {
-        if (this.layers[layerName].disabled) {
+        if (this.layers[layerName].disabled || renderers.length > 0) {
             this.layers[layerName].disabled = false;
-            bean.fire(MASCP,'layerRegistered',[this.layers[layerName]]);
+            bean.fire(MASCP,'layerRegistered',[this.layers[layerName]].concat(renderers));
         }
         return this.layers[layerName];
     }
@@ -171,8 +175,7 @@ MASCP.registerLayer = function(layerName, options)
         jQuery('<style type="text/css">'+layerCss+'</style>').appendTo('head');
     }
     layer.layer_id = new Date().getMilliseconds();
-    
-    bean.fire(MASCP,'layerRegistered',[layer]);
+    bean.fire(MASCP,'layerRegistered',[layer].concat(renderers));
     
     return layer;
 };

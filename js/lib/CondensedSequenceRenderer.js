@@ -14,13 +14,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     var self = this;
 
     MASCP.CondensedSequenceRenderer.Zoom(self);
-    
-    // When we have a layer registered with the global MASCP object
-    // add a track within this rendererer.
-    bean.add(MASCP,'layerRegistered', function(layer) {
-        self.addTrack(layer);
-    });
-    
+
     // We want to unbind the default handler for sequence change that we get from
     // inheriting from CondensedSequenceRenderer
     jQuery(this).unbind('sequenceChange');
@@ -508,11 +502,18 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             drawAminoAcids.call(this,canv);
             renderer._layer_containers = {};
             renderer.enablePrintResizing();
+
+            // When we have a layer registered with the global MASCP object
+            // add a track within this rendererer.
+            bean.add(MASCP,'layerRegistered', function(layer,rend) {
+                if (! rend || rend === renderer) {
+                    renderer.addTrack(layer);
+                }
+            });
+
             jQuery(renderer).trigger('sequenceChange');
         });
-    
         var canvas = createCanvasObject.call(this);
-    
         if (this._canvas) {
             has_canvas = true;
         } else {
