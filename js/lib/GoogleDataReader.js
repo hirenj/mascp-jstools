@@ -617,8 +617,8 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
         var a_temp_reader = new MASCP.UserdataReader();
         a_temp_reader.datasetname = doc;
         MASCP.Service.CacheService(a_temp_reader);
-        MASCP.Service.CachedAgis(a_temp_reader,function(accs) {
-            if ( accs.length < 1 ) {
+        MASCP.Service.FirstAgi(a_temp_reader,function(entry) {
+            if ( ! entry ) {
                 get_data(null);
                 return;
             }
@@ -626,7 +626,7 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 bean.fire(reader,'ready');
                 return;
             }
-            a_temp_reader.retrieve(accs[0],function() {
+            a_temp_reader.retrieve(entry,function() {
                 get_data(this.result._raw_data.etag);
             });
         });
