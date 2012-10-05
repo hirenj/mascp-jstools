@@ -218,7 +218,7 @@ var SVGCanvas = SVGCanvas || (function() {
         an_array.refresh_zoom = function() {
             for (var i = 0; i < an_array.length; i++ ) {
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
-                    if (canvas.zoom > 3.5) {
+                    if (an_array[i].ownerSVGElement.zoom > 3.5) {
                         an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
@@ -227,7 +227,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 }
             
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
-                    if (canvas.zoom <= 3.5) {
+                    if (an_array[i].ownerSVGElement.zoom <= 3.5) {
                         an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
