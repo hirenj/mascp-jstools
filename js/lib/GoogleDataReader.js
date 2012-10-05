@@ -33,14 +33,14 @@ var parsedata = function ( data ){
             R = m[ 1 ] - 1;
             C = m[ 2 ] - 1;
         }
-        var row = retdata.data[ R ];                                                                                                                           
+        var row = retdata.data[ R ];
         if( typeof( row ) == 'undefined' ) {
             retdata.data[ R ] = [];
         }
         retdata.data[ R ][ C ] = entry.content.$t;
     }
     retdata.retrieved = new Date(data.feed.updated.$t);
-    
+
     /* When we cache this data, we don't want to
        wipe out the hour/minute/second accuracy so
        that we can eventually do some clever updating
@@ -53,7 +53,7 @@ var parsedata = function ( data ){
     retdata.etag = data.feed.gd$etag;
     retdata.title = data.feed.title.$t;
 
-    return retdata;                                                                       
+    return retdata;
 };
 
 var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row;
@@ -194,7 +194,6 @@ get_document = function(doc,etag,callback) {
         }
     });
 };
-
 
 if (typeof module != 'undefined' && module.exports){
 
@@ -350,7 +349,6 @@ if (typeof module != 'undefined' && module.exports){
         req.write(post_data);
         req.end();
     };
-
 
     authenticate = function(cback) {
         with_google_authentication(function(auth_details) {
@@ -557,7 +555,6 @@ if (typeof module != 'undefined' && module.exports){
         }
     };
 }
-
 
 var render_site = function(renderer) {
     var self = this;
