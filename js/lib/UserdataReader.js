@@ -162,7 +162,9 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.data = dataset;
     
     var inserter = new MASCP.UserdataReader();
-
+    if (this.avoid_database) {
+        inserter.avoid_database = true;
+    }
     inserter.toString = function() {
         return self.toString();
     };
@@ -184,6 +186,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             if (acc.match(/[A-Z]/)) {
                 dataset[acc.toLowerCase()] = dataset[acc];
                 delete dataset[acc];
+                acc = acc.toLowerCase();
             }
             accs.push(acc);
         }
