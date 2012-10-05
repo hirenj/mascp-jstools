@@ -636,7 +636,6 @@ var SVGCanvas = SVGCanvas || (function() {
                 var scale_val = setHeight.call(this,height);
                 this.setAttribute('height',height);
                 var top_offset = this.offset || 0;
-                var widget_width = this.firstChild.firstChild.getBBox().width;
                 var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
                 if ( ! this.angle ) {
                     this.angle = 0;
