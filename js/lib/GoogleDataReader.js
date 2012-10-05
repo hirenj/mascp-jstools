@@ -596,8 +596,6 @@ MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
 
 MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
 
-var update_timestamps = {};
-
 /*
 map = {
     "peptides" : "column_a",
@@ -622,7 +620,15 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 get_data(null);
                 return;
             }
-            if (update_timestamps[doc] && ((new Date()) - update_timestamps[doc]) < 1000*60*30) {
+
+            var update_timestamps = {};
+            if (typeof module == 'undefined' || ! module.exports && typeof window != 'undefined'){
+                if (window.sessionStorage) {
+                    update_timestamps = JSON.parse(window.sessionStorage.getItem("update_timestamps") || "{}");
+                }
+            }
+
+            if (update_timestamps[doc] && ((new Date().getTime()) - update_timestamps[doc]) < 1000*60*120) {
                 bean.fire(reader,'ready');
                 return;
             }
@@ -635,7 +641,23 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     var trans;
 
     var get_data = function(etag) {
-        update_timestamps[doc] = new Date();
+
+        var update_timestamps = {};
+
+        if (typeof module == 'undefined' || ! module.exports && typeof window != 'undefined'){
+            if (window.sessionStorage) {
+                update_timestamps = JSON.parse(window.sessionStorage.getItem("update_timestamps") || "{}");
+            }
+        }
+
+        update_timestamps[doc] = new Date().getTime();
+
+        if (typeof module == 'undefined' || ! module.exports && typeof window != 'undefined'){
+            if (window.sessionStorage) {
+                update_timestamps = window.sessionStorage.setItem("update_timestamps",JSON.stringify(update_timestamps));
+            }
+        }
+
         self.getDocument(doc,etag,function(e,data) {
             if (e) {
                 if (e.cause.status == 304) {
