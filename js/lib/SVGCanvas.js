@@ -646,7 +646,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 if (top_offset == 0) {
                     centering_offset = 0;
                 }
-                this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*10/scale_val)+') rotate('+this.angle+',100,0)');
+                this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*RS)+') rotate('+this.angle+',100,0)');
             };
             return result;
         };

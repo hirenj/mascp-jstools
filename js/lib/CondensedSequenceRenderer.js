@@ -673,6 +673,13 @@ var addElementToLayer = function(layerName,opts) {
     tracer_marker.setAttribute('height','250');
     tracer_marker.firstChild.setAttribute('transform', 'translate(-100,0) rotate(0,100,0.001)');
 
+    if (typeof opts.offset == 'undefined' || opts.offset === null) {
+        // tracer_marker.offset = 2.5*this._renderer._layer_containers[layerName].track_height;
+    } else {
+        tracer_marker.offset = opts.offset;
+    }
+
+
     // tracer_marker.setAttribute('transform','scale(0.5)');
     // tracer_marker.zoom_level = 'text';
     tracer_marker.setAttribute('visibility','hidden');
