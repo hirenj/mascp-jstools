@@ -670,7 +670,7 @@ base.retrieve = function(agi,callback)
             id = id.toLowerCase();
             self.agi = id;
 
-            get_db_data(id,self.toString(),function(err,data) {
+            get_db_data(self.avoid_database ? null : id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
                         self.result = null;
@@ -918,6 +918,10 @@ base.retrieve = function(agi,callback)
         };
 
         find_latest_data = function(acc,service,timestamps,cback) {
+            if ( ! acc ) {
+                cback.call();
+                return;
+            }
             var trans = idb.transaction(["cached"],"readonly");
             var store = trans.objectStore("cached");
             var idx = store.index("entries");

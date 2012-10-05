@@ -69,6 +69,7 @@ MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
     writer.datasetname = "UniprotReader";
     callback(writer);
     setTimeout(function() {
+        writer.avoid_database = true;
         writer.setData("UniprotReader",{"data" : datas});
     },0);
     return writer;
