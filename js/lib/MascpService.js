@@ -714,8 +714,15 @@ base.retrieve = function(agi,callback)
                     if ((max_age !== 0)) {
                         self._endpointURL = null;
                     }
-                    _oldRetrieve.call(self,id,cback);
-                    self._endpointURL = old_url;
+                    if (self.avoid_database) {
+                        setTimeout(function() {
+                            _oldRetrieve.call(self,id,cback);
+                            self._endpointURL = old_url;
+                        },0);
+                    } else {
+                        _oldRetrieve.call(self,id,cback);
+                        self._endpointURL = old_url;
+                    }
                 }             
             });
             return self;
@@ -793,13 +800,23 @@ base.retrieve = function(agi,callback)
                         store.createIndex("entries", [ "acc" , "service" ], { unique : false });
                         store.createIndex("timestamps", [ "service" , "retrieved" ], { unique : false });
                         store.createIndex("services", "service", { unique : false });
+                        var trans = set_version.result;
+                        trans.oncomplete = function() {
+                            if (MASCP.events) {
+                                MASCP.events.emit("ready");
+                            }
+                            if (MASCP.ready) {
+                                MASCP.ready();
+                            }
+                        };
+                    };
+                } else {
+                    if (MASCP.events) {
+                        MASCP.events.emit("ready");
                     }
-                }
-                if (MASCP.events) {
-                    MASCP.events.emit("ready");
-                }
-                if (MASCP.ready) {
-                    MASCP.ready();
+                    if (MASCP.ready) {
+                        MASCP.ready();
+                    }
                 }
             };
         } else {
