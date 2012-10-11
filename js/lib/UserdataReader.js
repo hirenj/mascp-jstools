@@ -162,9 +162,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     this.data = dataset;
     
     var inserter = new MASCP.UserdataReader();
-    if (this.avoid_database) {
-        inserter.avoid_database = true;
-    }
+
     inserter.toString = function() {
         return self.toString();
     };
@@ -173,7 +171,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     
     inserter.retrieve = function(an_acc,cback) {
         this.agi = an_acc;
-        this._dataReceived(dataset[this.agi]);
+        // this._dataReceived(dataset[this.agi]);
         cback.call(this);
     };
     
@@ -203,23 +201,31 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             self.retrieve(id,cback);
         });
     };
+    if (accs.length < 1) {
+        return;
+    }
     var trans = MASCP.Service.BulkOperation();
-    (function() {
-        if (accs.length === 0) {
-            self.retrieve = retrieve;
-            trans(function(err) {
-                if ( ! err ) {
-                    bean.fire(self,'ready');
-                } else {
-                    bean.fire(self,'error');
-                }
-            });
-            return;
+
+    inserter.avoid_database = true;
+    inserter.retrieve(accs[0],function() {
+        while (accs.length > 0) {
+            var acc = accs.shift();
+            bean.fire(self,'progress',[100 * ((total - accs.length) / total), total - accs.length, total]);
+            inserter.agi = acc;
+            inserter._dataReceived(dataset[acc]);
+            if (accs.length === 0) {
+                self.retrieve = retrieve;
+                trans(function(err) {
+                    if ( ! err ) {
+                        bean.fire(self,'ready');
+                    } else {
+                        bean.fire(self,'error');
+                    }
+                });
+                return;
+            }
         }
-        var acc = accs.shift();
-        bean.fire(self,'progress',[100 * ((total - accs.length) / total), total - accs.length, total]);
-        inserter.retrieve(acc,arguments.callee);
-    })();
+    });
 
 };
 

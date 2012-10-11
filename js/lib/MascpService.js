@@ -658,7 +658,7 @@ base.retrieve = function(agi,callback)
             return;
         }
         var _oldRetrieve = reader.retrieve;
-        
+        var has_avoid;
         reader.retrieve = function(agi,cback) {
             var self = this;
             var id = agi ? agi : self.agi;
@@ -670,7 +670,31 @@ base.retrieve = function(agi,callback)
             id = id.toLowerCase();
             self.agi = id;
 
-            get_db_data(self.avoid_database ? null : id,self.toString(),function(err,data) {
+            if (self.avoid_database) {
+                if (has_avoid) {
+                    return;
+                }
+                has_avoid = self._dataReceived;
+                self._dataReceived = (function() { return function(dat) {
+                        var res = has_avoid.call(this,dat);
+                        var id = self.agi;
+                        if (res && this.result && this.result._raw_data !== null) {
+                            store_db_data(id,this.toString(),this.result._raw_data || {});
+                        }
+                        dat = {};
+                        return res;
+                    };})();
+                cback.call(self);
+                return;
+            }
+            if (has_avoid && ! self.avoid_database) {
+                self._dataReceived = has_avoid;
+                has_avoid = null;
+                cback.call(self);
+                return;
+            }
+
+            get_db_data(id,self.toString(),function(err,data) {
                 if (data) {
                     if (cback) {
                         self.result = null;
@@ -714,15 +738,8 @@ base.retrieve = function(agi,callback)
                     if ((max_age !== 0)) {
                         self._endpointURL = null;
                     }
-                    if (self.avoid_database) {
-                        setTimeout(function() {
-                            _oldRetrieve.call(self,id,cback);
-                            self._endpointURL = old_url;
-                        },0);
-                    } else {
-                        _oldRetrieve.call(self,id,cback);
-                        self._endpointURL = old_url;
-                    }
+                    _oldRetrieve.call(self,id,cback);
+                    self._endpointURL = old_url;
                 }             
             });
             return self;
@@ -759,16 +776,24 @@ base.retrieve = function(agi,callback)
         data_timestamps(serviceString,null,cback);
     };
 
+    var transaction_ref_count = 0;
+    var waiting_callbacks = [];
     clazz.BulkOperation = function() {
-        var success = begin_transaction();
-        return success ? function(callback) {
+        begin_transaction();
+        transaction_ref_count++;
+        return function(callback) {
             if ( ! callback ) {
                 callback = function() {};
             }
-            end_transaction(callback);
-        } : function(callback) {
-            if (callback) {
-                callback();
+            transaction_ref_count--;
+            waiting_callbacks.push(callback);
+            if (transaction_ref_count == 0) {
+                end_transaction(function(err) {
+                    waiting_callbacks.forEach(function(cback) {
+                        cback(err);
+                    });
+                    waiting_callbacks = [];
+                });
             }
         };
     };
