@@ -763,12 +763,12 @@ var addTextToElement = function(layerName,width,opts) {
     text.setAttribute('fill','#ffffff');
     text.setAttribute('stroke','#000000');
     text.setAttribute('stroke-width','5');
-    text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
+    text.setAttribute('style','font-family: Helvetica, Arial, Gil Sans, sans-serif; text-anchor: middle;');
     text.firstChild.setAttribute('dy','2ex');
     text.setAttribute('text-anchor','middle');
     text.setHeight = function(height) {
         text.setAttribute('font-size', 0.75*height);
-    }
+    };
     this._renderer._layer_containers[layerName].push(text);
     return text;
 }
@@ -1653,7 +1653,7 @@ clazz.prototype.refresh = function(animated) {
             }
             continue;
         } else {
-            container.attr({ 'opacity' : '1' });
+            // container.attr({ 'opacity' : '1' });
         }
         if (container.tracers) {
             var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'visible' : 'hidden';
