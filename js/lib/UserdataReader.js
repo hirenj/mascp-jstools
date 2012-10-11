@@ -203,11 +203,17 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             self.retrieve(id,cback);
         });
     };
-
+    var trans = MASCP.Service.BulkOperation();
     (function() {
         if (accs.length === 0) {
             self.retrieve = retrieve;
-            bean.fire(self,'ready');
+            trans(function(err) {
+                if ( ! err ) {
+                    bean.fire(self,'ready');
+                } else {
+                    bean.fire(self,'error');
+                }
+            });
             return;
         }
         var acc = accs.shift();
