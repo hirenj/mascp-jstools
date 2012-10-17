@@ -669,9 +669,14 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
             }
             // Clear out the cache since we have new data coming in
             console.log("Wiping out data on "+data.title+" ("+doc+")");
-            MASCP.Service.ClearCache(reader);
-            reader.map = map;
-            reader.setData(doc,data);
+            MASCP.Service.ClearCache(reader,null,function(error) {
+                if (error) {
+                    bean.fire(reader,"error",[error]);
+                    return;
+                }
+                reader.map = map;
+                reader.setData(doc,data);
+            });
         });
     }
     return reader;
