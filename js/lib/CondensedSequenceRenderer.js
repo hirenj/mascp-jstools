@@ -1528,55 +1528,63 @@ clazz.prototype.removeTrack = function(layer) {
     }
     
 };
-
+var refresh_id = 0;
 clazz.prototype.enablePrintResizing = function() {
-    var self = this;
-    if (self._media_func) {
-        return;
+    if (this._media_func) {
+        return this._media_func;
     }
     var old_zoom;
     var old_translate;
     var old_viewbox;
-    self._media_func = function(match) {
+    this._media_func = function(matcher) {
+        var self = this;
         if ( self.grow_container ) {
             return;
         }
-
+        var match=matcher;
         if (! match.matches ) {
-            if (old_zoom) {
+            if (self.old_zoom) {
+                var a_zoom = self.old_zoom;
+                self.old_zoom = null;
                 self.zoomCenter = null;
                 self.withoutRefresh(function() {
-                  self.zoom = old_zoom;
+                  self.zoom = a_zoom;
                 });
                 self._canvas.setCurrentTranslateXY(old_translate,0);
                 self._container_canvas.setAttribute('viewBox',old_viewbox);
-                self._container.style.height = 'auto';
-                old_zoom = null;
-                old_translate = null;
+                // self._container.style.height = 'auto';
+                self.old_zoom = null;
+                self.old_translate = null;
                 self.refresh();
-                bean.fire(widget_rend._canvas,'zoomChange');
+                bean.fire(self._canvas,'zoomChange');
             }
             return;
         }
-        var container = self._container;
-        old_translate = self._canvas.currentTranslate.x;
-        self._canvas.setCurrentTranslateXY(0,0);
-        var zoomFactor = 0.95 * (container.clientWidth) / (widget_rend.sequence.length);
-        if ( ! old_zoom ) {
-          old_zoom = self.zoom;
-          old_viewbox = self._container_canvas.getAttribute('viewBox');
+        try {
+            var container = self._container;
+            self.old_translate = self._canvas.currentTranslate.x;
+            self._canvas.setCurrentTranslateXY(0,0);
+            var zoomFactor = 0.95 * (container.clientWidth) / (self.sequence.length);
+            if ( ! self.old_zoom ) {
+              self.old_zoom = self.zoom;
+              self.old_viewbox = self._container_canvas.getAttribute('viewBox');
+            }
+            self.zoomCenter = null;
+            self._container_canvas.removeAttribute('viewBox');
+            self.withoutRefresh(function() {
+                self.zoom = zoomFactor;
+            });
+            self.refresh();
+        } catch (err) {
+            console.log(err);
+            console.log(err.stack);
         }
-        self.zoomCenter = null;
-        self._container_canvas.removeAttribute('viewBox');
-
-        self.withoutRefresh(function() {
-            self.zoom = zoomFactor;
-        });
-        self.grow_container = true;
-        self.refresh();
-        self.grow_container = false;
+        // self.grow_container = false;
     };
-    (self.win() || window).matchMedia('print').addListener(self._media_func);
+    var rend = this;
+    (this.win() || window).matchMedia('print').addListener(function(matcher) {
+        rend._media_func(matcher);
+    });
 };
 
 clazz.prototype.wireframe = function() {
