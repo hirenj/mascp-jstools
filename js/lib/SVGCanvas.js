@@ -343,7 +343,7 @@ var SVGCanvas = SVGCanvas || (function() {
         
         var RS = canvas.RS || DEFAULT_RS;
         canvas.RS = RS;
-        
+        canvas.font_order = 'Helvetica, Verdana, Arial, Sans-serif'
         extended_elements.push(canvas);
         
         canvas.makeEl = function(name,attributes) {
@@ -850,7 +850,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 a_tspan.textContent = text;
                 a_tspan.setAttribute('dy','0');
             }
-            a_text.style.fontFamily = 'Helvetica, Verdana, Arial, Sans-serif';
+            a_text.style.fontFamily = this.font_order || 'Helvetica, Verdana, Arial, Sans-serif';
             a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
             a_text.setAttribute('y',typeof y == 'string' ? y : y * RS);        
             this.appendChild(a_text);

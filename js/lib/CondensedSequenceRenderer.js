@@ -60,7 +60,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             this._object = null;
         }
         var canvas;
-
         if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
             var native_canvas = document.createElementNS(svgns,'svg');
             native_canvas.setAttribute('width','100%');
@@ -78,11 +77,17 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         canvas.addEventListener('load',function() {
             var container_canv = this;
             SVGCanvas(container_canv);
+            if (renderer.font_order) {
+                container_canv.font_order = renderer.font_order;
+            }
             var group = container_canv.makeEl('g');
         
             var canv = container_canv.makeEl('svg');
             canv.RS = renderer._RS;
             SVGCanvas(canv);
+            if (renderer.font_order) {
+                canv.font_order = renderer.font_order;
+            }
             group.appendChild(canv);
             container_canv.appendChild(group);
 
@@ -783,7 +788,7 @@ var addTextToElement = function(layerName,width,opts) {
     text.setAttribute('fill','#ffffff');
     text.setAttribute('stroke','#000000');
     text.setAttribute('stroke-width','5');
-    text.setAttribute('style','font-family: Helvetica, Arial, Gil Sans, sans-serif; text-anchor: middle;');
+    text.setAttribute('style','font-family: '+canvas.font_order);
     text.firstChild.setAttribute('dy','2ex');
     text.setAttribute('text-anchor','middle');
     text.setHeight = function(height) {
