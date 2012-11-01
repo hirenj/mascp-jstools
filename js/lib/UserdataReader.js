@@ -205,28 +205,33 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         bean.fire(self,'ready');
         return;
     }
-    var trans = MASCP.Service.BulkOperation();
-
-    inserter.avoid_database = true;
-    inserter.retrieve(accs[0],function() {
-        while (accs.length > 0) {
-            var acc = accs.shift();
-            bean.fire(self,'progress',[100 * ((total - accs.length) / total), total - accs.length, total]);
-            inserter.agi = acc;
-            inserter._dataReceived(dataset[acc]);
-            if (accs.length === 0) {
-                self.retrieve = retrieve;
-                trans(function(err) {
-                    if ( ! err ) {
-                        bean.fire(self,'ready');
-                    } else {
-                        bean.fire(self,'error');
-                    }
-                });
-                return;
-            }
+    var trans = MASCP.Service.BulkOperation(function(err) {
+        if (err) {
+            bean.fire(self,'error');
+            return;
         }
+        inserter.avoid_database = true;
+        inserter.retrieve(accs[0],function() {
+            while (accs.length > 0) {
+                var acc = accs.shift();
+                bean.fire(self,'progress',[100 * ((total - accs.length) / total), total - accs.length, total]);
+                inserter.agi = acc;
+                inserter._dataReceived(dataset[acc]);
+                if (accs.length === 0) {
+                    self.retrieve = retrieve;
+                    trans(function(err) {
+                        if ( ! err ) {
+                            bean.fire(self,'ready');
+                        } else {
+                            bean.fire(self,'error');
+                        }
+                    });
+                    return;
+                }
+            }
+        });
     });
+
 
 };
 

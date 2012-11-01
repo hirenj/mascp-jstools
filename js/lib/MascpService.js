@@ -781,8 +781,8 @@ base.retrieve = function(agi,callback)
 
     var transaction_ref_count = 0;
     var waiting_callbacks = [];
-    clazz.BulkOperation = function() {
-        begin_transaction();
+    clazz.BulkOperation = function(callback) {
+        begin_transaction(callback);
         transaction_ref_count++;
         return function(callback) {
             if ( ! callback ) {
@@ -894,14 +894,20 @@ base.retrieve = function(agi,callback)
         var transaction_store_db;
         var transaction_find_latest;
         var transaction_data = [];
-        begin_transaction = function() {
+        begin_transaction = function(callback) {
             if (transaction_store_db != null) {
+                setTimeout(function() {
+                    callback.call();
+                },0);
                 return false;
             }
             transaction_store_db = store_db_data;
             store_db_data = function(acc,service,data) {
                 transaction_data.push([acc,service,data]);
             };
+            setTimeout(function() {
+                callback.call();
+            },0);
             return true;
         };
 
@@ -1172,13 +1178,14 @@ base.retrieve = function(agi,callback)
 
         var old_get_db_data = null;
         
-        begin_transaction = function() {
+        begin_transaction = function(callback) {
             if (old_get_db_data !== null) {
+                callback.call();
                 return false;
             }
-
             db.exec("BEGIN TRANSACTION;",function(err) {
                 if ( err ) {
+                    callback.call(err);
                     return;
                 }
                 old_get_db_data = get_db_data;
@@ -1188,6 +1195,7 @@ base.retrieve = function(agi,callback)
                          cback.call(null,null);
                      },0);
                 };
+                callback.call();
             });
             return true;
         };
@@ -1463,8 +1471,11 @@ base.retrieve = function(agi,callback)
             cback.call(null,[]);
         };
         
-        begin_transaction = function() {
+        begin_transaction = function(callback) {
             // No support for transactions here. Do nothing.
+            setTimeout(function() {
+                callback.call();
+            },0);
         };
         end_transaction = function(callback) {
             // No support for transactions here. Do nothing.
@@ -1503,8 +1514,11 @@ base.retrieve = function(agi,callback)
             cback.call(null,[]);
         };
         
-        begin_transaction = function() {
+        begin_transaction = function(callback) {
             // No support for transactions here. Do nothing.
+            setTimeout(function(){
+                callback();
+            },0);
         };
         end_transaction = function(callback) {
             // No support for transactions here. Do nothing.
