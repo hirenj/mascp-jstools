@@ -621,7 +621,7 @@ if (typeof module != 'undefined' && module.exports){
 
 var render_site = function(renderer) {
     var self = this;
-    var sites = self.result._raw_data.sites || [], i = 0, match = null;
+    var sites = self.result._raw_data.data.sites || [], i = 0, match = null;
     MASCP.registerLayer(self.datasetname,{ 'fullname' : self.result._raw_data.title });
     for (i = sites.length - 1; i >= 0; i--) {
         if (match = sites[i].match(/(\d+)/g)) {
@@ -632,7 +632,7 @@ var render_site = function(renderer) {
 
 var render_peptides = function(renderer) {
     var self = this;
-    var peptides = self.result._raw_data.peptides || [], i = 0, match = null;
+    var peptides = self.result._raw_data.data.peptides || [], i = 0, match = null;
     MASCP.registerLayer(self.datasetname,{ 'fullname' : self.result._raw_data.title });
     for (i = peptides.length - 1; i >= 0; i--) {
         if (match = peptides [i].match(/(\d+)/g)) {
