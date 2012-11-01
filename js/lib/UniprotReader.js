@@ -15,6 +15,15 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @extends    MASCP.Service
  */
 MASCP.UniprotReader = MASCP.buildService(function(data) {
+                        if ( data && typeof(data) === 'string' ) {
+                            var dats = MASCP.UniprotReader.parseFasta(data);
+                            var key;
+                            for (key in dats) {
+                                if (dats.hasOwnProperty(key)) {
+                                    data = { 'data' : dats[key] };
+                                }
+                            }
+                        }
                         this._data = data || {};
                         if ( ! this._data.data ) {
                             this._data = { 'data' : ['',''] };
@@ -29,7 +38,8 @@ MASCP.UniprotReader.prototype.requestData = function()
     var self = this;
     return {
         type: "GET",
-        dataType: "json",
+        dataType: "txt",
+        'url'   : 'http://uniprot.org/uniprot/'+this.agi+'.fasta',
         data: { 'acc'   : this.agi,
                 'service' : 'uniprot' 
         }
@@ -44,7 +54,7 @@ MASCP.UniprotReader.Result.prototype.getSequence = function() {
     return this._data.data[0];
 };
 
-MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
+MASCP.UniprotReader.parseFasta = function(datablock) {
     var chunks = (datablock.split('>'));
     var datas = {};
     chunks.forEach(function(entry) {
@@ -59,6 +69,13 @@ MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
         var desc = header_data[2];
         datas[acc] = [seq,desc];
     });
+    return datas;
+}
+
+MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
+
+    var datas = MASCP.UniprotReader.parseFasta(datablock);
+
     var writer = new MASCP.UserdataReader();
     writer.toString = function() {
         return "MASCP.UniprotReader";
