@@ -108,15 +108,15 @@ var apply_map = function(data_block) {
         var row = databits.shift();
         var id = row[id_col].toLowerCase();
         if ( ! dataset[id] ) {
-            dataset[id] = {};
+            dataset[id] = {"data" : {}};
         }
         var obj = dataset[id];
         var i;
         for (i = cols_to_add.length - 1; i >= 0; i--) {
-            if ( ! obj[cols_to_add[i].name] ) {
-                obj[cols_to_add[i].name] = [];
+            if ( ! obj.data[cols_to_add[i].name] ) {
+                obj.data[cols_to_add[i].name] = [];
             }
-            obj[cols_to_add[i].name] = obj[cols_to_add[i].name].concat((row[cols_to_add[i].index] || '').split(','));
+            obj.data[cols_to_add[i].name] = obj.data[cols_to_add[i].name].concat((row[cols_to_add[i].index] || '').split(','));
         }
         obj.retrieved = data_block.retrieved;
         obj.title = data_block.title;
@@ -150,7 +150,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         data.title = name;
     }
 
-    var dataset;
+    var dataset = {}; // Format is { "accession" : { "data" : {}, "retrieved" : "" , "title" : ""  } };
 
     if (typeof this.map == 'object') {
         dataset = apply_map.call(this,data);
@@ -202,6 +202,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         });
     };
     if (accs.length < 1) {
+        bean.fire(self,'ready');
         return;
     }
     var trans = MASCP.Service.BulkOperation();
