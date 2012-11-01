@@ -221,7 +221,20 @@ if (typeof module != 'undefined' && module.exports){
         if (refresh_token) {
             refresh_authenticate(refresh_token,function(auth_details) {
                 if ( ! auth_details ) {
+                    console.log("Problems with auth details");
                     callback(null);
+                    return;
+                }
+                if ( auth_details.error && auth_details.error == 'invalid_grant') {
+                    nconf.clear('google:refresh_token');
+                    nconf.save(function(err) {
+                        if (err) {
+                            console.log("Could not write config");
+                        }
+                    });
+
+                    refresh_token = null;
+                    with_google_authentication(callback);
                     return;
                 }
                 var expiration = new Date();
@@ -261,18 +274,64 @@ if (typeof module != 'undefined' && module.exports){
         var enc_scope = encodeURIComponent(scope);
         var redirect_uri = encodeURIComponent("urn:ietf:wg:oauth:2.0:oob");
         var client_id = encodeURIComponent(google_client_id);
-        var state = "login";
+        var old_eval;
+
+        if ( ! google_client_id || ! google_client_secret ) {
+            console.log("Missing important authorisation information. Check that google:client_id and google:client_secret are set.");
+            if ( ! repl || ! repl.repl ) {
+                console.log("Not running in an interactive session - returning");
+                auth_done(null);
+                return;
+            }
+            old_eval = repl.repl.eval;
+            console.log("Set client ID now? : [yN] ");
+            repl.repl.eval = function(cmd,context,filename,callback) {
+                var re = /\n.*/m;
+                cmd = (cmd || "").replace(/\(/,'');
+                cmd = cmd.replace(re,'');
+                if (cmd.match(/[yY]/)) {
+                    console.log("Enter client ID: ");
+                    repl.repl.eval = function(cmd) {
+                        cmd = (cmd || "").replace(/\(/,'');
+                        cmd = cmd.replace(re,'');
+                        google_client_id = cmd;
+                        console.log("Enter client secret: ");
+                        repl.repl.eval = function(cmd) {
+                            cmd = (cmd || "").replace(/\(/,'');
+                            cmd = cmd.replace(re,'');
+                            repl.repl.eval = old_eval;
+                            google_client_secret = cmd;
+                            nconf.set('google:client_id',google_client_id);
+                            nconf.set('google:client_secret',google_client_secret);
+                            nconf.save(function(err) {
+                                if (! err) {
+                                    new_authenticate(auth_done);
+                                } else {
+                                    console.log("Error saving configuration");
+                                    auth_done(null);
+                                }
+                            });
+                        }
+                    };
+                } else {
+                    repl.repl.prompt = "Gator data server > ";
+                    repl.repl.eval = old_eval;
+                    auth_done(null);
+                }
+                return;
+            }
+            return;
+        }
         console.log("Go to this URL:");
         console.log(base+"scope="+enc_scope+"&redirect_uri="+redirect_uri+"&response_type=code&client_id="+client_id);
+        console.log("Authentication code : ");
         if ( ! repl || ! repl.repl ) {
             console.log("Not running in an interactive session - returning");
             auth_done(null);
             return;
         }
-        var old_eval = repl.repl.eval;
-        repl.repl.prompt = "Authentication code : ";
+        old_eval = repl.repl.eval;
         repl.repl.eval = function(cmd,context,filename,callback) {
-            repl.repl.prompt = "Gator data server > ";
             repl.repl.eval = old_eval;
 
             var re = /\n.*/m;
@@ -306,8 +365,12 @@ if (typeof module != 'undefined' && module.exports){
                         var response = JSON.parse(data);
 
                         callback(null,"Authentication code validated");
-
-                        auth_done(response);
+                        if (response.error) {
+                            console.log("Error validating authentication code");
+                            auth_done(null);
+                        } else {
+                            auth_done(response);
+                        }
                     });
                 }
             );
