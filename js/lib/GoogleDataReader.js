@@ -39,7 +39,7 @@ var parsedata = function ( data ){
         }
         retdata.data[ R ][ C ] = entry.content.$t;
     }
-    retdata.retrieved = new Date(data.feed.updated.$t);
+    retdata.retrieved = new Date((new Date(data.feed.updated.$t)).getTime());
 
     /* When we cache this data, we don't want to
        wipe out the hour/minute/second accuracy so
