@@ -1243,7 +1243,7 @@ base.retrieve = function(agi,callback)
                 if (records.length < 1) {
                     cback.call(MASCP.Service,null);
                 } else {
-                    cback.call(MASCP.Service,records[i].acc);
+                    cback.call(MASCP.Service,records[0].acc);
                 }
             });
         };
