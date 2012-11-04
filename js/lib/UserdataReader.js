@@ -205,11 +205,12 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         bean.fire(self,'ready');
         return;
     }
-    var trans = MASCP.Service.BulkOperation(function(err) {
+    MASCP.Service.BulkOperation(function(err) {
         if (err) {
             bean.fire(self,'error');
             return;
         }
+        var trans = this.transaction;
         inserter.avoid_database = true;
         inserter.retrieve(accs[0],function() {
             while (accs.length > 0) {
