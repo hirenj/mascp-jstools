@@ -462,8 +462,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
             defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
         
+            renderer.gradients = [];
             renderer.add3dGradient = function(color) {
                 defs.appendChild(canv.make_gradient('grad_'+color,'0%','100%',[color,'#ffffff',color],[1,1,1] ));
+                renderer.gradients.push(color);
             };
 
             var shadow = canv.makeEl('filter',{
@@ -830,6 +832,19 @@ var addShapeToElement = function(layerName,width,opts) {
     } else {
         return;
     }
+    if (opts.offset && opts.shape == "roundrect") {
+        var x_pos = shape.getAttribute('x');
+        var y_pos = shape.getAttribute('y');
+        shape.setAttribute('transform','translate('+x_pos+','+y_pos+')');
+        shape.setAttribute('x','0');
+        var offset_val = opts.offset - 4/3;
+        shape.setAttribute('y',offset_val*(opts.height || 4)*this._renderer._RS);
+        shape.setHeight = function(height) {
+            shape.setAttribute('y', offset_val*height);
+            shape.setAttribute('height',height);
+        };
+    }
+
     this._renderer._layer_containers[layerName].push(shape);
     shape.setAttribute('class',layerName);
     shape.style.strokeWidth = '0px';
