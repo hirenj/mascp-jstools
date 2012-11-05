@@ -40,7 +40,7 @@ MASCP.UniprotReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "txt",
-        'url'   : 'http://uniprot.org/uniprot/'+this.agi+'.fasta',
+        'url'   : 'http://www.uniprot.org/uniprot/'+this.agi+'.fasta',
         data: { 'acc'   : this.agi,
                 'service' : 'uniprot' 
         }
