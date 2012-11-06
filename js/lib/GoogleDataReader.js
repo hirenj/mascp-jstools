@@ -185,10 +185,13 @@ get_document = function(doc,etag,callback) {
     var headers_block = { 'GData-Version' : '3.0' };
 
     var feed_type = 'private';
-
     do_request("spreadsheets.google.com","/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",etag,function(err,json) {
         if ( ! err ) {
-            callback.call(null,null,parsedata(json));
+            if (json) {
+                callback.call(null,null,parsedata(json));
+            } else {
+                callback.call(null,{ "cause" : "No data" } );
+            }
         } else {
             callback.call(null,err);
         }
@@ -499,7 +502,7 @@ if (typeof module != 'undefined' && module.exports){
             if (script.parentNode) {
                 script.parentNode.removeChild(script);
             }
-            callback.call(null,"error",doc_id);
+            callback.call(null,{ "cause" : { "status" : "" }, "message" : "Could not load data via script tag" } ,doc_id);
         });
         window["cback"+doc_id] = function(dat) {
             delete window["cback"+doc_id];
@@ -530,6 +533,7 @@ if (typeof module != 'undefined' && module.exports){
         gapi.auth.authorize({immediate: true},function(){
         });
         initing_auth = true;
+        var user_action = event ? event.which : null;
         gapi.auth.authorize(auth_settings,function(result) {
             if (result && ! result.error) {
                 MASCP.GOOGLE_AUTH_TOKEN = result.access_token;
@@ -553,6 +557,24 @@ if (typeof module != 'undefined' && module.exports){
                 });
             } else {
                 if ( auth_settings.immediate ) {
+                    if (! user_action ) {
+                        cback.call(null,{"cause" : "No user event", "authorize" : function(success) {
+                            auth_settings.immediate = false;
+                            gapi.auth.authorize(auth_settings,function(result) {
+                                if (result && ! result.error) {
+                                    MASCP.GOOGLE_AUTH_TOKEN = result.access_token;
+                                    window.setTimeout(function(){
+                                        console.log("Google token has timed out, forcing refresh");
+                                        delete MASCP["GOOGLE_AUTH_TOKEN"];
+                                    },parseInt(result.expires_in)*1000);
+                                    success.call(null);
+                                } else {
+                                    success.call(null,{ "cause" : result ? result.error : "No auth result" });
+                                }
+                            });
+                        }});
+                        return;
+                    }
                     auth_settings.immediate = false;
                     gapi.auth.authorize(auth_settings,arguments.callee);
                     return;
@@ -584,7 +606,7 @@ if (typeof module != 'undefined' && module.exports){
             }
             request.onreadystatechange = function(evt) {
                 if (request.readyState == 4) {
-                    if (request.status < 300) {
+                    if (request.status < 300 && request.status >= 200) {
                         var datablock = request.responseText.length > 0 ? (request.getResponseHeader('Content-Type').match(/json/) ? JSON.parse(request.responseText) : request.responseText) : null;
                         callback.call(null,null,datablock);
                     } else {
@@ -597,20 +619,34 @@ if (typeof module != 'undefined' && module.exports){
     };
 
     var basic_get_document = get_document;
-
     get_document = function(doc,etag,callback) {
         if ( ! doc.match(/^spreadsheet/ ) ) {
             console.log("No support for retrieving things that aren't spreadsheets yet");
             return;
         }
-        var doc_id = doc.replace(/^spreadsheet:/,'');
-
+        var doc_id = doc.replace(/^spreadsheet:/g,'');
         if (etag || MASCP.GOOGLE_AUTH_TOKEN) {
-            basic_get_document(doc,etag,callback);
+            basic_get_document(doc,etag,function(err,dat) {
+                if (err) {
+                    get_document_using_script(doc_id,callback);
+                } else {
+                    callback.call(null,null,dat);
+                }
+            });
         } else {
             get_document_using_script(doc_id,function(err,dat){
                 if (err) {
-                    basic_get_document(doc,etag,callback);
+                    basic_get_document(doc,etag,function(err,dat) {
+                        if (err) {
+                            if (err.cause == "No user event") {
+                                callback.call(null,err);
+                                return;
+                            }
+                            get_document_using_script(doc_id,callback);
+                        } else {
+                            callback.call(null,null,dat);
+                        }
+                    });
                 } else {
                     callback.call(null,null,dat);
                 }
