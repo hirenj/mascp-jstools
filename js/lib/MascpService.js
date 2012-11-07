@@ -811,7 +811,9 @@ base.retrieve = function(agi,callback)
     } else if ("openDatabase" in window) {
 
         window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
-
+        if ( ! window.indexedDB ) {
+            delete window.indexedDB;
+        }
         if ("indexedDB" in window) {
             // Handle the prefix of Chrome to IDBTransaction/IDBKeyRange.
             if ('webkitIndexedDB' in window) {
@@ -1133,6 +1135,9 @@ base.retrieve = function(agi,callback)
                 if (MASCP.events) {
                     MASCP.events.emit('ready');            
                 }
+                if (MASCP.ready) {
+                    MASCP.ready();
+                }
                 return;                
             }
             
@@ -1170,7 +1175,10 @@ base.retrieve = function(agi,callback)
                     if ( ! err ) {
                         if (MASCP.events) {
                             MASCP.events.emit('ready');            
-                        }                        
+                        }
+                        if (MASCP.ready) {
+                            MASCP.ready();
+                        }
                     }
                 });
                 version = 1.3;                
