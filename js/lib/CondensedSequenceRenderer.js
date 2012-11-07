@@ -699,6 +699,15 @@ var addElementToLayer = function(layerName,opts) {
     tracer_marker.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale('+scale+')');
     tracer_marker.setAttribute('height','250');
     tracer_marker.firstChild.setAttribute('transform', 'translate(-100,0) rotate(0,100,0.001)');
+    tracer.setHeight = function(height) {
+        var bbox = canvas.transformedBoundingBox(tracer_marker);
+        if (bbox && bbox.y > 0) {
+            var new_y = bbox.y - parseInt(this.getAttribute('y'));
+            this.setAttribute('height', new_y >= 0 ? new_y : height);
+        } else {
+            this.setAttribute('height', height);
+        }
+    };
 
     if (typeof opts.offset == 'undefined' || opts.offset === null) {
         // tracer_marker.offset = 2.5*this._renderer._layer_containers[layerName].track_height;
@@ -840,8 +849,12 @@ var addShapeToElement = function(layerName,width,opts) {
         var offset_val = opts.offset - 4/3;
         shape.setAttribute('y',offset_val*(opts.height || 4)*this._renderer._RS);
         shape.setHeight = function(height) {
+            if ( ! this._orig_stroke_width ) {
+                this._orig_stroke_width = parseInt(this.getAttribute('stroke-width'));
+            }
             shape.setAttribute('y', offset_val*height);
             shape.setAttribute('height',height);
+            shape.setAttribute('stroke-width',this._orig_stroke_width/canvas.zoom);
         };
     }
 
@@ -1707,16 +1720,9 @@ clazz.prototype.refresh = function(animated) {
         } else {
             // container.attr({ 'opacity' : '1' });
         }
-        if (container.tracers) {
-            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'visible' : 'hidden';
-            var height = (1.5 + track_heights / this.zoom )*RS;
-            
-            if(animated) {
-                container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
-            } else {
-                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
-            }
-        }
+
+        var tracer_top = track_heights;
+
         if (container.fixed_track_height) {
 
             var track_height = container.fixed_track_height;
@@ -1747,6 +1753,16 @@ clazz.prototype.refresh = function(animated) {
                 track_heights += container.track_height;
             }
             track_heights += container.track_height + this.trackGap;
+        }
+        if (container.tracers) {
+            var disp_style = (this.isLayerActive(name) && (this.zoom > 3.6)) ? 'visible' : 'hidden';
+            var height = (1.5 + tracer_top / this.zoom )*RS;
+
+            if(animated) {
+                container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
+            } else {
+                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
+            }
         }
 
         container.refresh_zoom();
