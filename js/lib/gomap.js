@@ -1092,6 +1092,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       if (document.createEvent) {
           self.clicktimeout = setTimeout(function() {
               var evObj = document.createEvent('Events');
+              self.clicktimeout = null;
               evObj.initEvent('panstart',false,true);
               targ.dispatchEvent(evObj);
           },200);
