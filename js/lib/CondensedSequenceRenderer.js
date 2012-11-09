@@ -671,6 +671,7 @@ var addElementToLayer = function(layerName,opts) {
     bobble.setAttribute('visibility','hidden');
     bobble.style.opacity = '0.4';
     var tracer = canvas.rect(this._index+0.5,10,0.05,0);
+    tracer._index = this._index;
     tracer.style.strokeWidth = '0';
     tracer.style.fill = MASCP.layers[layerName].color;
     tracer.setAttribute('visibility','hidden');
@@ -699,8 +700,30 @@ var addElementToLayer = function(layerName,opts) {
     tracer_marker.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale('+scale+')');
     tracer_marker.setAttribute('height','250');
     tracer_marker.firstChild.setAttribute('transform', 'translate(-100,0) rotate(0,100,0.001)');
+    var renderer = this._renderer;
     tracer.setHeight = function(height) {
-        var bbox = canvas.transformedBoundingBox(tracer_marker);
+        if (tracer.getAttribute('visibility') == 'hidden') {
+            return;
+        }
+        var transform_attr = tracer_marker.getAttribute('transform');
+        var matches = /translate\(.*,(.*)\) scale\((.*)\)/.exec(transform_attr);
+        var bbox;
+        if (renderer.sequence.length > 1000) {
+            if ( ! canvas.cachedBBox )
+            {
+                canvas.cachedBBox = [];
+            }
+            if (matches[1] && matches[2]) {
+                bbox = canvas.cachedBBox[matches[1]+"-"+matches[2]];
+                if ( ! bbox ) {
+                    bbox = canvas.transformedBoundingBox(tracer_marker);
+                }
+                canvas.cachedBBox[matches[1]+"-"+matches[2]] = bbox;
+            }
+        } else {
+            bbox = canvas.transformedBoundingBox(tracer_marker);
+        }
+
         if (bbox && bbox.y > 0) {
             var new_y = bbox.y - parseInt(this.getAttribute('y'));
             this.setAttribute('height', new_y >= 0 ? new_y : height);
@@ -1029,6 +1052,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         bobble.style.opacity = '0.4';
 
         var tracer = canvas.rect(this._index+0.5,10+height,0.05,0);
+        tracer._index = this._index;
         tracer.style.strokeWidth = '0px';
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
