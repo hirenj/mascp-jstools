@@ -1549,8 +1549,12 @@ clazz.prototype.addTrack = function(layer) {
         for (var i = 0 ; i < event_names.length; i++) {
             jQuery(layer_containers[layer.name]._event_proxy).bind(event_names[i],ev_function);
         }
-        jQuery(layer).unbind('removed').bind('removed',function() {
-            renderer.removeTrack(this);
+        jQuery(layer).unbind('removed').bind('removed',function(e,rend) {
+            if (rend) {
+                rend.removeTrack(this);
+            } else{
+                renderer.removeTrack(this);
+            }
         });
     }
     
