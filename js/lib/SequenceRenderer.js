@@ -266,8 +266,8 @@ MASCP.SequenceRenderer = (function() {
                     if (track_order.indexOf(renderer_track_order[i]) < 0) {
                         this.hideLayer(renderer_track_order[i]);
                         this.hideGroup(renderer_track_order[i]);
-                        jQuery(MASCP.getLayer(renderer_track_order[i])).trigger('removed');
-                        jQuery(MASCP.getGroup(renderer_track_order[i])).trigger('removed');
+                        jQuery(MASCP.getLayer(renderer_track_order[i])).trigger('removed',[renderer]);
+                        jQuery(MASCP.getGroup(renderer_track_order[i])).trigger('removed',[renderer]);
                     }
                 }
                 renderer_track_order = track_order;
