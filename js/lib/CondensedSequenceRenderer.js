@@ -705,30 +705,16 @@ var addElementToLayer = function(layerName,opts) {
         if (tracer.getAttribute('visibility') == 'hidden') {
             return;
         }
+
         var transform_attr = tracer_marker.getAttribute('transform');
         var matches = /translate\(.*,(.*)\) scale\((.*)\)/.exec(transform_attr);
-        var bbox;
-        if (renderer.sequence.length > 1000) {
-            if ( ! canvas.cachedBBox )
-            {
-                canvas.cachedBBox = [];
-            }
-            if (matches[1] && matches[2]) {
-                bbox = canvas.cachedBBox[matches[1]+"-"+matches[2]];
-                if ( ! bbox ) {
-                    bbox = canvas.transformedBoundingBox(tracer_marker);
-                }
-                canvas.cachedBBox[matches[1]+"-"+matches[2]] = bbox;
-            }
+        if (matches[1] && matches[2]) {
+            var scale = parseFloat(matches[2]);
+            var y = parseFloat(matches[1]);
+            var new_height = y + scale*(((tracer_marker.offset || 0) * 50) + 125) - parseInt(this.getAttribute('y'));
+            this.setAttribute('height',new_height);
         } else {
-            bbox = canvas.transformedBoundingBox(tracer_marker);
-        }
-
-        if (bbox && bbox.y > 0) {
-            var new_y = bbox.y - parseInt(this.getAttribute('y'));
-            this.setAttribute('height', new_y >= 0 ? new_y : height);
-        } else {
-            this.setAttribute('height', height);
+            this.setAttribute('height',height);
         }
     };
 
