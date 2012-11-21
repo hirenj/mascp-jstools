@@ -485,6 +485,7 @@ if (typeof module != 'undefined' && module.exports){
     MASCP.GoogledataReader.authenticate = authenticate;
 
 } else {
+    scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.file";
 
     var get_document_using_script = function(doc_id,callback) {
         var head = document.getElementsByTagName('head')[0];
