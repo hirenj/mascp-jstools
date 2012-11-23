@@ -390,6 +390,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                }
         },false);
     };
+    clazz.prototype.setLeftVisibleResidue = function(val) {
+        var self = this;
+        self._canvas.setCurrentTranslateXY((self._canvas.width.baseVal.value * (1 - (val / (self.sequence.length+self.padding+2)))) - self._canvas.width.baseVal.value,0);
+    };
 
     clazz.prototype.leftVisibleResidue = function() {
         var self = this;
