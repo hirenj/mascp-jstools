@@ -845,6 +845,8 @@ base.retrieve = function(agi,callback)
                             }
                             if (MASCP.ready) {
                                 MASCP.ready();
+                            } else {
+                                MASCP.ready = true;
                             }
                         };
                     };
@@ -854,6 +856,8 @@ base.retrieve = function(agi,callback)
                     }
                     if (MASCP.ready) {
                         MASCP.ready();
+                    } else {
+                        MASCP.ready = true;
                     }
                 }
             };
@@ -892,8 +896,8 @@ base.retrieve = function(agi,callback)
             };
         }
     }
+
     if (typeof idb != 'undefined') {
-        /* The following two should be no-ops */
         var transaction_store_db;
         var transaction_find_latest;
         var transaction_data = [];
@@ -1137,6 +1141,8 @@ base.retrieve = function(agi,callback)
                 }
                 if (MASCP.ready) {
                     MASCP.ready();
+                } else {
+                    MASCP.ready = true;
                 }
                 return;                
             }
@@ -1178,6 +1184,8 @@ base.retrieve = function(agi,callback)
                         }
                         if (MASCP.ready) {
                             MASCP.ready();
+                        } else {
+                            MASCP.ready  = true;
                         }
                     }
                 });
@@ -1346,6 +1354,7 @@ base.retrieve = function(agi,callback)
         };
         
     } else if ("localStorage" in window) {
+
         sweep_cache = function(timestamp) {
             if ("localStorage" in window) {
                 var keys = [];
@@ -1492,6 +1501,19 @@ base.retrieve = function(agi,callback)
                 callback();
             },0);
         };
+
+        if (MASCP.events) {
+            MASCP.events.emit('ready');
+        }
+        setTimeout(function() {
+            if (MASCP.ready) {
+                MASCP.ready();
+            } else {
+                MASCP.ready = true;
+            }
+        },100);
+
+
     } else {
 
         sweep_cache = function(timestamp) {

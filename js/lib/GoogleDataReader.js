@@ -714,33 +714,6 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
 
     MASCP.Service.CacheService(reader);
 
-    (function() {
-        var a_temp_reader = new MASCP.UserdataReader();
-        a_temp_reader.datasetname = doc;
-        MASCP.Service.CacheService(a_temp_reader);
-        MASCP.Service.FirstAgi(a_temp_reader,function(entry) {
-            if ( ! entry ) {
-                get_data(null);
-                return;
-            }
-
-            var update_timestamps = {};
-            if (typeof module == 'undefined' || ! module.exports && typeof window != 'undefined'){
-                if (window.sessionStorage) {
-                    update_timestamps = JSON.parse(window.sessionStorage.getItem("update_timestamps") || "{}");
-                }
-            }
-
-            if (update_timestamps[doc] && ((new Date().getTime()) - update_timestamps[doc]) < 1000*60*120) {
-                bean.fire(reader,'ready');
-                return;
-            }
-            a_temp_reader.retrieve(entry,function() {
-                get_data(this.result._raw_data.etag);
-            });
-        });
-    })();
-
     var trans;
 
     var get_data = function(etag) {
@@ -784,7 +757,35 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 reader.setData(doc,data);
             });
         });
-    }
+    };
+
+    (function() {
+        var a_temp_reader = new MASCP.UserdataReader();
+        a_temp_reader.datasetname = doc;
+        MASCP.Service.CacheService(a_temp_reader);
+        MASCP.Service.FirstAgi(a_temp_reader,function(entry) {
+            if ( ! entry ) {
+                get_data(null);
+                return;
+            }
+
+            var update_timestamps = {};
+            if (typeof module == 'undefined' || ! module.exports && typeof window != 'undefined'){
+                if (window.sessionStorage) {
+                    update_timestamps = JSON.parse(window.sessionStorage.getItem("update_timestamps") || "{}");
+                }
+            }
+
+            if (update_timestamps[doc] && ((new Date().getTime()) - update_timestamps[doc]) < 1000*60*120) {
+                bean.fire(reader,'ready');
+                return;
+            }
+            a_temp_reader.retrieve(entry,function() {
+                get_data(this.result._raw_data.etag);
+            });
+        });
+    })();
+
     return reader;
 };
 
