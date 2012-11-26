@@ -711,7 +711,7 @@ var addElementToLayer = function(layerName,opts) {
         }
 
         var transform_attr = tracer_marker.getAttribute('transform');
-        var matches = /translate\(.*,(.*)\) scale\((.*)\)/.exec(transform_attr);
+        var matches = /translate\(.*[,\s](.*)\) scale\((.*)\)/.exec(transform_attr);
         if (matches[1] && matches[2]) {
             var scale = parseFloat(matches[2]);
             var y = parseFloat(matches[1]);
@@ -1585,6 +1585,9 @@ clazz.prototype.removeTrack = function(layer) {
 };
 var refresh_id = 0;
 clazz.prototype.enablePrintResizing = function() {
+    if ( ! (this.win() || window).matchMedia ) {
+        return;
+    }
     if (this._media_func) {
         return this._media_func;
     }
