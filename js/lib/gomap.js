@@ -1612,6 +1612,42 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
     return controls_container;
 };
 
+GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
+    var scroller = document.createElement('div');
+    while (scrollContainer.childNodes.length > 0) {
+        scrollContainer.removeChild(scrollContainer.firstChild);
+    }
+    scrollContainer.appendChild(scroller);
+    if ( ! scrollContainer.style.position ) {
+        scrollContainer.style.position = 'absolute';
+    }
+    scrollContainer.style.overflowX = 'scroll';
+    scrollContainer.style.overflowY = 'hidden';
+
+    scroller.style.position = 'absolute';
+    scroller.style.left = '0px';
+    scroller.style.width = '100%';
+    scroller.style.height= '100%';
+
+    bean.remove(scrollContainer,'scroll');
+    bean.remove(scrollContainer,'mouseenter');
+    bean.add(scrollContainer,'mouseenter',function() {
+        scrollContainer.scrollLeft += 1;
+        scrollContainer.scrollLeft -= 1;
+    });
+    bean.add(scrollContainer,'scroll',function() {
+        bean.fire(controlElement,'panstart');
+        target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / scroller.clientWidth));
+        bean.fire(controlElement,'panend');
+    });
+    bean.add(controlElement,'pan',function() {
+        var size = 100*target.getTotalLength() / (target.getVisibleLength());
+        scroller.style.width = parseInt(size)+'%';
+        var left_shift = parseInt(scroller.clientWidth * (target.getLeftPosition() / target.getTotalLength() ));
+        scroll_box.scrollLeft = left_shift;
+    });
+};
+
 /**
  * Connect the scroll wheel to the controls to control zoom
  */
