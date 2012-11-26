@@ -1177,6 +1177,9 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         }
         a_text.replaceChild(document.createTextNode(seq.substr(start,max_length)),a_text.firstChild);
         a_text.setAttribute('dx',5+((start)*RS));
+        if (MASCP.IE) {
+            a_text.setAttribute('textLength',parseInt(5+((start)*RS))+(max_length*RS));
+        }
     };
     if ( ! canvas.panevents ) {
         canvas.addEventListener('panstart', function() {
