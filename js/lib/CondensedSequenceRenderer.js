@@ -61,7 +61,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         var canvas;
         if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
-            var native_canvas = document.createElementNS(svgns,'svg');
+            var native_canvas = this.win().document.createElementNS(svgns,'svg');
             native_canvas.setAttribute('width','100%');
             native_canvas.setAttribute('height','100%');
             this._container.appendChild(native_canvas);
