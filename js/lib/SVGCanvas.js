@@ -347,7 +347,7 @@ var SVGCanvas = SVGCanvas || (function() {
         extended_elements.push(canvas);
         
         canvas.makeEl = function(name,attributes) {
-            var result = document.createElementNS(svgns,name);
+            var result = canvas.ownerDocument.createElementNS(svgns,name);
             for (var attribute in attributes) {
                 if (attributes.hasOwnProperty(attribute)) {
                     result.setAttribute(attribute, attributes[attribute]);
