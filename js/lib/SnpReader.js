@@ -153,7 +153,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
                 if (pos > renderer.sequence.length) {
                     pos = renderer.sequence.length;
                 }
-                var ann = renderer.getAA(pos).addAnnotation('insertions_controller',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta, 'angle': 'auto' });
+                var ann = renderer.getAA(pos).addAnnotation('insertions_controller',1, { 'border' : 'rgb(150,0,0)', 'content' : ins[i].delta, 'angle': 0 });
                 if (! ann._click) {
                     ann.addEventListener('click',(function(posn) {
                         var visible = false;

@@ -108,8 +108,8 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
                 icons.push(peptide_bits.addToLayer('prippdb_experimental'));
 
                 for (var k = 0; k < peps[i].positions.length; k++ ) {
-                    icons = icons.concat(peptide_bits[peps[i].positions[k] - 1].addToLayer('prippdb_experimental'));
-                    peptide_bits[peps[i].positions[k] - 1].addToLayer(layer_name);
+                    icons = icons.concat(peptide_bits[peps[i].positions[k] - 1].addToLayer('prippdb_experimental',{ 'height' : 20, 'offset': -2.5 }));
+                    peptide_bits[peps[i].positions[k] - 1].addToLayer(layer_name,{ 'height' : 20, 'offset': -2.5 });
                 }
 
             }
