@@ -274,8 +274,8 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
                 icons.push(aa.addBoxOverlay('phosphat_experimental',end,0.5));
             }
 	        jQuery(sequenceRenderer.getAminoAcidsByPosition(this)).each(function() {
-	            this.addToLayer('phosphat_peptide_'+i);
-	            icons = icons.concat(this.addToLayer('phosphat_experimental'));
+	            this.addToLayer('phosphat_peptide_'+i, { 'height' : 20, 'offset': -2.5 });
+	            icons = icons.concat(this.addToLayer('phosphat_experimental',{ 'height' : 20, 'offset': -2.5}));
 	        });
         });
 

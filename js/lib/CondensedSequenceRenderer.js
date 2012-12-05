@@ -988,7 +988,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
 
     var height = opts.height || this._renderer._layer_containers[layerName].track_height;
 
-    var offset = this._renderer._RS * height / 2; //this._renderer._RS * height / 2;
+    var offset = height / 2; //this._renderer._RS * height / 2;
     var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,0,opts.content,opts);
 
     if (opts.angle == 'auto') {
@@ -1016,7 +1016,7 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         blob._value = 0;
         this._renderer._layer_containers[layerName].push(blob);
         if (typeof opts.offset == 'undefined' || opts.offset === null) {
-            blob.offset = 2.5*height;
+            blob.offset = 0*height;
         } else {
             blob.offset = opts.offset;
         }
