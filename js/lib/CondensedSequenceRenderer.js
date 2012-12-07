@@ -1181,7 +1181,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
             a_text.setAttribute('textLength',parseInt(5+((start)*RS))+(max_length*RS));
         }
     };
-    if ( ! canvas.panevents ) {
+    if ( ! container.panevents ) {
         canvas.addEventListener('panstart', function() {
             if (amino_acids_shown) {
                 amino_acids.attr( { 'display' : 'none'});
@@ -1193,7 +1193,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
                 update_sequence();
             }
         });
-        canvas.panevents = true;
+        container.panevents = true;
     }
        
     canvas.addEventListener('zoomChange', function() {
