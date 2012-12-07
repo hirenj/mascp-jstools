@@ -1635,17 +1635,8 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
         scrollContainer.scrollLeft += 1;
         scrollContainer.scrollLeft -= 1;
     });
-    if (window.matchMedia && ! GOMap.print_watcher ) {
-        window.matchMedia('print').addListener(function(matcher) {
-            GOMap.in_print = ! matcher.matches;
-        });
-        GOMap.print_watcher = true;
-    }
 
     bean.add(scrollContainer,'scroll',function() {
-        if (GOMap.print_watcher && GOMap.in_print) {
-            return;
-        }
         bean.fire(controlElement,'panstart');
         target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / scroller.clientWidth));
         bean.fire(controlElement,'panend');
