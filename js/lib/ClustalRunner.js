@@ -143,7 +143,7 @@ var normalise_insertions = function(inserts) {
 
 var splice_char = function(seqs,index,insertions) {
     for (var i = 0; i < seqs.length; i++) {
-        var seq = seqs[i];
+        var seq = seqs[i].toString();
         if (seq.charAt(index) != '-') {
             if ( ! insertions[i] ) {
                 insertions[i] = {};
