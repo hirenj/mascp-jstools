@@ -168,6 +168,11 @@ var splice_char = function(seqs,index,insertions) {
 }
 
 MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
+    if ( ! this._orig_raw_data ) {
+        this._orig_raw_data = JSON.stringify(this._raw_data);
+    } else {
+        this._raw_data = JSON.parse(this._orig_raw_data);
+    }
     var seqs = this._raw_data.data.sequences.concat([this._raw_data.data.alignment]);
     var insertions = [];
     var aligning_seq = seqs[seq_index], i = aligning_seq.length - 1;
