@@ -1376,7 +1376,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
     }
 
   mpr.fillTemplate = function(str,data,callback) {
-    callback.call(null,template_func(str,data));
+    callback.call(null,null,template_func(str,data));
   };
 })(MASCP.CondensedSequenceRenderer.prototype);
 
