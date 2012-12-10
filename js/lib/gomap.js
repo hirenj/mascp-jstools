@@ -1619,7 +1619,7 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     }
     scrollContainer.appendChild(scroller);
     if ( ! scrollContainer.style.position ) {
-        scrollContainer.style.position = 'absolute';
+        scrollContainer.style.position = 'relative';
     }
     scrollContainer.style.overflowX = 'scroll';
     scrollContainer.style.overflowY = 'hidden';
