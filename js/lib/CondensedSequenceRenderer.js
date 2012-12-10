@@ -1047,12 +1047,21 @@ var addAnnotationToLayer = function(layerName,width,opts) {
         tracer.style.fill = '#777777';
         tracer.setAttribute('visibility','hidden');
         var theight = this._renderer._layer_containers[layerName].track_height;
-        var height_offset = (10*blob.offset);
-        if (! opts.height && ! opts.offset) {
-            height_offset = this._renderer._layer_containers[layerName].fixed_track_height * 0.5 * this._renderer._RS;
-        }
         tracer.setHeight = function(hght) {
-            tracer.setAttribute('height', hght+height_offset);
+            if (this.getAttribute('visibility') == 'hidden') {
+                return;
+            }
+            var transform_attr = blob.getAttribute('transform');
+            var matches = /translate\(.*[,\s](.*)\) scale\((.*)\)/.exec(transform_attr);
+            if (matches[1] && matches[2]) {
+                var scale = parseFloat(matches[2]);
+                var y = parseFloat(matches[1]);
+                var new_height = y + scale*(((blob.offset || 0) * 50)) - parseInt(this.getAttribute('y'));
+                this.setAttribute('height',new_height);
+            } else {
+                this.setAttribute('height',height);
+            }
+
         }
         canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
     
