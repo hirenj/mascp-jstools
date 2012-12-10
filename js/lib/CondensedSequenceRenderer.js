@@ -385,6 +385,16 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
                    huge_labels.show();
                    huge_labels.attr({'font-size':parseInt(30*2*RS*0.2/canvas.zoom)+'pt','y':parseInt(40*2*RS*0.2/canvas.zoom)});
+                   var last_right = -10000;
+                   huge_labels.forEach(function(label) {
+                    if (label.getBBox().x <= (last_right+(RS*100))) {
+                        label.setAttribute('display','none');
+                    } else {
+                        label.removeAttribute('display');
+                        last_right = label.getBBox().x + label.getBBox().width;
+                    }
+                   });
+
                    little_ticks.hide();
                    little_labels.hide();
                }
