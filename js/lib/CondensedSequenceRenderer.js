@@ -1249,7 +1249,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
     }
     var renderer = this;
     var container = this._layer_containers[layerName];
-    this.addTextTrack(in_text,container);
+    return this.addTextTrack(in_text,container);
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
