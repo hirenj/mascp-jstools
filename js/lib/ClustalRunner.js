@@ -257,18 +257,116 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                     index = i;
                 }
             }
-            var old_get_aas = widget_rend.getAminoAcidsByPosition;
-            var old_get_pep = widget_rend.getAminoAcidsByPeptide;
-            widget_rend.getAminoAcidsByPosition = function(aas) {
+            var old_get_aas = renderer.getAminoAcidsByPosition;
+            var old_get_pep = renderer.getAminoAcidsByPeptide;
+            renderer.getAminoAcidsByPosition = function(aas) {
                 var new_aas = aas.map(function(aa) { return Math.abs(self.result.calculatePositionForSequence(index,aa)); });
                 return old_get_aas.call(this,new_aas);
             };
-            widget_rend.getAminoAcidsByPeptide = function() {};
+            renderer.getAminoAcidsByPeptide = function() {};
             old.call(reader);
-            widget_rend.getAminoAcidsByPosition = old_get_aas;
-            widget_rend.getAminoAcidsByPeptide = old_get_pep;
+            renderer.getAminoAcidsByPosition = old_get_aas;
+            renderer.getAminoAcidsByPeptide = old_get_pep;
         }
     });
+
+    var rendered_bits = [];
+    var controller_name = 'isoform_controller';
+    var group_name = 'isoforms';
+
+
+    var redraw_alignments = function(sequence_index) {
+        var result = self.result;
+
+        while (rendered_bits.length > 0) {
+            var bit = rendered_bits.shift();
+            renderer.remove(bit.layer,bit);
+        }
+        result.alignToSequence(sequence_index || 0);
+        var aligned = result.getSequences();
+        if ( ! renderer.sequence ) {
+            renderer.setSequence(aligned[sequence_index])(function() {
+                MASCP.registerGroup(group_name, 'Splice variants');
+                MASCP.registerLayer(controller_name, { 'fullname' : 'Splices', 'color' : '#000000' });
+                if (renderer.trackOrder.indexOf(controller_name) < 0) {
+                    renderer.trackOrder.push(controller_name);
+                }
+                renderer.showLayer(controller_name);
+                renderer.createGroupController(controller_name,group_name);
+                redraw_alignments(sequence_index);
+            });
+            return;
+        } else {
+            renderer.sequence = aligned[sequence_index];
+            renderer.redrawAxis();
+        }
+
+        var alignments = result.getAlignment().split('');
+        rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,'.')));
+        for (var i = 0 ; i < alignments.length; i++ ) {
+            rendered_bits.push(renderer.getAA(i+1).addBoxOverlay(controller_name,1,check_values(aligned[0],i,aligned)));
+            rendered_bits.slice(-1)[0].layer = controller_name;
+        }
+
+        for (var i = 0 ; i < aligned.length; i++) {
+            MASCP.registerLayer(aligned[i].agi,{'fullname': aligned[i].agi, 'group' : group_name, 'color' : '#ff0000'});
+            var text_array = renderer.renderTextTrack(aligned[i].agi,aligned[i].toString());
+            rendered_bits = rendered_bits.concat(text_array);
+            rendered_bits.slice(-1)[0].layer = aligned[i].agi;
+            if (renderer.trackOrder.indexOf(aligned[i].agi) < 0) {
+              renderer.trackOrder.push(aligned[i].agi);
+            }
+            var name = "Isoform "+(i+1);
+            if (aligned[i].insertions) {
+              for (var insert in aligned[i].insertions) {
+                var insertions = aligned[i].insertions;
+                var layname = aligned[i].agi;
+                if (insert == 0 && insertions[insert] == "") {
+                  continue;
+                }
+                if (insert == 0) {
+                  insert = 1;
+                }
+                var an_anno = renderer.getAA(insert).addToLayer(layname,
+                  { 'content' : '+'+insertions[insert].length,
+                    'height' : 16,
+                    'offset' : 1,
+                    'angle'  : 320,
+                    'border' : 'rgb(0,0,255)',
+                    'no_tracer' : true
+                  })[1];
+                rendered_bits.push(an_anno);
+                rendered_bits.slice(-1)[0].layer = layname;
+
+                // (function(layname,insert,insertions,nm) {
+                // an_anno.addEventListener('click',function() {
+                //   if (seq_callout !== null && seq_callout.parentNode !== null) {
+                //     seq_callout.parentNode.removeChild(seq_callout);
+                //   }
+                //   seq_callout = null;
+                //   seq_callout = renderer.getAA(insert).callout(layname,'insertion_tmpl', { 'width' : insertions[insert].length, 'height' : 10, 'insert' : insertions[insert].match(/(\w{1,10})/g).join(' ')});
+                //   seq_callout.addEventListener('click',function() {
+                //     this.parentNode.removeChild(this);
+                //   });
+                //   renderer.refresh();
+                // });
+                // })(layname,insert,insertions,name);
+               // var an_anno = widget_rend.getAA(insert).callout('lay'+i,'insertion_tmpl', { 'width' : aligned[i].insertions[insert].length*10, 'height' : 12, 'insert' : aligned[i].insertions[insert]});
+                // console.log(an_anno);
+              }
+            }
+        }
+    };
+
+    this.bind('resultReceived',function() {
+        var result = this.result;
+        redraw_alignments(0);
+        renderer.bind('orderChanged',function(e,order) {
+            var re = /[^\d]/g;
+            redraw_alignments(parseInt(order[1].replace(re,'')));
+        });
+    });
+
 }
 
 MASCP.ClustalRunner.Result.prototype.getSequences = function() {
