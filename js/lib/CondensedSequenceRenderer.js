@@ -258,6 +258,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             var to = vals[1];
             this.moveHighlight.apply(this,vals);
         };
+        return aas;
     };
 
     var drawAxis = function(canvas,lineLength) {
