@@ -1147,6 +1147,16 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.callout = addCalloutToLayer;
 };
 
+MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
+    if (this._layer_containers[lay].indexOf(el) >= 0) {
+        this._layer_containers[lay].splice(this._layer_containers[lay].indexOf(el),1);
+        bean.fire(el,'removed');
+        if (el.parentNode) {
+            el.parentNode.removeChild(el);
+        }
+    }
+};
+
 var zoomFunctions = [];
 
 MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
