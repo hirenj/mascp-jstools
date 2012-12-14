@@ -480,7 +480,7 @@ var SVGCanvas = SVGCanvas || (function() {
                         points[0] = 0;
                     }
                     if (points[0] == max_x) {
-                        points[0] = (width)*RS;
+                        points[0] = a*2;
                     }
                     return points.join(",");
                 });
@@ -652,6 +652,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 }
                 this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*RS)+') rotate('+this.angle+',100,0)');
             };
+            result.container = container;
             return result;
         };
 
