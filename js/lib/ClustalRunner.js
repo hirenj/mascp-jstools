@@ -240,9 +240,49 @@ MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx
 
 
 })();
+//1265 (P)
+
+var draw_discontinuity = function(canvas) {
+    var top = -3;
+    var left = -2;
+    var group = canvas.group();
+    var line;
+    line = canvas.line(left+1,top+4,left+3,top+1);
+    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke-width','10');
+    group.push(line);
+    line = canvas.line(left+1,top+6,left+3,top+3);
+    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke-width','10');
+    group.push(line);
+    line = canvas.line(left+1,top+4,left+3,top+3);
+    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke-width','5');
+    group.push(line);
+    line = canvas.line(left+1,top+5.3,left+1,top+5.8);
+    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke-width','10');
+    group.push(line);
+    line = canvas.line(left+1,top+5.9,left+1.5,top+5.9);
+    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke-width','10');
+    group.push(line);
+    var circle = canvas.circle(left+2.8,top+1.75,1);
+    circle.setAttribute('fill','#fff');
+    circle.setAttribute('stroke','#000');
+    circle.setAttribute('stroke-width','10');
+    group.push(circle);
+    var minus = canvas.text(left+2.25,top+2.25,'÷');
+    minus.setAttribute('fill','#000');
+    minus.setAttribute('font-size',100);
+    group.push(minus);
+    return group;
+};
 
 MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     var self = this;
+
+    var elements_to_move = [];
 
     jQuery(renderer).bind('readerRegistered',function(ev,reader) {
         if (self == reader) {
@@ -253,15 +293,50 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             var index = 0;
             for (var i = 0; i < self.sequences.length; i++) {
                 if (self.sequences[i].agi && self.sequences[i].agi == reader.agi) {
-                    console.log(reader.agi);
                     index = i;
                 }
             }
             var old_get_aas = renderer.getAminoAcidsByPosition;
             var old_get_pep = renderer.getAminoAcidsByPeptide;
+            var orig_functions = {};
+            renderer._extendElement(orig_functions);
+            var extender = function(aas) {
+                return function(el) {
+                    var result = {};
+                    result.original_index = aas.shift();
+                    result.addShapeOverlay = function(layername,width,opts) {
+                        elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.slice(-1)[0].layer_idx = index;
+                        elements_to_move.slice(-1)[0].aa = result.original_index;
+                        elements_to_move.slice(-1)[0].aa_width = width;
+                        return elements_to_move.slice(-1)[0];
+                    };
+                    result.addBoxOverlay = function(layername,width,fraction) {
+                        elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),fraction));
+                        return elements_to_move.slice(-1)[0];
+                    };
+                    result.addTextOverlay = function(layername,width,opts) {
+                        elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        return elements_to_move.slice(-1)[0];
+                    };
+                    result.addToLayerWithLink = function(layername,url,width) {
+                        elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index)));
+                        return elements_to_move.slice(-1)[0];
+                    };
+                    for (var method in orig_functions) {
+                        if ( ! result[method] ) {
+                            result[method] = function() {
+                                elements_to_move.push(orig_functions[method].apply(el,arguments));
+                                return elements_to_move.slice(-1)[0];
+                            };
+                        }
+                    }
+                    return result;
+                };
+            };
             renderer.getAminoAcidsByPosition = function(aas) {
                 var new_aas = aas.map(function(aa) { return Math.abs(self.result.calculatePositionForSequence(index,aa)); });
-                return old_get_aas.call(this,new_aas);
+                return old_get_aas.call(this,new_aas).map(extender(aas));
             };
             renderer.getAminoAcidsByPeptide = function() {};
             old.call(reader);
@@ -283,6 +358,13 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             renderer.remove(bit.layer,bit);
         }
         result.alignToSequence(sequence_index || 0);
+        elements_to_move.forEach(function(el) {
+            if (el.move) {
+                var aa = result.calculatePositionForSequence(el.layer_idx,el.aa);
+                var aa_width = result.calculatePositionForSequence(el.layer_idx,el.aa_width);
+                el.move(aa,aa_width);
+            }
+        });
         var aligned = result.getSequences();
         if ( ! renderer.sequence ) {
             renderer.setSequence(aligned[sequence_index])(function() {
@@ -307,34 +389,36 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             rendered_bits.push(renderer.getAA(i+1).addBoxOverlay(controller_name,1,check_values(aligned[0],i,aligned)));
             rendered_bits.slice(-1)[0].layer = controller_name;
         }
-
         for (var i = 0 ; i < aligned.length; i++) {
-            MASCP.registerLayer(aligned[i].agi,{'fullname': aligned[i].agi, 'group' : group_name, 'color' : '#ff0000'});
-            var text_array = renderer.renderTextTrack(aligned[i].agi,aligned[i].toString());
+            var layname = self.sequences[i].agi || "missing"+i;
+            MASCP.registerLayer(layname,{'fullname': layname, 'group' : group_name, 'color' : '#ff0000'});
+            var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
             rendered_bits = rendered_bits.concat(text_array);
-            rendered_bits.slice(-1)[0].layer = aligned[i].agi;
-            if (renderer.trackOrder.indexOf(aligned[i].agi) < 0) {
-              renderer.trackOrder.push(aligned[i].agi);
+            rendered_bits.slice(-1)[0].layer = layname;
+            if (renderer.trackOrder.indexOf(layname) < 0) {
+              renderer.trackOrder.push(layname);
             }
             var name = "Isoform "+(i+1);
             if (aligned[i].insertions) {
               for (var insert in aligned[i].insertions) {
                 var insertions = aligned[i].insertions;
-                var layname = aligned[i].agi;
                 if (insert == 0 && insertions[insert] == "") {
                   continue;
                 }
                 if (insert == 0) {
                   insert = 1;
                 }
+                var content = draw_discontinuity(renderer._canvas);
+                content.setAttribute('fill','#ffff00');
                 var an_anno = renderer.getAA(insert).addToLayer(layname,
-                  { 'content' : '+'+insertions[insert].length,
-                    'height' : 16,
-                    'offset' : 1,
-                    'angle'  : 320,
-                    'border' : 'rgb(0,0,255)',
+                  { 'content' : content,//'+'+insertions[insert].length,
+                    'bare_element': true,
+                    'height' : 20,
+                    'offset' : -2.5,
                     'no_tracer' : true
                   })[1];
+                an_anno.container.setAttribute('height','300');
+                an_anno.container.setAttribute('viewBox','-50 -100 200 300');
                 rendered_bits.push(an_anno);
                 rendered_bits.slice(-1)[0].layer = layname;
 
@@ -361,9 +445,13 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     this.bind('resultReceived',function() {
         var result = this.result;
         redraw_alignments(0);
+        var accs = [];
+        self.sequences.forEach(function(seq) {
+            accs.push(seq.agi);
+        });
+
         renderer.bind('orderChanged',function(e,order) {
-            var re = /[^\d]/g;
-            redraw_alignments(parseInt(order[1].replace(re,'')));
+            redraw_alignments(accs.indexOf(order[(order.indexOf(controller_name)+1)]));
         });
     });
 
