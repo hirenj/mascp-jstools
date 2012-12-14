@@ -465,6 +465,9 @@ MASCP.SequenceRenderer.prototype._cleanSequence = function(sequence) {
 MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition = function(indexes) {
     var sequence_els = this._sequence_els;
     return jQuery.map(indexes, function(index) {
+        if (index < 0) {
+            return null;
+        }
         return sequence_els[index-1];
     });
 };
