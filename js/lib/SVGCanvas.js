@@ -432,6 +432,10 @@ var SVGCanvas = SVGCanvas || (function() {
           a_rect.setAttribute('stroke','#000000');
     //      a_rect.setAttribute('shape-rendering','optimizeSpeed');
           this.appendChild(a_rect);
+          a_rect.move = function(new_x,new_width) {
+              this.setAttribute('x',new_x*RS);
+              this.setAttribute('width',new_width*RS);
+          };
           return a_rect;
         };
 
@@ -442,6 +446,10 @@ var SVGCanvas = SVGCanvas || (function() {
             }
             a_rect.setAttribute('rx',r.x*RS);
             a_rect.setAttribute('ry',r.y*RS);
+            a_rect.move = function(new_x,new_width) {
+                this.setAttribute('x',new_x*RS);
+                this.setAttribute('width',new_width*RS);
+            };
             return a_rect;
         };
 
@@ -485,6 +493,16 @@ var SVGCanvas = SVGCanvas || (function() {
                     return points.join(",");
                 });
                 this.setAttribute('points',points.join(" "));
+            };
+            shape.move = function(new_x,new_width) {
+                var curr_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(this.getAttribute('transform'));
+                if (curr_y === null) {
+                    return;
+                }
+                curr_y = curr_y[2];
+                var curr_transform = this.getAttribute('transform').replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+(new_x*RS)+','+curr_y+')');
+                this.setAttribute('transform',curr_transform);
+                a = 0.5*new_width*RS;
             };
             shape.setHeight(height*RS);
             return shape;
