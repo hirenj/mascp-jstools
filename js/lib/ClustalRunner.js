@@ -305,30 +305,47 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                     var result = {};
                     result.original_index = aas.shift();
                     result.addShapeOverlay = function(layername,width,opts) {
-                        elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
                         elements_to_move.slice(-1)[0].layer_idx = index;
                         elements_to_move.slice(-1)[0].aa = result.original_index;
                         elements_to_move.slice(-1)[0].aa_width = width;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addBoxOverlay = function(layername,width,fraction) {
-                        elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),fraction));
+                        elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),fraction));
+                        elements_to_move.slice(-1)[0].layer_idx = index;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addTextOverlay = function(layername,width,opts) {
-                        elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.slice(-1)[0].layer_idx = index;
+                        elements_to_move.slice(-1)[0].aa = result.original_index;
+                        elements_to_move.slice(-1)[0].aa_width = width;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addToLayerWithLink = function(layername,url,width) {
-                        elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index)));
+                        elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index)));
+                        elements_to_move.slice(-1)[0].layer_idx = index;
+                        return elements_to_move.slice(-1)[0];
+                    };
+                    result.addToLayer = function(layername,opts) {
+                        elements_to_move.push(orig_functions['addToLayer'].call(el,layername,opts));
+                        elements_to_move.slice(-1)[0].layer_idx = index;
+                        elements_to_move.slice(-1)[0].aa = result.original_index;
+                        elements_to_move.slice(-1)[0].aa_width = 1;
                         return elements_to_move.slice(-1)[0];
                     };
                     for (var method in orig_functions) {
                         if ( ! result[method] ) {
-                            result[method] = function() {
+                            result[method] = (function(method){
+                                return function() {
                                 elements_to_move.push(orig_functions[method].apply(el,arguments));
+                                // console.log(elements_to_move.slice(-1)[0]);
+                                // console.log(elements_to_move.slice(-1)[0].move);
+                                // console.log(method);
                                 return elements_to_move.slice(-1)[0];
-                            };
+                                };
+                            })(method);
                         }
                     }
                     return result;
@@ -349,6 +366,17 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     var controller_name = 'isoform_controller';
     var group_name = 'isoforms';
 
+    var check_values = function(seq,idx,seqs) {
+        var positives = 0;
+        var aa = seq.toString().charAt(idx);
+        for (var i = 1; i < seqs.length; i++) {
+          if (seqs[i].toString().charAt(idx) == aa) {
+            positives += 1;
+          }
+        }
+        return 1 - (positives / (seqs.length - 1));
+    };
+
 
     var redraw_alignments = function(sequence_index) {
         var result = self.result;
@@ -361,8 +389,14 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         elements_to_move.forEach(function(el) {
             if (el.move) {
                 var aa = result.calculatePositionForSequence(el.layer_idx,el.aa);
-                var aa_width = result.calculatePositionForSequence(el.layer_idx,el.aa_width);
-                el.move(aa,aa_width);
+                var aa_width = result.calculatePositionForSequence(el.layer_idx,el.aa+el.aa_width);
+                if (aa < 0) {
+                    aa *= -1;
+                }
+                if (aa_width < 0) {
+                    aa_width *= -1;
+                }
+                el.move(aa,aa_width-aa);
             }
         });
         var aligned = result.getSequences();
@@ -384,7 +418,8 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         }
 
         var alignments = result.getAlignment().split('');
-        rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,'.')));
+        rendered_bits = rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,'.')));
+        rendered_bits.slice(-1)[0].layer = controller_name;
         for (var i = 0 ; i < alignments.length; i++ ) {
             rendered_bits.push(renderer.getAA(i+1).addBoxOverlay(controller_name,1,check_values(aligned[0],i,aligned)));
             rendered_bits.slice(-1)[0].layer = controller_name;

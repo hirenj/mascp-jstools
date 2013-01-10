@@ -787,8 +787,16 @@ var addElementToLayer = function(layerName,opts) {
     tracer_marker.setAttribute('visibility','hidden');
 
     this._renderer._layer_containers[layerName].push(tracer_marker);
-    
-    return [tracer,tracer_marker,bobble];
+    var result = [tracer,tracer_marker,bobble];
+    result.move = function(x,width) {
+        var transform_attr = tracer_marker.getAttribute('transform');
+        var matches = /translate\(.*[,\s](.*)\) scale\((.*)\)/.exec(transform_attr);
+        if (matches[1] && matches[2]) {
+            tracer_marker.setAttribute('transform','translate('+((x-0.5)*renderer._RS)+','+matches[1]+') scale('+matches[2]+')');
+        }
+        tracer.move(x-0.5,0.05);
+    };
+    return result;
 };
 
 var addBoxOverlayToElement = function(layerName,width,fraction) {
@@ -1293,8 +1301,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         canvas.removeEventListener('zoomChange',zoomchange);
         delete container.panevents;
     });
-
-   return amino_acids;
+    return amino_acids;
 };
 
 MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
@@ -1308,7 +1315,8 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
     }
     var renderer = this;
     var container = this._layer_containers[layerName];
-    return this.addTextTrack(in_text,container);
+    var result = this.addTextTrack(in_text,container);
+    return result;
 };
 
 MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
