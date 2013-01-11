@@ -314,6 +314,8 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                     result.addBoxOverlay = function(layername,width,fraction) {
                         elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),fraction));
                         elements_to_move.slice(-1)[0].layer_idx = index;
+                        elements_to_move.slice(-1)[0].aa_width = width;
+                        elements_to_move.slice(-1)[0].aa = result.original_index;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addTextOverlay = function(layername,width,opts) {

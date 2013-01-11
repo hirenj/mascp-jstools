@@ -795,6 +795,7 @@ var addElementToLayer = function(layerName,opts) {
             tracer_marker.setAttribute('transform','translate('+((x-0.5)*renderer._RS)+','+matches[1]+') scale('+matches[2]+')');
         }
         tracer.move(x-0.5,0.05);
+        bobble.move(x-0.5);
     };
     return result;
 };
