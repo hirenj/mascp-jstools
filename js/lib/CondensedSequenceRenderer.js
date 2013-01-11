@@ -463,9 +463,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
         var renderer = this;
 
-        var seq_els = [];
 
         var build_sequence_els = function() {
+            var seq_els = [];
             jQuery(renderer.sequence.split('')).each( function(i) {
                 var el = {};
                 el._index = i;
