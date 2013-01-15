@@ -1166,7 +1166,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
-    if (this._layer_containers[lay].indexOf(el) >= 0) {
+    if (this._layer_containers[lay] && this._layer_containers[lay].indexOf(el) >= 0) {
         this._layer_containers[lay].splice(this._layer_containers[lay].indexOf(el),1);
         bean.fire(el,'removed');
         if (el.parentNode) {
