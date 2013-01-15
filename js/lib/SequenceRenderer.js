@@ -128,16 +128,28 @@ MASCP.registerLayer = function(layerName, options, renderers)
     if ( ! renderers ) {
         renderers = [];
     }
-
+    var layer;
     if (this.layers[layerName]) {
         if (this.layers[layerName].disabled || renderers.length > 0) {
             this.layers[layerName].disabled = false;
             bean.fire(MASCP,'layerRegistered',[this.layers[layerName]].concat(renderers));
         }
-        return this.layers[layerName];
+        layer = this.layers[layerName];
+    }
+
+    if (layer && options.group) {
+        layer.group = this.getGroup(options.group);
+        if ( ! layer.group ) {
+            throw "Cannot register this layer with the given group - the group has not been registered yet";
+        }
+        layer.group._layers.push(layer);
     }
     
-    var layer = new MASCP.Layer();
+    if (layer) {
+        return layer;
+    }
+
+    layer = new MASCP.Layer();
     
     layer.name = layerName;
     
@@ -150,19 +162,18 @@ MASCP.registerLayer = function(layerName, options, renderers)
     if (options.color) {
         layer.color = options.color;
     }
+
+    if (options.data) {
+        layer.data = options.data;
+    }
     
-    if (options.group) {
+    if (layer && options.group) {
         layer.group = this.getGroup(options.group);
         if ( ! layer.group ) {
             throw "Cannot register this layer with the given group - the group has not been registered yet";
         }
         layer.group._layers.push(layer);
     }
-    
-    if (options.data) {
-        layer.data = options.data;
-    }
-    
     
     this.layers[layerName] = layer;
     
