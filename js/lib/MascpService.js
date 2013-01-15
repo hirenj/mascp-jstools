@@ -429,7 +429,7 @@ var do_request = function(request_data) {
                 request.send();
                 return;
             }
-            if (request.status == 200) {
+            if (request.status >= 200 && request.status < 300) {
                 var data_block;
                 if (request_data.dataType == 'xml') {
                     data_block = typeof(document) !== 'undefined' ? document.implementation.createDocument(null, "nodata", null) : { 'getElementsByTagName' : function() { return []; } };
