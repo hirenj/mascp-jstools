@@ -31,6 +31,7 @@ MASCP.ClustalRunner.hash = function(str){
 MASCP.ClustalRunner.prototype.requestData = function()
 {   
     var sequences = [].concat(this.sequences || []);
+    var self = this;
     this.agi = MASCP.ClustalRunner.hash(this.sequences.join(','))+'';
     if (! MASCP.ClustalRunner.SERVICE_URL.match(/ebi/)) {
         return {
