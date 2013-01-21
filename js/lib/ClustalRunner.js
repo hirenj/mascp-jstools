@@ -259,23 +259,23 @@ var draw_discontinuity = function(canvas) {
     var group = canvas.group();
     var line;
     line = canvas.line(left+1,top+4,left+3,top+1);
-    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke','#faa');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+6,left+3,top+3);
-    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke','#faa');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+4,left+3,top+3);
-    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke','#faa');
     line.setAttribute('stroke-width','5');
     group.push(line);
     line = canvas.line(left+1,top+5.3,left+1,top+5.8);
-    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke','#faa');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+5.9,left+1.5,top+5.9);
-    line.setAttribute('stroke','#f00');
+    line.setAttribute('stroke','#faa');
     line.setAttribute('stroke-width','10');
     group.push(line);
     var circle = canvas.circle(left+2.8,top+1.75,1);
@@ -318,6 +318,10 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 return function(el) {
                     var result = {};
                     result.original_index = aas.shift();
+                    if ( ! el ) {
+                        el = { "_index" : -100, "_renderer" : renderer };
+                    }
+
                     result.addShapeOverlay = function(layername,width,opts) {
                         elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
                         elements_to_move.slice(-1)[0].layer_idx = index;
