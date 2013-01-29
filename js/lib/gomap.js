@@ -1157,7 +1157,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             this.style.cursor = 'pointer';
             return true;
         }
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
+        // this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
         if (!self.dragging) {
             return;
         }
@@ -1176,7 +1176,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
     var doMouseMove = function(evt) {        
         var positions = mousePosition(evt);
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
+        // this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur), -moz-grabbing';
 
         if (self.targetElement) {
             self.targetElement.shiftPosition(positions[0],positions[1]);
