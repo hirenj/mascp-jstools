@@ -396,7 +396,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             positives += 1;
           }
         }
-        return 1 - (positives / (seqs.length - 1));
+        return (positives / (seqs.length - 1));
     };
 
 
@@ -442,8 +442,9 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         var alignments = result.getAlignment().split('');
         rendered_bits = rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,'.')));
         rendered_bits.slice(-1)[0].layer = controller_name;
+        var idxs = ["*",":","."," "].reverse();
         for (var i = 0 ; i < alignments.length; i++ ) {
-            rendered_bits.push(renderer.getAA(i+1).addBoxOverlay(controller_name,1,check_values(aligned[0],i,aligned)));
+            rendered_bits.push(renderer.getAA(i+1).addBoxOverlay(controller_name,1,idxs.indexOf(alignments[i])/4));
             rendered_bits.slice(-1)[0].layer = controller_name;
         }
         for (var i = 0 ; i < aligned.length; i++) {
