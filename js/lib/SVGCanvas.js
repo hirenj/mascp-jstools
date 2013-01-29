@@ -609,7 +609,7 @@ var SVGCanvas = SVGCanvas || (function() {
             var html = document.createElementNS('http://www.w3.org/1999/xhtml','html');
             html.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
             var body = document.createElementNS('http://www.w3.org/1999/xhtml','body');
-            body.style.fontSize = (15*RS) +'px';
+            body.style.fontSize = ((opts['font-size'] || 15)*RS) +'px';
             body.style.margin = (5*RS)+'px';
             body.style.height = opts.height*RS*10+'px';
             html.appendChild(body);
