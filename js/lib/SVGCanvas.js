@@ -157,6 +157,9 @@ var SVGCanvas = SVGCanvas || (function() {
                         if ( ! an_array[i]) {
                             continue;
                         }
+                        if ( an_array[i].style.display == 'none' ){
+                            continue;
+                        }
                         var value = hash[key];
                         if (key == 'style' && an_array[i].hasAttribute('style')) {
                             var curr_style = an_array[i].getAttribute('style');
