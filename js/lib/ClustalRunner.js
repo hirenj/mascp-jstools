@@ -322,6 +322,8 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                         el = { "_index" : -100, "_renderer" : renderer };
                     }
 
+                    result._index = el._index;
+
                     result.addShapeOverlay = function(layername,width,opts) {
                         elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
                         elements_to_move.slice(-1)[0].layer_idx = index;
