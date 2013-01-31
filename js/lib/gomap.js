@@ -1632,20 +1632,42 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     bean.remove(scrollContainer,'scroll');
     bean.remove(scrollContainer,'mouseenter');
     bean.add(scrollContainer,'mouseenter',function() {
+        disabled = true;
         scrollContainer.scrollLeft += 1;
         scrollContainer.scrollLeft -= 1;
+        setTimeout(function() {
+            disabled = false;
+        },0);
+        scroller.cached_width = scroller.clientWidth;
+    });
+    var disabled = false;
+
+    window.matchMedia('print').addListener(function(matcher) {
+        disabled = true;
+        setTimeout(function() {
+            disabled = false;
+        },0);
     });
 
     bean.add(scrollContainer,'scroll',function() {
+        if (disabled || ! console) {
+            return;
+        }
         bean.fire(controlElement,'panstart');
-        target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / scroller.clientWidth));
+        var width = scroller.cached_width || scroller.clientWidth;
+        target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / width));
         bean.fire(controlElement,'panend');
     });
     bean.add(controlElement,'pan',function() {
         var size = 100*target.getTotalLength() / (target.getVisibleLength());
         scroller.style.width = parseInt(size)+'%';
-        var left_shift = parseInt(scroller.clientWidth * (target.getLeftPosition() / target.getTotalLength() ));
-        scroll_box.scrollLeft = left_shift;
+        var width = scroller.cached_width || scroller.clientWidth;
+        var left_shift = parseInt(width * (target.getLeftPosition() / target.getTotalLength() ));
+        disabled = true;
+        scrollContainer.scrollLeft = left_shift;
+        setTimeout(function() {
+            disabled = false;
+        },0);
     });
 };
 
