@@ -14,6 +14,10 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     var self = this;
 
     MASCP.CondensedSequenceRenderer.Zoom(self);
+    window.addEventListener('onresize',function() {
+        sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
+    },true);
+    sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
 
     // We want to unbind the default handler for sequence change that we get from
     // inheriting from CondensedSequenceRenderer
@@ -453,7 +457,11 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
     clazz.prototype.rightVisibleResidue = function() {
         var self = this;
-        var val = Math.floor(self.leftVisibleResidue() + (self.sequence.length+self.padding+2)*(self._container_canvas.parentNode.getBoundingClientRect().width / self._canvas.width.baseVal.value));
+        var container_width = self._container_canvas.parentNode.cached_width;
+        if ( ! container_width ) {
+            container_width = self._container_canvas.parentNode.getBoundingClientRect().width;
+        }
+        var val = Math.floor(self.leftVisibleResidue() + (self.sequence.length+self.padding+2)*(container_width/ self._canvas.width.baseVal.value));
         if (val > self.sequence.length) {
             val = self.sequence.length;
         }
@@ -1978,7 +1986,11 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
     var start_x = null;
     var accessors = { 
         setZoom: function(zoomLevel) {
-            var min_zoom_level = renderer.sequence ? (0.3 / 2) * renderer._container.clientWidth / renderer.sequence.length : 0.5;
+            var container_width = renderer._container.cached_width;
+            if ( ! container_width ) {
+                container_width = renderer._container.clientWidth;
+            }
+            var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
             if (zoomLevel < min_zoom_level) {
                 zoomLevel = min_zoom_level;
             }
