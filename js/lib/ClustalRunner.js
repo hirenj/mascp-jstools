@@ -280,11 +280,11 @@ var draw_discontinuity = function(canvas) {
     group.push(line);
     var circle = canvas.circle(left+2.8,top+1.75,1);
     circle.setAttribute('fill','#fff');
-    circle.setAttribute('stroke','#000');
+    circle.setAttribute('stroke','#aaa');
     circle.setAttribute('stroke-width','10');
     group.push(circle);
     var minus = canvas.text(left+2.25,top+2.25,'÷');
-    minus.setAttribute('fill','#000');
+    minus.setAttribute('fill','#aaa');
     minus.setAttribute('font-size',100);
     group.push(minus);
     return group;
