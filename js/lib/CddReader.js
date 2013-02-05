@@ -25,6 +25,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
                             if (data && typeof data == 'string') {
                                 var self = this;
                                 var rows = read_csv(data);
+                                rows.shift();
                                 self._raw_data = { 'data' : {} };
                                 rows.forEach(function(row) {
                                     if (row.length != 12) {
