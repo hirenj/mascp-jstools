@@ -92,3 +92,52 @@ MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
     },0);
     return writer;
 };
+
+MASCP.UniprotReader.parseDomains = function(datalines) {
+    var results = {};
+    datalines = datalines.split(/\n/);
+    datalines.forEach(function(data) {
+        var domain_re = /FT\s+DOMAIN\s+(\d+)\s+(\d+)\s+(.*)/m;
+        var carb_re = /FT\s+CARBOHYD\s+(\d+)\s+(\d+)\s+(.*)/m;
+        var match = carb_re.exec(data);
+        if (match) {
+            var name = match[3];
+            name = name.replace('...','..');
+            if ( ! results[name]) {
+                results[name] = { "peptides" : [], "name" : name };
+            }
+            results[name].peptides.push([match[1],match[2]]);
+        }
+        var match = domain_re.exec(data);
+        if (match) {
+            if ( ! results[match[3]]) {
+                results[match[3]] = { "peptides" : [] };
+            }
+            results[match[3]].peptides.push([match[1],match[2]]);
+        }
+    });
+
+    return results;
+};
+
+MASCP.UniprotDomainReader = MASCP.buildService(function(data) {
+                        if ( data && typeof(data) === 'string' ) {
+                            var dats = MASCP.UniprotReader.parseDomains(data);
+                            data = { 'data' : dats };
+                            this._raw_data = data;
+                        }
+                        return this;
+                    });
+
+MASCP.UniprotDomainReader.prototype.requestData = function()
+{
+    var self = this;
+    return {
+        type: "GET",
+        dataType: "txt",
+        'url'   : 'http://www.uniprot.org/uniprot/'+this.agi+'.txt',
+        data: { 'acc'   : this.agi,
+                'service' : 'uniprot'
+        }
+    };
+};

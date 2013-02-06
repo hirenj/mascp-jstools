@@ -15,6 +15,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
             var lines = text_data.split("\n");
             var data = [];
             for (var i = lines.length - 1; i >= 0; i-- ) {
+                if (lines[i].match(/^#/)) {
+                    continue;
+                }
                 data.push(lines[i].replace(/"/g,'').split(/\t/));
             }
             return data.reverse();
@@ -25,10 +28,14 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
                             if (data && typeof data == 'string') {
                                 var self = this;
                                 var rows = read_csv(data);
-                                rows.shift();
+                                var header_seen = false;
                                 self._raw_data = { 'data' : {} };
                                 rows.forEach(function(row) {
                                     if (row.length != 12) {
+                                        return;
+                                    }
+                                    if ( ! header_seen ) {
+                                        header_seen = true;
                                         return;
                                     }
                                     if ( ! self._raw_data.data[row[7]]) {
@@ -44,15 +51,6 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
                         });
 })();
 MASCP.CddRunner.SERVICE_URL = 'http://www.ncbi.nlm.nih.gov/Structure/bwrpsb/bwrpsb.cgi?';
-
-MASCP.CddRunner.hash = function(str){
-    var hash = 0;
-    for (i = 0; i < str.length; i++) {
-        char = str.charCodeAt(i);
-        hash = char + (hash << 6) + (hash << 16) - hash;
-    }
-    return hash;
-};
 
 MASCP.CddRunner.prototype.requestData = function()
 {   
