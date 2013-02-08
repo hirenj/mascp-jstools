@@ -449,6 +449,13 @@ var do_request = function(request_data) {
                         return;
                     }
                 }
+                if (request.status == 202 && data_block.status == "RUNNING") {
+                    setTimeout(function(){
+                        request.open(request_data.type,request_data.url,request_data.async);
+                        request.send(datablock);
+                    },5000);
+                    return;
+                }
                 request_data.success.call(null,data_block,request.status,request);
                 data_block = null;
             } else {
