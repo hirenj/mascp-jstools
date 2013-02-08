@@ -202,7 +202,10 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         });
     };
     if (accs.length < 1) {
-        bean.fire(self,'ready');
+        setTimeout(function() {
+            self.retrieve = retrieve;
+            bean.fire(self,'ready');
+        },0);
         return;
     }
     MASCP.Service.BulkOperation(function(err) {
