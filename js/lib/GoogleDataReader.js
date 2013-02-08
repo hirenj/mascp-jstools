@@ -389,9 +389,6 @@ if (typeof module != 'undefined' && module.exports){
             }
             return;
         }
-        console.log("Go to this URL:");
-        console.log(base+"scope="+enc_scope+"&redirect_uri="+redirect_uri+"&response_type=code&client_id="+client_id);
-        console.log("Authentication code : ");
         if ( ! repl || ! repl.repl ) {
             console.log("Not running in an interactive session - returning");
             auth_done(null);
@@ -402,6 +399,9 @@ if (typeof module != 'undefined' && module.exports){
             auth_done(null);
             return;
         }
+        console.log("Go to this URL:");
+        console.log(base+"scope="+enc_scope+"&redirect_uri="+redirect_uri+"&response_type=code&client_id="+client_id);
+        console.log("Authentication code : ");
         repl.repl.running = true;
         old_eval = repl.repl.eval;
         repl.repl.eval = function(cmd,context,filename,callback) {
@@ -437,12 +437,12 @@ if (typeof module != 'undefined' && module.exports){
                     res.on('end',function() {
                         var response = JSON.parse(data);
 
-                        callback(null,"Authentication code validated");
                         if (response.error) {
                             console.log("Error validating authentication code");
                             delete repl.repl.running;
                             auth_done(null);
                         } else {
+                            callback(null,"Authentication code validated");
                             delete repl.repl.running;
                             auth_done(response);
                         }
