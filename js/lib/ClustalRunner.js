@@ -424,7 +424,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         var aligned = result.getSequences();
         if ( ! renderer.sequence ) {
             renderer.setSequence(aligned[sequence_index])(function() {
-                MASCP.registerGroup(group_name, 'Splice variants');
+                MASCP.registerGroup(group_name, 'Aligned');
                 MASCP.registerLayer(controller_name, { 'fullname' : 'Splices', 'color' : '#000000' });
                 if (renderer.trackOrder.indexOf(controller_name) < 0) {
                     renderer.trackOrder.push(controller_name);
@@ -448,13 +448,13 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             rendered_bits.slice(-1)[0].layer = controller_name;
         }
         for (var i = 0 ; i < aligned.length; i++) {
-            var layname = self.sequences[i].agi || "missing"+i;
-            MASCP.registerLayer(layname,{'fullname': layname, 'group' : group_name, 'color' : '#ff0000'});
+            var layname = self.sequences[i].agi.toLowerCase() || "missing"+i;
+            MASCP.registerLayer(layname,{'fullname': layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
-            if (renderer.trackOrder.indexOf(layname) < 0) {
-              renderer.trackOrder.push(layname);
+            if (renderer.trackOrder.indexOf(layname.toLowerCase()) < 0) {
+              renderer.trackOrder.push(layname.toLowerCase());
             }
             var name = "Isoform "+(i+1);
             if (aligned[i].insertions) {
