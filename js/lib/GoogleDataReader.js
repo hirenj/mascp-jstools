@@ -56,7 +56,7 @@ var parsedata = function ( data ){
     return retdata;
 };
 
-var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row;
+var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row, get_preferences;
 
 update_or_insert_row = function(doc,query,new_data,callback) {
     if ( ! doc.match(/^spreadsheet/ ) ) {
@@ -139,6 +139,70 @@ get_permissions_id = function(callback) {
         callback.call(null,null,data.permissionId);
     });
 }
+
+// parseUri 1.2.2
+// (c) Steven Levithan <stevenlevithan.com>
+// MIT License
+
+function parseUri (str) {
+    var o   = parseUri.options,
+        m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+        uri = {},
+        i   = 14;
+
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+        if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+};
+
+parseUri.options = {
+    strictMode: false,
+    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+    q:   {
+        name:   "queryKey",
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
+get_preferences = function(callback) {
+    var query = encodeURIComponent("title='Domaintool preferences' and mimeType != 'application/vnd.google-apps.folder'");
+    do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
+
+        if (err) {
+            callback.call(null,err);
+            return;
+        }
+        var item_id = data.items[0].id;
+
+        do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
+
+            if ( err ) {
+                callback.call(null,err);
+                return;
+            }
+
+            var uri = parseUri(data.downloadUrl);
+            do_request(uri.host,uri.relative,null,function(err,data) {
+                console.log("Back from getting data");
+                if ( err ) {
+                    callback.call(null,err);
+                    return;
+                }
+                callback.call(null,null,JSON.parse(data));
+            });
+        });
+    });
+};
+
 
 get_permissions = function(doc,callback) {
     if ( ! doc.match(/^spreadsheet/ ) ) {
@@ -485,7 +549,7 @@ if (typeof module != 'undefined' && module.exports){
     MASCP.GoogledataReader.authenticate = authenticate;
 
 } else {
-    scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.file https://spreadsheets.google.com/feeds/";
+    scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
 
     var get_document_using_script = function(doc_id,callback) {
         var head = document.getElementsByTagName('head')[0];
@@ -617,7 +681,10 @@ if (typeof module != 'undefined' && module.exports){
                 if (request.readyState == 4) {
                     if (request.status < 300 && request.status >= 200) {
                         var datablock = request.responseText.length > 0 ? (request.getResponseHeader('Content-Type').match(/json/) ? JSON.parse(request.responseText) : request.responseText) : null;
-                        callback.call(null,null,datablock);
+                        if (callback !== null) {
+                            callback.call(null,null,datablock);
+                        }
+                        callback = null;
                     } else {
                         callback.call(null,{'cause' : { 'status' : request.status }});
                     }
@@ -704,6 +771,8 @@ MASCP.GoogledataReader.prototype.getDocument = get_document;
 MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
 
 MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
+
+MASCP.GoogledataReader.prototype.getPreferences = get_preferences;
 
 /*
 map = {
