@@ -316,6 +316,7 @@ if (typeof module != 'undefined' && module.exports){
         }
         new_authenticate(function(auth_details) {
             if ( ! auth_details ) {
+                console.log("We didn't get back auth details");
                 callback(null);
                 return;
             }
@@ -330,6 +331,8 @@ if (typeof module != 'undefined' && module.exports){
             nconf.save(function(err) {
                 if (err) {
                     console.log("Could not write config");
+                } else {
+                    console.log("Successful retrieval of auth details");
                 }
             });
             callback(access_token);
