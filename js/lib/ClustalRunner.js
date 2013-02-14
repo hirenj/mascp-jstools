@@ -441,7 +441,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         }
 
         var alignments = result.getAlignment().split('');
-        rendered_bits = rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,'.')));
+        rendered_bits = rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,' ')));
         rendered_bits.slice(-1)[0].layer = controller_name;
         var idxs = ["*",":","."," "].reverse();
         for (var i = 0 ; i < alignments.length; i++ ) {
