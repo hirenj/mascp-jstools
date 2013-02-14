@@ -452,6 +452,12 @@ var do_request = function(request_data) {
                 if (request.status == 202 && data_block.status == "RUNNING") {
                     setTimeout(function(){
                         request.open(request_data.type,request_data.url,request_data.async);
+                        if (request_data.type == 'POST') {
+                            request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+                        }
+                        if (request.customUA) {
+                            request.setRequestHeader('User-Agent',request.customUA);
+                        }
                         request.send(datablock);
                     },5000);
                     return;
