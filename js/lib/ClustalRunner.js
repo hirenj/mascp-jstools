@@ -253,40 +253,41 @@ MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx
 })();
 //1265 (P)
 
-var draw_discontinuity = function(canvas) {
+var draw_discontinuity = function(canvas,size) {
     var top = -3;
     var left = -2;
     var group = canvas.group();
     var line;
     line = canvas.line(left+1,top+4,left+3,top+1);
-    line.setAttribute('stroke','#faa');
+    line.setAttribute('stroke','#fcc');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+6,left+3,top+3);
-    line.setAttribute('stroke','#faa');
+    line.setAttribute('stroke','#fcc');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+4,left+3,top+3);
-    line.setAttribute('stroke','#faa');
+    line.setAttribute('stroke','#fcc');
     line.setAttribute('stroke-width','5');
     group.push(line);
     line = canvas.line(left+1,top+5.3,left+1,top+5.8);
-    line.setAttribute('stroke','#faa');
+    line.setAttribute('stroke','#fcc');
     line.setAttribute('stroke-width','10');
     group.push(line);
     line = canvas.line(left+1,top+5.9,left+1.5,top+5.9);
-    line.setAttribute('stroke','#faa');
+    line.setAttribute('stroke','#fcc');
     line.setAttribute('stroke-width','10');
     group.push(line);
     var circle = canvas.circle(left+2.8,top+1.75,1);
     circle.setAttribute('fill','#fff');
-    circle.setAttribute('stroke','#aaa');
+    circle.setAttribute('stroke','#ccc');
     circle.setAttribute('stroke-width','10');
     group.push(circle);
-    var minus = canvas.text(left+2.25,top+2.25,'÷');
-    minus.setAttribute('fill','#aaa');
-    minus.setAttribute('font-size',100);
+    var minus = canvas.text(left+2.25,top+2.25,(size || '÷')+"");
+    minus.setAttribute('fill','#ccc');
+    minus.setAttribute('font-size',75);
     group.push(minus);
+    canvas.firstChild.nextSibling.appendChild(group);
     return group;
 };
 
@@ -449,8 +450,10 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         }
         for (var i = 0 ; i < aligned.length; i++) {
             var layname = self.sequences[i].agi.toLowerCase() || "missing"+i;
-            MASCP.registerLayer(layname,{'fullname': layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
+            var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
+            lay.fullname = self.sequences[i].name || layname.toUpperCase();
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
+            text_array[0].setAttribute('dy','-1ex');
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
             if (renderer.trackOrder.indexOf(layname.toLowerCase()) < 0) {
@@ -463,10 +466,14 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 if (insert == 0 && insertions[insert] == "") {
                   continue;
                 }
+                if (insertions[insert].length < 3) {
+                    continue;
+                }
+                var size = insertions[insert].length;
                 if (insert == 0) {
                   insert = 1;
                 }
-                var content = draw_discontinuity(renderer._canvas);
+                var content = draw_discontinuity(renderer._canvas,size);
                 content.setAttribute('fill','#ffff00');
                 var an_anno = renderer.getAA(insert).addToLayer(layname,
                   { 'content' : content,//'+'+insertions[insert].length,
