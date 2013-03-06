@@ -466,7 +466,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 if (insert == 0 && insertions[insert] == "") {
                   continue;
                 }
-                if (insertions[insert].length < 3) {
+                if (insertions[insert].length < 1) {
                     continue;
                 }
                 var size = insertions[insert].length;
