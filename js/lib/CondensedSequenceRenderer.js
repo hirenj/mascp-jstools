@@ -14,7 +14,7 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     var self = this;
 
     MASCP.CondensedSequenceRenderer.Zoom(self);
-    window.addEventListener('onresize',function() {
+    window.addEventListener('resize',function() {
         sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
     },true);
     sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
@@ -1281,21 +1281,32 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         if (seq.length <= max_length) {
             return;
         }
+        var container_width = renderer._container_canvas.parentNode.cached_width;
+        if ( ! container_width ) {
+            container_width = renderer._container_canvas.parentNode.getBoundingClientRect().width;
+        }
+        max_size = Math.ceil(10*container_width / RS);
+        if (max_size > seq.length) {
+            max_size = seq.length;
+        }
+
+        a_text.setAttribute('textLength',RS*max_size);
+
         var start = parseInt(renderer.leftVisibleResidue());
         start -= 50;
         if (start < 0) { 
             start = 0;
         }
-        if ((start + max_length) >= seq.length) {
-            start = seq.length - max_length;
+        if ((start + max_size) >= seq.length) {
+            start = seq.length - max_size;
             if (start < 0) {
                 start = 0;
             }
         }
-        a_text.replaceChild(document.createTextNode(seq.substr(start,max_length)),a_text.firstChild);
+        a_text.replaceChild(document.createTextNode(seq.substr(start,max_size)),a_text.firstChild);
         a_text.setAttribute('dx',5+((start)*RS));
         if (MASCP.IE) {
-            a_text.setAttribute('textLength',parseInt(5+((start)*RS))+(max_length*RS));
+            a_text.setAttribute('textLength',parseInt(5+((start)*RS))+(max_size*RS));
         }
     };
     var panstart = function() {
@@ -1726,6 +1737,10 @@ clazz.prototype.enablePrintResizing = function() {
     this._media_func = function(matcher) {
         var self = this;
         if ( self.grow_container ) {
+            if (matcher.matches) {
+                delete self._container_canvas.parentNode.cached_width;
+                bean.fire(self._canvas,'panend');
+            }
             return;
         }
         var match=matcher;
