@@ -173,14 +173,31 @@ parseUri.options = {
     }
 };
 
-get_preferences = function(callback) {
-    var query = encodeURIComponent("title='Domaintool preferences' and mimeType != 'application/vnd.google-apps.folder'");
+get_preferences = function(prefs_domain,callback) {
+    if (! MASCP.preferences) {
+        MASCP.preferences = {};
+    }
+    if ( ! prefs_domain ) {
+        prefs_domain = "Domaintool preferences";
+    }
+    if (MASCP.preferences[prefs_domain]) {
+        callback.call(null,null,MASCP.preferences[prefs_domain]);
+        return;
+    }
+    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json+domaintool-session' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
             callback.call(null,err);
             return;
         }
+
+        if (data.items.length == 0) {
+            MASCP.preferences[prefs_domain] = {};
+            callback.call(null,null,MASCP.preferences[prefs_domain]);
+            return;
+        }
+
         var item_id = data.items[0].id;
 
         do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
@@ -197,12 +214,82 @@ get_preferences = function(callback) {
                     callback.call(null,err);
                     return;
                 }
-                callback.call(null,null,JSON.parse(data));
+                if (typeof data !== 'string') {
+                    MASCP.preferences[prefs_domain] = data;
+                } else {
+                    MASCP.preferences[prefs_domain] = JSON.parse(data);
+                }
+                callback.call(null,null,MASCP.preferences[prefs_domain]);
             });
         });
     });
 };
 
+write_preferences = function(prefs_domain,callback) {
+    if (! MASCP.preferences) {
+        MASCP.preferences = {};
+    }
+    if ( ! prefs_domain ) {
+        prefs_domain = "Domaintool preferences";
+    }
+    if (! MASCP.preferences[prefs_domain]) {
+        callback.call(null,{"error" : "No preferences to save"});
+        return;
+    }
+    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json+domaintool-session' and trashed = false");
+    do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
+
+        if (err) {
+            callback.call(null,err);
+            return;
+        }
+        var item_id = null;
+        if (data.items && data.items.length == 0) {
+            do_request("www.googleapis.com","/drive/v2/files/",null,arguments.callee, "POST:application/json",JSON.stringify({
+                "title" : prefs_domain,
+                "mimeType" : "application/json+domaintool-session",
+                "description" : "Domaintool session information for session "+prefs_domain
+            }));
+            return;
+        }
+        if (data.items) {
+            item_id = data.items[0].id;
+        } else {
+            item_id = data.id;
+        }
+
+        // CORS requests are not allowed on this domain for uploads for some reason, we need to use
+        // the wacky Google uploader, but the commented out bit should work for when they finally
+        // allow the CORS request to go through
+
+
+        var req = gapi.client.request({
+            'path' : "/upload/drive/v2/files/"+item_id,
+            'method' : "PUT",
+            'params' : { "uploadType" : "media"},
+            'headers' : {
+                'Content-Type' : 'application/json+domaintool-session'
+            },
+            'body' : JSON.stringify(MASCP.preferences[prefs_domain])
+        });
+        req.execute(function(err,data) {
+            if ( err ) {
+                callback.call(null,err);
+                return;
+            }
+            callback.call(null,null,MASCP.preferences[prefs_domain]);
+        });
+
+        // do_request("www.googleapis.com","/upload/drive/v2/files/"+item_id+"?uploadType=media",null,function(err,data) {
+
+        //     if ( err ) {
+        //         callback.call(null,err);
+        //         return;
+        //     }
+        //     callback.call(null,null,MASCP.preferences[prefs_domain]);
+        // }, "PUT:application/json+domaintool-session",JSON.stringify(MASCP.preferences[prefs_domain]));
+    });
+};
 
 get_permissions = function(doc,callback) {
     if ( ! doc.match(/^spreadsheet/ ) ) {
@@ -240,26 +327,47 @@ get_permissions = function(doc,callback) {
 };
 
 get_document = function(doc,etag,callback) {
+    var is_spreadsheet = true;
     if ( ! doc.match(/^spreadsheet/ ) ) {
-        console.log("No support for retrieving things that aren't spreadsheets yet");
-        return;
+        is_spreadsheet = false;
+        // console.log("No support for retrieving things that aren't spreadsheets yet");
+        // return;
     }
     var doc_id = doc.replace(/^spreadsheet:/,'');
 
     var headers_block = { 'GData-Version' : '3.0' };
 
     var feed_type = 'private';
-    do_request("spreadsheets.google.com","/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",etag,function(err,json) {
-        if ( ! err ) {
-            if (json) {
-                callback.call(null,null,parsedata(json));
+    if (is_spreadsheet) {
+        do_request("spreadsheets.google.com","/feeds/cells/"+doc_id+"/1/"+feed_type+"/basic?alt=json",etag,function(err,json) {
+            if ( ! err ) {
+                if (json) {
+                    callback.call(null,null,parsedata(json));
+                } else {
+                    callback.call(null,{ "cause" : "No data" } );
+                }
             } else {
-                callback.call(null,{ "cause" : "No data" } );
+                callback.call(null,err);
             }
-        } else {
-            callback.call(null,err);
-        }
-    });
+        });
+    } else {
+        do_request("www.googleapis.com","/drive/v2/files/"+doc_id,etag,function(err,data) {
+            if ( ! err ) {
+                var uri = parseUri(data.downloadUrl);
+                var etag = data.etag;
+                do_request(uri.host,uri.relative,null,function(err,json) {
+                    if (err) {
+                        callback.call(null,err);
+                    } else {
+                        json.etag = etag;
+                        callback.call(null,null,json);
+                    }
+                });
+            } else {
+                callback.call(null,err);
+            }
+        });
+    }
 };
 
 if (typeof module != 'undefined' && module.exports){
@@ -513,6 +621,12 @@ if (typeof module != 'undefined' && module.exports){
         if (req_method == "POST") {
             headers_block["Content-Type"] = "application/atom+xml";
         }
+
+        if (req_method.match(/:/)) {
+            headers_block['Content-Type'] = req_method.split(':')[1];
+            req_method = req_method.split(':')[0];
+        }
+
         if (MASCP.GOOGLE_AUTH_TOKEN) {
             headers_block['Authorization'] = 'Bearer '+MASCP.GOOGLE_AUTH_TOKEN;
         } else {
@@ -677,13 +791,17 @@ if (typeof module != 'undefined' && module.exports){
 
             var request = new XMLHttpRequest();
             var req_method = method || 'GET';
-            request.open(req_method,"https://"+host+path);
+            request.open(req_method.replace(/:.*/,''),"https://"+host+path);
             request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
             if (req_method == 'GET') {
                 request.setRequestHeader('GData-Version','3.0');
             }
             if (req_method == 'POST') {
                 request.setRequestHeader('Content-Type','application/atom+xml');
+            }
+            if (req_method.match(/:/)) {
+                request.setRequestHeader('Content-Type',req_method.split(':')[1]);
+                req_method = req_method.split(':')[0];
             }
             if (etag) {
                 request.setRequestHeader('If-None-Match',etag);
@@ -711,12 +829,12 @@ if (typeof module != 'undefined' && module.exports){
             authenticate(callback,true);
             return;
         }
+        var is_spreadsheet = true;
         if ( ! doc.match(/^spreadsheet/ ) ) {
-            console.log("No support for retrieving things that aren't spreadsheets yet");
-            return;
+            is_spreadsheet = false;
         }
         var doc_id = doc.replace(/^spreadsheet:/g,'');
-        if (etag || MASCP.GOOGLE_AUTH_TOKEN) {
+        if (! is_spreadsheet || etag || MASCP.GOOGLE_AUTH_TOKEN) {
             basic_get_document(doc,etag,function(err,dat) {
                 if (err) {
                     get_document_using_script(doc_id,callback);
@@ -784,6 +902,9 @@ MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
 MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
 
 MASCP.GoogledataReader.prototype.getPreferences = get_preferences;
+
+MASCP.GoogledataReader.prototype.writePreferences = write_preferences;
+
 
 /*
 map = {
