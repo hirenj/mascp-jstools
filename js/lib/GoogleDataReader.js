@@ -836,7 +836,7 @@ if (typeof module != 'undefined' && module.exports){
         var doc_id = doc.replace(/^spreadsheet:/g,'');
         if (! is_spreadsheet || etag || MASCP.GOOGLE_AUTH_TOKEN) {
             basic_get_document(doc,etag,function(err,dat) {
-                if (err) {
+                if (err && (err.cause && err.cause.status != 304)) {
                     get_document_using_script(doc_id,callback);
                 } else {
                     callback.call(null,null,dat);
