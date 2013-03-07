@@ -820,6 +820,7 @@ base.retrieve = function(agi,callback)
     if (typeof module != 'undefined' && module.exports) {
         var sqlite = require('sqlite3');
         db = new sqlite.Database("cached.db");
+        db.exec("VACUUM;");
         //db.open("cached.db",function() {});
     } else if ("openDatabase" in window) {
 
