@@ -209,7 +209,6 @@ get_preferences = function(prefs_domain,callback) {
 
             var uri = parseUri(data.downloadUrl);
             do_request(uri.host,uri.relative,null,function(err,data) {
-                console.log("Back from getting data");
                 if ( err ) {
                     callback.call(null,err);
                     return;
@@ -945,7 +944,7 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
             if (e) {
                 if (e.cause.status == 304) {
                     // We don't do anything - the cached data is fine.
-                    console.log("Matching e-tag");
+                    console.log("Matching e-tag for "+doc);
                     bean.fire(reader,'ready');
                     return;
                 }
@@ -984,6 +983,7 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
             }
 
             if (update_timestamps[doc] && ((new Date().getTime()) - update_timestamps[doc]) < 1000*60*120) {
+                console.log("Update timestamp < 2 hours, not refreshing data for "+doc);
                 bean.fire(reader,'ready');
                 return;
             }
