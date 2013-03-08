@@ -697,7 +697,11 @@ if (typeof module != 'undefined' && module.exports){
             delete window["cback"+doc_id];
             callback.call(null,null,parsedata(dat));
         }
-        head.appendChild(script);
+        try {
+            head.appendChild(script);
+        } catch (e) {
+            callback.call(null,{"cause" : { "status" : "" }, "object" : e});
+        }
     };
     var initing_auth = false;
     var waiting_callbacks = [];
@@ -814,7 +818,10 @@ if (typeof module != 'undefined' && module.exports){
                         }
                         callback = null;
                     } else {
-                        callback.call(null,{'cause' : { 'status' : request.status }});
+                        if (callback !== null) {
+                            callback.call(null,{'cause' : { 'status' : request.status }});
+                        }
+                        callback =  null;
                     }
                 }
             };
@@ -835,7 +842,11 @@ if (typeof module != 'undefined' && module.exports){
         var doc_id = doc.replace(/^spreadsheet:/g,'');
         if (! is_spreadsheet || etag || MASCP.GOOGLE_AUTH_TOKEN) {
             basic_get_document(doc,etag,function(err,dat) {
-                if (err && (err.cause && err.cause.status != 304)) {
+                if (err) {
+                    if (err.cause && err.cause.status == 304) {
+                        callback.call(null,err);
+                        return;
+                    }
                     get_document_using_script(doc_id,callback);
                 } else {
                     callback.call(null,null,dat);
@@ -914,7 +925,7 @@ map = {
 */
 MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     var self = this;
-    var reader = new MASCP.UserdataReader();
+    var reader = new MASCP.UserdataReader(null,null);
     reader.datasetname = doc;
     reader.setupSequenceRenderer = setup;
 
