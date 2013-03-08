@@ -184,7 +184,7 @@ get_preferences = function(prefs_domain,callback) {
         callback.call(null,null,MASCP.preferences[prefs_domain]);
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json+domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -236,7 +236,7 @@ write_preferences = function(prefs_domain,callback) {
         callback.call(null,{"error" : "No preferences to save"});
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json+domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -247,7 +247,7 @@ write_preferences = function(prefs_domain,callback) {
         if (data.items && data.items.length == 0) {
             do_request("www.googleapis.com","/drive/v2/files/",null,arguments.callee, "POST:application/json",JSON.stringify({
                 "title" : prefs_domain,
-                "mimeType" : "application/json+domaintool-session",
+                "mimeType" : "application/json; data-type=domaintool-session",
                 "description" : "Domaintool session information for session "+prefs_domain
             }));
             return;
@@ -268,7 +268,7 @@ write_preferences = function(prefs_domain,callback) {
             'method' : "PUT",
             'params' : { "uploadType" : "media"},
             'headers' : {
-                'Content-Type' : 'application/json+domaintool-session'
+                'Content-Type' : 'application/json; data-type=domaintool-session'
             },
             'body' : JSON.stringify(MASCP.preferences[prefs_domain])
         });
@@ -287,7 +287,7 @@ write_preferences = function(prefs_domain,callback) {
         //         return;
         //     }
         //     callback.call(null,null,MASCP.preferences[prefs_domain]);
-        // }, "PUT:application/json+domaintool-session",JSON.stringify(MASCP.preferences[prefs_domain]));
+        // }, "PUT:application/json; data-type=domaintool-session",JSON.stringify(MASCP.preferences[prefs_domain]));
     });
 };
 
