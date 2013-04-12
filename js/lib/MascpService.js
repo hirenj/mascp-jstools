@@ -837,42 +837,55 @@ base.retrieve = function(agi,callback)
             }
 
             /* Versioning of DB schema */
+
+            var change_func = function(version,transaction) {
+                var db = transaction.db;
+                if (db.objectStoreNames && db.objectStoreNames.contains("cached")) {
+                    db.deleteObjectStore("cached");
+                }
+                var store = db.createObjectStore("cached", { keyPath: "id"});
+                store.createIndex("entries", [ "acc" , "service" ], { unique : false });
+                store.createIndex("timestamps", [ "service" , "retrieved" ], { unique : false });
+                store.createIndex("services", "service", { unique : false });
+                transaction.oncomplete = function() {
+                    database_ready(db);
+                };
+            };
+
+
             idb = true;
-            var req = indexedDB.open("datacache");
+            var req = indexedDB.open("datacache",1);
+
+            req.onupgradeneeded = function (e) {
+              var transaction = req.transaction;
+              change_func(e.oldVersion, transaction);
+            };
+
+            var database_ready = function(db) {
+                if (db) {
+                    idb = db;
+                }
+                if (MASCP.events) {
+                    MASCP.events.emit("ready");
+                }
+                if (MASCP.ready) {
+                    MASCP.ready();
+                } else {
+                    MASCP.ready = true;
+                }
+            };
+
             req.onsuccess = function(e) {
                 idb = e.target.result;
-                var version = "1.3";
-                if (idb.version != version) {
-                    var set_version = idb.setVersion(version);
-                    set_version.onsuccess = function(e) {
-                        if (idb.objectStoreNames.contains("cached")) {
-                            idb.deleteObjectStore("cached");
-                        }
-                        var store = idb.createObjectStore("cached", { keyPath: "id"});
-                        store.createIndex("entries", [ "acc" , "service" ], { unique : false });
-                        store.createIndex("timestamps", [ "service" , "retrieved" ], { unique : false });
-                        store.createIndex("services", "service", { unique : false });
-                        var trans = set_version.result;
-                        trans.oncomplete = function() {
-                            if (MASCP.events) {
-                                MASCP.events.emit("ready");
-                            }
-                            if (MASCP.ready) {
-                                MASCP.ready();
-                            } else {
-                                MASCP.ready = true;
-                            }
-                        };
+                var version = "1";
+                if (idb.version != Number(version)) {
+                    var versionRequest = db.setVersion(ver);
+                    versionRequest.onsuccess = function (e) {
+                        var transaction = versionRequest.result;
+                        change_func(oldVersion, transaction);
                     };
                 } else {
-                    if (MASCP.events) {
-                        MASCP.events.emit("ready");
-                    }
-                    if (MASCP.ready) {
-                        MASCP.ready();
-                    } else {
-                        MASCP.ready = true;
-                    }
+                    database_ready();
                 }
             };
         } else {
