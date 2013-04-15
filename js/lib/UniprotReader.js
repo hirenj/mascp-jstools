@@ -135,7 +135,7 @@ MASCP.UniprotDomainReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "txt",
-        'url'   : 'http://www.uniprot.org/uniprot/'+this.agi+'.txt',
+        'url'   : 'http://www.uniprot.org/uniprot/'+(this.agi).toUpperCase()+'.txt',
         data: { 'acc'   : this.agi,
                 'service' : 'uniprot'
         }
