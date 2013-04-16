@@ -469,6 +469,18 @@ var do_request = function(request_data) {
             }
         }
     };
+    if (MASCP.NETWORK_FAIL && MASCP.NETWORK_FAIL.enabled) {
+        setTimeout(function() {
+            console.log("Causing network failure");
+            request = { 'onreadystatechange' : request.onreadystatechange};
+            request.readyState = 4;
+            request.status = MASCP.NETWORK_FAIL.status || 500;
+            request.responseText = "Intercepted by Network Failure simulator";
+            request.onreadystatechange();
+        },1000);
+        return;
+    }
+
     request.send(datablock);
 };
 
@@ -556,7 +568,7 @@ base.retrieve = function(agi,callback)
         this.result = null;
         
         var done_result = false;
-        var done_func = function(err) {
+        var done_func = function(obj,err) {
             bean.remove(self,"resultReceived",done_func);
             bean.remove(self,"error",done_func);
             bean.remove(self,"requestComplete",done_func);
@@ -586,6 +598,9 @@ base.retrieve = function(agi,callback)
                     MASCP.Service._current_reqs -= 1;
                     if (typeof status == 'string') {
                         status = { 'error' : status , 'request' : req };
+                    }
+                    if (! isNaN(status) ) {
+                        status = { "error" : "Reqeust error", "status" : status, 'request' : req };
                     }
                     bean.fire(self,"error",[status]);
                     bean.fire(MASCP.Service,'requestComplete');
