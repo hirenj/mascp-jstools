@@ -1642,13 +1642,14 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     });
     var disabled = false;
 
-    window.matchMedia('print').addListener(function(matcher) {
-        disabled = true;
-        setTimeout(function() {
-            disabled = false;
-        },0);
-    });
-
+    if (window.matchMedia) {
+        window.matchMedia('print').addListener(function(matcher) {
+            disabled = true;
+            setTimeout(function() {
+                disabled = false;
+            },0);
+        });
+    }
     bean.add(scrollContainer,'scroll',function() {
         if (disabled || ! console) {
             return;
