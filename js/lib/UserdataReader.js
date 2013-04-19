@@ -159,6 +159,9 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         dataset = this.map(data);
     }
 
+    if ( ! this.map ) {
+        return;
+    }
     this.data = dataset;
     
     var inserter = new MASCP.UserdataReader();
