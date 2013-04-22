@@ -271,9 +271,9 @@ write_preferences = function(prefs_domain,callback) {
             },
             'body' : JSON.stringify(MASCP.preferences[prefs_domain])
         });
-        req.execute(function(err,data) {
-            if ( err ) {
-                callback.call(null,err);
+        req.execute(function(isjson,data) {
+            if ( ! isjson ) {
+                callback.call(null,{"status" : "Google error", "response" : response});
                 return;
             }
             callback.call(null,null,MASCP.preferences[prefs_domain]);
@@ -353,12 +353,14 @@ get_document = function(doc,etag,callback) {
         do_request("www.googleapis.com","/drive/v2/files/"+doc_id,etag,function(err,data) {
             if ( ! err ) {
                 var uri = parseUri(data.downloadUrl);
+                var title = data.title;
                 var etag = data.etag;
                 do_request(uri.host,uri.relative,null,function(err,json) {
                     if (err) {
                         callback.call(null,err);
                     } else {
                         json.etag = etag;
+                        json.title = title || doc_id;
                         callback.call(null,null,json);
                     }
                 });
@@ -915,6 +917,75 @@ MASCP.GoogledataReader.prototype.getPreferences = get_preferences;
 
 MASCP.GoogledataReader.prototype.writePreferences = write_preferences;
 
+
+MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_id,parser_function,callback) {
+    var reader = (new MASCP.GoogledataReader()).createReader(doc_id,parser_function);
+
+    reader.bind('error',function(err) {
+        callback.call(null,err);
+    });
+
+    reader.bind('ready',function() {
+        var title = this.title;
+        (new MASCP.GoogledataReader()).getPreferences(prefs_domain,function(err,prefs) {
+            if (err) {
+                callback.call(null,{ "status" : "preferences", "original_error" : err });
+                return;
+            }
+
+            if ( ! prefs.user_datasets ) {
+                prefs.user_datasets = {};
+            }
+
+            prefs.user_datasets[reader.datasetname] = {
+                "sites" : "man",
+                "peptides" : "true",
+                "parser_function" : parser_function.toString()
+            };
+            (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
+                if (err) {
+                    callback.call(null,{ "status" : "preferences", "original_error" : err });
+                    return;
+                }
+                callback.call(null,null,title);
+            });
+        });
+    });
+};
+
+MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,callback) {
+    var gdata = new MASCP.GoogledataReader();
+    gdata.getPreferences(prefs_domain,function(err,prefs) {
+        if (err) {
+          if (err.cause === "No user event") {
+            console.log("Consuming no user event");
+            return;
+          }
+          callback.call(null,{ "status" : "preferences", "original_error" : err });
+          return;
+        }
+        var sets = prefs.user_datasets;
+        for (var set in sets) {
+          (function() {
+            var pref = sets[set];
+
+            if ( ! sets[set].parser_function ) {
+              return;
+            }
+
+            var parser = eval("("+sets[set].parser_function+")");
+            var a_reader = gdata.createReader(set,parser);
+
+            a_reader.bind('ready',function() {
+                callback.call(null,null,pref,a_reader);
+            });
+            a_reader.bind('error',function(err) {
+                callback.call(null,{"error" : err });
+            });
+          })();
+        }
+    });
+};
 
 /*
 map = {

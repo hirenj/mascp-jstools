@@ -150,6 +150,8 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         data.title = name;
     }
 
+    self.title = data.title;
+
     var dataset = {}; // Format is { "accession" : { "data" : {}, "retrieved" : "" , "title" : ""  } };
 
     if (typeof this.map == 'object') {
