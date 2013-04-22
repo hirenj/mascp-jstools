@@ -864,6 +864,7 @@ base.retrieve = function(agi,callback)
                 store.createIndex("services", "service", { unique : false });
                 transaction.oncomplete = function() {
                     database_ready(db);
+                    database_ready = function() {};
                 };
             };
 
