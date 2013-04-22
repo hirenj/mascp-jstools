@@ -178,13 +178,13 @@ get_preferences = function(prefs_domain,callback) {
         MASCP.preferences = {};
     }
     if ( ! prefs_domain ) {
-        prefs_domain = "Domaintool preferences";
+        prefs_domain = "MASCP GATOR PREFS";
     }
     if (MASCP.preferences[prefs_domain]) {
         callback.call(null,null,MASCP.preferences[prefs_domain]);
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+prefs_domain+"' and 'appdata' in parents and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -235,7 +235,7 @@ write_preferences = function(prefs_domain,callback) {
         callback.call(null,{"error" : "No preferences to save"});
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+prefs_domain+"' and 'appdata' in parents and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -245,6 +245,7 @@ write_preferences = function(prefs_domain,callback) {
         var item_id = null;
         if (data.items && data.items.length == 0) {
             do_request("www.googleapis.com","/drive/v2/files/",null,arguments.callee, "POST:application/json",JSON.stringify({
+                'parents': [{'id': 'appdata'}],
                 "title" : prefs_domain,
                 "mimeType" : "application/json; data-type=domaintool-session",
                 "description" : "Domaintool session information for session "+prefs_domain
@@ -675,7 +676,7 @@ if (typeof module != 'undefined' && module.exports){
     MASCP.GoogledataReader.authenticate = authenticate;
 
 } else {
-    scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
+    scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
 
     var get_document_using_script = function(doc_id,callback) {
         var head = document.getElementsByTagName('head')[0];
