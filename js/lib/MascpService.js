@@ -429,6 +429,21 @@ var do_request = function(request_data) {
                 request.send();
                 return;
             }
+            if (request.status == 503) {
+                // Let's encode an exponential backoff
+                request.last_wait = (request_data.last_wait || 500) * 2;
+                setTimeout(function(){
+                    request.open(request_data.type,request_data.url,request_data.async);
+                    if (request_data.type == 'POST') {
+                        request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+                    }
+                    if (request.customUA) {
+                        request.setRequestHeader('User-Agent',request.customUA);
+                    }
+                    request.send(datablock);
+                },request_data.last_wait);
+                return;
+            }
             if (request.status >= 200 && request.status < 300) {
                 var data_block;
                 if (request_data.dataType == 'xml') {
