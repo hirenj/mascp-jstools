@@ -56,7 +56,7 @@ var parsedata = function ( data ){
     return retdata;
 };
 
-var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row, get_preferences;
+var get_document, get_document_list, get_permissions, get_permissions_id, authenticate, do_request, update_or_insert_row, insert_row;
 
 update_or_insert_row = function(doc,query,new_data,callback) {
     if ( ! doc.match(/^spreadsheet/ ) ) {
@@ -173,18 +173,17 @@ parseUri.options = {
     }
 };
 
-get_preferences = function(prefs_domain,callback) {
-    if (! MASCP.preferences) {
-        MASCP.preferences = {};
-    }
-    if ( ! prefs_domain ) {
-        prefs_domain = "MASCP GATOR PREFS";
-    }
-    if (MASCP.preferences[prefs_domain]) {
-        callback.call(null,null,MASCP.preferences[prefs_domain]);
+
+// We want to store the locally cached files
+// for all instances
+var cached_files = {};
+
+var get_file = function(filename,mime,callback) {
+    if (cached_files[filename]) {
+        callback.call(null,null,cached_files[filename]);
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and 'appdata' in parents and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+filename+"' and 'appdata' in parents and mimeType = '"+mime+"' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -193,13 +192,12 @@ get_preferences = function(prefs_domain,callback) {
         }
 
         if (data.items.length == 0) {
-            MASCP.preferences[prefs_domain] = {};
-            callback.call(null,null,MASCP.preferences[prefs_domain]);
+            cached_files[filename] = {};
+            callback.call(null,null,cached_files[filename]);
             return;
         }
 
         var item_id = data.items[0].id;
-
         do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
 
             if ( err ) {
@@ -213,29 +211,26 @@ get_preferences = function(prefs_domain,callback) {
                     callback.call(null,err);
                     return;
                 }
-                if (typeof data !== 'string') {
-                    MASCP.preferences[prefs_domain] = data;
-                } else {
-                    MASCP.preferences[prefs_domain] = JSON.parse(data);
+                if ( ! data ) {
+                    data = {};
                 }
-                callback.call(null,null,MASCP.preferences[prefs_domain]);
+                if (typeof data !== 'string') {
+                    cached_files[filename] = data;
+                } else {
+                    cached_files[filename] = JSON.parse(data);
+                }
+                callback.call(null,null,cached_files[filename],item_id);
             });
         });
     });
 };
 
-write_preferences = function(prefs_domain,callback) {
-    if (! MASCP.preferences) {
-        MASCP.preferences = {};
-    }
-    if ( ! prefs_domain ) {
-        prefs_domain = "Domaintool preferences";
-    }
-    if (! MASCP.preferences[prefs_domain]) {
-        callback.call(null,{"error" : "No preferences to save"});
+var write_file = function(filename,mime,callback) {
+    if (! cached_files[filename]) {
+        callback.call(null,{"error" : "No file to save"});
         return;
     }
-    var query = encodeURIComponent("title='"+prefs_domain+"' and 'appdata' in parents and mimeType = 'application/json; data-type=domaintool-session' and trashed = false");
+    var query = encodeURIComponent("title='"+filename+"' and 'appdata' in parents and mimeType = '"+mime+"' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
         if (err) {
@@ -246,9 +241,9 @@ write_preferences = function(prefs_domain,callback) {
         if (data.items && data.items.length == 0) {
             do_request("www.googleapis.com","/drive/v2/files/",null,arguments.callee, "POST:application/json",JSON.stringify({
                 'parents': [{'id': 'appdata'}],
-                "title" : prefs_domain,
-                "mimeType" : "application/json; data-type=domaintool-session",
-                "description" : "Domaintool session information for session "+prefs_domain
+                "title" : filename,
+                "mimeType" : mime,
+                "description" : filename
             }));
             return;
         }
@@ -268,16 +263,16 @@ write_preferences = function(prefs_domain,callback) {
             'method' : "PUT",
             'params' : { "uploadType" : "media"},
             'headers' : {
-                'Content-Type' : 'application/json; data-type=domaintool-session'
+                'Content-Type' : mime
             },
-            'body' : JSON.stringify(MASCP.preferences[prefs_domain])
+            'body' : JSON.stringify(cached_files[filename])
         });
         req.execute(function(isjson,data) {
             if ( ! isjson ) {
                 callback.call(null,{"status" : "Google error", "response" : response});
                 return;
             }
-            callback.call(null,null,MASCP.preferences[prefs_domain]);
+            callback.call(null,null,cached_files[filename]);
         });
 
         // do_request("www.googleapis.com","/upload/drive/v2/files/"+item_id+"?uploadType=media",null,function(err,data) {
@@ -286,17 +281,13 @@ write_preferences = function(prefs_domain,callback) {
         //         callback.call(null,err);
         //         return;
         //     }
-        //     callback.call(null,null,MASCP.preferences[prefs_domain]);
-        // }, "PUT:application/json; data-type=domaintool-session",JSON.stringify(MASCP.preferences[prefs_domain]));
+        //     callback.call(null,null,cached_files[filename]);
+        // }, "PUT:"+mime,JSON.stringify(cached_files[filename]));
     });
 };
 
 get_permissions = function(doc,callback) {
-    if ( ! doc.match(/^spreadsheet/ ) ) {
-        console.log("No support for retrieving things that aren't spreadsheets yet");
-        return;
-    }
-    var doc_id = doc.replace(/^spreadsheet:/,'');
+    var doc_id = doc.replace(/^file:/,'');
     get_permissions_id(function(error,permissionId) {
         if ( error ) {
             callback.call(null,error);
@@ -735,6 +726,9 @@ if (typeof module != 'undefined' && module.exports){
         if (window.event) {
             user_action = window.event ? window.event.which : null;
         }
+        if (MASCP.IE && ! window.event) {
+            user_action = false;
+        }
         setTimeout(function() {
         gapi.auth.authorize(auth_settings,function(result) {
             if (result && ! result.error) {
@@ -914,10 +908,63 @@ MASCP.GoogledataReader.prototype.getPermissions = get_permissions;
 
 MASCP.GoogledataReader.prototype.updateOrInsertRow = update_or_insert_row;
 
-MASCP.GoogledataReader.prototype.getPreferences = get_preferences;
+MASCP.GoogledataReader.prototype.getPreferences = function(prefs_domain,callback) {
+    if ( ! prefs_domain ) {
+        prefs_domain = "MASCP GATOR PREFS";
+    }
+    return get_file(prefs_domain,"application/json; data-type=domaintool-session",callback);
+};
 
-MASCP.GoogledataReader.prototype.writePreferences = write_preferences;
+MASCP.GoogledataReader.prototype.writePreferences = function(prefs_domain,callback) {
+    return write_file(prefs_domain,"application/json; data-type=domaintool-session",callback);
+};
 
+MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
+    var file_block = { "getData" : function() { return "Not ready"; }};
+    get_file(file,"application/json",function(err,filedata,file_id) {
+        if (err) {
+            callback.call(null,err);
+        }
+        file_block.getData = function() {
+            return filedata;
+        };
+        var timeout = null;
+        var original_sync;
+        file_block.sync = function() {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = null;
+            }
+            timeout = setTimeout(function() {
+                var wanting_new_sync = false;
+                file_block.sync = function() {
+                    wanting_new_sync = true;
+                };
+                write_file(file,"application/json",function(err) {
+                    timeout = null;
+                    file_block.sync = original_sync;
+                    if (wanting_new_sync) {
+                        file_block.sync();
+                    }
+                });
+            },500);
+        };
+        original_sync = file_block.sync;
+        // We disable permissions checking here, since the method is not supported for app settings
+        if (false && file_id) {
+            get_permissions(file_id,function(err,permissions) {
+                file.permissions = permissions;
+                bean.fire(file_block,'ready');
+                callback.call(null,null,file_block);
+            });
+        } else {
+            file_block.permissions = { "read" : true, "write" : true };
+            bean.fire(file_block,'ready');
+            callback.call(null,null,file_block);
+        }
+    });
+    return file_block;
+};
 
 MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_id,parser_function,callback) {
     var reader = (new MASCP.GoogledataReader()).createReader(doc_id,parser_function);

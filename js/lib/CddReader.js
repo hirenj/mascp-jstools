@@ -118,8 +118,9 @@ MASCP.CddRunner.prototype.requestData = function()
         if (typeof data == "string" && ! this.job_id ) {
             match = re.exec(data);
             if (match) {
+                var self = this;
                 this.job_id = match[1];
-                this.retrieve(this.agi);
+                self.retrieve(this.agi);
                 return;
             }
         }
@@ -133,7 +134,7 @@ MASCP.CddRunner.prototype.requestData = function()
             var self = this;
             setTimeout(function() {
                 self.retrieve(self.agi);
-            },1000);
+            },5000);
             return;
         }
         
