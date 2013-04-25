@@ -901,6 +901,7 @@ base.retrieve = function(agi,callback)
                 }
                 if (MASCP.ready) {
                     MASCP.ready();
+                    MASCP.ready = true;
                 } else {
                     MASCP.ready = true;
                 }
@@ -1199,6 +1200,7 @@ base.retrieve = function(agi,callback)
                 }
                 if (MASCP.ready) {
                     MASCP.ready();
+                    MASCP.ready = true;
                 } else {
                     MASCP.ready = true;
                 }
@@ -1242,6 +1244,7 @@ base.retrieve = function(agi,callback)
                         }
                         if (MASCP.ready) {
                             MASCP.ready();
+                            MASCP.ready = true;
                         } else {
                             MASCP.ready  = true;
                         }
@@ -1566,6 +1569,7 @@ base.retrieve = function(agi,callback)
         setTimeout(function() {
             if (MASCP.ready) {
                 MASCP.ready();
+                MASCP.ready = true;
             } else {
                 MASCP.ready = true;
             }
