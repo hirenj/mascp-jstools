@@ -575,6 +575,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         var ctm_refresh = [];
 
+        self.isEditing = function() {
+            return edit_enabled;
+        };
+
         self.refresh = function() {
             (close_buttons || []).forEach(function(button) {
                 button.setAttribute('visibility', edit_enabled ? 'visible' : 'hidden');
