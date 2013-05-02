@@ -4,6 +4,14 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     throw "MASCP.Service is not defined, required class";
 }
 
+/* We don't need to query the web service any more
+
+./ncbi-blast-2.2.28+/bin/rpsblast -db mycdd -evalue 0.01 -query foo.fasta -outfmt "6 sstart send stitle"
+
+http://blastedbio.blogspot.dk/2012/05/blast-tabular-missing-descriptions.html
+
+*/
+
 /** Default class constructor
  *  @class      Service class that will retrieve data from Cdd for given sequences
  *  @param      {String} endpointURL    Endpoint URL for this service
@@ -55,6 +63,9 @@ MASCP.CddRunner.SERVICE_URL = 'http://www.ncbi.nlm.nih.gov/Structure/bwrpsb/bwrp
 MASCP.CddRunner.prototype.requestData = function()
 {   
     var self = this;
+    bean.fire(self,"error",["CDD live retrieving is disabled"]);
+    return;
+
     // var sequences = [].concat(self.sequences || []);
 
     if (! MASCP.CddRunner.SERVICE_URL.match(/ncbi/)) {

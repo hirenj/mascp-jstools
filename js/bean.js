@@ -297,7 +297,7 @@
     gesturestart: 1, gesturechange: 1, gestureend: 1, // gesture
     focus: 1, blur: 1, change: 1, reset: 1, select: 1, submit: 1, //form elements
     load: 1, unload: 1, beforeunload: 1, resize: 1, move: 1, DOMContentLoaded: 1, readystatechange: 1, //window
-    error: 1, abort: 1, scroll: 1 }; //misc
+    error: 0, abort: 1, scroll: 1 }; //misc
 
   function check(event) {
     var related = event.relatedTarget;

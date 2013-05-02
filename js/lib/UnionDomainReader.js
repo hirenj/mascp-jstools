@@ -25,11 +25,19 @@ MASCP.UnionDomainReader.prototype.requestData = function() {
     var self = this;
     var uprot = new MASCP.UniprotDomainReader();
     var cdd = new MASCP.CddRunner();
+    MASCP.Service.CacheService(cdd);
     var uprot_result;
     var cdd_result;
     cdd.bind('running',function() {
         bean.fire(self,'running');
     });
+    var merge_hash = function(h1,h2) {
+        var key;
+        for (key in h2) {
+            h1[key] = h2[key];
+        }
+        return h1;
+    }
     var check_result = function(err) {
         if (err) {
             bean.fire(self,"error",[err]);
@@ -39,8 +47,7 @@ MASCP.UnionDomainReader.prototype.requestData = function() {
             return;
         }
         if (uprot_result && cdd_result) {
-            self._dataReceived(uprot_result);
-            self._dataReceived(cdd_result);
+            self._dataReceived(merge_hash(uprot_result,cdd_result));
             self.gotResult();
             self.requestComplete();
         }
@@ -57,5 +64,5 @@ MASCP.UnionDomainReader.prototype.requestData = function() {
         }
         check_result(err);
     });
-    return;
+    return false;
 };

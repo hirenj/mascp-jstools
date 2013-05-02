@@ -583,7 +583,7 @@ base.retrieve = function(agi,callback)
         this.result = null;
         
         var done_result = false;
-        var done_func = function(obj,err) {
+        var done_func = function(err,obj) {
             bean.remove(self,"resultReceived",done_func);
             bean.remove(self,"error",done_func);
             bean.remove(self,"requestComplete",done_func);
@@ -601,7 +601,15 @@ base.retrieve = function(agi,callback)
         bean.add(self,"requestComplete",done_func);
     }
     var request_data = this.requestData();
+
+    if (request_data === false) {
+        return;
+    }
+
     if (! request_data ) {
+        bean.fire(self,"error",["No request data"]);
+        bean.fire(MASCP.Service,"requestComplete",[self]);
+        this.requestComplete();
         return this;
     }
         
