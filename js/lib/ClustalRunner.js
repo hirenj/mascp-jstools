@@ -307,7 +307,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         reader.gotResult = function() {
             var index = 0;
             for (var i = 0; i < self.sequences.length; i++) {
-                if (self.sequences[i].agi && self.sequences[i].agi == reader.agi) {
+                if (self.sequences[i].agi && self.sequences[i].agi.toUpperCase() == reader.agi) {
                     index = i;
                 }
             }
@@ -326,28 +326,28 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                     result._index = el._index;
 
                     result.addShapeOverlay = function(layername,width,opts) {
-                        elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,opts));
                         elements_to_move.slice(-1)[0].layer_idx = index;
                         elements_to_move.slice(-1)[0].aa = result.original_index;
                         elements_to_move.slice(-1)[0].aa_width = width;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addBoxOverlay = function(layername,width,fraction) {
-                        elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),fraction));
+                        elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,fraction));
                         elements_to_move.slice(-1)[0].layer_idx = index;
                         elements_to_move.slice(-1)[0].aa_width = width;
                         elements_to_move.slice(-1)[0].aa = result.original_index;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addTextOverlay = function(layername,width,opts) {
-                        elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index),opts));
+                        elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,opts));
                         elements_to_move.slice(-1)[0].layer_idx = index;
                         elements_to_move.slice(-1)[0].aa = result.original_index;
                         elements_to_move.slice(-1)[0].aa_width = width;
                         return elements_to_move.slice(-1)[0];
                     };
                     result.addToLayerWithLink = function(layername,url,width) {
-                        elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width) - el._index)));
+                        elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,Math.abs(self.result.calculatePositionForSequence(index,result.original_index+width)) - el._index));
                         elements_to_move.slice(-1)[0].layer_idx = index;
                         return elements_to_move.slice(-1)[0];
                     };
@@ -449,15 +449,15 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             rendered_bits.slice(-1)[0].layer = controller_name;
         }
         for (var i = 0 ; i < aligned.length; i++) {
-            var layname = self.sequences[i].agi.toLowerCase() || "missing"+i;
+            var layname = self.sequences[i].agi.toUpperCase() || "missing"+i;
             var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
             lay.fullname = self.sequences[i].name || layname.toUpperCase();
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
             text_array[0].setAttribute('dy','-1ex');
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
-            if (renderer.trackOrder.indexOf(layname.toLowerCase()) < 0) {
-              renderer.trackOrder.push(layname.toLowerCase());
+            if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
+              renderer.trackOrder.push(layname.toUpperCase());
             }
             var name = "Isoform "+(i+1);
             if (aligned[i].insertions) {
@@ -516,7 +516,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         redraw_alignments(0);
         var accs = [];
         self.sequences.forEach(function(seq) {
-            accs.push(seq.agi);
+            accs.push(seq.agi.toUpperCase());
         });
 
         renderer.bind('orderChanged',function(e,order) {
