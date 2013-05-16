@@ -477,15 +477,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
 
-        var scroll_controls = document.createElementNS(svgns,'foreignObject');
-        scroll_controls.setAttribute('x','0');
-        scroll_controls.setAttribute('y','0');
-        scroll_controls.setAttribute('width','100');
-        scroll_controls.setAttribute('height','45');
-        scroll_controls.setAttribute('clip-path',"url(#nav_clipping)");
-    
-        panel_back.push(scroll_controls);
-            
         tracks_button.addEventListener('click',function() {
             jQuery(self).trigger('toggleEdit');
             jQuery(self).trigger('click');
@@ -533,7 +524,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 }
                 close_group.setAttribute('style',needs_transition+transform_origin_statement);
 
-                scroll_controls.setAttribute('display','inline');
                 self.refresh();
             } else {
                 self.demote();
@@ -548,7 +538,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     close_group.setAttribute('transform',close_transform);
                     panel_back.setAttribute('visibility','hidden');
                 }
-                scroll_controls.setAttribute('display','none');
             }
             return true;
         };

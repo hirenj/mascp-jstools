@@ -855,17 +855,19 @@ base.retrieve = function(agi,callback)
 
     var db,idb;
 
+    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+    if ( ! window.indexedDB ) {
+        delete window.indexedDB;
+    }
+
+
     if (typeof module != 'undefined' && module.exports) {
         var sqlite = require('sqlite3');
         db = new sqlite.Database("cached.db");
         db.exec("VACUUM;");
         //db.open("cached.db",function() {});
-    } else if ("openDatabase" in window) {
+    } else if ("openDatabase" in window || "indexedDB" in window) {
 
-        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
-        if ( ! window.indexedDB ) {
-            delete window.indexedDB;
-        }
         if ("indexedDB" in window) {
             // Handle the prefix of Chrome to IDBTransaction/IDBKeyRange.
             if ('webkitIndexedDB' in window) {
@@ -1498,7 +1500,7 @@ base.retrieve = function(agi,callback)
                     key = localStorage.key(i);
                     if (re.test(key)) {
                         key = key.replace(service,'');
-                        cback.call(clazz,uniques);
+                        cback.call(clazz,key);
                         return;
                     }
                 }
