@@ -209,12 +209,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             var nav = renderer.navigation;
             var old_show = nav.show, old_hide = nav.hide;
             nav.show = function() {
-                old_show.call(nav);
+                old_show.apply(nav,arguments);
                 canv.style.GomapScrollLeftMargin = 100 * renderer._RS / renderer.zoom;
             };
         
             nav.hide = function() {
-                old_hide.call(nav);
+                old_hide.apply(nav,arguments);
                 canv.style.GomapScrollLeftMargin = 1000;
             };
         
