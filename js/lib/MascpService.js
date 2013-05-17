@@ -855,11 +855,12 @@ base.retrieve = function(agi,callback)
 
     var db,idb;
 
-    window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
-    if ( ! window.indexedDB ) {
-        delete window.indexedDB;
+    if (typeof window != 'undefined') {
+        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
+        if ( ! window.indexedDB ) {
+            delete window.indexedDB;
+        }
     }
-
 
     if (typeof module != 'undefined' && module.exports) {
         var sqlite = require('sqlite3');
