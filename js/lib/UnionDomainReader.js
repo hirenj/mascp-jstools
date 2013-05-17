@@ -33,8 +33,8 @@ MASCP.UnionDomainReader.prototype.requestData = function() {
     });
     var merge_hash = function(h1,h2) {
         var key;
-        for (key in h2) {
-            h1[key] = h2[key];
+        for (key in h2.data) {
+            h1.data[key] = h2.data[key];
         }
         return h1;
     }
