@@ -516,7 +516,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
 
                 close_group._button.removeAttribute('filter');
-                if (window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
+                if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
                     close_transform = close_group.getAttribute('transform') || ' ';
                     close_transform = close_transform.replace(/translate\(.*\)/,'');
                     close_transform = close_transform.replace(/rotate\(.*\)/,'');
@@ -527,16 +527,17 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 self.refresh();
             } else {
                 self.demote();
-                panel_back.setAttribute('style',needs_transition+translate(-1*nav_width));
-                tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*nav_width));
 
                 close_group._button.setAttribute('filter','url(#drop_shadow)');            
                 close_group.setAttribute('style',needs_transition+transform_origin_statement+translate(-0.75*nav_width,"405deg"));
-                if (window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
+                if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
                     close_transform = close_group.getAttribute('transform') || ' ';
                     close_transform = close_transform + ' translate('+-0.75*nav_width+',0) rotate(45,'+(nav_width-(10 + touch_scale*11))+','+(12*touch_scale)+') ';
                     close_group.setAttribute('transform',close_transform);
                     panel_back.setAttribute('visibility','hidden');
+                } else {
+                    panel_back.setAttribute('style',needs_transition+translate(-1*nav_width));
+                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*nav_width));
                 }
             }
             return true;
