@@ -985,11 +985,9 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
                 prefs.user_datasets = {};
             }
 
-            prefs.user_datasets[reader.datasetname] = {
-                "sites" : "man",
-                "peptides" : "true",
-                "parser_function" : parser_function.toString()
-            };
+            prefs.user_datasets[reader.datasetname] = prefs.user_datasets[reader.datasetname] || {};
+            prefs.user_datasets[reader.datasetname].parser_function = parser_function.toString();
+
             (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
                 if (err) {
                     callback.call(null,{ "status" : "preferences", "original_error" : err });
