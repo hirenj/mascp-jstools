@@ -717,7 +717,7 @@ if (typeof module != 'undefined' && module.exports){
             return;
         }
         var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : scope, immediate : true };
-        gapi.auth.authorize({immediate: true},function(){});
+        //gapi.auth.authorize({immediate: true},function(){});
         initing_auth = true;
         var user_action = true;
         if (noevent) {
