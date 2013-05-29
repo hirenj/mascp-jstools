@@ -733,7 +733,11 @@ var SVGCanvas = SVGCanvas || (function() {
             marker.setHeight = setHeight;
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
-                marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
+                if (symbol.match(/^(:?https?:)?\//)) {
+                    marker.contentElement = this.use(symbol,-r,0,r,r);
+                } else {
+                    marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
+                }
                 marker.push(marker.contentElement);
             } else {
                 marker.contentElement = this.group();
