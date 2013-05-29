@@ -378,7 +378,14 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 var new_aas = aas.map(function(aa) { return Math.abs(self.result.calculatePositionForSequence(index,aa)); });
                 return old_get_aas.call(this,new_aas).map(extender(aas));
             };
-            renderer.getAminoAcidsByPeptide = function() {};
+            renderer.getAminoAcidsByPeptide = function(peptide) {
+                var positions = [];
+                var start = self.sequences[index].toString().indexOf(peptide);
+                for (var i = 0; i < peptide.length; i++ ) {
+                    positions.push(start+i);
+                }
+                return this.getAminoAcidsByPosition(positions);
+            };
             old.call(reader);
             renderer.getAminoAcidsByPosition = old_get_aas;
             renderer.getAminoAcidsByPeptide = old_get_pep;

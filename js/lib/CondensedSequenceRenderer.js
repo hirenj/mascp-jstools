@@ -793,7 +793,7 @@ var addElementToLayer = function(layerName,opts) {
                 var scale = parseFloat(matches[2]);
                 var y = parseFloat(matches[1]);
                 var new_height = y + scale*(((tracer_marker.offset || 0) * 50) + 125) - parseInt(this.getAttribute('y'));
-                this.setAttribute('height',new_height);
+                this.setAttribute('height',new_height < 0 ? 0 : new_height );
             } else {
                 this.setAttribute('height',height);
             }
