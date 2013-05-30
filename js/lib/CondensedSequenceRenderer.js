@@ -255,35 +255,45 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     var drawAminoAcids = function() {
         var renderer = this;
         var aas = renderer.addTextTrack(this.sequence,this._canvas.set());
-        aas.attr({'y' : 12*renderer._RS});
+        aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
         renderer.select = function() {
             var vals = Array.prototype.slice.call(arguments);
             var from = vals[0];
             var to = vals[1];
             this.moveHighlight.apply(this,vals);
         };
+        var zoomchange = function() {
+            console.log("zoomchange");
+            aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
+        };
+        var canvas = renderer._canvas;
+        canvas.addEventListener('zoomChange', zoomchange, false);
+        bean.add(aas,'removed',function() {
+            canvas.removeEventListener('zoomChange',zoomchange);
+        });
         return aas;
     };
 
     var drawAxis = function(canvas,lineLength) {
         var RS = this._RS;
+        var self = this;
         var x = 0, i = 0;
     
     
         var axis = canvas.set();
-        axis.push(canvas.path('M0 '+15*RS+' l0 '+10*RS));
+        axis.push(canvas.path('M0 0 l0 '+1*RS));
+        axis.push(canvas.path('M'+(lineLength*RS)+' 0 l0 '+1*RS));
 
-        axis.push(canvas.path('M'+(lineLength*RS)+' '+14*RS+' l0 '+10*RS));
-
-        this._axis_height = 20;
+        var base_axis_height = 30;
 
         axis.attr({'pointer-events' : 'none'});
 
         var big_ticks = canvas.set();
         var little_ticks = canvas.set();
-        var big_labels = canvas.set();
-        var huge_labels = canvas.set();
-        var little_labels = canvas.set();
+        var all_labels = canvas.set();
+        var major_mark_labels = canvas.set();
+        var minor_mark_labels = canvas.set();
+        var thousand_mark_labels = canvas.set();
         var minor_mark = 10;
         var major_mark = 20;
         
@@ -298,129 +308,131 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         for ( i = 0; i < (lineLength/5); i++ ) {
 
             if ( (x % minor_mark) === 0) {
-                big_ticks.push(canvas.path('M'+x*RS+' '+14*RS+' l 0 '+7*RS));
+                big_ticks.push(canvas.path('M'+x*RS+' 0 l 0 '+1*RS));
             } else {
-                little_ticks.push(canvas.path('M'+x*RS+' '+16*RS+' l 0 '+4*RS));
+                little_ticks.push(canvas.path('M'+x*RS+' 0 l 0 '+1*RS));
             }
+            var a_text = canvas.text(x,0,""+(x));
+            all_labels.push(a_text);
 
             if ( (x % major_mark) === 0 && x !== 0) {
-                big_labels.push(canvas.text(x,5,""+(x)));
+                major_mark_labels.push(a_text);
             } else if (( x % minor_mark ) === 0 && x !== 0) {
-                little_labels.push(canvas.text(x,7,""+(x)));
+                minor_mark_labels.push(a_text);
             }
             if ( (x % (100*parseInt(this.sequence.length / 1000))) === 0 && x !== 0) {
-                huge_labels.push(canvas.text(x,30,""+(x)));
+                thousand_mark_labels.push(a_text);
             }
             x += 5;
         }
     
-        for ( i = 0; i < big_labels.length; i++ ) {
-            big_labels[i].style.textAnchor = 'middle';
-            big_labels[i].setAttribute('text-anchor','middle');
-            big_labels[i].firstChild.setAttribute('dy','1.5ex');
-            big_labels[i].setAttribute('font-size',7*RS+'pt');
-        }
-
-        for ( i = 0; i < little_labels.length; i++ ) {
-            little_labels[i].style.textAnchor = 'middle';
-            little_labels[i].setAttribute('text-anchor','middle');
-            little_labels[i].firstChild.setAttribute('dy','1.5ex');
-            little_labels[i].setAttribute('font-size',2*RS+'pt');        
-            little_labels[i].style.fill = '#000000';
+        for ( i = 0; i < all_labels.length; i++ ) {
+            all_labels[i].style.textAnchor = 'middle';
+            all_labels[i].firstChild.setAttribute('dy','1.5ex');
         }
     
         big_ticks.attr({'pointer-events' : 'none'});
         little_ticks.attr({'pointer-events' : 'none'});
-        big_labels.attr({'pointer-events' : 'none'});
-        little_labels.attr({'pointer-events' : 'none'});
+        all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
+        all_labels.hide();
     
         little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
         little_ticks.hide();
-        little_labels.hide();
 
-        huge_labels.hide();
         var zoom_status = null;
         var zoomchange = function() {
+               renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
+               axis.attr({ 'transform' : 'translate(0,'+0.7*renderer._axis_height*RS+') scale(1,'+0.3*renderer._axis_height+')'});
+
                if (this.zoom > 3.6) {
-                   if (zoom_status == 1) {
-                        return;
-                   }
-                   zoom_status = 1;
 
                    little_ticks.hide();
                    big_ticks.show();
-                   big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'scale(1,0.1) translate(0,4500)' });
-                   little_labels.attr({'font-size':2*RS+'pt'});
-                   big_labels.attr({'font-size': 2*RS+'pt'});
+                   big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'translate(0,'+(0.3*renderer._axis_height*RS)+') scale(1,'+(0.3*renderer._axis_height)+')' });
                    axis.hide();
-                   huge_labels.hide();
+                   minor_mark_labels.show();
+                   major_mark_labels.show();
+                   var text_scale = 0.15*self._axis_height;
+                   if (text_scale < 1) {
+                    text_scale = 1;
+                   }
+                   minor_mark_labels.attr({ 'font-size' : (text_scale*RS)+'pt', 'text-anchor' : 'end' });
+                   major_mark_labels.attr({ 'font-size' : (1.3*RS*text_scale)+'pt', 'text-anchor' : 'end' });
                    if (this._visibleTracers && this._visibleTracers()) {
                        this._visibleTracers().show();
                    }
                } else if (this.zoom > 1.8) {
-                   if (zoom_status == 2) {
-                        return;
-                   }
-                   zoom_status = 2;
+
+                   minor_mark_labels.hide();
+                   major_mark_labels.show();
+                   major_mark_labels.attr({ 'font-size' : (0.5*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
 
                    axis.show();
                    big_ticks.show();
-                   axis.attr({'stroke-width':0.5*RS+'pt'});
-                   big_ticks.attr({'stroke-width':0.5*RS+'pt', 'stroke' : '#000000', 'transform' : ''});
-                   big_labels.show();
-                   big_labels.attr({'font-size':4*RS+'pt','y':7*RS});
-                   little_labels.attr({'font-size':4*RS+'pt'});
-                   little_ticks.attr({'stroke-width':0.3*RS+'pt'});
+                   big_ticks.attr({'stroke-width' : 0.5*RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.7*renderer._axis_height*RS)+') scale(1,'+(0.2*renderer._axis_height)+')' });
                    little_ticks.show();
-                   little_labels.show();
-                   huge_labels.hide();
+                   little_ticks.attr({'stroke-width' : 0.3*RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.7*renderer._axis_height*RS)+') scale(1,'+(0.15*renderer._axis_height)+')' });
+
+                   axis.attr({'stroke-width':0.5*RS+'pt'});
                    if (this.tracers) {
                        this.tracers.hide();
                    }
                } else if (this.zoom > 0.2) {
-                   if (zoom_status == 3) {
-                        return;
-                   }
-                   zoom_status = 3;
 
                    if (this.tracers) {
                        this.tracers.hide();
+                   }
+                   minor_mark_labels.hide();
+                   major_mark_labels.show();
+                   major_mark_labels.attr({ 'font-size' : (0.5*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
+
+                   var last_right = -10000;
+                   var changed = false;
+                   major_mark_labels.forEach(function(label) {
+                    if (label.getBBox().x <= (last_right+(RS*10))) {
+                        label.setAttribute('visibility','hidden');
+                        changed = true;
+                    } else {
+                        label.setAttribute('visibility','visible');
+                        last_right = label.getBBox().x + label.getBBox().width;
+                    }
+                   });
+                   if (changed) {
+                    major_mark_labels[0].setAttribute('visibility','hidden');
                    }
                    axis.show();
                    axis.attr({'stroke-width':RS+'pt'});
                    big_ticks.show();
-                   big_ticks.attr({'stroke-width':RS+'pt', 'transform' : '', 'stroke' : '#000000'});
-                   big_labels.show();
-                   big_labels.attr({'font-size':7*RS+'pt','y':5*RS});
+                   big_ticks.attr({'stroke-width' : RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.6*renderer._axis_height*RS)+') scale(1,'+(0.3*renderer._axis_height)+')' });
                    little_ticks.hide();
-                   little_labels.hide();
-                   huge_labels.hide();
                } else {
-                   if (zoom_status == 4) {
-                        return;
-                   }
-                   zoom_status = 4;
                    if (this.tracers) {
                        this.tracers.hide();
                    }
+                   minor_mark_labels.hide();
+                   major_mark_labels.hide();
+                   thousand_mark_labels.show();
+                   thousand_mark_labels.attr({ 'font-size' : (0.75*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
+
                    axis.hide();
                    big_ticks.hide();
-                   big_labels.hide();
 
-                   huge_labels.show();
-                   huge_labels.attr({'font-size':parseInt(30*2*RS*0.2/canvas.zoom)+'pt','y':parseInt(40*2*RS*0.2/canvas.zoom)});
                    var last_right = -10000;
-                   huge_labels.forEach(function(label) {
+                   var changed = false;
+                   thousand_mark_labels.forEach(function(label) {
                     if (label.getBBox().x <= (last_right+(RS*100))) {
-                        label.setAttribute('display','none');
+                        label.setAttribute('visibility','hidden');
                     } else {
-                        label.removeAttribute('display');
+                        label.setAttribute('visibility','visible');
                         last_right = label.getBBox().x + label.getBBox().width;
                     }
                    });
+                   if (changed) {
+                    thousan_mark_labels[0].setAttribute('visibility','hidden');
+                   }
+
 
                    little_ticks.hide();
-                   little_labels.hide();
                }
         };
         canvas.addEventListener('zoomChange', zoomchange, false);
@@ -434,9 +446,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             axis.forEach(remover);
             big_ticks.forEach(remover)
             little_ticks.forEach(remover);
-            big_labels.forEach(remover);
-            huge_labels.forEach(remover);
-            little_labels.forEach(remover);
+            all_labels.forEach(remover);
 
         });
         return axis;
@@ -602,6 +612,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                         aa.parentNode.removeChild(aa);
                     }
                 });
+                bean.fire(aas,'removed');
                 axis = drawAxis.call(self,canv,renderer.sequence.length);
                 aas = drawAminoAcids.call(self,canv);
 
@@ -1322,16 +1333,13 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
                     };
     var zoomchange = function() {
                        if (canvas.zoom > 3.6) {
-                           renderer._axis_height = 14;
                            amino_acids.attr({'display' : 'block'});
                            amino_acids_shown = true;
                            update_sequence();
                        } else if (canvas.zoom > 0.2) {
-                           renderer._axis_height = 30;
                            amino_acids.attr({'display' : 'none'});
                            amino_acids_shown = false;
                        } else {
-                           renderer._axis_height = parseInt(60 * 2 * (0.2 / canvas.zoom));
                            amino_acids.attr({'display' : 'none'});
                            amino_acids_shown = false;
                        }
@@ -1930,9 +1938,9 @@ clazz.prototype.refresh = function(animated) {
             var height = (1.5 + tracer_top / this.zoom )*RS;
 
             if(animated) {
-                container.tracers.animate({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
+                container.tracers.animate({'visibility' : disp_style , 'y' : 0.65*(this._axis_height)*RS,'height' : height });
             } else {
-                container.tracers.attr({'visibility' : disp_style , 'y' : (this._axis_height - 1.5)*RS,'height' : height });
+                container.tracers.attr({'visibility' : disp_style , 'y' : 0.65*(this._axis_height)*RS,'height' : height });
             }
         }
 
@@ -2062,7 +2070,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             if (center_residue) {
                 var delta = ((start_zoom - zoom_level)/(scale_value*25))*center_residue;
                 delta += start_x/(scale_value);
-                self._canvas.setCurrentTranslateXY(delta,0);
+                self._canvas.setCurrentTranslateXY(delta,((start_zoom - zoom_level)/(scale_value))*self._axis_height*2);
             }
         
             var end_function = function() {
