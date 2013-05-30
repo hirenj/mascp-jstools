@@ -1581,6 +1581,7 @@ MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var createNewHighlight = function() {
         var highlight = renderer._canvas.rect(0,0,0,'100%');
         highlight.setAttribute('fill','#ffdddd');
+        highlight.removeAttribute('stroke');
         var pnode = highlight.parentNode;
         pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
         highlights.push(highlight);
@@ -1600,8 +1601,8 @@ MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
                 highlight = highlights[idx];
             }
         
-            highlight.setAttribute('x',(from - 0.25) * RS );
-            highlight.setAttribute('width',(to - from) * RS );
+            highlight.setAttribute('x',(from - 1) * RS );
+            highlight.setAttribute('width',(to - (from - 1)) * RS );
             highlight.setAttribute('visibility','visible');
             idx += 1;
         }
