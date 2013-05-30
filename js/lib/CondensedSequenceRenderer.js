@@ -263,7 +263,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             this.moveHighlight.apply(this,vals);
         };
         var zoomchange = function() {
-            console.log("zoomchange");
             aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
         };
         var canvas = renderer._canvas;
