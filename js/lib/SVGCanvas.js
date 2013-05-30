@@ -208,7 +208,10 @@ var SVGCanvas = SVGCanvas || (function() {
                             curr_y = curr_y[2];
                             curr_transform = curr_transform.replace(/translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/,'translate('+value+','+curr_y+')');
                             an_array[i].setAttribute('transform',curr_transform);                        
-                        }                    
+                        }
+                        if (key == 'text-anchor' && an_array[i].hasAttribute('style')) {
+                            an_array[i].style.textAnchor = hash[key];
+                        };
                     }
                 }
             }
