@@ -280,15 +280,15 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
     
         var axis = canvas.set();
-        axis.push(canvas.path('M0 0 l0 '+1*RS));
-        axis.push(canvas.path('M'+(lineLength*RS)+' 0 l0 '+1*RS));
+
+        var axis_back = canvas.rect(0,0,lineLength,1.5);
+        axis_back.setAttribute('fill',"url('#axis_pattern')");
+        axis_back.removeAttribute('stroke');
+        axis_back.removeAttribute('stroke-width');
+        axis_back.setAttribute('id','axis_back');
 
         var base_axis_height = 30;
 
-        axis.attr({'pointer-events' : 'none'});
-
-        var big_ticks = canvas.set();
-        var little_ticks = canvas.set();
         var all_labels = canvas.set();
         var major_mark_labels = canvas.set();
         var minor_mark_labels = canvas.set();
@@ -306,11 +306,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         for ( i = 0; i < (lineLength/5); i++ ) {
 
-            if ( (x % minor_mark) === 0) {
-                big_ticks.push(canvas.path('M'+x*RS+' 0 l 0 '+1*RS));
-            } else {
-                little_ticks.push(canvas.path('M'+x*RS+' 0 l 0 '+1*RS));
-            }
             var a_text = canvas.text(x,0,""+(x));
             all_labels.push(a_text);
 
@@ -319,7 +314,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             } else if (( x % minor_mark ) === 0 && x !== 0) {
                 minor_mark_labels.push(a_text);
             }
-            if ( (x % (100*parseInt(this.sequence.length / 1000))) === 0 && x !== 0) {
+            if ( (x % (250*parseInt(this.sequence.length / 500))) === 0 && x !== 0) {
                 thousand_mark_labels.push(a_text);
             }
             x += 5;
@@ -330,25 +325,20 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             all_labels[i].firstChild.setAttribute('dy','1.5ex');
         }
     
-        big_ticks.attr({'pointer-events' : 'none'});
-        little_ticks.attr({'pointer-events' : 'none'});
         all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
         all_labels.hide();
     
-        little_ticks.attr({ 'stroke':'#555555', 'stroke-width':0.5*RS+'pt'});
-        little_ticks.hide();
-
         var zoom_status = null;
         var zoomchange = function() {
                renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
-               axis.attr({ 'transform' : 'translate(0,'+0.7*renderer._axis_height*RS+') scale(1,'+0.3*renderer._axis_height+')'});
-
+               var pattern = renderer._canvas.ownerDocument.getElementById('axis_pattern');
                if (this.zoom > 3.6) {
 
-                   little_ticks.hide();
-                   big_ticks.show();
-                   big_ticks.attr({'stroke-width' : 0.05*RS+'pt', 'stroke' : '#999999', 'transform' : 'translate(0,'+(0.3*renderer._axis_height*RS)+') scale(1,'+(0.3*renderer._axis_height)+')' });
-                   axis.hide();
+                   axis_back.setAttribute('transform','translate(-5,'+(0.3*renderer._axis_height*RS)+')');
+                   axis_back.setAttribute('height',0.25*renderer._axis_height*RS);
+                   pattern.setAttribute('width',10*RS);
+                   pattern.firstChild.setAttribute('width',RS / renderer.zoom);
+
                    minor_mark_labels.show();
                    major_mark_labels.show();
                    var text_scale = 0.15*self._axis_height;
@@ -356,7 +346,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     text_scale = 1;
                    }
                    minor_mark_labels.attr({ 'font-size' : (text_scale*RS)+'pt', 'text-anchor' : 'end' });
-                   major_mark_labels.attr({ 'font-size' : (1.3*RS*text_scale)+'pt', 'text-anchor' : 'end' });
+                   major_mark_labels.attr({ 'font-size' : (text_scale*RS)+'pt', 'text-anchor' : 'end' });
                    if (this._visibleTracers && this._visibleTracers()) {
                        this._visibleTracers().show();
                    }
@@ -365,14 +355,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    minor_mark_labels.hide();
                    major_mark_labels.show();
                    major_mark_labels.attr({ 'font-size' : (0.5*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
-
-                   axis.show();
-                   big_ticks.show();
-                   big_ticks.attr({'stroke-width' : 0.5*RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.7*renderer._axis_height*RS)+') scale(1,'+(0.2*renderer._axis_height)+')' });
-                   little_ticks.show();
-                   little_ticks.attr({'stroke-width' : 0.3*RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.7*renderer._axis_height*RS)+') scale(1,'+(0.15*renderer._axis_height)+')' });
-
-                   axis.attr({'stroke-width':0.5*RS+'pt'});
+                   axis_back.setAttribute('transform','translate(-25,'+(0.5*renderer._axis_height*RS)+')');
+                   axis_back.setAttribute('height',0.3*renderer._axis_height*RS);
+                   pattern.setAttribute('width',20*RS);
+                   pattern.firstChild.setAttribute('width',RS / renderer.zoom );
                    if (this.tracers) {
                        this.tracers.hide();
                    }
@@ -384,11 +370,18 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    minor_mark_labels.hide();
                    major_mark_labels.show();
                    major_mark_labels.attr({ 'font-size' : (0.5*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
+                   axis_back.setAttribute('transform','translate(-25,'+(0.5*renderer._axis_height*RS)+')');
+                   axis_back.setAttribute('height',0.3*renderer._axis_height*RS);
+                   pattern.setAttribute('width',50*RS);
+                   pattern.firstChild.setAttribute('width',RS / renderer.zoom);
+
+
 
                    var last_right = -10000;
                    var changed = false;
                    major_mark_labels.forEach(function(label) {
-                    if (label.getBBox().x <= (last_right+(RS*10))) {
+
+                    if (label.getBBox().x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 50) != 0) {
                         label.setAttribute('visibility','hidden');
                         changed = true;
                     } else {
@@ -399,11 +392,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    if (changed) {
                     major_mark_labels[0].setAttribute('visibility','hidden');
                    }
-                   axis.show();
-                   axis.attr({'stroke-width':RS+'pt'});
-                   big_ticks.show();
-                   big_ticks.attr({'stroke-width' : RS+'pt', 'stroke' : '#000000', 'transform' : 'translate(0,'+(0.6*renderer._axis_height*RS)+') scale(1,'+(0.3*renderer._axis_height)+')' });
-                   little_ticks.hide();
                } else {
                    if (this.tracers) {
                        this.tracers.hide();
@@ -411,15 +399,18 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    minor_mark_labels.hide();
                    major_mark_labels.hide();
                    thousand_mark_labels.show();
-                   thousand_mark_labels.attr({ 'font-size' : (0.75*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
+                   thousand_mark_labels.attr({ 'font-size' : (0.5*RS*self._axis_height)+'pt', 'text-anchor' : 'middle' });
 
-                   axis.hide();
-                   big_ticks.hide();
+                   axis_back.setAttribute('transform','translate(-50,'+(0.85*renderer._axis_height*RS)+')');
+                   axis_back.setAttribute('height',0.1*renderer._axis_height*RS);
+                   pattern.setAttribute('width',250*RS);
+                   pattern.firstChild.setAttribute('width',RS / renderer.zoom);
+
 
                    var last_right = -10000;
                    var changed = false;
                    thousand_mark_labels.forEach(function(label) {
-                    if (label.getBBox().x <= (last_right+(RS*100))) {
+                    if (label.getBBox().x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 250) != 0) {
                         label.setAttribute('visibility','hidden');
                     } else {
                         label.setAttribute('visibility','visible');
@@ -427,11 +418,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     }
                    });
                    if (changed) {
-                    thousan_mark_labels[0].setAttribute('visibility','hidden');
+                    thousand_mark_labels[0].setAttribute('visibility','hidden');
                    }
-
-
-                   little_ticks.hide();
                }
         };
         canvas.addEventListener('zoomChange', zoomchange, false);
@@ -442,9 +430,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     el.parentNode.removeChild(el);
                 }
             };
-            axis.forEach(remover);
-            big_ticks.forEach(remover)
-            little_ticks.forEach(remover);
+            axis_back.parentNode.removeChild(axis_back);
             all_labels.forEach(remover);
 
         });
@@ -601,6 +587,26 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             minus_icon.appendChild(canv.minus(0,0,100/canv.RS));
 
             defs.appendChild(minus_icon);
+
+            var pattern = canv.makeEl('pattern', {
+                'patternUnits' : 'userSpaceOnUse',
+                'x'            : '0',
+                'y'            : '0',
+                'width'        : 10*canv.RS,
+                'height'       : 2*canv.RS,
+                'id'           : 'axis_pattern'
+            });
+            var line = canv.makeEl('rect',{
+                'x'     : '0',
+                'y'     : '0',
+                'width' : '10%',
+                'height': '100%',
+                'fill'  : '#000'
+            });
+            pattern.appendChild(line);
+
+            defs.appendChild(pattern);
+
             var self = this;
             var axis = drawAxis.call(self,canv,line_length);
             var aas = drawAminoAcids.call(self,canv);
@@ -1746,8 +1752,12 @@ clazz.prototype.enablePrintResizing = function() {
         var self = this;
         if ( self.grow_container ) {
             if (matcher.matches) {
+                var left_pos = 10*parseInt(self.leftVisibleResidue() / 10)+10;
+                self._canvas.ownerDocument.getElementById('axis_pattern').setAttribute('x',(left_pos*self._RS));
                 delete self._container_canvas.parentNode.cached_width;
                 bean.fire(self._canvas,'panend');
+            } else {
+                self._canvas.ownerDocument.getElementById('axis_pattern').setAttribute('x','0');
             }
             return;
         }
