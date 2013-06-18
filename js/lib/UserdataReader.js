@@ -215,7 +215,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     }
     MASCP.Service.BulkOperation(function(err) {
         if (err) {
-            bean.fire(self,'error');
+            bean.fire(self,'error',[err]);
             return;
         }
         var trans = this.transaction;
