@@ -1264,43 +1264,51 @@ base.retrieve = function(agi,callback)
                 version = 1.3;                
             }
         });
+        if (typeof module != 'undefined' && module.exports) {
+            var old_get_db_data = null;
 
-        var old_get_db_data = null;
-        
-        begin_transaction = function(callback,trans) {
-            if (old_get_db_data !== null) {
-                callback.call({ "transaction" : trans });
-                return false;
-            }
-            db.exec("BEGIN TRANSACTION;",function(err) {
-                if ( err ) {
-                    callback.call(null,err);
+            begin_transaction = function(callback,trans) {
+                if (old_get_db_data !== null) {
+                    callback.call({ "transaction" : trans });
+                    return false;
+                }
+                db.exec("BEGIN TRANSACTION;",function(err) {
+                    if ( err ) {
+                        callback.call(null,err);
+                        return;
+                    }
+                    old_get_db_data = get_db_data;
+
+                    get_db_data = function(id,clazz,cback) {
+                         setTimeout(function() {
+                             cback.call(null,null);
+                         },0);
+                    };
+                    callback.call({ "transaction" : trans });
+                });
+                return true;
+            };
+
+            end_transaction = function(callback) {
+                if (old_get_db_data === null) {
+                    callback();
                     return;
                 }
-                old_get_db_data = get_db_data;
-
-                get_db_data = function(id,clazz,cback) {
-                     setTimeout(function() {
-                         cback.call(null,null);
-                     },0);
-                };
+                db.exec("END TRANSACTION;",function(err) {
+                    get_db_data = old_get_db_data;
+                    old_get_db_data = null;
+                    callback(err);
+                });
+            };
+        } else {
+            begin_transaction = function(callback,trans) {
                 callback.call({ "transaction" : trans });
-            });
-            return true;
-        };
-        
-        end_transaction = function(callback) {
-            if (old_get_db_data === null) {
+            };
+            end_transaction = function(callback) {
                 callback();
-                return;
-            }
-            db.exec("END TRANSACTION;",function(err) {
-                get_db_data = old_get_db_data;
-                old_get_db_data = null;
-                callback(err);
-            });
-        };
-        
+            };
+        }
+
         sweep_cache = function(timestamp) {
             db.all("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
         };
