@@ -962,14 +962,15 @@ var addShapeToElement = function(layerName,width,opts) {
         var y_pos = shape.getAttribute('y');
         shape.setAttribute('transform','translate('+x_pos+','+y_pos+')');
         shape.setAttribute('x','0');
-        var offset_val = opts.offset - 4/3;
-        shape.setAttribute('y',offset_val*(opts.height || 4)*this._renderer._RS);
+        var offset_val = opts.offset;
+        var orig_height = opts.height || 4;
+        shape.setAttribute('y',offset_val*this._renderer._RS);
         shape.setHeight = function(height) {
             if ( ! this._orig_stroke_width ) {
                 this._orig_stroke_width = parseInt(this.getAttribute('stroke-width'));
             }
-            shape.setAttribute('y', offset_val*height);
-            shape.setAttribute('height',height);
+            shape.setAttribute('y', (offset_val*renderer._RS)/canvas.zoom);
+            shape.setAttribute('height',(orig_height*renderer._RS)/canvas.zoom);
             shape.setAttribute('stroke-width',this._orig_stroke_width/canvas.zoom);
         };
         shape.move = function(new_x,new_width) {
@@ -1606,7 +1607,9 @@ MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
                 createNewHighlight();
                 highlight = highlights[idx];
             }
-        
+            if ( highlight.previousSibling.previousSibling && highlights.indexOf(highlight.previousSibling.previousSibling) < 0 ) {
+                highlight.parentNode.insertBefore(highlight,highlight.parentNode.firstChild.nextSibling);
+            }
             highlight.setAttribute('x',(from - 1) * RS );
             highlight.setAttribute('width',(to - (from - 1)) * RS );
             highlight.setAttribute('visibility','visible');
