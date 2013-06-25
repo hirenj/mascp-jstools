@@ -726,7 +726,8 @@ if (typeof module != 'undefined' && module.exports){
         if (window.event) {
             user_action = window.event ? window.event.which : null;
         }
-        if (MASCP.IE && ! window.event) {
+
+        if (! window.event && "event" in window) {
             user_action = false;
         }
         setTimeout(function() {

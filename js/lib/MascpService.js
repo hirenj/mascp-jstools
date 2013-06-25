@@ -115,6 +115,10 @@ if (typeof module != 'undefined' && module.exports){
             MASCP.IE = true;
             MASCP.IE8 = true;
         }
+        if (ie == 9) {
+            MASCP.IE = true;
+            MASCP.IE9 = true;
+        }
         MASCP.IE = true;
     }
 }
@@ -884,8 +888,12 @@ base.retrieve = function(agi,callback)
                 if (db.objectStoreNames && db.objectStoreNames.contains("cached")) {
                     db.deleteObjectStore("cached");
                 }
-                var store = db.createObjectStore("cached", { keyPath: "id"});
+                var keypath = window.msIndexedDB ? "serviceacc" : "id";
+                var store = db.createObjectStore("cached", { keyPath: keypath });
                 store.createIndex("entries", [ "acc" , "service" ], { unique : false });
+                if (window.msIndexedDB) {
+                    store.createIndex("entries-ms","serviceacc", { unique : false });
+                }
                 store.createIndex("timestamps", [ "service" , "retrieved" ], { unique : false });
                 store.createIndex("services", "service", { unique : false });
                 transaction.oncomplete = function() {
@@ -896,7 +904,8 @@ base.retrieve = function(agi,callback)
 
 
             idb = true;
-            var req = indexedDB.open("datacache",1);
+            var db_version = 2;
+            var req = indexedDB.open("datacache",db_version);
 
             req.onupgradeneeded = function (e) {
               var transaction = req.transaction;
@@ -917,10 +926,17 @@ base.retrieve = function(agi,callback)
                     MASCP.ready = true;
                 }
             };
+            req.onerror = function(e) {
+                console.log("Error loading Database");
+                // setTimeout(function() {
+                //     indexedDB.deleteDatabase("datacache").onsuccess = function() {
 
+                //     }
+                // },0);
+            }
             req.onsuccess = function(e) {
                 idb = e.target.result;
-                var version = "1";
+                var version = db_version;
                 if (idb.version != Number(version)) {
                     var versionRequest = db.setVersion(ver);
                     versionRequest.onsuccess = function (e) {
@@ -1024,6 +1040,9 @@ base.retrieve = function(agi,callback)
                 data.id = [acc,service,datetime];
                 data.acc = acc;
                 data.service = service;
+                if (window.msIndexedDB) {
+                    data.serviceacc = service+acc;
+                }
                 data.retrieved = datetime;
                 var req = store.put(data);
                 req.onerror = reporter;
@@ -1055,6 +1074,9 @@ base.retrieve = function(agi,callback)
             var datetime = dateobj.getTime();
             data.id = [acc,service,datetime];
             data.acc = acc;
+            if (window.msIndexedDB) {
+                data.serviceacc = service+acc;
+            }
             data.service = service;
             data.retrieved = datetime;
             var req = store.put(data);
@@ -1074,10 +1096,10 @@ base.retrieve = function(agi,callback)
             }
             var trans = idb.transaction(["cached"],"readonly");
             var store = trans.objectStore("cached");
-            var idx = store.index("entries");
+            var idx = store.index(window.msIndexedDB ? "entries-ms" : "entries");
             var max_stamp = -1;
             var result = null;
-            var range = IDBKeyRange.only([acc,service]);
+            var range = IDBKeyRange.only(window.msIndexedDB ? service+acc : [acc,service]);
             idx.openCursor(range).onsuccess = function(event) {
                 var cursor = event.target.result;
                 if (cursor) {

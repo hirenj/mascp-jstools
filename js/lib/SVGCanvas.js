@@ -543,7 +543,11 @@ var SVGCanvas = SVGCanvas || (function() {
             fo.setAttribute('y',0);
             fo.setAttribute('width',x+width);
             fo.setAttribute('height',y+height);
-            fo.style.position = 'absolute';
+            if ( ! fo.style ) {
+                fo.setAttribute('style','position: absolute;');
+            } else {
+                fo.style.position = 'absolute';
+            }
             this.appendChild(fo);
             var button = document.createElement('button');
             button.style.display = 'block';
