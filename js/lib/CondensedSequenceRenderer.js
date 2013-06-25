@@ -962,16 +962,16 @@ var addShapeToElement = function(layerName,width,opts) {
         var y_pos = shape.getAttribute('y');
         shape.setAttribute('transform','translate('+x_pos+','+y_pos+')');
         shape.setAttribute('x','0');
-        var offset_val = opts.offset;
+        var offset_val = opts.offset || 0;
         var orig_height = opts.height || 4;
         shape.setAttribute('y',offset_val*this._renderer._RS);
         shape.setHeight = function(height) {
             if ( ! this._orig_stroke_width ) {
                 this._orig_stroke_width = parseInt(this.getAttribute('stroke-width'));
             }
-            shape.setAttribute('y', (offset_val*renderer._RS)/canvas.zoom);
-            shape.setAttribute('height',(orig_height*renderer._RS)/canvas.zoom);
-            shape.setAttribute('stroke-width',this._orig_stroke_width/canvas.zoom);
+            shape.setAttribute('y', (offset_val*renderer._RS)/renderer.zoom);
+            shape.setAttribute('height',(orig_height*renderer._RS)/renderer.zoom);
+            shape.setAttribute('stroke-width',this._orig_stroke_width/renderer.zoom);
         };
         shape.move = function(new_x,new_width) {
             var transform_attr = this.getAttribute('transform');
@@ -1262,6 +1262,40 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
        http://jsfiddle.net/nkmLu/11/embedded/result/
     */
 
+    /* We also need to test for support for adjusting textLength
+       while also adjusting the dx value. Internet Explorer 10
+       squeezes text when setting a dx value as well as a textLength.
+       I.e. the right-most position of the character is calculated to
+       be x + textLength, rather than x + dx + textLength.
+     */
+
+    var supports_dx = false;
+
+    (function(supports_textLength) {
+        if (! supports_textLength) {
+            supports_dx = false;
+            return;
+        }
+        var test_el = document.createElementNS(svgns,'text');
+        test_el.setAttribute('textLength',30);
+
+        if ( ! test_el.getExtentOfChar ) {
+            return;
+        }
+        test_el.setAttribute('x','0');
+        test_el.setAttribute('y','0');
+        test_el.textContent = 'ABC';
+        canvas.appendChild(test_el);
+        var extent = test_el.getExtentOfChar(2).x;
+        test_el.setAttribute('dx','10');
+        if (Math.abs(test_el.getExtentOfChar(2).x - extent) < 9.5) {
+            supports_dx = false;
+        } else {
+            supports_dx = true;
+        }
+        test_el.parentNode.removeChild(test_el);
+    })(has_textLength);
+
     var a_text;
 
     if (has_textLength && ('lengthAdjust' in document.createElementNS(svgns,'text')) && ('textLength' in document.createElementNS(svgns,'text'))) {
@@ -1321,10 +1355,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
             }
         }
         a_text.replaceChild(document.createTextNode(seq.substr(start,max_size)),a_text.firstChild);
-        a_text.setAttribute('dx',5+((start)*RS));
-        if (MASCP.IE) {
-            a_text.setAttribute('textLength',parseInt(5+((start)*RS))+(max_size*RS));
-        }
+        a_text.setAttribute(supports_dx ? 'dx' : 'x',5+((start)*RS));
     };
     var panstart = function() {
                         if (amino_acids_shown) {
