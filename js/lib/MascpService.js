@@ -1171,9 +1171,10 @@ base.retrieve = function(agi,callback)
                         store.delete(cursor.value.id);
                     }
                     cursor.continue();
-                } else {
-                    callback.call(MASCP.Service);
                 }
+            };
+            trans.oncomplete = function() {
+                callback.call(MASCP.Service);
             };
         };
 
