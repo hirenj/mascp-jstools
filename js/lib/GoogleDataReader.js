@@ -707,6 +707,7 @@ if (typeof module != 'undefined' && module.exports){
         }
         if (initing_auth) {
             waiting_callbacks.push(cback);
+            return;
         }
         if (! gapi || ! gapi.auth || ! gapi.auth.authorize) {
             cback.call(null,{ "cause" : "No google auth library"});
@@ -741,7 +742,9 @@ if (typeof module != 'undefined' && module.exports){
                 initing_auth = false;
                 cback.call(null);
                 waiting_callbacks.forEach(function(cb){
-                    cb.call(null);
+                    if (cb !== cback) {
+                        cb.call(null);
+                    }
                 });
                 waiting_callbacks = [];
                 return;
@@ -750,13 +753,16 @@ if (typeof module != 'undefined' && module.exports){
                 var error = { "cause" : result.error };
                 cback.call(null,error);
                 waiting_callbacks.forEach(function(cb){
-                    cb.call(null,error);
+                    if (cb !== cback) {
+                        cb.call(null,error);
+                    }
                 });
+                waiting_callbacks = [];
             } else {
                 initing_auth = false;
                 if ( auth_settings.immediate ) {
                     if (! user_action ) {
-                        cback.call(null,{"cause" : "No user event", "authorize" : function(success) {
+                        var auth_func = function(success) {
                             auth_settings.immediate = false;
                             gapi.auth.authorize(auth_settings,function(result) {
                                 if (result && ! result.error) {
@@ -770,7 +776,16 @@ if (typeof module != 'undefined' && module.exports){
                                     success.call(null,{ "cause" : result ? result.error : "No auth result" });
                                 }
                             });
-                        }});
+                        };
+                        cback.call(null,{"cause" : "No user event", "authorize" : auth_func });
+                        if (waiting_callbacks) {
+                            waiting_callbacks.forEach(function(cb) {
+                                if (cb !== cback) {
+                                    cb.call(null, {"cause" : "No user event", "authorize" : auth_func });
+                                }
+                            });
+                            waiting_callbacks = [];
+                        }
                         return;
                     }
                     auth_settings.immediate = false;
@@ -988,6 +1003,7 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
 
             prefs.user_datasets[reader.datasetname] = prefs.user_datasets[reader.datasetname] || {};
             prefs.user_datasets[reader.datasetname].parser_function = parser_function.toString();
+            prefs.user_datasets[reader.datasetname].title = title;
 
             (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
                 if (err) {
@@ -997,6 +1013,47 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
                 callback.call(null,null,title);
             });
         });
+    });
+};
+
+MASCP.GoogledataReader.prototype.removeWatchedDocument = function(prefs_domain,doc_id,callback) {
+    this.getPreferences(prefs_domain,function(err,prefs) {
+        if (err) {
+            callback.call(null,{ "status" : "preferences", "original_error" : err });
+            return;
+        }
+
+        if ( ! prefs.user_datasets ) {
+            prefs.user_datasets = {};
+        }
+        if (doc_id in prefs.user_datasets) {
+            delete prefs.user_datasets[doc_id];
+        } else {
+            callback.call();
+        }
+
+        (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
+            if (err) {
+                callback.call(null,{ "status" : "preferences", "original_error" : err });
+                return;
+            }
+            callback.call();
+        });
+    });
+};
+
+MASCP.GoogledataReader.prototype.listWatchedDocuments = function(prefs_domain,callback) {
+    this.getPreferences(prefs_domain,function(err,prefs) {
+        if (err) {
+          if (err.cause === "No user event") {
+            console.log("Consuming no user event");
+            return;
+          }
+          callback.call(null,{ "status" : "preferences", "original_error" : err });
+          return;
+        }
+        var sets = prefs.user_datasets;
+        callback.call(null,null,sets);
     });
 };
 
