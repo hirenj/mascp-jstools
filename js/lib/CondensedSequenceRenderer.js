@@ -327,6 +327,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
         all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
         all_labels.hide();
+
+       self._axis_height = parseInt( base_axis_height / self.zoom);
+
     
         var zoom_status = null;
         var zoomchange = function() {
