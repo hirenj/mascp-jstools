@@ -602,7 +602,7 @@ if (typeof module != 'undefined' && module.exports){
             } else {
                 console.log("Could not authorize");
                 if (cback) {
-                    cback.call({"error" : "Could not authorize" });
+                    cback.call(null,{"error" : "Could not authorize" });
                 }
             }
         });
@@ -631,7 +631,7 @@ if (typeof module != 'undefined' && module.exports){
                 if ( ! err ) {
                     self_func.call(null,host,path,etag,callback);
                 } else {
-                    self_func.call(err);
+                    callback.call(null,err);
                 }
             });
             return;
