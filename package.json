@@ -21,7 +21,7 @@
            "url": "http://www.example.org/licenses/gpl.html" 
        } 
    ],
-   "repositories": [
+   "repository": [
        {
            "type": "git",
            "url": "https://hirenj@github.com/hirenj/mascp-jstools.git" 
@@ -29,7 +29,7 @@
    ],
    "dependencies": {
        "xmlhttprequest": "1.0.x",
-       "jsdom": "0.2.x",
+       "jsdom": "0.6.x",
        "nconf"   : "0.6.x",
        "optimist": "0.2.x",
        "carrier" : "0.1.x",
