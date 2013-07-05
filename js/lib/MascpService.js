@@ -29,26 +29,29 @@ MASCP.Service = function(agi,endpointURL) {};
 if (typeof module != 'undefined' && module.exports){
     var events = require('events');
     
-    MASCP.Service.prototype = new events.EventEmitter();
+    // MASCP.Service.prototype = new events.EventEmitter();
 
-    var singletonService = new MASCP.Service();
+    singletonemitter = new events.EventEmitter();
 
     MASCP.Service.emit = function(targ,args) {
-        singletonService.emit(targ,args);
+        singletonemitter.emit(targ,args);
     };
 
     MASCP.Service.removeAllListeners = function(ev,cback) {
         if (cback) {
-            singletonService.removeListeners(ev,cback);
+            singletonemitter.removeListeners(ev,cback);
         } else {
-            singletonService.removeAllListeners(ev);
+            singletonemitter.removeAllListeners(ev);
         }
     };
 
-    MASCP.Service.addListener = function(ev,cback) {
-        singletonService.addListener(ev,cback);
+    MASCP.Service.removeListener = function(ev,cback) {
+        singletonemitter.removeListener(ev,cback);
     };
 
+    MASCP.Service.addListener = function(ev,cback) {
+        singletonemitter.addListener(ev,cback);
+    };
     
     var bean = {
         'add' : function(targ,ev,cback) {
@@ -57,14 +60,31 @@ if (typeof module != 'undefined' && module.exports){
             }
             if (targ.addListener) {
                 targ.addListener(ev,cback);
+            } else {
+                var callback_func = function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    if (args[0] === targ) {
+                        args.shift();
+                        cback.call(targ,args);
+                    }
+                };
+                MASCP.events.addListener(ev,callback_func);
+                targ._listeners = targ._listeners || {};
+                targ._listeners[cback] = callback_func;
             }
         },
         'remove' : function(targ,ev,cback) {
+            var self = this;
             if (ev == "error") {
                 ev = "MASCP.error";
             }
             if (cback && targ.removeListener) {
                 targ.removeListener(ev,cback);
+            } else if (cback) {
+                if (self._listeners && self._listeners[cback]) {
+                    MASCP.events.removeListener(ev,self._listeners[cback]);
+                    delete self._listeners[cback];
+                }
             } else if (targ.removeAllListeners && typeof cback == 'undefined') {
                 targ.removeAllListeners(ev);
             }
@@ -75,6 +95,8 @@ if (typeof module != 'undefined' && module.exports){
             }
             if (targ.emit) {
                 targ.emit.apply(targ,[ev].concat(args));
+            } else {
+                MASCP.events.emit.apply(MASCP.events,[ev,targ].concat(args));
             }
         }
     };
