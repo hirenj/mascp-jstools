@@ -65,12 +65,22 @@ if (typeof module != 'undefined' && module.exports){
                     var args = Array.prototype.slice.call(arguments);
                     if (args[0] === targ) {
                         args.shift();
-                        cback.call(targ,args);
+                        cback.apply(targ,args);
                     }
                 };
-                MASCP.events.addListener(ev,callback_func);
+
                 targ._listeners = targ._listeners || {};
-                targ._listeners[cback] = callback_func;
+                if ( ! targ._listeners[ev] ) {
+                    targ._listeners[ev] = {};
+                }
+                if ( ! targ._listener ) {
+                    targ._listener = new events.EventEmitter();
+                }
+                if (targ._listeners[ev][cback]) {
+                    callback_func = targ._listeners[ev][cback];
+                }
+                targ._listener.addListener(ev,callback_func);
+                targ._listeners[ev][cback] = callback_func;
             }
         },
         'remove' : function(targ,ev,cback) {
@@ -81,9 +91,12 @@ if (typeof module != 'undefined' && module.exports){
             if (cback && targ.removeListener) {
                 targ.removeListener(ev,cback);
             } else if (cback) {
-                if (self._listeners && self._listeners[cback]) {
-                    MASCP.events.removeListener(ev,self._listeners[cback]);
-                    delete self._listeners[cback];
+                if (targ._listeners && targ._listeners[ev] && targ._listeners[ev][cback]) {
+                    targ._listener.removeListener(ev,targ._listeners[ev][cback]);
+                    delete targ._listeners[ev][cback];
+                }
+                if (targ._listener.listeners(ev).length == 0) {
+                    targ._listeners[ev] = {};
                 }
             } else if (targ.removeAllListeners && typeof cback == 'undefined') {
                 targ.removeAllListeners(ev);
@@ -96,7 +109,9 @@ if (typeof module != 'undefined' && module.exports){
             if (targ.emit) {
                 targ.emit.apply(targ,[ev].concat(args));
             } else {
-                MASCP.events.emit.apply(MASCP.events,[ev,targ].concat(args));
+                if (targ._listener) {
+                    targ._listener.emit.apply(targ._listener,[ev,targ].concat(args));
+                }
             }
         }
     };
