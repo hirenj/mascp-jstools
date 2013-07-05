@@ -1368,7 +1368,7 @@ base.retrieve = function(agi,callback)
 
         first_accession = function(service,cback) {
             db.all("SELECT distinct acc from datacache where service = ? limit 1",[service],function(err,records) {
-                if (records.length < 1) {
+                if (! records || records.length < 1) {
                     cback.call(MASCP.Service,null);
                 } else {
                     cback.call(MASCP.Service,records[0].acc);
