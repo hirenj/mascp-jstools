@@ -1264,7 +1264,7 @@ base.retrieve = function(agi,callback)
     } else if (typeof db != 'undefined') {
 
         db.all('SELECT version from versions where tablename = "datacache"',function(err,rows) { 
-            var version = rows ? rows[0].version : null;
+            var version = (rows && rows.length > 0) ? rows[0].version : null;
             if (version == 1.3) {
                 if (MASCP.events) {
                     MASCP.events.emit('ready');            
