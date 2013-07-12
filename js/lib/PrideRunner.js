@@ -35,13 +35,13 @@ MASCP.PrideRunner.prototype.requestData = function()
         type: "GET",
         dataType: "txt",
         data : {
-            "query" :   '<?xml version="1.0" encoding="UTF-8"?>' +
+            "query" :   encodeURIComponent('<?xml version="1.0" encoding="UTF-8"?>' +
                         '<!DOCTYPE Query>' +
                         '<Query  virtualSchemaName = "default" formatter = "CSV" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.6" >'+
                         '<Dataset name = "pride" interface = "default" ><Filter name = "submitted_accession_option" value = "'+self.agi+'"/>'+
                         '<Attribute name = "peptide_sequence" /><Attribute name = "start_coord" /><Attribute name = "end_coord" />'+
                         '</Dataset>'+
-                        '</Query>'
+                        '</Query>')
         }
     }
 };
