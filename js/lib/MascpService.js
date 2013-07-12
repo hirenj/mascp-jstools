@@ -501,7 +501,7 @@ var do_request = function(request_data) {
                         request_data.success.call(null,{},request.status,request);
                         return;
                     } else {
-                        request_data.error.call(null,{'error' : e.type || e.message, 'stack' : e });
+                        request_data.error.call(null,request.responseText,request,{'error' : e.type || e.message, 'stack' : e });
                         return;
                     }
                 }

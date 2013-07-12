@@ -682,6 +682,23 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
  * @type Array
  */
 MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windowSize) {
+    MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
+    var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
+           'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
+           'L': 3.8,'K':-3.9,'M': 1.9,'F': 2.8,'P':-1.6,
+           'S':-0.8,'T':-0.7,'W':-0.9,'Y':-1.3,'V': 4.2 };
+    var values = [];
+    for (var i = windowSize; i < (this._sequence_els.length - windowSize); i++ ) {
+        var value = 0;
+        for (var j = -1*windowSize; j <= windowSize; j++) {
+            value += kd[this._sequence_els[i+j].amino_acid[0]] / (windowSize * 2 + 1);
+        }        
+    }    
+    this.addValuesToLayer('hydropathy',values);
+};
+
+
+MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values,options) {
     var RS = this._RS;
     
     var canvas = this._canvas;
@@ -690,60 +707,84 @@ MASCP.CondensedSequenceRenderer.prototype.createHydropathyLayer = function(windo
         var orig_func = arguments.callee;
         var self = this;
         this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
-            orig_func.call(self,windowSize);
+            this._renderer.unbind('sequencechange',arguments.callee);
+            orig_func.call(self,layerName,values);
         });
         log("Delaying rendering, waiting for sequence change");
         return;
     }
 
-    MASCP.registerLayer('hydropathy',{ 'fullname' : 'Hydropathy plot','color' : '#990000' });
-    var kd = { 'A': 1.8,'R':-4.5,'N':-3.5,'D':-3.5,'C': 2.5,
-           'Q':-3.5,'E':-3.5,'G':-0.4,'H':-3.2,'I': 4.5,
-           'L': 3.8,'K':-3.9,'M': 1.9,'F': 2.8,'P':-1.6,
-           'S':-0.8,'T':-0.7,'W':-0.9,'Y':-1.3,'V': 4.2 };
-    var plot_path = 'm'+RS*(windowSize-1)+' 0 ';
-    var last_value = null;
-    var max_value = -100;
-    var min_value = null;
-    var scale_factor = 2.5 * RS;
-    var values = [];
-    for (var i = windowSize; i < (this._sequence_els.length - windowSize); i++ ) {
-        var value = 0;
-        for (var j = -1*windowSize; j <= windowSize; j++) {
-            value += kd[this._sequence_els[i+j].amino_acid[0]] / (windowSize * 2 + 1);
-        }        
-        
-        if (scale_factor*value > max_value) {
-            max_value = scale_factor*value;
-        }
-        if (! min_value || scale_factor*value < min_value) {
-            min_value = scale_factor*value;
-        }
-        values[i] = value;
-        if ( ! last_value ) {
-            plot_path += ' m'+RS+' '+(-1*scale_factor*value);
-        } else {
-            plot_path += ' l'+RS+' '+(-1 * scale_factor * (last_value + value));
-        }
-        last_value = value * -1;
-    }
+    var max_value;
+    var min_value;
+    var height_scale = 1;
     
-    var plot = this._canvas.path('M0 0 m0 '+max_value+' '+plot_path);
+    options = options || {};
+
+    if (options.height) {
+        height_scale = options.height / this._layer_containers[layerName].track_height;
+    }
+
+    var offset_scale = 0;
+    if (options.offset) {
+        offset_scale = options.offset / this._layer_containers[layerName].track_height;
+    }
+    var recalculate_plot  = function(scale) {
+        var plot_path = 'm0 0';
+        var last_value = null;
+        values.forEach(function(value) {
+            if ( typeof(last_value) == 'undefined' ) {
+            } else {
+                plot_path += ' l'+RS+' '+(-1 *RS*scale*height_scale*(value - last_value));
+            }
+            last_value = value;
+            if (isNaN(max_value) || (value > max_value)) {
+                max_value = value;            
+            }
+            if (isNaN(min_value) || (value < min_value)) {
+                min_value = value;
+            }
+        });
+        return plot_path;
+    };
+    var axis = this._canvas.path('M0 0 m0 '+(RS*((max_value || 0) - (min_value || 0)))+' l'+this._sequence_els.length*RS+' 0');
+    var plot = this._canvas.path('M0 0 M0 0 m0 '+((max_value || 0))*RS+' '+recalculate_plot(1));
+    var abs_min_val = min_value;
     plot.setAttribute('stroke','#ff0000');
     plot.setAttribute('stroke-width', 0.35*RS);
     plot.setAttribute('fill', 'none');
     plot.setAttribute('visibility','hidden');
-    var axis = this._canvas.path('M0 0 m0 '+(-1*min_value)+' l'+this._sequence_els.length*RS+' 0');
     axis.setAttribute('stroke-width',0.2*RS);
     axis.setAttribute('visibility','hidden');
+    axis.setAttribute('transform','translate(0,0)');
     plot.setAttribute('pointer-events','none');
     axis.setAttribute('pointer-events','none');
     
-    this._layer_containers.hydropathy.push(plot);    
-    this._layer_containers.hydropathy.push(axis);
-    this._layer_containers.hydropathy.fixed_track_height = (-1*min_value+max_value) / RS;
-    return values;
+    this._layer_containers[layerName].push(plot);
+    plot.setAttribute('transform','translate(0,10) scale(1,1)');
+    this._layer_containers[layerName].push(axis);
+
+    if (options.label) {
+        var text = this._canvas.text(0,0, options.label.max || options.label.min );
+        text.setAttribute('transform','translate(0,0)');
+        text.setAttribute('font-size', (4*RS)+'pt');
+        text.setHeight = function(height) {
+            text.setAttribute('y',height*offset_scale);
+            text.setAttribute('font-size',(4*RS/renderer.zoom)+'pt');
+        };
+        this._layer_containers[layerName].push(text);
+    }
+
+    plot.setHeight = function(height) {
+        var path_vals = recalculate_plot(0.5*height/RS);
+        plot.setAttribute('d','M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' '+path_vals);
+        plot.setAttribute('stroke-width',RS/renderer.zoom);
+    };
+    axis.setHeight = function(height) {
+        axis.setAttribute('d','M0 0 m0 '+height*offset_scale+'m0 '+0.5*(1-abs_min_val)*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
+        axis.setAttribute('stroke-width',0.2*RS/renderer.zoom);
+    }
+    // this._layer_containers.hydropathy.fixed_track_height = (-1*min_value+max_value) / RS;
+    return plot;
 };
 
 (function() {
