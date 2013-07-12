@@ -1162,6 +1162,12 @@ MASCP.SequenceRenderer.prototype.bind = function(ev,func)
     jQuery(this).bind(ev,func);
 };
 
+MASCP.SequenceRenderer.prototype.unbind = function(ev,func)
+{
+    jQuery(this).unbind(ev,func);
+};
+
+
 MASCP.SequenceRenderer.prototype.trigger = function(ev,args)
 {
     jQuery(this).trigger(ev,args);
