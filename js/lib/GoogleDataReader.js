@@ -688,14 +688,23 @@ if (typeof module != 'undefined' && module.exports){
             type = "private";
         }
         script.src = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/"+type+"/basic?alt=json-in-script&callback=cback"+doc_id+""+auth;
-        script.addEventListener('error', function() {
+        var error_function = function() {
+            if (window.removeEventListener) {
+                window.removeEventListener(error_function);
+            }
             if (script.parentNode) {
                 script.parentNode.removeChild(script);
+                callback.call(null,{ "cause" : { "status" : "" }, "message" : "Could not load data via script tag" } ,doc_id);
             }
-            callback.call(null,{ "cause" : { "status" : "" }, "message" : "Could not load data via script tag" } ,doc_id);
-        },false);
+        };
+        script.addEventListener('error', error_function ,false);
+        window.addEventListener('error', error_function, false);
+
         window["cback"+doc_id] = function(dat) {
             delete window["cback"+doc_id];
+            if (window.removeEventListener) {
+                window.removeEventListener('error',error_function);
+            }
             callback.call(null,null,parsedata(dat));
         }
         try {
