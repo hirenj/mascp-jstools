@@ -46,7 +46,10 @@ MASCP.PrideRunner.prototype.requestData = function()
     }
 };
 
-MASCP.PrideRunner.prototype.setupSequenceRenderer = function(renderer) {
+MASCP.PrideRunner.prototype.setupSequenceRenderer = function(renderer,options) {
+    if ( ! options ) {
+        options = {};
+    }
     this.bind('resultReceived',function() {
       var raw_values = [];
       var max_val = 0;
@@ -74,7 +77,7 @@ MASCP.PrideRunner.prototype.setupSequenceRenderer = function(renderer) {
           values.push(0);
         }
       }
-      var plot = renderer.addValuesToLayer(this.agi,values,{'height' : 12, 'offset' : 32, 'label' : { 'max' : max_val+' PRIDE peptides' } });
+      var plot = renderer.addValuesToLayer(options.track || this.agi,values,{'height' : 12, 'offset' : isNaN(options.offset) ? 0 : options.offset, 'label' : { 'max' : max_val+' PRIDE peptides' } });
       plot.setAttribute('stroke','#00f');
       renderer.trigger('resultsRendered',[this]);
     });

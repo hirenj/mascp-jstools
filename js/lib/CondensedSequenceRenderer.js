@@ -754,14 +754,14 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
 
     plot.setHeight = function(height) {
         var path_vals = recalculate_plot(0.5*height/RS);
-        plot.setAttribute('d','M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' '+path_vals);
+        plot.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' '+path_vals);
         plot.setAttribute('stroke-width',RS/renderer.zoom);
     };
     axis.setHeight = function(height) {
         if (abs_min_val < 0 && abs_max_val > 0) {
-            axis.setAttribute('d','M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');            
+            axis.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
         } else {
-            axis.setAttribute('d','M0 0 m0 '+height*offset_scale+'m0 '+0.5*(1-abs_min_val)*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
+            axis.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*(1-abs_min_val)*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
         }
         axis.setAttribute('stroke-width',0.2*RS/renderer.zoom);
     }

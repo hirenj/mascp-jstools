@@ -1742,11 +1742,11 @@ MASCP.Service.prototype.toString = function()
  * results onto the sequence.
  * @param {MASCP.SequenceRenderer} sequenceRenderer Sequence renderer object to render results upon
  */
-MASCP.Service.prototype.registerSequenceRenderer = function(sequenceRenderer)
+MASCP.Service.prototype.registerSequenceRenderer = function(sequenceRenderer,options)
 {
     if (this.setupSequenceRenderer) {
         this.renderers = this.renderers || [];
-        this.setupSequenceRenderer(sequenceRenderer);        
+        this.setupSequenceRenderer(sequenceRenderer,options);
         this.renderers.push(sequenceRenderer);
     }
     sequenceRenderer.trigger('readerRegistered',[this]);
