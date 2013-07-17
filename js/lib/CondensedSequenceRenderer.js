@@ -335,6 +335,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var zoomchange = function() {
                renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
                var pattern = renderer._canvas.ownerDocument.getElementById('axis_pattern');
+               thousand_mark_labels.forEach(function(label) {
+                label.setAttribute('visibility','hidden');
+               });
+
                if (this.zoom > 3.6) {
 
                    axis_back.setAttribute('transform','translate(-5,'+(0.3*renderer._axis_height*RS)+')');
