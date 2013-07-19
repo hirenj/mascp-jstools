@@ -1299,31 +1299,35 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
      */
 
     var supports_dx = false;
+    if (typeof MASCP.supports_dx != 'undefined') {
+        supports_dx = MASCP.supports_dx;
+    } else {
+        (function(supports_textLength) {
+            if (! supports_textLength) {
+                supports_dx = false;
+                return;
+            }
+            var test_el = document.createElementNS(svgns,'text');
+            test_el.setAttribute('textLength',30);
 
-    (function(supports_textLength) {
-        if (! supports_textLength) {
-            supports_dx = false;
-            return;
-        }
-        var test_el = document.createElementNS(svgns,'text');
-        test_el.setAttribute('textLength',30);
-
-        if ( ! test_el.getExtentOfChar ) {
-            return;
-        }
-        test_el.setAttribute('x','0');
-        test_el.setAttribute('y','0');
-        test_el.textContent = 'ABC';
-        canvas.appendChild(test_el);
-        var extent = test_el.getExtentOfChar(2).x;
-        test_el.setAttribute('dx','10');
-        if (Math.abs(test_el.getExtentOfChar(2).x - extent) < 9.5) {
-            supports_dx = false;
-        } else {
-            supports_dx = true;
-        }
-        test_el.parentNode.removeChild(test_el);
-    })(has_textLength);
+            if ( ! test_el.getExtentOfChar ) {
+                return;
+            }
+            test_el.setAttribute('x','0');
+            test_el.setAttribute('y','0');
+            test_el.textContent = 'ABC';
+            canvas.appendChild(test_el);
+            var extent = test_el.getExtentOfChar(2).x;
+            test_el.setAttribute('dx','10');
+            if (Math.abs(test_el.getExtentOfChar(2).x - extent) < 9.5) {
+                supports_dx = false;
+            } else {
+                supports_dx = true;
+            }
+            MASCP.supports_dx = supports_dx;
+            test_el.parentNode.removeChild(test_el);
+        })(has_textLength);
+    }
 
     var a_text;
 
