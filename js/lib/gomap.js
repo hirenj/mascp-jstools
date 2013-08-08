@@ -1330,6 +1330,10 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
         var positions = mousePosition(e.touches[0]);
 
+        if (! positions || ! self.matrix) {
+            return;
+        }
+
         var p;
         if (targ.nodeName == 'svg') {
             p = targ.createSVGPoint();

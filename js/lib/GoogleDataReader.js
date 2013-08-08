@@ -258,6 +258,14 @@ var write_file = function(filename,mime,callback) {
         // allow the CORS request to go through
 
 
+        var string_rep;
+        try {
+            string_rep = JSON.stringify(cached_files[filename]);
+        } catch (e) {
+            callback.call(null,{"status" : "JSON error", "error" : e });
+            return;
+        }
+
         var req = gapi.client.request({
             'path' : "/upload/drive/v2/files/"+item_id,
             'method' : "PUT",
@@ -265,7 +273,7 @@ var write_file = function(filename,mime,callback) {
             'headers' : {
                 'Content-Type' : mime
             },
-            'body' : JSON.stringify(cached_files[filename])
+            'body' : string_rep
         });
         req.execute(function(isjson,data) {
             if ( ! isjson ) {

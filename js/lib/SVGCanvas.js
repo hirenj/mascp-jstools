@@ -966,8 +966,12 @@ var SVGCanvas = SVGCanvas || (function() {
             });
 
             // Update the bounding box with the new values
-            bb.x = xMin; bb.width  = xMax-xMin;
-            bb.y = yMin; bb.height = yMax-yMin;
+            try {
+                bb.x = xMin; bb.width  = xMax-xMin;
+                bb.y = yMin; bb.height = yMax-yMin;
+            } catch (e) {
+                bb = { 'x' : xMin, 'y' : yMin, 'width' : xMax-xMin, 'height' : yMax-yMin };
+            }
             return bb;
         };
         
