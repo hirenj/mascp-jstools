@@ -946,9 +946,22 @@ var addTextToElement = function(layerName,width,opts) {
     text.setAttribute('style','font-family: '+canvas.font_order);
     text.firstChild.setAttribute('dy','2ex');
     text.setAttribute('text-anchor','middle');
-    text.setHeight = function(height) {
-        text.setAttribute('font-size', 0.75*height);
-    };
+    if (opts.offset) {
+        text.setAttribute('transform','translate('+text.getAttribute('x')+','+text.getAttribute('y')+')');
+        text.offset = opts.offset;
+        text.setHeight = function(height) {
+            var top_offset = this.offset;
+            this.setAttribute('x',0);
+            this.setAttribute('y',top_offset*renderer._RS / renderer.zoom);
+            text.setAttribute('stroke-width', 5/renderer.zoom);
+            text.setAttribute('font-size', 0.75*height);
+        };
+    } else {
+        text.setHeight = function(height) {
+            text.setAttribute('stroke-width', 5/renderer.zoom);
+            text.setAttribute('font-size', 0.75*height);
+        };
+    }
     this._renderer._layer_containers[layerName].push(text);
     return text;
 }
