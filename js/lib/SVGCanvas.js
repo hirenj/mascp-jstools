@@ -385,19 +385,19 @@ var SVGCanvas = SVGCanvas || (function() {
 
 
         canvas.path = function(pathdesc) {
-          var a_path = document.createElementNS(svgns,'path');
-          a_path.setAttribute('d', pathdesc);
-          a_path.setAttribute('stroke','#000000');
-          a_path.setAttribute('stroke-width','1');
-          this.appendChild(a_path);
-          return a_path;
+            var a_path = document.createElementNS(svgns,'path');
+            a_path.setAttribute('d', pathdesc);
+            a_path.setAttribute('stroke','#000000');
+            a_path.setAttribute('stroke-width','1');
+            this.appendChild(a_path);
+            return a_path;
         };
 
         canvas.poly = function(points) {
-           var a_poly = document.createElementNS(svgns,'polygon');
-           a_poly.setAttribute('points',points);
-           this.appendChild(a_poly);
-           return a_poly;
+            var a_poly = document.createElementNS(svgns,'polygon');
+            a_poly.setAttribute('points',points);
+            this.appendChild(a_poly);
+            return a_poly;
         };
 
         canvas.circle = function(x,y,radius) {
@@ -433,19 +433,18 @@ var SVGCanvas = SVGCanvas || (function() {
         };
 
         canvas.rect = function(x,y,width,height) {
-          var a_rect = document.createElementNS(svgns,'rect');
-          a_rect.setAttribute('x', typeof x == 'string' ? x : x * RS);
-          a_rect.setAttribute('y', typeof y == 'string' ? y : y * RS);
-          a_rect.setAttribute('width', typeof width == 'string' ? width : width * RS);
-          a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
-          a_rect.setAttribute('stroke','#000000');
-    //      a_rect.setAttribute('shape-rendering','optimizeSpeed');
-          this.appendChild(a_rect);
-          a_rect.move = function(new_x,new_width) {
-              this.setAttribute('x',new_x*RS);
-              this.setAttribute('width',new_width*RS);
-          };
-          return a_rect;
+            var a_rect = document.createElementNS(svgns,'rect');
+            a_rect.setAttribute('x', typeof x == 'string' ? x : x * RS);
+            a_rect.setAttribute('y', typeof y == 'string' ? y : y * RS);
+            a_rect.setAttribute('width', typeof width == 'string' ? width : width * RS);
+            a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
+            a_rect.setAttribute('stroke','#000000');
+            this.appendChild(a_rect);
+            a_rect.move = function(new_x,new_width) {
+                this.setAttribute('x',new_x*RS);
+                this.setAttribute('width',new_width*RS);
+            };
+            return a_rect;
         };
 
         canvas.roundRect = function(x,y,width,height,r) {
