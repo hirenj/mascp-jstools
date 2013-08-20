@@ -432,7 +432,10 @@ var SVGCanvas = SVGCanvas || (function() {
             return a_line;        
         };
 
-        canvas.rect = function(x,y,width,height) {
+        canvas.rect = function(x,y,width,height,opts) {
+            if ( ! opts ) {
+                opts = {};
+            }
             var a_rect = document.createElementNS(svgns,'rect');
             a_rect.setAttribute('x', typeof x == 'string' ? x : x * RS);
             a_rect.setAttribute('y', typeof y == 'string' ? y : y * RS);
@@ -440,24 +443,36 @@ var SVGCanvas = SVGCanvas || (function() {
             a_rect.setAttribute('height', typeof height == 'string' ? height : height * RS);
             a_rect.setAttribute('stroke','#000000');
             this.appendChild(a_rect);
+            if ( typeof(opts.offset) !== "undefined" ) {
+                this.offset = opts.offset;
+                a_rect.setAttribute('transform','translate('+a_rect.getAttribute('x')+','+a_rect.getAttribute('y')+')');
+                a_rect.setAttribute('x','0');
+                a_rect.setAttribute('y',this.offset*RS);
+            }
+
             a_rect.move = function(new_x,new_width) {
-                this.setAttribute('x',new_x*RS);
-                this.setAttribute('width',new_width*RS);
+                if ((typeof(this.offset) !== "undefined") && this.getAttribute('transform')) {
+                    var transform_attr = this.getAttribute('transform');
+                    var matches = /translate\(.*[,\s](.*)\)/.exec(transform_attr);
+                    if (matches[1]) {
+                      this.setAttribute('transform','translate('+(new_x*RS)+','+matches[1]+')');
+                    }
+                    this.setAttribute('width',new_width*RS);
+                } else {
+                    this.setAttribute('x',new_x*RS);
+                    this.setAttribute('width',new_width*RS);
+                }
             };
             return a_rect;
         };
 
-        canvas.roundRect = function(x,y,width,height,r) {
-            var a_rect = this.rect(x,y,width,height);
+        canvas.roundRect = function(x,y,width,height,r,opts) {
+            var a_rect = this.rect(x,y,width,height,opts);
             if (typeof r != 'object' || ! r.x ) {
                 r = { 'x' : r, 'y' : r };
             }
             a_rect.setAttribute('rx',r.x*RS);
             a_rect.setAttribute('ry',r.y*RS);
-            a_rect.move = function(new_x,new_width) {
-                this.setAttribute('x',new_x*RS);
-                this.setAttribute('width',new_width*RS);
-            };
             return a_rect;
         };
 
@@ -663,22 +678,37 @@ var SVGCanvas = SVGCanvas || (function() {
             positioning_group.appendChild(container);
             container.setAttribute('width','200');
             container.setAttribute('height','250');
+            // var rect = document.createElementNS(svgns,'rect');
+            // rect.setAttribute('stroke','#f00');
+            // rect.setAttribute('stroke-width','10');
+            // rect.setAttribute('x','-50');
+            // rect.setAttribute('y','-100');
+            // rect.setAttribute('width','100%');
+            // rect.setAttribute('height','100%');
+            // rect.setAttribute('fill','none');
+            // container.appendChild(rect);
+
+            // var rect = document.createElementNS(svgns,'rect');
+            // rect.setAttribute('stroke','#0f0');
+            // rect.setAttribute('stroke-width','10');
+            // rect.setAttribute('x','50');
+            // rect.setAttribute('y','25');
+            // rect.setAttribute('width','50%');
+            // rect.setAttribute('height','50%');
+            // rect.setAttribute('fill','none');
+
+            // container.appendChild(rect);
+
             result.setAttribute('height','250');
             result.setAttribute('transform','scale(1)');
             result.setHeight = function(height) {
                 // this.setAttribute('height',height);
                 var scale_val = setHeight.call(this,height);
                 this.setAttribute('height',height);
-                var top_offset = this.offset || 0;
+                var top_offset = this.offset;
                 var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
                 if ( ! this.angle ) {
                     this.angle = 0;
-                }
-                if (this.angle > 10) {
-                    centering_offset = 0;
-                }
-                if (top_offset == 0) {
-                    centering_offset = 0;
                 }
                 this.firstChild.setAttribute('transform','translate(-100,'+(top_offset*RS)+') rotate('+this.angle+',100,0)');
             };
