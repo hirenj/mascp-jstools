@@ -797,6 +797,10 @@ var addElementToLayer = function(layerName,opts) {
 
     var scale = 1;
     if (opts.height) {
+        opts.height = parseFloat(opts.height);
+        if (typeof(opts.height) !== 'undefined' && opts.bare_element ) {
+            opts.height *= 2;
+        }
         scale = opts.height / this._renderer._layer_containers[layerName].track_height;
         if (typeof(opts.offset) !== 'undefined') {
             opts.offset  = -1.25 -1.25 + (opts.offset / opts.height) * 5;// ( -250/4 + (x / height) * 250 ) where 250 is growing marker height
