@@ -884,7 +884,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     var canvas = this._renderer._canvas;
     var renderer = this._renderer;
     if ( ! opts ) {
-        opts = {};
+        opts = { };
     }
     if ( ! canvas ) {
         var orig_func = arguments.callee;
@@ -902,8 +902,11 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     var rect_x = parseFloat(rect.getAttribute('x'));
     var rect_max_x = rect_x + parseFloat(rect.getAttribute('width'));
     var container = this._renderer._layer_containers[layerName];
-    if ( typeof(opts.merge) == 'undefined' || opts.merge ) {
+    if ( typeof(opts.merge) !== 'undefined' || opts.merge ) {
         for (var i = 0; i < container.length; i++) {
+            if (container[i].value != fraction ) {
+                continue;
+            }
             var el_x = parseFloat(container[i].getAttribute('x'));
             var el_max_x = el_x + parseFloat(container[i].getAttribute('width'));
             if ((el_x <= rect_x && rect_x <= el_max_x) ||
@@ -919,6 +922,10 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     rect.setAttribute('class',layerName);
     rect.style.strokeWidth = '0px';
     rect.setAttribute('visibility', 'hidden');
+    if (typeof(fraction) !== 'undefined') {
+        rect.setAttribute('opacity',fraction);
+        rect.value = fraction;
+    }
     rect.setAttribute('fill',opts.fill || MASCP.layers[layerName].color);
     rect.position_start = this._index;
     rect.position_end = this._index + width;
