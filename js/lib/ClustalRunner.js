@@ -433,7 +433,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         if ( ! renderer.sequence ) {
             renderer.setSequence(aligned[sequence_index])(function() {
                 MASCP.registerGroup(group_name, 'Aligned');
-                MASCP.registerLayer(controller_name, { 'fullname' : 'Splices', 'color' : '#000000' });
+                MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
                 if (renderer.trackOrder.indexOf(controller_name) < 0) {
                     renderer.trackOrder.push(controller_name);
                 }
@@ -485,8 +485,8 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 var an_anno = renderer.getAA(insert).addToLayer(layname,
                   { 'content' : content,//'+'+insertions[insert].length,
                     'bare_element': true,
-                    'height' : 20,
-                    'offset' : -2.5,
+                    'height' : 10,
+                    'offset' : -5,
                     'no_tracer' : true
                   })[1];
                 an_anno.container.setAttribute('height','300');
