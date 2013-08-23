@@ -504,8 +504,8 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     }
     results = results.concat(this._sequence_els.slice(start,start+(peptideSequence.length)));
     if (results.length) {
-        results.addToLayer = function(layername, fraction) {
-            return results[0].addBoxOverlay(layername,results.length,fraction);
+        results.addToLayer = function(layername, fraction, options) {
+            return results[0].addBoxOverlay(layername,results.length,fraction,options);
         };
     } else {
         results.addToLayer = function() {};

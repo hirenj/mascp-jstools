@@ -902,7 +902,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     var rect_x = parseFloat(rect.getAttribute('x'));
     var rect_max_x = rect_x + parseFloat(rect.getAttribute('width'));
     var container = this._renderer._layer_containers[layerName];
-    if ( typeof(opts.merge) !== 'undefined' || opts.merge ) {
+    if ( typeof(opts.merge) !== 'undefined' && opts.merge ) {
         for (var i = 0; i < container.length; i++) {
             if (container[i].value != fraction ) {
                 continue;
@@ -1290,6 +1290,35 @@ MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underla
         });
     }
     zoomFunctions.push(underlayFunc);
+};
+
+MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
+    var renderer = this;
+    objects.forEach(function(object) {
+        if (object.type === "box") {
+            if (object.aa) {
+                renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
+            } else if (object.peptide) {
+                renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,object.options);
+            }
+        }
+        if (object.type == "marker") {
+            var content = (object.options || {}).content;
+            if (typeof(content) == 'object') {
+                var content_el;
+                if (content.type == "circle") {
+                    content_el = renderer._canvas.circle(-0.5,-0.5,1,1);
+                }
+                ["fill","stroke","stroke-width","fill-opacity","stroke-opacity"].forEach(function(prop) {
+                    if (content[prop]) {
+                        content_el.setAttribute(prop,content[prop]);
+                    }
+                });
+                object.options.content = content_el;
+            }
+            renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+        }
+    });
 };
 
 MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
