@@ -186,6 +186,12 @@ var get_file = function(filename,mime,callback) {
     var query = encodeURIComponent("title='"+filename+"' and 'appdata' in parents and mimeType = '"+mime+"' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
+        if (cached_files[filename]) {
+            callback.call(null,null,cached_files[filename]);
+            return;
+        }
+
+
         if (err) {
             callback.call(null,err);
             return;
@@ -200,6 +206,11 @@ var get_file = function(filename,mime,callback) {
         var item_id = data.items[0].id;
         do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
 
+            if (cached_files[filename]) {
+                callback.call(null,null,cached_files[filename]);
+                return;
+            }
+
             if ( err ) {
                 callback.call(null,err);
                 return;
@@ -207,6 +218,12 @@ var get_file = function(filename,mime,callback) {
 
             var uri = parseUri(data.downloadUrl);
             do_request(uri.host,uri.relative,null,function(err,data) {
+                if (cached_files[filename]) {
+                    callback.call(null,null,cached_files[filename]);
+                    return;
+                }
+
+
                 if ( err ) {
                     callback.call(null,err);
                     return;
