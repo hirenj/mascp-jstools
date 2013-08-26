@@ -120,6 +120,31 @@ MASCP.UniprotReader.parseDomains = function(datalines) {
     return results;
 };
 
+MASCP.UniprotReader.parseSecondaryStructure = function(datalines) {
+    var results;
+    datalines = datalines.split(/\n/);
+    datalines.forEach(function(data) {
+        var strand_re = /FT\s+(STRAND)\s+(\d+)\s+(\d+)/m;
+        var helix_re = /FT\s+(HELIX)\s+(\d+)\s+(\d+)/m;
+        var turn_re = /FT\s+(TURN)\s+(\d+)\s+(\d+)/m;
+        [strand_re,helix_re,turn_re].forEach(function(re) {
+            var match = re.exec(data);
+            if ( ! match ) {
+                return;
+            }
+            if ( ! results || ! results[match[1]] ) {
+                results = { "STRAND" : {"peptides" : [ ]},  "HELIX" : {"peptides" : []}, "TURN" : {"peptides" : [] } };
+            }
+            if (match) {
+                results[match[1]].peptides.push([match[2],match[3]]);
+            }
+        });
+    });
+
+    return results;
+};
+
+
 MASCP.UniprotDomainReader = MASCP.buildService(function(data) {
                         if ( data && typeof(data) === 'string' ) {
                             var dats = MASCP.UniprotReader.parseDomains(data);
@@ -141,3 +166,58 @@ MASCP.UniprotDomainReader.prototype.requestData = function()
         }
     };
 };
+
+
+MASCP.UniprotSecondaryStructureReader = MASCP.buildService(function(data) {
+                        if ( data && typeof(data) === 'string' ) {
+                            var dats = MASCP.UniprotReader.parseSecondaryStructure(data);
+                            if (dats) {
+                                data = { 'data' : dats };
+                            } else {
+                                return null;
+                            }
+                            this._raw_data = data;
+                        }
+                        return this;
+                    });
+
+MASCP.UniprotSecondaryStructureReader.prototype.requestData = function()
+{
+    var self = this;
+    return {
+        type: "GET",
+        dataType: "txt",
+        'url'   : 'http://www.uniprot.org/uniprot/'+(this.agi).toUpperCase()+'.txt',
+        data: { 'acc'   : this.agi,
+                'service' : 'uniprot'
+        }
+    };
+};
+
+
+MASCP.UniprotSecondaryStructureReader.prototype.setupSequenceRenderer = function(renderer,options) {
+    this.bind('resultReceived',function() {
+        if (this.result && this.result._raw_data.data) {
+            if ( ! options.track ) {
+                MASCP.registerLayer('secstructure',{ 'fullname' : 'Secondary structure', 'color' : '#0f0' });
+            }
+            this.result._raw_data.data['STRAND'].peptides.forEach(function(pos) {
+                var start = parseInt(pos[0]);
+                var end = parseInt(pos[1]);
+                renderer.getAA(start).addBoxOverlay(options.track || 'secstructure',end-start,1,{"fill" : "#9AFF9A"});
+            });
+            this.result._raw_data.data['HELIX'].peptides.forEach(function(pos) {
+                var start = parseInt(pos[0]);
+                var end = parseInt(pos[1]);
+                renderer.getAA(start).addBoxOverlay(options.track || 'secstructure',end-start,1,{"fill" : "#7EB6FF"});
+            });
+            this.result._raw_data.data['TURN'].peptides.forEach(function(pos) {
+                var start = parseInt(pos[0]);
+                var end = parseInt(pos[1]);
+                renderer.getAA(start).addBoxOverlay(options.track || 'secstructure',end-start,1,{"fill" : "#F0A"});
+            });
+        }
+        renderer.trigger('resultsRendered',[this]);
+    });
+};
+
