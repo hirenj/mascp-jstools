@@ -873,8 +873,10 @@ var addElementToLayer = function(layerName,opts) {
         if (matches[1] && matches[2]) {
             tracer_marker.setAttribute('transform','translate('+((x-0.5)*renderer._RS)+','+matches[1]+') scale('+matches[2]+')');
         }
-        tracer.move(x-0.5,0.05);
-        bobble.move(x-0.5);
+        if (tracer) {
+            tracer.move(x-0.5,0.05);
+            bobble.move(x-0.5);
+        }
     };
     return result;
 };
