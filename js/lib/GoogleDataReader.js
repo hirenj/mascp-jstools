@@ -177,16 +177,17 @@ parseUri.options = {
 // We want to store the locally cached files
 // for all instances
 var cached_files = {};
+var etags = {};
 
 var get_file = function(filename,mime,callback) {
-    if (cached_files[filename]) {
+    if (cached_files[filename] && callback) {
         callback.call(null,null,cached_files[filename]);
         return;
     }
     var query = encodeURIComponent("title='"+filename+"' and 'appdata' in parents and mimeType = '"+mime+"' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
 
-        if (cached_files[filename]) {
+        if (cached_files[filename] && callback) {
             callback.call(null,null,cached_files[filename]);
             return;
         }
@@ -204,8 +205,11 @@ var get_file = function(filename,mime,callback) {
         }
 
         var item_id = data.items[0].id;
+        etags[filename] = data.items[0].etag;
+        if ( ! callback ) {
+            return;
+        }
         do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
-
             if (cached_files[filename]) {
                 callback.call(null,null,cached_files[filename]);
                 return;
@@ -249,7 +253,9 @@ var write_file = function(filename,mime,callback) {
     }
     var query = encodeURIComponent("title='"+filename+"' and 'appdata' in parents and mimeType = '"+mime+"' and trashed = false");
     do_request("www.googleapis.com","/drive/v2/files?q="+query,null,function(err,data) {
-
+        if ( ! cached_files[filename]) {
+            return;
+        }
         if (err) {
             callback.call(null,err);
             return;
@@ -269,11 +275,20 @@ var write_file = function(filename,mime,callback) {
         } else {
             item_id = data.id;
         }
+        if (etags[filename] && data.items && etags[filename] !== data.items[0].etag ) {
+            cached_files[filename] = null;
+            etags[filename] = null;
+            get_file(filename,mime,function() { });
+            callback.call(null,{"cause" : "File too old"});
+            return;
+        }
 
         // CORS requests are not allowed on this domain for uploads for some reason, we need to use
         // the wacky Google uploader, but the commented out bit should work for when they finally
         // allow the CORS request to go through
-
+        if ( ! cached_files[filename]) {
+            return;
+        }
 
         var string_rep;
         try {
@@ -283,20 +298,37 @@ var write_file = function(filename,mime,callback) {
             return;
         }
 
+        var headers_block = {
+            'Content-Type' : mime
+        };
+
+        // if (etags[filename]) {
+        //     headers_block['If-Match'] = etags[filename];
+        // }
+
         var req = gapi.client.request({
             'path' : "/upload/drive/v2/files/"+item_id,
             'method' : "PUT",
             'params' : { "uploadType" : "media"},
-            'headers' : {
-                'Content-Type' : mime
-            },
+            'headers' : headers_block,
             'body' : string_rep
         });
+
         req.execute(function(isjson,data) {
+            if (isjson && isjson.error && isjson.error.code == 412) {
+                cached_files[filename] = null;
+                etags[filename] = null;
+                get_file(filename,mime,callback);
+                return;
+            }
             if ( ! isjson ) {
                 callback.call(null,{"status" : "Google error", "response" : response});
                 return;
             }
+
+            // cached_files[filename] = null;
+            etags[filename] = null;
+            get_file(filename,mime,null);
             callback.call(null,null,cached_files[filename]);
         });
 
@@ -860,8 +892,11 @@ if (typeof module != 'undefined' && module.exports){
                 request.setRequestHeader('Content-Type',req_method.split(':')[1]);
                 req_method = req_method.split(':')[0];
             }
-            if (etag) {
+            if (etag && req_method !== 'PUT') {
                 request.setRequestHeader('If-None-Match',etag);
+            }
+            if (etag && req_method == 'PUT' ) {
+                request.setRequestHeader('If-Match',etag);
             }
             request.onreadystatechange = function(evt) {
                 if (request.readyState == 4) {
