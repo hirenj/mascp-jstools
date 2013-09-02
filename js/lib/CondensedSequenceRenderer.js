@@ -737,12 +737,12 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
     plot.setAttribute('visibility','hidden');
     axis.setAttribute('stroke-width',0.2*RS);
     axis.setAttribute('visibility','hidden');
-    axis.setAttribute('transform','translate(0,0)');
+    axis.setAttribute('transform','translate(1,0)');
     plot.setAttribute('pointer-events','none');
     axis.setAttribute('pointer-events','none');
     
     this._layer_containers[layerName].push(plot);
-    plot.setAttribute('transform','translate(0,10) scale(1,1)');
+    plot.setAttribute('transform','translate(1,10) scale(1,1)');
     this._layer_containers[layerName].push(axis);
 
     if (options.label) {
