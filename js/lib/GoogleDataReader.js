@@ -775,6 +775,11 @@ if (typeof module != 'undefined' && module.exports){
     var has_failed_once = false;
 
     authenticate = function(cback,noevent) {
+        if ( ! ("withCredentials" in (new XMLHttpRequest()))) {
+            cback.call(null,{"cause" : "Browser not supported"});
+            return;
+        }
+
         if (MASCP.GOOGLE_AUTH_TOKEN) {
             cback.call(null);
             return;
@@ -899,8 +904,17 @@ if (typeof module != 'undefined' && module.exports){
             }
 
             var request = new XMLHttpRequest();
+            if (! ('withCredentials' in request) ) {
+                callback.call(null, {'cause' : 'Browser not supported'});
+                return;
+            }
             var req_method = method || 'GET';
-            request.open(req_method.replace(/:.*/,''),"https://"+host+path);
+            try {
+                request.open(req_method.replace(/:.*/,''),"https://"+host+path);
+            } catch (e) {
+                callback.call(null,{ 'cause' : "Access is denied.", 'error' : e, 'status' : 0 });
+                return;
+            }
             request.setRequestHeader('Authorization','Bearer '+MASCP.GOOGLE_AUTH_TOKEN);
             if (req_method == 'GET') {
                 request.setRequestHeader('GData-Version','3.0');
@@ -966,7 +980,7 @@ if (typeof module != 'undefined' && module.exports){
                 if (err) {
                     basic_get_document(doc,etag,function(err,dat) {
                         if (err) {
-                            if (err.cause == "No user event") {
+                            if (err.cause == "No user event" || err.cause == "Access is denied.") {
                                 callback.call(null,err);
                                 return;
                             }
@@ -1159,6 +1173,10 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
         if (err) {
           if (err.cause === "No user event") {
             console.log("Consuming no user event");
+            return;
+          }
+          if (err.cause == "Browser not supported") {
+            console.log("Consuming no browser support");
             return;
           }
           callback.call(null,{ "status" : "preferences", "original_error" : err });
