@@ -1140,8 +1140,11 @@ base.retrieve = function(agi,callback)
             idx.openCursor(range).onsuccess = function(event) {
                 var cursor = event.target.result;
                 if (cursor) {
-                    if (cursor.primaryKey[2] >= timestamps[0] && cursor.primaryKey[2] <= timestamps[1] ) {
-                        if (cursor.primaryKey[2] > max_stamp && cursor.primaryKey[0] == acc && cursor.primaryKey[1] == service) {
+                    var ts = window.msIndexedDB ? cursor.value.retrieved : cursor.primaryKey[2];
+                    var c_acc = window.msIndexedDB ? cursor.value.acc : cursor.primaryKey[0];
+                    var serv = window.msIndexedDB ? cursor.value.service : cursor.primaryKey[1];
+                    if (ts >= timestamps[0] && ts <= timestamps[1] ) {
+                        if (ts > max_stamp && c_acc == acc && serv == service) {
                             result = cursor.value;
                             max_stamp = cursor.primaryKey.retrieved;
                             result.retrieved = new Date(cursor.primaryKey.retrieved);
@@ -1205,7 +1208,11 @@ base.retrieve = function(agi,callback)
                 var cursor = event.target.result;
                 if (cursor) {
                     if ((! acc || (cursor.value.acc == acc) )) {
-                        store.delete(cursor.value.id);
+                        if (window.msIndexedDB) {
+                            store.delete(cursor.value.serviceacc);
+                        } else {
+                            store.delete(cursor.value.id);
+                        }
                     }
                     cursor.continue();
                 }
