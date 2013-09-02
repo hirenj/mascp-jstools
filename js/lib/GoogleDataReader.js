@@ -1291,7 +1291,7 @@ MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
                 return;
             }
             a_temp_reader.retrieve(entry,function() {
-                get_data(this.result._raw_data.etag);
+                get_data( (this.result && this.result._raw_data) ? this.result._raw_data.etag : null);
             });
         });
     })();
