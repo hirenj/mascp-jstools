@@ -179,7 +179,7 @@ parseUri.options = {
 var cached_files = {};
 var etags = {};
 
-var get_file = function(filename,mime,callback) {
+var get_file_by_filename = function(filename,mime,callback) {
     if (cached_files[filename] && callback && MASCP["GOOGLE_AUTH_TOKEN"]) {
         callback.call(null,null,cached_files[filename]);
         return;
@@ -212,44 +212,61 @@ var get_file = function(filename,mime,callback) {
         if ( ! callback ) {
             return;
         }
-        do_request("www.googleapis.com","/drive/v2/files/"+item_id,null,function(err,data) {
+        get_file({ "id" : item_id },null,function(err,data) {
             if (cached_files[filename]) {
                 callback.call(null,null,cached_files[filename]);
                 return;
             }
-
             if ( err ) {
                 callback.call(null,err);
-                return;
             }
-
-            var uri = parseUri(data.downloadUrl);
-            do_request(uri.host,uri.relative,null,function(err,data) {
-                if (cached_files[filename]) {
-                    callback.call(null,null,cached_files[filename]);
-                    return;
-                }
-
-
-                if ( err ) {
-                    callback.call(null,err);
-                    return;
-                }
-                if ( ! data ) {
-                    data = {};
-                }
-                if (typeof data !== 'string') {
-                    cached_files[filename] = data;
-                } else {
-                    cached_files[filename] = JSON.parse(data);
-                }
-                callback.call(null,null,cached_files[filename],item_id);
-            });
+            cached_files[filename] = data;
+            callback.call(null,null,cached_files[filename],item_id);
         });
     });
 };
 
-var write_file = function(filename,mime,callback) {
+var get_file = function(file,mime,callback) {
+    if ( typeof(file) === 'string' ) {
+        get_file_by_filename(file,mime,callback);
+        return;
+    }
+    if (! file.id) {
+        callback.call(null,{"error" : "No file id"});
+        return;
+    }
+    var item_id = file.id;
+    do_request("www.googleapis.com","/drive/v2/files/"+item_id,file.etag,function(err,data) {
+
+        if ( err ) {
+            callback.call(null,err);
+            return;
+        }
+
+        var uri = parseUri(data.downloadUrl);
+
+        file.etag = data.etag;
+
+        do_request(uri.host,uri.relative,null,function(err,data) {
+            if ( err ) {
+                callback.call(null,err);
+                return;
+            }
+            if ( ! data ) {
+                data = {};
+            }
+            var ret_data;
+            if (typeof data !== 'string') {
+                ret_data = data;
+            } else {
+                ret_data = JSON.parse(data);
+            }
+            callback.call(null,null,ret_data,item_id);
+        });
+    });
+};
+
+var write_file_by_filename = function(filename,mime,callback) {
     if (! cached_files[filename]) {
         callback.call(null,{"error" : "No file to save"});
         return;
@@ -286,46 +303,17 @@ var write_file = function(filename,mime,callback) {
             return;
         }
 
-        // CORS requests are not allowed on this domain for uploads for some reason, we need to use
-        // the wacky Google uploader, but the commented out bit should work for when they finally
-        // allow the CORS request to go through
         if ( ! cached_files[filename]) {
             return;
         }
-
-        var string_rep;
-        try {
-            string_rep = JSON.stringify(cached_files[filename]);
-        } catch (e) {
-            callback.call(null,{"status" : "JSON error", "error" : e });
-            return;
-        }
-
-        var headers_block = {
-            'Content-Type' : mime
-        };
-
-        // if (etags[filename]) {
-        //     headers_block['If-Match'] = etags[filename];
-        // }
-
-        var req = gapi.client.request({
-            'path' : "/upload/drive/v2/files/"+item_id,
-            'method' : "PUT",
-            'params' : { "uploadType" : "media"},
-            'headers' : headers_block,
-            'body' : string_rep
-        });
-
-        req.execute(function(isjson,data) {
-            if (isjson && isjson.error && isjson.error.code == 412) {
-                cached_files[filename] = null;
-                etags[filename] = null;
-                get_file(filename,mime,callback);
-                return;
-            }
-            if ( ! isjson ) {
-                callback.call(null,{"status" : "Google error", "response" : response});
+        write_file( { "id" : item_id, "content" : cached_files[filename] },mime,function(err,data) {
+            if (err) {
+                if (err.status && err.status == 412) {
+                    cached_files[filename] = null;
+                    etags[filename] = null;
+                    get_file(filename,mime,callback);
+                }
+                callback.call(null,err);
                 return;
             }
 
@@ -333,17 +321,105 @@ var write_file = function(filename,mime,callback) {
             etags[filename] = null;
             get_file(filename,mime,null);
             callback.call(null,null,cached_files[filename]);
+
         });
-
-        // do_request("www.googleapis.com","/upload/drive/v2/files/"+item_id+"?uploadType=media",null,function(err,data) {
-
-        //     if ( err ) {
-        //         callback.call(null,err);
-        //         return;
-        //     }
-        //     callback.call(null,null,cached_files[filename]);
-        // }, "PUT:"+mime,JSON.stringify(cached_files[filename]));
     });
+}
+
+var create_file = function(file,mime,callback) {
+    if ( typeof(file) === 'string' ) {
+        write_file_by_filename(file,mime,callback);
+        return;
+    }
+    if (file.id) {
+        write_file(file,mime,callback);
+        return;
+    }
+    var req_body = JSON.stringify({
+        'parents': [{'id': file.parent }],
+        "title" : file.name,
+        "mimeType" : mime,
+        "description" : file.name
+    });
+
+    do_request("www.googleapis.com","/drive/v2/files/",null,
+        function(err,data) {
+            if (err) {
+                callback.call(null,err);
+                return;
+            }
+            file.id = data.id;
+            write_file(file,mime,callback);
+        },
+        "POST:application/json",req_body);
+};
+
+var write_file = function(file,mime,callback) {
+    if ( typeof(file) === 'string' ) {
+        write_file_by_filename(file,mime,callback);
+        return;
+    }
+    if ( ! file.id ) {
+        callback.call(null,{"error" : "No file id"});
+        return;
+    }
+    var item_id = file.id;
+    var string_rep;
+
+    if ( ! file.content ) {
+        callback.call();
+        return;
+    }
+
+    try {
+        string_rep = JSON.stringify(file.content);
+    } catch (e) {
+        callback.call(null,{"status" : "JSON error", "error" : e });
+        return;
+    }
+
+    item_id = file.id;
+
+    // CORS requests are not allowed on this domain for uploads for some reason, we need to use
+    // the wacky Google uploader, but the commented out bit should work for when they finally
+    // allow the CORS request to go through
+
+    var headers_block = {
+        'Content-Type' : mime
+    };
+
+    if (file.etag) {
+        // headers_block['If-Match'] = file.etag;
+    }
+
+    var req = gapi.client.request({
+        'path' : "/upload/drive/v2/files/"+item_id,
+        'method' : "PUT",
+        'params' : { "uploadType" : "media"},
+        'headers' : headers_block,
+        'body' : string_rep
+    });
+
+    req.execute(function(isjson,data) {
+        if (isjson && isjson.error && isjson.error.code == 412) {
+            callback.call(null,{"status" : 412, "message" : "E-tag mismatch" });
+            return;
+        }
+        if ( ! isjson ) {
+            callback.call(null,{"status" : "Google error", "response" : response});
+            return;
+        }
+        callback.call(null,null,file.content);
+    });
+
+    // do_request("www.googleapis.com","/upload/drive/v2/files/"+item_id+"?uploadType=media",null,function(err,data) {
+
+    //     if ( err ) {
+    //         callback.call(null,err);
+    //         return;
+    //     }
+    //     callback.call(null,null,cached_files[filename]);
+    // }, "PUT:"+mime,JSON.stringify(cached_files[filename]));
 };
 
 get_permissions = function(doc,callback) {
@@ -1053,6 +1129,10 @@ MASCP.GoogledataReader.prototype.writePreferences = function(prefs_domain,callba
     return write_file(prefs_domain,"application/json; data-type=domaintool-session",callback);
 };
 
+MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
+    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session" }, "application/json; data-type=domaintool-session",callback);
+};
+
 MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
     var file_block = { "getData" : function() { return "Not ready"; }};
     get_file(file,"application/json",function(err,filedata,file_id) {
@@ -1101,6 +1181,7 @@ MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
 };
 
 MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_id,parser_function,callback) {
+    var self = this;
     var reader = (new MASCP.GoogledataReader()).createReader(doc_id,parser_function);
 
     reader.bind('error',function(err) {
@@ -1109,7 +1190,7 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
 
     reader.bind('ready',function() {
         var title = this.title;
-        (new MASCP.GoogledataReader()).getPreferences(prefs_domain,function(err,prefs) {
+        self.getPreferences(prefs_domain,function(err,prefs) {
             if (err) {
                 callback.call(null,{ "status" : "preferences", "original_error" : err });
                 return;
@@ -1123,7 +1204,7 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
             prefs.user_datasets[reader.datasetname].parser_function = parser_function.toString();
             prefs.user_datasets[reader.datasetname].title = title;
 
-            (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
+            self.writePreferences(prefs_domain,function(err,prefs) {
                 if (err) {
                     callback.call(null,{ "status" : "preferences", "original_error" : err });
                     return;
@@ -1135,7 +1216,8 @@ MASCP.GoogledataReader.prototype.addWatchedDocument = function(prefs_domain,doc_
 };
 
 MASCP.GoogledataReader.prototype.removeWatchedDocument = function(prefs_domain,doc_id,callback) {
-    this.getPreferences(prefs_domain,function(err,prefs) {
+    var self = this;
+    self.getPreferences(prefs_domain,function(err,prefs) {
         if (err) {
             callback.call(null,{ "status" : "preferences", "original_error" : err });
             return;
@@ -1150,7 +1232,7 @@ MASCP.GoogledataReader.prototype.removeWatchedDocument = function(prefs_domain,d
             callback.call();
         }
 
-        (new MASCP.GoogledataReader()).writePreferences(prefs_domain,function(err,prefs) {
+        self.writePreferences(prefs_domain,function(err,prefs) {
             if (err) {
                 callback.call(null,{ "status" : "preferences", "original_error" : err });
                 return;
@@ -1176,8 +1258,8 @@ MASCP.GoogledataReader.prototype.listWatchedDocuments = function(prefs_domain,ca
 };
 
 MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,callback) {
-    var gdata = new MASCP.GoogledataReader();
-    gdata.getPreferences(prefs_domain,function(err,prefs) {
+    var self = this;
+    self.getPreferences(prefs_domain,function(err,prefs) {
         if (err) {
           if (err.cause === "No user event") {
             console.log("Consuming no user event");
@@ -1200,7 +1282,7 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
             }
 
             var parser = eval("("+sets[set].parser_function+")");
-            var a_reader = gdata.createReader(set,parser);
+            var a_reader = self.createReader(set,parser);
 
             a_reader.bind('ready',function() {
                 callback.call(null,null,pref,a_reader);
