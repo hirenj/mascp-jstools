@@ -815,14 +815,14 @@ if (typeof module != 'undefined' && module.exports){
 } else {
     scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
 
-    var get_document_using_script = function(doc_id,callback) {
+    var get_document_using_script = function(doc_id,callback,tryauth) {
         var head = document.getElementsByTagName('head')[0];
         var script = document.createElement('script');
         var type = "public";
         var auth = "";
         script.type = 'text/javascript';
         script.setAttribute('id','ssheet-'+doc_id);
-        if (MASCP.GOOGLE_AUTH_TOKEN) {
+        if (MASCP.GOOGLE_AUTH_TOKEN && tryauth ) {
             auth = "&access_token="+MASCP.GOOGLE_AUTH_TOKEN;
             type = "private";
         }
@@ -1054,7 +1054,13 @@ if (typeof module != 'undefined' && module.exports){
                         callback.call(null,err);
                         return;
                     }
-                    get_document_using_script(doc_id,callback);
+                    get_document_using_script(doc_id,function(err,dat) {
+                        if (err) {
+                            get_document_using_script(doc_id,callback,true);
+                        } else {
+                            callback(null,err,dat);
+                        }
+                    },false);
                 } else {
                     callback.call(null,null,dat);
                 }
@@ -1068,7 +1074,7 @@ if (typeof module != 'undefined' && module.exports){
                                 callback.call(null,err);
                                 return;
                             }
-                            get_document_using_script(doc_id,callback);
+                            get_document_using_script(doc_id,callback,true);
                         } else {
                             callback.call(null,null,dat);
                         }
