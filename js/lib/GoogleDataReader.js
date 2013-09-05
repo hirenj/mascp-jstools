@@ -409,7 +409,7 @@ var write_file = function(file,mime,callback) {
             callback.call(null,{"status" : "Google error", "response" : response});
             return;
         }
-        callback.call(null,null,file.content);
+        callback.call(null,null,file.content,file.id);
     });
 
     // do_request("www.googleapis.com","/upload/drive/v2/files/"+item_id+"?uploadType=media",null,function(err,data) {
@@ -925,6 +925,7 @@ if (typeof module != 'undefined' && module.exports){
                 window.setTimeout(function(){
                     console.log("Google token has timed out, forcing refresh");
                     delete MASCP["GOOGLE_AUTH_TOKEN"];
+                    authenticate(function() {});
                 },parseInt(result.expires_in)*1000);
                 initing_auth = false;
                 cback.call(null);
@@ -957,6 +958,7 @@ if (typeof module != 'undefined' && module.exports){
                                     window.setTimeout(function(){
                                         console.log("Google token has timed out, forcing refresh");
                                         delete MASCP["GOOGLE_AUTH_TOKEN"];
+                                        authenticate(function() {});
                                     },parseInt(result.expires_in)*1000);
                                     success.call(null);
                                 } else {
@@ -1144,7 +1146,9 @@ MASCP.GoogledataReader.prototype.writePreferences = function(prefs_domain,callba
 };
 
 MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
-    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session" }, "application/json; data-type=domaintool-session",callback);
+    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session" }, "application/json; data-type=domaintool-session",function(err,content,file_id) {
+        callback.call(null,err,content,file_id,"New annotation session");
+    });
 };
 
 MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
