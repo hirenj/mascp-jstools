@@ -244,8 +244,8 @@ var get_file = function(file,mime,callback) {
         }
 
         var uri = parseUri(data.downloadUrl);
-
         file.etag = data.etag;
+        file.modified = new Date(data.modifiedDate);
 
         do_request(uri.host,uri.relative,null,function(err,data) {
             if ( err ) {
@@ -1039,6 +1039,9 @@ if (typeof module != 'undefined' && module.exports){
                         callback =  null;
                     }
                 }
+            };
+            request.onerror = function(evt) {
+                callback.call(null,{'cause' : { 'status' : request.status }});
             };
             request.send(data);
         });
