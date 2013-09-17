@@ -707,7 +707,7 @@ base.retrieve = function(agi,callback)
 
 (function(clazz) {
 
-    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_accessions, begin_transaction, end_transaction;
+    var get_db_data, store_db_data, search_service, clear_service, find_latest_data, data_timestamps, sweep_cache, cached_accessions, begin_transaction, end_transaction,first_accession;
     
     var max_age = 0, min_age = 0;
 

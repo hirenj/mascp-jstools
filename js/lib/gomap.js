@@ -954,14 +954,14 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                         window.requestAnimFrame(arguments.callee, targetElement);
 //                        targetElement._snapback = setTimeout(arguments.callee,10);
                         if (document.createEvent) {
-                            evObj = document.createEvent('Events');
+                            var evObj = document.createEvent('Events');
                             evObj.initEvent('panstart',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
                     } else {
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
                         if (document.createEvent) {
-                            evObj = document.createEvent('Events');
+                            var evObj = document.createEvent('Events');
                             evObj.initEvent('pan',false,true);
                             targetElement.dispatchEvent(evObj);
                         }
