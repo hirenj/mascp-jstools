@@ -743,6 +743,7 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
     this._layer_containers[layerName].push(plot);
     plot.setAttribute('transform','translate(1,10) scale(1,1)');
     this._layer_containers[layerName].push(axis);
+    var renderer = this;
 
     if (options.label) {
         var text = this._canvas.text(0,0, options.label.max || options.label.min );
