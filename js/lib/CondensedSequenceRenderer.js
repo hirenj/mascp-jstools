@@ -333,6 +333,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
         var zoom_status = null;
         var zoomchange = function() {
+            var renderer = self;
                renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
                var pattern = renderer._canvas.ownerDocument.getElementById('axis_pattern');
                thousand_mark_labels.forEach(function(label) {
@@ -645,9 +646,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             jQuery(renderer).trigger('sequenceChange');
         });
         var canvas = createCanvasObject.call(this);
-        if (this._canvas) {
-            has_canvas = true;
-        } else {
+        if (! this._canvas) {
             if (typeof svgweb != 'undefined') {
                 svgweb.appendChild(canvas,this._container);
             } else {
@@ -943,6 +942,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
 
 var addTextToElement = function(layerName,width,opts) {
     var canvas = this._renderer._canvas;
+    var renderer = this._renderer;
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
@@ -2204,7 +2204,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             self._canvas.parentNode.setAttribute('transform',curr_transform);
             jQuery(self._canvas).trigger('_anim_begin');
             if (document.createEvent) {
-                evObj = document.createEvent('Events');
+                var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
                 self._canvas.dispatchEvent(evObj);
             }
