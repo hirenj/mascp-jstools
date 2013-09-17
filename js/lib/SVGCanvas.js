@@ -226,7 +226,7 @@ var SVGCanvas = SVGCanvas || (function() {
         an_array.refresh_zoom = function() {
             for (var i = 0; i < an_array.length; i++ ) {
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
-                    if (an_array[i].ownerSVGElement.zoom > 3.5) {
+                    if (an_array[i].ownerSVGElement && an_array[i].ownerSVGElement.zoom > 3.5) {
                         an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
@@ -235,7 +235,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 }
             
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'summary') {
-                    if (an_array[i].ownerSVGElement.zoom <= 3.5) {
+                    if (an_array[i].ownerSVGElement && an_array[i].ownerSVGElement.zoom <= 3.5) {
                         an_array[i].setAttribute('display', 'inline');
                         an_array[i].setAttribute('opacity', 1);
                     } else {
@@ -828,22 +828,48 @@ var SVGCanvas = SVGCanvas || (function() {
 
             var marker_group = this.group();
 
-            var back = this.circle(0,dim.CY,9/10*dim.R);
+
+            var text = this.text(0,dim.CY-0.5*dim.R,txt);
+            text.setAttribute('font-size',(opts.font_size || r)*RS);
+            text.setAttribute('font-weight',opts.weight || 'bolder');
+            text.setAttribute('fill',opts.text_fill || '#ffffff');
+            text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
+            text.firstChild.setAttribute('dy','1.5ex');
+            text.setAttribute('text-anchor','middle');
+            var back;
+
+            if ( ! opts.stretch ) {
+                back = this.circle(0,dim.CY,9/10*dim.R);
+            } else {
+                var text_width = 3/2 * text.getBBox().width / RS;
+                var text_height = 3/2 * dim.R;
+                var left_pos = -0.5*text_width;
+                if (text_width > (3*dim.R)) {
+                    left_pos = -0.5*text_width;
+
+                    if (opts.stretch == 'right') {
+                        left_pos = -0.1*text_width;
+                    }
+                    if (opts.stretch == 'left') {
+                        left_pos = -0.9*text_width;
+                    }
+                } else {
+                    text_width = 3 * dim.R;
+                    left_pos = -0.5*text_width;
+                }
+                text.setAttribute('x',(0.5*text_width + left_pos)*RS);
+                back = this.roundRect(left_pos,dim.CY-0.5*text_height,text_width,text_height,{'x' : 0.5*dim.R, 'y' : 0.5*text_height },opts);
+            }
+
             back.setAttribute('fill',opts.fill || 'url(#simple_gradient)');
             window.matchMedia('print').addListener(function(match) {
-                back.setAttribute('fill',match.matches ? '#aaaaaa': 'url(#simple_gradient)');
+                back.setAttribute('fill',match.matches ? '#aaaaaa': (opts.fill || 'url(#simple_gradient)'));
             });
             back.setAttribute('stroke', opts.border || '#000000');
             back.setAttribute('stroke-width', (r/10)*RS);
 
             marker_group.push(back);
-            var text = this.text(0,dim.CY-0.5*dim.R,txt);
-            text.setAttribute('font-size',r*RS);
-            text.setAttribute('font-weight','bolder');
-            text.setAttribute('fill',opts.text_fill || '#ffffff');
-            text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
-            text.firstChild.setAttribute('dy','1.5ex');
-            text.setAttribute('text-anchor','middle');
+
             marker_group.push(text);
 
             marker_group.setAttribute('transform','translate('+dim.CX*RS+', 1) scale(1)');
