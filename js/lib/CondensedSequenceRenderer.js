@@ -2058,7 +2058,7 @@ clazz.prototype.refresh = function(animated) {
                 y_val -= 1*container.track_height/this.zoom;
                 this.navigation.renderTrack(MASCP.getLayer(name), y_val*RS , RS * container.fixed_track_height / this.zoom, { 'font-scale' : ((fixed_font_scale || 1) * 3 *container.track_height) / container.fixed_track_height } );
             }
-            track_heights += container.fixed_track_height + this.trackGap;
+            track_heights += container.fixed_track_height + this.trackGap - container.track_height;
 
         } else {
             y_val = this._axis_height + track_heights / this.zoom;
