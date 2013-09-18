@@ -1020,7 +1020,7 @@ var addShapeToElement = function(layerName,width,opts) {
     } else {
         return;
     }
-    if (opts.offset && opts.shape == "roundrect") {
+    if (((typeof opts.offset) !== 'undefined') && (opts.shape == "roundrect" || opts.shape == "rectangle")) {
         var x_pos = shape.getAttribute('x');
         var y_pos = shape.getAttribute('y');
         shape.setAttribute('transform','translate('+x_pos+','+y_pos+')');
@@ -2047,19 +2047,19 @@ clazz.prototype.refresh = function(animated) {
 
             var track_height = container.fixed_track_height;
 
-            y_val = this._axis_height + (track_heights  - track_height*0.3) / this.zoom;
+            y_val = this._axis_height + track_heights  / this.zoom;
 
             if (animated) {
-                container.animate({ 'visibility' : 'visible','y' : (y_val)*RS });
+                container.animate({ 'visibility': 'visible', 'y' : y_val*RS, 'height' :  RS * container.track_height / this.zoom });
             } else {
-                container.attr({ 'visibility' : 'visible','y' : (y_val)*RS });                
+                container.attr({ 'visibility': 'visible', 'y' : y_val*RS, 'height' :  RS * container.track_height / this.zoom });
             }
-            
             if (this.navigation) {
-                var grow_scale = this.grow_container ? 1 / this.zoom : 1;
-                this.navigation.renderTrack(MASCP.getLayer(name), (y_val)*RS , RS * track_height, { 'font-scale' : ((container.track_height / track_height) * 3 * grow_scale) } );
+                y_val -= 1*container.track_height/this.zoom;
+                this.navigation.renderTrack(MASCP.getLayer(name), y_val*RS , RS * container.fixed_track_height / this.zoom, { 'font-scale' : ((fixed_font_scale || 1) * 3 *container.track_height) / container.fixed_track_height } );
             }
-            track_heights += (this.zoom * track_height) + this.trackGap;
+            track_heights += container.fixed_track_height + this.trackGap;
+
         } else {
             y_val = this._axis_height + track_heights / this.zoom;
             if (animated) {
