@@ -1425,7 +1425,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (self.targetElement) {
             self.targetElement.addEventListener('mouseout',mouseOut,false);
         }
-        targetElement.addEventListener('click',function(ev) { ev.preventDefault(); ev.stopPropagation(); },false);
+        // targetElement.addEventListener('click',function(ev) { ev.preventDefault(); ev.stopPropagation(); },false);
     } else {
         targetElement.addEventListener('mousedown', mouseDown, false);
         targetElement.addEventListener('mousemove', mouseMove, false);        
