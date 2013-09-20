@@ -540,6 +540,19 @@ var do_request = function(request_data) {
     request.send(datablock);
 };
 
+MASCP.Service.request = function(url,callback) {
+    var method =  MASCP.IE ? do_request_ie : do_request;
+    var params =  { async: true, url: url, timeout: 5000, type : "GET",
+                    error: function(response,req,status) {
+                        callback.call(null,{"status" : status });
+                    },
+                    success:function(data,status,xhr) {
+                        callback.call(null,null,data);
+                    }
+                };
+    method.call(null,params);
+};
+
 /**
  * Private method for performing a cross-domain request using Internet Explorer 8 and up. Adapts the 
  * parameters passed, and builds an XDR object. There is no support for a locking
