@@ -665,8 +665,12 @@ var SVGCanvas = SVGCanvas || (function() {
 
         canvas.growingMarker = function(x,y,symbol,opts) {
             var container = document.createElementNS(svgns,'svg');
-            container.setAttribute('viewBox', '-50 -100 200 250');
-            container.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+            if ( ! opts.stretch ) {
+                container.setAttribute('viewBox', '-50 -100 200 250');
+                container.setAttribute('preserveAspectRatio', 'xMinYMin meet');
+            } else {
+                container = this.group();
+            }
             container.setAttribute('x',x);
             container.setAttribute('y',y);
             var the_marker = this.marker(50/RS,(50)/RS,50/RS,symbol,opts);
@@ -676,8 +680,10 @@ var SVGCanvas = SVGCanvas || (function() {
             var positioning_group = this.group();
             result.appendChild(positioning_group);
             positioning_group.appendChild(container);
-            container.setAttribute('width','200');
-            container.setAttribute('height','250');
+            if ( ! opts.stretch ) {
+                container.setAttribute('width','200');
+                container.setAttribute('height','250');
+            }
             // var rect = document.createElementNS(svgns,'rect');
             // rect.setAttribute('stroke','#f00');
             // rect.setAttribute('stroke-width','10');
