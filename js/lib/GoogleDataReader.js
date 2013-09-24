@@ -455,7 +455,11 @@ get_permissions = function(doc,callback) {
 
 get_mimetype = function(doc_id,callback) {
     do_request("www.googleapis.com","/drive/v2/files/"+doc_id+"?fields=mimeType,title",null,function(err,data) {
-        callback.call(null,err,err ? null : (data || {}).mimeType,err ? null : (data || {}).title );
+        var mime = (data || {}).mimeType;
+        if (mime) {
+            mime = mime.replace(/\s+charset=[^\s]+/i,'');
+        }
+        callback.call(null,err,err ? null : mime ,err ? null : (data || {}).title );
     });
 }
 
