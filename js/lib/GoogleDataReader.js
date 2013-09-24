@@ -1083,15 +1083,21 @@ if (typeof module != 'undefined' && module.exports){
         } else {
             get_document_using_script(doc_id,function(err,dat){
                 if (err) {
-                    basic_get_document(doc,etag,function(err,dat) {
-                        if (err) {
-                            if (err.cause == "No user event" || err.cause == "Access is denied.") {
-                                callback.call(null,err);
-                                return;
-                            }
-                            get_document_using_script(doc_id,callback,true);
+                    gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedIn) {
+                        if (loggedIn == true) {
+                            basic_get_document(doc,etag,function(err,dat) {
+                                if (err) {
+                                    if (err.cause == "No user event" || err.cause == "Access is denied.") {
+                                        callback.call(null,err);
+                                        return;
+                                    }
+                                    get_document_using_script(doc_id,callback,true);
+                                } else {
+                                    callback.call(null,null,dat);
+                                }
+                            });
                         } else {
-                            callback.call(null,null,dat);
+                            callback.call(null,{"cause" : "Google session timed out"});
                         }
                     });
                 } else {
