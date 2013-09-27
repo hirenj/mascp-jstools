@@ -1665,7 +1665,7 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
             },0);
         });
     }
-    bean.add(scrollContainer,'scroll',function() {
+    var scroll_func = function() {
         if (disabled || ! console) {
             return;
         }
@@ -1673,16 +1673,20 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
         var width = scroller.cached_width || scroller.clientWidth;
         target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / width));
         bean.fire(controlElement,'panend');
-    });
+    };
+
+    bean.add(scrollContainer,'scroll',scroll_func);
+
     bean.add(controlElement,'pan',function() {
         var size = 100*target.getTotalLength() / (target.getVisibleLength());
         scroller.style.width = parseInt(size)+'%';
         var width = scroller.cached_width || scroller.clientWidth;
         var left_shift = parseInt(width * (target.getLeftPosition() / target.getTotalLength() ));
-        disabled = true;
+        bean.remove(scrollContainer,'scroll',scroll_func);
         scrollContainer.scrollLeft = left_shift;
-        setTimeout(function() {
-            disabled = false;
+        setTimeout(function(){
+            bean.remove(scrollContainer,'scroll',scroll_func);
+            bean.add(scrollContainer,'scroll',scroll_func);
         },0);
     });
 };
