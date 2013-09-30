@@ -1045,7 +1045,9 @@ if (typeof module != 'undefined' && module.exports){
                 }
             };
             request.onerror = function(evt) {
-                callback.call(null,{'cause' : { 'status' : request.status }});
+                if (callback) {
+                    callback.call(null,{'cause' : { 'status' : request.status }});
+                }
             };
             request.send(data);
         });
