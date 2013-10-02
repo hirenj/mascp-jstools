@@ -26,6 +26,17 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         track_group.setAttribute('clip-path','url(#nav_clipping)');
 
+        this.disable = function() {
+            parent_canvas.style.display = 'none';
+            track_canvas.style.display = 'none';
+
+        };
+
+        this.enable = function() {
+            parent_canvas.style.display = 'block';
+            track_canvas.style.display = 'block';
+        }
+
         this.demote = function() {
             track_canvas.hide();
             return;
@@ -611,7 +622,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 toggleMouseEvents.call(this,false);
             }
 
-            if (track_canvas.getAttribute('display') == 'none') {
+            if (track_canvas.getAttribute('display') == 'none' || track_canvas.style.display == 'none') {
                 return;
             }
 
