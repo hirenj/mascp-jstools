@@ -444,6 +444,59 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         });
         return axis;
     };
+
+    clazz.prototype.panTo = function(end,callback) {
+        var renderer = this;
+        var pos = renderer.leftVisibleResidue();
+        var delta = 1;
+        if (pos == end) {
+            if (callback) {
+                callback.call(null);
+            }
+            return;
+        }
+        if (pos > end) {
+            delta = -1;
+        }
+        requestAnimationFrame(function() {
+            renderer.setLeftVisibleResidue(pos);
+            pos += delta;
+            bean.fire(renderer._canvas,'panend');
+            if (pos !== end) {
+                requestAnimationFrame(arguments.callee);
+            } else {
+                if (callback) {
+                    callback.call(null);
+                }
+            }
+        });
+    };
+
+    clazz.prototype.zoomTo = function(zoom,residue,callback) {
+        var renderer = this;
+        var curr = renderer.zoom;
+        var delta = (zoom - curr)/50;
+        jQuery(renderer).bind('zoomChange',function() {
+            jQuery(renderer).unbind('zoomChange',arguments.callee);
+            if (callback) {
+                callback.call(null);
+            }
+        });
+        if (residue) {
+            renderer.zoomCenter = (residue == 'center') ? residue : { 'x' : renderer._RS*residue };
+        } else {
+            renderer.zoom = zoom;
+            return;
+        }
+        requestAnimationFrame(function() {
+            renderer.zoom = curr;
+            curr += delta;
+            if (Math.abs(curr - zoom) > 0.01) {
+                requestAnimationFrame(arguments.callee);
+            }
+        });
+    };
+
     clazz.prototype.setLeftVisibleResidue = function(val) {
         var self = this;
         self._canvas.setCurrentTranslateXY((self._canvas.width.baseVal.value * (1 - (val / (self.sequence.length+self.padding+2)))) - self._canvas.width.baseVal.value,0);
@@ -1754,7 +1807,7 @@ MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
 MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
     var tracers = null;
     for (var i in MASCP.layers) {
-        if (this.isLayerActive(i) && this._layer_containers[i].tracers) {
+        if (this.isLayerActive(i) && this._layer_containers[i] && this._layer_containers[i].tracers) {
             if ( ! tracers ) {
                 tracers = this._layer_containers[i].tracers;
             } else {
