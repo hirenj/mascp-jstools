@@ -540,7 +540,7 @@ var do_request = function(request_data) {
     request.send(datablock);
 };
 
-MASCP.Service.request = function(url,callback) {
+MASCP.Service.request = function(url,callback,noparse) {
     var method =  MASCP.IE ? do_request_ie : do_request;
     var params =  { async: true, url: url, timeout: 5000, type : "GET",
                     error: function(response,req,status) {
@@ -550,6 +550,9 @@ MASCP.Service.request = function(url,callback) {
                         callback.call(null,null,data);
                     }
                 };
+    if (noparse) {
+        params.dataType = 'txt';
+    }
     method.call(null,params);
 };
 
@@ -826,8 +829,11 @@ base.retrieve = function(agi,callback)
 
                 } else {
                     var old_received = self._dataReceived;
-                    self._dataReceived = (function() { return function(dat) {
-                        var res = old_received.call(this,dat);
+                    self._dataReceived = (function() { return function(dat,source) {
+                        var res = old_received.call(this,dat,source);
+                        if (source === "db") {
+                            return res;
+                        }
                         if (res && this.result && this.result._raw_data !== null) {
                             store_db_data(id,this.toString(),this.result._raw_data || {});
                         }
