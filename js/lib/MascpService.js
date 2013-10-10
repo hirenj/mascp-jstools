@@ -762,7 +762,7 @@ base.retrieve = function(agi,callback)
     };
 
     clazz.CacheService = function(reader) {
-        if (reader.retrieve.caching) {
+        if ((reader.prototype && reader.prototype.retrieve.caching) || reader.retrieve.caching) {
             return;
         }
         var _oldRetrieve = reader.retrieve;
@@ -831,9 +831,6 @@ base.retrieve = function(agi,callback)
                     var old_received = self._dataReceived;
                     self._dataReceived = (function() { return function(dat,source) {
                         var res = old_received.call(this,dat,source);
-                        if (source === "db") {
-                            return res;
-                        }
                         if (res && this.result && this.result._raw_data !== null) {
                             store_db_data(id,this.toString(),this.result._raw_data || {});
                         }
