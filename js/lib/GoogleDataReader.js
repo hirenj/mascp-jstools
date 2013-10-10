@@ -227,43 +227,54 @@ var get_file_by_filename = function(filename,mime,callback) {
 };
 
 var get_file = function(file,mime,callback) {
-    if ( typeof(file) === 'string' ) {
-        get_file_by_filename(file,mime,callback);
-        return;
-    }
-    if (! file.id) {
-        callback.call(null,{"error" : "No file id"});
-        return;
-    }
-    var item_id = file.id;
-    do_request("www.googleapis.com","/drive/v2/files/"+item_id,file.etag,function(err,data) {
 
-        if ( err ) {
-            callback.call(null,err);
+    gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
+        if (loggedOut) {
+            callback.call(null,{"cause" : "No user event"});
             return;
         }
 
-        var uri = parseUri(data.downloadUrl);
-        file.etag = data.etag;
-        file.modified = new Date(data.modifiedDate);
+        if ( typeof(file) === 'string' ) {
+            get_file_by_filename(file,mime,callback);
+            return;
+        }
+        if (! file.id) {
+            callback.call(null,{"error" : "No file id"});
+            return;
+        }
+        var item_id = file.id;
+        do_request("www.googleapis.com","/drive/v2/files/"+item_id,file.etag,function(err,data) {
 
-        do_request(uri.host,uri.relative,null,function(err,data) {
             if ( err ) {
                 callback.call(null,err);
                 return;
             }
-            if ( ! data ) {
-                data = {};
-            }
-            var ret_data;
-            if (typeof data !== 'string') {
-                ret_data = data;
-            } else {
-                ret_data = JSON.parse(data);
-            }
-            callback.call(null,null,ret_data,item_id);
+
+            var uri = parseUri(data.downloadUrl);
+            file.etag = data.etag;
+            file.modified = new Date(data.modifiedDate);
+
+            do_request(uri.host,uri.relative,null,function(err,data) {
+                if ( err ) {
+                    callback.call(null,err);
+                    return;
+                }
+                if ( ! data ) {
+                    data = {};
+                }
+                var ret_data;
+                if (typeof data !== 'string') {
+                    ret_data = data;
+                } else {
+                    ret_data = JSON.parse(data);
+                }
+                callback.call(null,null,ret_data,item_id);
+            });
         });
+
     });
+
+
 };
 
 var write_file_by_filename = function(filename,mime,callback) {
