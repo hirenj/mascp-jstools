@@ -1362,8 +1362,11 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if (object.type == "marker") {
             var content = (object.options || {}).content;
+            var wanted_height = object.options.height;
             if (Array.isArray && Array.isArray(content)) {
+                delete object.options.height;
                 click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+                object.options.height = wanted_height;
                 click_reveal = click_reveal[1];
                 click_reveal.style.display = 'none';
                 object.options.content = object.options.alt_content;
