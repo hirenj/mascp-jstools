@@ -1352,6 +1352,7 @@ MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underla
 MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     var renderer = this;
     objects.forEach(function(object) {
+        var click_reveal;
         if (object.type === "box") {
             if (object.aa) {
                 renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
@@ -1361,7 +1362,12 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if (object.type == "marker") {
             var content = (object.options || {}).content;
-            if (typeof(content) == 'object') {
+            if (Array.isArray && Array.isArray(content)) {
+                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+                click_reveal = click_reveal[1];
+                click_reveal.style.display = 'none';
+                object.options.content = object.options.alt_content;
+            } else if (typeof(content) == 'object') {
                 var content_el;
                 if (content.type == "circle") {
                     content_el = renderer._canvas.circle(-0.5,-0.5,1,1);
@@ -1373,7 +1379,17 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 });
                 object.options.content = content_el;
             }
-            renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+            if (click_reveal) {
+                added[1].addEventListener('click',function() {
+                    if (click_reveal.style.display === 'none') {
+                        click_reveal.style.display = 'block';
+                    } else {
+                        click_reveal.style.display = 'none';
+                    }
+                    renderer.refresh();
+                },false);
+            }
         }
     });
 };
