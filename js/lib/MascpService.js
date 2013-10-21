@@ -887,6 +887,11 @@ base.retrieve = function(agi,callback)
         data_timestamps(serviceString,null,cback);
     };
 
+    clazz.Snapshot = function(service,date,cback) {
+        var serviceString = service.toString();
+        get_snapshot(serviceString,null,cback);
+    };
+
     var transaction_ref_count = 0;
     var waiting_callbacks = [];
     clazz.BulkOperation = function(callback) {
@@ -1447,6 +1452,29 @@ base.retrieve = function(agi,callback)
             });
         };
         
+        get_snapshot = function(service,timestamps,cback) {
+            if (! timestamps || typeof timestamps != 'object' || ! timestamps.length ) {
+                timestamps = [0,(new Date()).getTime()];
+            }
+            var sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+            var args = [service,timestamps[0],timestamps[1]];
+            db.all(sql,args,function(err,records) {
+                records = records || [];
+                var results = {};
+                records.forEach(function(record) {
+                    var data = typeof record.data === 'string' ? JSON.parse(record.data) : record.data;
+                    if (data) {
+                        data.retrieved = new Date(record.retrieved);
+                    }
+                    if (results[record.acc] && results[record.acc].retrieved > record.retrieved) {
+                        return;
+                    }
+                    results[record.acc] = record;
+                });
+                cback.call(null,null,results);
+            });
+        };
+
         get_db_data = function(acc,service,cback) {
             var timestamps = max_age ? [min_age,max_age] : [min_age, (new Date()).getTime()];
             return find_latest_data(acc,service,timestamps,cback);
