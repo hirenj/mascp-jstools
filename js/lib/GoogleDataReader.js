@@ -849,6 +849,9 @@ if (typeof module != 'undefined' && module.exports){
         }
         script.src = "https://spreadsheets.google.com/feeds/cells/"+doc_id+"/1/"+type+"/basic?alt=json-in-script&callback=cback"+doc_id+""+auth;
         var error_function = function(e) {
+            if (e.target !== script) {
+                return;
+            }
             if (window.removeEventListener) {
                 window.removeEventListener('error',error_function);
             }
