@@ -227,6 +227,10 @@ var get_file_by_filename = function(filename,mime,callback) {
 };
 
 var get_file = function(file,mime,callback) {
+    if (! gapi || ! gapi.auth || ! gapi.auth.authorize) {
+        callback.call(null,{ "cause" : "No google auth library"});
+        return;
+    }
 
     gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
         if (loggedOut) {
