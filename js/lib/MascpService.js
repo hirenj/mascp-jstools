@@ -887,9 +887,9 @@ base.retrieve = function(agi,callback)
         data_timestamps(serviceString,null,cback);
     };
 
-    clazz.Snapshot = function(service,date,cback) {
+    clazz.Snapshot = function(service,date,wanted,cback) {
         var serviceString = service.toString();
-        get_snapshot(serviceString,null,cback);
+        get_snapshot(serviceString,null,wanted,cback);
     };
 
     var transaction_ref_count = 0;
@@ -1452,12 +1452,19 @@ base.retrieve = function(agi,callback)
             });
         };
         
-        get_snapshot = function(service,timestamps,cback) {
+        get_snapshot = function(service,timestamps,wanted,cback) {
             if (! timestamps || typeof timestamps != 'object' || ! timestamps.length ) {
                 timestamps = [0,(new Date()).getTime()];
             }
-            var sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+            var sql;
             var args = [service,timestamps[0],timestamps[1]];
+            if (wanted) {
+                var question_marks = (new Array(wanted.length+1).join(',?')).substring(1);
+                args = args.concat(wanted);
+                sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? AND acc in ("+question_marks+") ORDER BY retrieved ASC";
+            } else {
+                sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+            }
             db.all(sql,args,function(err,records) {
                 records = records || [];
                 var results = {};
