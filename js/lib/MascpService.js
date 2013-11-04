@@ -887,6 +887,11 @@ base.retrieve = function(agi,callback)
         data_timestamps(serviceString,null,cback);
     };
 
+    clazz.Snapshot = function(service,date,wanted,cback) {
+        var serviceString = service.toString();
+        get_snapshot(serviceString,null,wanted,cback);
+    };
+
     var transaction_ref_count = 0;
     var waiting_callbacks = [];
     clazz.BulkOperation = function(callback) {
@@ -1447,6 +1452,41 @@ base.retrieve = function(agi,callback)
             });
         };
         
+        get_snapshot = function(service,timestamps,wanted,cback) {
+            if (! timestamps || typeof timestamps != 'object' || ! timestamps.length ) {
+                timestamps = [0,(new Date()).getTime()];
+            }
+            var sql;
+            var args = [service,timestamps[0],timestamps[1]];
+            if (wanted && Array.isArray(wanted)) {
+                var question_marks = (new Array(wanted.length+1).join(',?')).substring(1);
+                args = args.concat(wanted);
+                sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? AND acc in ("+question_marks+") ORDER BY retrieved ASC";
+            } else {
+                if (wanted && /^\d+$/.test(wanted.toString())) {
+                    sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? LIMIT ? ORDER BY retrieved ASC";
+                    args = args.concat(parseInt(wanted.toString()));
+                } else {
+                    sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+                }
+            }
+            db.all(sql,args,function(err,records) {
+                records = records || [];
+                var results = {};
+                records.forEach(function(record) {
+                    var data = typeof record.data === 'string' ? JSON.parse(record.data) : record.data;
+                    if (data) {
+                        data.retrieved = new Date(record.retrieved);
+                    }
+                    if (results[record.acc] && results[record.acc].retrieved > record.retrieved) {
+                        return;
+                    }
+                    results[record.acc] = record;
+                });
+                cback.call(null,null,results);
+            });
+        };
+
         get_db_data = function(acc,service,cback) {
             var timestamps = max_age ? [min_age,max_age] : [min_age, (new Date()).getTime()];
             return find_latest_data(acc,service,timestamps,cback);
