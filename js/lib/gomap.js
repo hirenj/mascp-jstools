@@ -1076,7 +1076,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       p.x = positions[0];
       p.y = positions[1];
 
-      var rootCTM = this.getScreenCTM();
+      var rootCTM = this.firstElementChild.getScreenCTM();
       self.matrix = rootCTM.inverse();
       
       p = p.matrixTransform(self.matrix);
@@ -1192,7 +1192,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         p.x = positions[0];
         p.y = positions[1];
 
-        var rootCTM = targetElement._cachedrctm || targetElement.getScreenCTM();
+        var rootCTM = targetElement._cachedrctm || targetElement.firstElementChild.getScreenCTM();
         targetElement._cachedrctm = rootCTM;
         
         p = p.matrixTransform(self.matrix);
@@ -1713,6 +1713,7 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
       if (element.addEventListener) {
         if (eventName == 'mousewheel') {
           element.addEventListener('DOMMouseScroll', callback, false);  
+          element.addEventListener('wheel', callback, false);
         }
         element.addEventListener(eventName, callback, false);
       } else if (element.attachEvent) {
@@ -1741,23 +1742,25 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
               p = controlElement.createSVGPoint();
               p.x = posx;
               p.y = posy;
-              var rootCTM = controlElement.getScreenCTM();
+              /* Fix for mouse position in firefox - http://jsfiddle.net/JNKgR/6/ */
+              var rootCTM = controlElement.firstElementChild.getScreenCTM();
               self.matrix = rootCTM.inverse();
               p = p.matrixTransform(self.matrix);
           } else {
               p.x = posx;
               p.y = posy;
           }
-
           return p;
     };
 
     var mouseWheel = function(e) {
-
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
+      if ( ! wheelData ) {
+        wheelData = e.deltaY;
+      }
       target.zoomCenter = mousePosition(e);
-      
+
       if (wheelData > 0) {
         target.zoom = target.zoom += precision;
       } else {
@@ -1768,6 +1771,10 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
       if (e.preventDefault) {
         e.preventDefault();
       }
+
+      e.returnValue = false;
+      e.stopPropagation();
+
       return false;
     };
 
