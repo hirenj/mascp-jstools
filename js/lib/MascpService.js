@@ -1458,12 +1458,17 @@ base.retrieve = function(agi,callback)
             }
             var sql;
             var args = [service,timestamps[0],timestamps[1]];
-            if (wanted) {
+            if (wanted && Array.isArray(wanted)) {
                 var question_marks = (new Array(wanted.length+1).join(',?')).substring(1);
                 args = args.concat(wanted);
                 sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? AND acc in ("+question_marks+") ORDER BY retrieved ASC";
             } else {
-                sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+                if (wanted && /^\d+$/.test(wanted.toString())) {
+                    sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? LIMIT ? ORDER BY retrieved ASC";
+                    args = args.concat(parseInt(wanted.toString()));
+                } else {
+                    sql = "SELECT * from datacache where service = ? AND retrieved >= ? AND retrieved <= ? ORDER BY retrieved ASC";
+                }
             }
             db.all(sql,args,function(err,records) {
                 records = records || [];
