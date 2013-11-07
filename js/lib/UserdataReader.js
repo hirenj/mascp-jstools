@@ -202,14 +202,14 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         console.log("Data not ready! Waiting for ready state");
         var self = this;        
         bean.add(self,'ready',function() {
-            bend.remove(self,'ready',arguments.callee);
+            bean.remove(self,'ready',arguments.callee);
             self.retrieve(id,cback);
         });
     };
     if (accs.length < 1) {
         setTimeout(function() {
             self.retrieve = retrieve;
-            bean.fire(self,'ready');
+            bean.fire(self,'ready',[data]);
         },0);
         return;
     }
@@ -230,7 +230,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
                     self.retrieve = retrieve;
                     trans(function(err) {
                         if ( ! err ) {
-                            bean.fire(self,'ready');
+                            bean.fire(self,'ready',[data]);
                         } else {
                             bean.fire(self,'error');
                         }
