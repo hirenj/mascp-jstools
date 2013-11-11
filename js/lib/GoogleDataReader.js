@@ -1391,10 +1391,11 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
                 reader.datasetname = pref.title;
                 reader.requestData = function() {
                     var agi = this.agi.toLowerCase();
+                    var gatorURL = set.slice(-1) == '/' ? set+agi : set+'/'+agi;
                     return {
                         type: "GET",
                         dataType: "json",
-                        url : set+agi,
+                        url : gatorURL,
                         data: { 'agi'       : agi,
                                 'service'   : this.datasetname
                         }
