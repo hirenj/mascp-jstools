@@ -783,21 +783,25 @@ var SVGCanvas = SVGCanvas || (function() {
             } else if (Array.isArray && Array.isArray(symbol)) {
                 marker.contentElement = this.group();
                 var phase = (2 * Math.PI / symbol.length);
-                phase -= (Math.PI / 2);
+//                phase -= (Math.PI / 2);
                 var needs_stretch = opts.stretch;
                 symbol.forEach(function(symb,i) {
                     var new_el;
-                    var x_pos = 0.5 + (3 * Math.cos(i*phase));
-                    var y_pos = 0.5 + (3 * Math.sin(i*phase));
+                    var x_pos = r + (r*symbol.length * Math.cos(i*phase - Math.PI/2));
+                    var y_pos = 0 + (r*symbol.length * Math.sin(i*phase - Math.PI/2));
 
                     var rotate_amount = 360*i/symbol.length;
                     rotate_amount -= 90;
                     if (needs_stretch) {
-                        if (rotate_amount > 90 && rotate_amount < 270 ) {
-                            opts.stretch = 'left';
-                        } else {
+                        if (rotate_amount >= -90 && rotate_amount <= 90 ) {
                             opts.stretch = 'right';
+                        } else {
+                            opts.stretch = 'left';
                         }
+                        if ((rotate_amount % 90) == 0 && rotate_amount != 90 && rotate_amount != -90) {
+                            opts.stretch = true;
+                        }
+
                     }
 
                     if (rotate_amount > 90 && rotate_amount < 270) {
@@ -884,7 +888,7 @@ var SVGCanvas = SVGCanvas || (function() {
             if ( ! opts.stretch ) {
                 back = this.circle(0,dim.CY,9/10*dim.R);
             } else {
-                var text_width = text.getBBox().width / RS;
+                var text_width = 1.2 * text.getBBox().width / RS;
                 var text_height = 3/2 * dim.R;
                 var left_pos = -0.5*text_width;
                 if (text_width > (3*dim.R)) {
