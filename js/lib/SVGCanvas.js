@@ -712,7 +712,6 @@ var SVGCanvas = SVGCanvas || (function() {
                 var scale_val = setHeight.call(this,height);
                 this.setAttribute('height',height);
                 var top_offset = this.offset || 0;
-                var widget_height = parseFloat(this.firstChild.firstChild.getAttribute('height'));
                 if ( ! this.angle ) {
                     this.angle = 0;
                 }
@@ -778,7 +777,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 if (symbol.match(/^(:?https?:)?\//)) {
                     marker.contentElement = this.use(symbol,-r,0,r,r);
                 } else {
-                    marker.contentElement = this.text_circle(0,0.5*r,1.75*r,symbol,opts);
+                    marker.contentElement = this.text_circle(0,0,2*r,symbol,opts);
                 }
                 marker.push(marker.contentElement);
             } else if (Array.isArray && Array.isArray(symbol)) {
@@ -808,7 +807,11 @@ var SVGCanvas = SVGCanvas || (function() {
                         new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,r,r);
                         new_el.setAttribute('pointer-events','none');
                     } else {
-                        new_el = canvas.text_circle(x_pos*r,y_pos*r,1.75*r,symb,opts);
+                        var opts_copy = JSON.parse(JSON.stringify(opts));
+                        opts_copy.no_tracer = true;
+                        delete opts_copy.offset;
+                        delete opts_copy.height;
+                        new_el = canvas.text_circle(x_pos*r,y_pos*r,1.75*r,symb,opts_copy);
                     }
                     var curr_transform = new_el.getAttribute('transform');
                     curr_transform = curr_transform + ' rotate('+(rotate_amount)+','+0*r*RS+','+y_pos*r*RS+')';
@@ -881,7 +884,7 @@ var SVGCanvas = SVGCanvas || (function() {
             if ( ! opts.stretch ) {
                 back = this.circle(0,dim.CY,9/10*dim.R);
             } else {
-                var text_width = 3/2 * text.getBBox().width / RS;
+                var text_width = text.getBBox().width / RS;
                 var text_height = 3/2 * dim.R;
                 var left_pos = -0.5*text_width;
                 if (text_width > (3*dim.R)) {
@@ -898,7 +901,7 @@ var SVGCanvas = SVGCanvas || (function() {
                     left_pos = -0.5*text_width;
                 }
                 text.setAttribute('x',(0.5*text_width + left_pos)*RS);
-                back = this.roundRect(left_pos,dim.CY-0.5*text_height,text_width,text_height,{'x' : 0.5*dim.R, 'y' : 0.5*text_height },opts);
+                back = this.roundRect(left_pos,dim.CY-0.5*text_height,text_width,text_height,{'x' : 0.5*dim.R, 'y' : 0.5*text_height },{});
             }
 
             back.setAttribute('fill',opts.fill || 'url(#simple_gradient)');

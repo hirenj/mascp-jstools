@@ -1364,12 +1364,11 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
             var content = (object.options || {}).content;
             var wanted_height = object.options.height;
             if (Array.isArray && Array.isArray(content)) {
-                delete object.options.height;
-                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
-                object.options.height = wanted_height;
+                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,JSON.parse(JSON.stringify(object.options)));
                 click_reveal = click_reveal[1];
                 click_reveal.style.display = 'none';
                 object.options.content = object.options.alt_content;
+                // delete object.options.stretch;
             } else if (typeof(content) == 'object') {
                 var content_el;
                 if (content.type == "circle") {
@@ -1382,10 +1381,11 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 });
                 object.options.content = content_el;
             }
-            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,object.options);
+            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,JSON.parse(JSON.stringify(object.options)));
             if (click_reveal) {
                 added[1].addEventListener('click',function() {
                     if (click_reveal.style.display === 'none') {
+                        click_reveal.parentNode.appendChild(click_reveal);
                         click_reveal.style.display = 'block';
                     } else {
                         click_reveal.style.display = 'none';
