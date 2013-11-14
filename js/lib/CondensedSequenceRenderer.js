@@ -1363,8 +1363,16 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         if (object.type == "marker") {
             var content = (object.options || {}).content;
             var wanted_height = object.options.height;
+
             if (Array.isArray && Array.isArray(content)) {
-                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,JSON.parse(JSON.stringify(object.options)));
+                var cloned_options_array = {};
+                for( var key in object.options ) {
+                    if (object.options.hasOwnProperty(key)) {
+                        cloned_options_array[key] = object.options[key];
+                    }
+                }
+
+                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,cloned_options_array);
                 click_reveal = click_reveal[1];
                 click_reveal.style.display = 'none';
                 object.options.content = object.options.alt_content;
@@ -1381,7 +1389,13 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 });
                 object.options.content = content_el;
             }
-            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,JSON.parse(JSON.stringify(object.options)));
+            var cloned_options = {};
+            for( var key in object.options ) {
+                if (object.options.hasOwnProperty(key)) {
+                    cloned_options[key] = object.options[key];
+                }
+            }
+            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,cloned_options);
             if (click_reveal) {
                 added[1].addEventListener('click',function() {
                     if (click_reveal.style.display === 'none') {
