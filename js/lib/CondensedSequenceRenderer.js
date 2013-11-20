@@ -1102,9 +1102,16 @@ var addShapeToElement = function(layerName,width,opts) {
 
     this._renderer._layer_containers[layerName].push(shape);
     shape.setAttribute('class',layerName);
-    shape.style.strokeWidth = '0px';
     shape.setAttribute('visibility', 'hidden');
     shape.setAttribute('fill',opts.fill || MASCP.layers[layerName].color);
+    if (opts.stroke) {
+        shape.setAttribute('stroke',opts.stroke);
+    }
+    if (opts.stroke_width) {
+        shape.setAttribute('stroke-width',renderer._RS*opts.stroke_width);
+    } else {
+        shape.style.strokeWidth = '0';
+    }
     shape.position_start = this._index;
     shape.position_end = this._index + width;
     return shape;
@@ -1349,15 +1356,124 @@ MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underla
     zoomFunctions.push(underlayFunc);
 };
 
+/*
+          var group = [];
+          for (i = 0; i < sites.length; i++) {
+              var current = sites[i], next = null;
+              if ( ! current ) {
+                continue;
+              }
+              if (sites[i+1]) {
+                next = sites[i+1];
+              }
+              if ( ! do_grouping || (! next || ((next - current) > 10) || renderer.sequence.substring(current,next-1).match(/[ST]/)) ) {
+                if (group.length < 3) {
+                  group.push(current);
+                  group.forEach(function(site){
+                    renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true });
+                  });
+                } else {
+                  group.push(current);
+                  group.forEach(function(site){
+                    renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true })[1].zoom_level = 'text';
+                  });
+                  var rect = renderer.getAA(group[0]).addShapeOverlay(layer,current-group[0]+1,{ "shape" : "roundrect", "offset" : offset - 4.875, "height" : 9.75 });
+                  var a_galnac = (offset < 1) ? renderer.galnac() : renderer.light_galnac();
+                  rect.setAttribute('fill',a_galnac.getAttribute('fill'));
+                  rect.setAttribute('stroke',a_galnac.getAttribute('stroke'));
+                  rect.setAttribute('stroke-width',70);
+                  a_galnac.parentNode.removeChild(a_galnac);
+                  rect.removeAttribute('style');
+                  rect.setAttribute('rx','120');
+                  rect.setAttribute('ry','120');
+                  rect.zoom_level = 'summary';
+                }
+                group = [];
+              } else {
+                group.push(current);
+              }
+          }
+*/
+
+var mark_groups = function(renderer,objects) {
+    var group = [];
+    var new_objects = [];
+    for (i = 0; i < objects.length; i++) {
+      var current = objects[i], next = null;
+      if ( ! current ) {
+        continue;
+      }
+      if (objects[i+1]) {
+        next = objects[i+1];
+      }
+      if ( (! next || (parseInt(next.aa) - parseInt(current.aa) > 10) || renderer.sequence.substring(current,next-1).match(/[ST]/)) ) {
+        if (group.length < 3) {
+          group.push(current);
+          group.forEach(function(site){
+            // We don't want to do anything to these guys, render as usual.
+//            renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true });
+          });
+        } else {
+          group.push(current);
+          group.forEach(function(site){
+            site.options.zoom_level = 'text';
+          });
+          new_objects.push({
+            'aa' : group[0].aa,
+            'type' : 'shape',
+            'width' : parseInt(current.aa)-parseInt(group[0].aa)+1,
+            'options' : {   'zoom_level' : 'summary',
+                            'shape' : 'roundrect',
+                            'fill' : group[0].coalesce.fill,
+                            'stroke' : group[0].coalesce.stroke,
+                            'stroke_width' : group[0].coalesce.stroke_width,
+                            'height' : group[0].options.height,
+                            'offset' : group[0].options.offset
+                        }
+            });
+          // var rect = renderer.getAA(group[0]).addShapeOverlay(layer,current-group[0]+1,{ "shape" : "roundrect", "offset" : offset - 4.875, "height" : 9.75 });
+          // var a_galnac = (offset < 1) ? renderer.galnac() : renderer.light_galnac();
+          // rect.setAttribute('fill',a_galnac.getAttribute('fill'));
+          // rect.setAttribute('stroke',a_galnac.getAttribute('stroke'));
+          // rect.setAttribute('stroke-width',70);
+          // a_galnac.parentNode.removeChild(a_galnac);
+          // rect.removeAttribute('style');
+          // rect.setAttribute('rx','120');
+          // rect.setAttribute('ry','120');
+          // rect.zoom_level = 'summary';
+        }
+        group = [];
+      } else {
+        group.push(current);
+      }
+    }
+    new_objects.forEach(function(obj) {
+        objects.push(obj);
+    });
+};
+
+
 MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     var renderer = this;
+    if (objects.length > 0 && objects[0].coalesce ) {
+        mark_groups(renderer,objects);
+    }
+    console.log(objects);
     objects.forEach(function(object) {
         var click_reveal;
+        var rendered;
         if (object.type === "box") {
             if (object.aa) {
-                renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
+                rendered = renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
             } else if (object.peptide) {
-                renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,object.options);
+            }
+        }
+        if (object.type == "shape") {
+            if (object.aa) {
+                rendered = renderer.getAA(parseInt(object.aa)).addShapeOverlay(track,parseInt(object.width),object.options);
+            } else if (object.peptide) {
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide)[0].addShapeOverlay(track, object.peptide.length, object.options);
             }
         }
         if (object.type == "marker") {
@@ -1407,6 +1523,10 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                     renderer.refresh();
                 },false);
             }
+            rendered = added[1];
+        }
+        if ((object.options || {}).zoom_level) {
+            rendered.zoom_level = object.options.zoom_level;
         }
     });
 };

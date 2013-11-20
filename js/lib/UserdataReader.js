@@ -158,6 +158,15 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
         dataset = apply_map.call(this,data);
     }
     if (typeof this.map == 'function') {
+
+        if (this.map.callback) {
+            var self_func = arguments.callee;
+            this.map(data,function(parsed) {
+                self.map = function(d) { return (d); };
+                self.call(arguments.callee,name,parsed);
+            });
+            return;
+        }
         dataset = this.map(data);
     }
 
