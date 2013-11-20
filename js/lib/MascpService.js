@@ -219,6 +219,89 @@ MASCP.cloneService = function(service,name) {
     return new_service;
 };
 
+
+(function() {
+    var service_from_config = function(set,pref,callback) {
+        if ( ! pref ) {
+            return;
+        }
+        if ( pref.type == "liveClass" ) {
+            var reader_class = MASCP[set];
+            callback.call(null,null,pref,new reader_class());
+            return;
+        }
+        if ( pref.type == "gatorURL" ) {
+            var reader = new MASCP.UserdataReader(null, set);
+            reader.datasetname = pref.title;
+            reader.requestData = function() {
+                var agi = this.agi.toLowerCase();
+                var gatorURL = set.slice(-1) == '/' ? set+agi : set+'/'+agi;
+                return {
+                    type: "GET",
+                    dataType: "json",
+                    url : gatorURL,
+                    data: { 'agi'       : agi,
+                            'service'   : this.datasetname
+                    }
+                };
+            };
+            callback.call(null,null,pref,reader);
+            return;
+        }
+
+
+        // If we wish to load complete datasets
+        // and store them browser-side, we need
+        // a parser function to grab the dataset.
+
+        if ( ! pref.parser_function ) {
+          return;
+        }
+
+        if (JSandbox) {
+          var sandbox = new JSandbox();
+          var parser;
+          sandbox.exec('var sandboxed_parser = '+pref.parser_function+';',function() {
+            var box = this;
+            parser = function(datablock,cback) {
+                box.eval({ "data" : "sandboxed_parser(datablock)",
+                            "input" : {"datablock" : datablock },
+                            "callback" : function(r) {
+                                cback.call(null,r);
+                            }
+                        });
+            };
+            parser.callback = true;
+          });
+        } else {
+            console.log("No sandbox support - not trying to get data for "+pref.title);
+            callback.call(null,{"error" : "No sandbox support"});
+            return;
+        }
+
+        // Right now we only download stuff from Google Drive
+        // We should be able to download stuff from other datasources too
+
+        var a_reader = (new MASCP.GoogledataReader()).createReader(set,parser);
+
+        a_reader.bind('ready',function() {
+            callback.call(null,null,pref,a_reader);
+        });
+        a_reader.bind('error',function(err) {
+            callback.call(null,{"error" : err },pref);
+        });
+    };
+
+    MASCP.IterateServicesFromConfig = function(configuration,callback) {
+        if (! configuration ) {
+            return;
+        }
+        for (var set in configuration) {
+            service_from_config(set,configuration[set],callback);
+        }
+    };
+})();
+
 MASCP.extend = function(in_hsh,hsh) {
     for (var i in hsh) {
         if (true) {

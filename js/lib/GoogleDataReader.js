@@ -226,13 +226,33 @@ var get_file_by_filename = function(filename,mime,callback) {
     });
 };
 
+var check_current_session = function(callback) {
+    if (! gapi || ! gapi.auth || ! gapi.auth.authorize) {
+        callback.call(null,{ "cause" : "No google auth library"});
+        return;
+    }
+    if (! MASCP.GOOGLE_CLIENT_ID) {
+        // We can't have a valid login here, so lets just say we don't
+        // have a valid session.
+        callback.call(null,null,false);
+    }
+    gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
+        callback.call(null,null,loggedOut);
+    });
+};
+
+
 var get_file = function(file,mime,callback) {
     if (! gapi || ! gapi.auth || ! gapi.auth.authorize) {
         callback.call(null,{ "cause" : "No google auth library"});
         return;
     }
 
-    gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
+    check_current_session(function(err,loggedOut) {
+        if (err) {
+            callback.call(null,err);
+            return;
+        }
         if (loggedOut) {
             callback.call(null,{"cause" : "No user event"});
             return;
@@ -1107,7 +1127,15 @@ if (typeof module != 'undefined' && module.exports){
         } else {
             get_document_using_script(doc_id,function(err,dat){
                 if (err) {
-                    gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
+                    check_current_session(function(err,loggedOut) {
+                        if (err) {
+                            callback.call(null,err);
+                            return;
+                        }
+
+                        // If we have a current session active
+                        // we can continue trying the super-authed
+                        // document retrieval
                         if (loggedOut == false) {
                             basic_get_document(doc,etag,function(err,dat) {
                                 if (err) {
@@ -1121,6 +1149,9 @@ if (typeof module != 'undefined' && module.exports){
                                 }
                             });
                         } else {
+                            // If we don't have a valid session AND we failed to retrieve
+                            // the document using the script tag, we're in that semi-logged-in state
+                            // We need to give up, and get the user to log in again.
                             callback.call(null,{"cause" : "Google session timed out"});
                         }
                     });
@@ -1160,6 +1191,8 @@ var setup = function(renderer) {
         render_site.call(this,renderer);
     });
 };
+
+MASCP.GoogledataReader.isLoggedOut = check_current_session;
 
 MASCP.GoogledataReader.prototype.getDocumentList = get_document_list;
 
@@ -1377,48 +1410,7 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
           callback.call(null,{ "status" : "preferences", "original_error" : err });
           return;
         }
-        var sets = prefs.user_datasets;
-        for (var set in sets) {
-          (function() {
-            var pref = sets[set];
-            if ( sets[set].type == "liveClass" ) {
-                var reader_class = MASCP[set];
-                callback.call(null,null,pref,new reader_class());
-                return;
-            }
-            if ( sets[set].type == "gatorURL" ) {
-                var reader = new MASCP.UserdataReader(null, set);
-                reader.datasetname = pref.title;
-                reader.requestData = function() {
-                    var agi = this.agi.toLowerCase();
-                    var gatorURL = set.slice(-1) == '/' ? set+agi : set+'/'+agi;
-                    return {
-                        type: "GET",
-                        dataType: "json",
-                        url : gatorURL,
-                        data: { 'agi'       : agi,
-                                'service'   : this.datasetname
-                        }
-                    };
-                };
-                callback.call(null,null,pref,reader);
-                return;
-            }
-            if ( ! sets[set].parser_function ) {
-              return;
-            }
-
-            var parser = eval("("+sets[set].parser_function+")");
-            var a_reader = self.createReader(set,parser);
-
-            a_reader.bind('ready',function() {
-                callback.call(null,null,pref,a_reader);
-            });
-            a_reader.bind('error',function(err) {
-                callback.call(null,{"error" : err });
-            });
-          })();
-        }
+        MASCP.IterateServicesFromConfig(sets,prefs.user_datasets);
     });
 };
 
