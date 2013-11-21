@@ -1458,7 +1458,6 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     if (objects.length > 0 && objects[0].coalesce ) {
         mark_groups(renderer,objects);
     }
-    console.log(objects);
     objects.forEach(function(object) {
         var click_reveal;
         var rendered;

@@ -227,7 +227,7 @@ MASCP.cloneService = function(service,name) {
         }
         if ( pref.type == "liveClass" ) {
             var reader_class = MASCP[set];
-            callback.call(null,null,pref,new reader_class());
+            callback.call(null,null,pref,new reader_class(null,pref.url));
             return;
         }
         if ( pref.type == "gatorURL" ) {
