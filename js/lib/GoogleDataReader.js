@@ -1030,7 +1030,7 @@ if (typeof module != 'undefined' && module.exports){
         return;
     };
 
-    do_request = function(host,path,etag,callback,method,data) {
+    do_request = function(host,path,etag,callback,method,data,backoff) {
         authenticate(function(err) {
             if (err) {
                 callback.call(null,err);
@@ -1074,6 +1074,15 @@ if (typeof module != 'undefined' && module.exports){
                             callback.call(null,null,datablock);
                         }
                         callback = null;
+                    } else if (request.status >= 500 && ((! backoff ) || (backoff < 1000))  ) {
+                        if ( ! backoff ) {
+                            backoff = 100;
+                        } else {
+                            backoff = 2*backoff;
+                        }
+                        setTimeout(function() {
+                            do_request(host,path,etag,callback,method,data,backoff);
+                        },backoff);
                     } else {
                         if (callback !== null) {
                             callback.call(null,{'cause' : { 'status' : request.status }});
@@ -1222,7 +1231,7 @@ MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
 };
 
 MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
-    var file_block = { "getData" : function() { return "Not ready"; }};
+    var file_block = { "getData" : function() { return "Not ready"; } , "ready" : false };
     get_file(file,"application/json",function(err,filedata,file_id) {
         if (err) {
             callback.call(null,err);
@@ -1249,7 +1258,7 @@ MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
                         file_block.sync();
                     }
                 });
-            },500);
+            },1000);
         };
         original_sync = file_block.sync;
         // We disable permissions checking here, since the method is not supported for app settings
@@ -1257,11 +1266,13 @@ MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
             get_permissions(file_id,function(err,permissions) {
                 file.permissions = permissions;
                 bean.fire(file_block,'ready');
+                file_block.ready = true;
                 callback.call(null,null,file_block);
             });
         } else {
             file_block.permissions = { "read" : true, "write" : true };
             bean.fire(file_block,'ready');
+            file_block.ready = true;
             callback.call(null,null,file_block);
         }
     });
@@ -1410,7 +1421,7 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
           callback.call(null,{ "status" : "preferences", "original_error" : err });
           return;
         }
-        MASCP.IterateServicesFromConfig(sets,prefs.user_datasets);
+        MASCP.IterateServicesFromConfig(prefs.user_datasets,callback);
     });
 };
 
