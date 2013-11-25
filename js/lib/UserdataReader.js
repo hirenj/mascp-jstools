@@ -163,7 +163,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
             var self_func = arguments.callee;
             this.map(data,function(parsed) {
                 self.map = function(d) { return (d); };
-                self.call(arguments.callee,name,parsed);
+                self_func.call(self,name,parsed);
             });
             return;
         }
