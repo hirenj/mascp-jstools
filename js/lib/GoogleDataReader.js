@@ -1230,9 +1230,18 @@ MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
     });
 };
 
-MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
+MASCP.GoogledataReader.prototype.createFile = function(folder,content,title,mime,callback) {
+    return create_file({ "parent" : folder, "content" : content, "name" : title }, mime,function(err,content,file_id) {
+        callback.call(null,err,content,file_id,title);
+    });
+};
+
+MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback,mime) {
+    if ( ! mime ) {
+        mime = "application/json";
+    }
     var file_block = { "getData" : function() { return "Not ready"; } , "ready" : false };
-    get_file(file,"application/json",function(err,filedata,file_id) {
+    get_file(file,mime,function(err,filedata,file_id) {
         if (err) {
             callback.call(null,err);
         }
@@ -1251,7 +1260,10 @@ MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback) {
                 file_block.sync = function() {
                     wanting_new_sync = true;
                 };
-                write_file(file,"application/json",function(err) {
+                if (typeof file !== "string") {
+                    file.content = filedata;
+                }
+                write_file(file,mime,function(err) {
                     timeout = null;
                     file_block.sync = original_sync;
                     if (wanting_new_sync) {
