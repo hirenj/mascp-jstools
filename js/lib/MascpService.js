@@ -268,28 +268,44 @@ MASCP.cloneService = function(service,name) {
                             "input" : {"datablock" : datablock },
                             "callback" : function(r) {
                                 cback.call(null,r);
+                                console.log("Terminating");
+                                box.terminate();
                             }
                         });
+                sandbox.terminate();
             };
             parser.callback = true;
+            parser.terminate = function() {
+                if (sandbox) {
+                    sandbox.terminate();
+                }
+            };
+
+
+            // Right now we only download stuff from Google Drive
+            // We should be able to download stuff from other datasources too
+
+            var a_reader = (new MASCP.GoogledataReader()).createReader(set,parser);
+
+            a_reader.bind('ready',function() {
+                if (parser) {
+                    parser.terminate();
+                }
+                callback.call(null,null,pref,a_reader);
+            });
+            a_reader.bind('error',function(err) {
+                callback.call(null,{"error" : err },pref);
+            });
+
+
           });
+
         } else {
             console.log("No sandbox support - not trying to get data for "+pref.title);
             callback.call(null,{"error" : "No sandbox support"});
             return;
         }
 
-        // Right now we only download stuff from Google Drive
-        // We should be able to download stuff from other datasources too
-
-        var a_reader = (new MASCP.GoogledataReader()).createReader(set,parser);
-
-        a_reader.bind('ready',function() {
-            callback.call(null,null,pref,a_reader);
-        });
-        a_reader.bind('error',function(err) {
-            callback.call(null,{"error" : err },pref);
-        });
     };
 
     MASCP.IterateServicesFromConfig = function(configuration,callback) {
