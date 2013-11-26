@@ -277,6 +277,7 @@ var get_file = function(file,mime,callback) {
             var uri = parseUri(data.downloadUrl);
             file.etag = data.etag;
             file.modified = new Date(data.modifiedDate);
+            file.owner = (data.ownerNames || [])[0];
 
             do_request(uri.host,uri.relative,null,function(err,data) {
                 if ( err ) {
@@ -1273,10 +1274,13 @@ MASCP.GoogledataReader.prototype.getSyncableFile = function(file,callback,mime) 
             },1000);
         };
         original_sync = file_block.sync;
-        // We disable permissions checking here, since the method is not supported for app settings
-        if (false && file_id) {
+        file_block.owner = file.owner;
+        // Anything in app settings uses a string for the filename, since we will have to search for the file
+        // by filename anyway. As such, we can detect if we are after a real file or not.
+        if (typeof file !== "string" && file_id) {
             get_permissions(file_id,function(err,permissions) {
                 file.permissions = permissions;
+                file_block.permissions = permissions;
                 bean.fire(file_block,'ready');
                 file_block.ready = true;
                 callback.call(null,null,file_block);
