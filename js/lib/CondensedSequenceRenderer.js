@@ -794,8 +794,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         if (this._container_canvas.getElementById('defs_'+namespace)){
             return;
         }
-        // this._container_canvas.appendChild(new_owner.createElement('defs'));
-        // this._container_canvas.lastChild.setAttribute('id','defs_'+namespace);
+        this._container_canvas.appendChild(new_owner.createElement('defs'));
+        this._container_canvas.lastChild.setAttribute('id','defs_'+namespace);
         var defs_block = this._container_canvas.lastChild;
 
         if ( ! new_owner._importNode ) {
@@ -803,7 +803,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         var new_nodes = new_owner._importNode(doc,true);
         if (typeof XPathResult !== 'undefined') {
-            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { console.log(ns); return svgns; } ,XPathResult.ANY_TYPE);
+            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return svgns; } ,XPathResult.ANY_TYPE);
             var el = iterator.iterateNext();
             var to_append = [];
             while (el) {
