@@ -1083,7 +1083,7 @@ var addShapeToElement = function(layerName,width,opts) {
     } else {
         return;
     }
-    if (((typeof opts.offset) !== 'undefined') && (opts.shape == "roundrect" || opts.shape == "rectangle")) {
+    if (((typeof opts.offset) !== 'undefined') && (opts.shape == "roundrect" || opts.shape == "rectangle" || opts.shape == "ellipse" )) {
         var x_pos = shape.getAttribute('x');
         var y_pos = shape.getAttribute('y');
         shape.setAttribute('transform','translate('+x_pos+','+y_pos+')');
