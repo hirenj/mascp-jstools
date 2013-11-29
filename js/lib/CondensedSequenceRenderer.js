@@ -741,6 +741,91 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
 })(MASCP.CondensedSequenceRenderer);
 
+
+(function() {
+    var svgns = 'http://www.w3.org/2000/svg';
+    var add_import = function(ownerdoc) {
+        if (!ownerdoc.ELEMENT_NODE) {
+          ownerdoc.ELEMENT_NODE = 1;
+          ownerdoc.ATTRIBUTE_NODE = 2;
+          ownerdoc.TEXT_NODE = 3;
+          ownerdoc.CDATA_SECTION_NODE = 4;
+          ownerdoc.ENTITY_REFERENCE_NODE = 5;
+          ownerdoc.ENTITY_NODE = 6;
+          ownerdoc.PROCESSING_INSTRUCTION_NODE = 7;
+          ownerdoc.COMMENT_NODE = 8;
+          ownerdoc.DOCUMENT_NODE = 9;
+          ownerdoc.DOCUMENT_TYPE_NODE = 10;
+          ownerdoc.DOCUMENT_FRAGMENT_NODE = 11;
+          ownerdoc.NOTATION_NODE = 12;
+        }
+
+        ownerdoc._importNode = function(node, allChildren) {
+          switch (node.nodeType) {
+            case ownerdoc.ELEMENT_NODE:
+              var newNode = ownerdoc.createElementNS(svgns,node.nodeName);
+              /* does the node have any attributes to add? */
+              if (node.attributes && node.attributes.length > 0)
+                for (var i = 0, il = node.attributes.length; i < il;) {
+                  if (! /^on/.test(node.attributes[i].nodeName)) {
+                      newNode.setAttribute(node.attributes[i].nodeName, node.getAttribute(node.attributes[i++].nodeName));
+                  }
+                }
+              /* are we going after children too, and does the node have any? */
+              if (allChildren && node.childNodes && node.childNodes.length > 0)
+                for (var i = 0, il = node.childNodes.length; i < il;) {
+                  if (node.childNodes[i].nodeName !== 'USE' && node.childNodes[i].nodeName !== 'SCRIPT') {
+                      newNode.appendChild(ownerdoc._importNode(node.childNodes[i++], allChildren));
+                  }
+                }
+              return newNode;
+              break;
+            case ownerdoc.TEXT_NODE:
+            case ownerdoc.CDATA_SECTION_NODE:
+            case ownerdoc.COMMENT_NODE:
+              return ownerdoc.createTextNode(node.nodeValue);
+              break;
+          }
+        };
+    };
+
+    MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc) {
+        var new_owner = this._container_canvas.ownerDocument;
+        if (this._container_canvas.getElementById('defs_'+namespace)){
+            return;
+        }
+        // this._container_canvas.appendChild(new_owner.createElement('defs'));
+        // this._container_canvas.lastChild.setAttribute('id','defs_'+namespace);
+        var defs_block = this._container_canvas.lastChild;
+
+        if ( ! new_owner._importNode ) {
+            add_import(new_owner);
+        }
+        var new_nodes = new_owner._importNode(doc,true);
+        if (typeof XPathResult !== 'undefined') {
+            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { console.log(ns); return svgns; } ,XPathResult.ANY_TYPE);
+            var el = iterator.iterateNext();
+            var to_append = [];
+            while (el) {
+                to_append.push(el);
+                el = iterator.iterateNext();
+            }
+            to_append.forEach(function(el) {
+                el.setAttribute('id',namespace+'_'+el.getAttribute('id'));
+                defs_block.appendChild(el);
+            });
+        } else {
+            var els = new_nodes.querySelectorAll('defs > *');
+            for (var i = 0 ; i < els.length; i++ ) {
+                els[i].setAttribute('id',namespace+'_'+els[i].getAttribute('id'));
+                defs_block.appendChild(els[i]);
+            }
+        }
+    };
+
+})();
+
+
 MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values,options) {
     var RS = this._RS;
     
