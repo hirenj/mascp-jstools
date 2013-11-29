@@ -653,6 +653,9 @@ MASCP.Service.request = function(url,callback,noparse) {
                 };
     if (noparse) {
         params.dataType = 'txt';
+        if (noparse === "xml") {
+            params.dataType = 'xml';
+        }
     }
     method.call(null,params);
 };
@@ -1333,7 +1336,7 @@ base.retrieve = function(agi,callback)
                         if (window.msIndexedDB) {
                             store.delete(cursor.value.serviceacc);
                         } else {
-                            store.delete(cursor.value.id);
+                            store.delete(cursor.value.id ? cursor.value.id : cursor.primaryKey );
                         }
                     }
                     cursor.continue();

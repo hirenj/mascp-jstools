@@ -774,7 +774,7 @@ var SVGCanvas = SVGCanvas || (function() {
             marker.setHeight = setHeight;
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
-                if (symbol.match(/^(:?https?:)?\//)) {
+                if (symbol.match(/^(:?https?:)?\/?.*#/)) {
                     marker.contentElement = this.use(symbol,-r,0,r,r);
                 } else {
                     marker.contentElement = this.text_circle(0,0,2*r,symbol,opts);
@@ -807,7 +807,7 @@ var SVGCanvas = SVGCanvas || (function() {
                     if (rotate_amount > 90 && rotate_amount < 270) {
                         rotate_amount = 180 + rotate_amount;
                     }
-                    if (symb.match(/^(:?https?:)?\//)) {
+                    if (symb.match(/^(:?https?:)?\/?.*#/)) {
                         new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,r,r);
                         new_el.setAttribute('pointer-events','none');
                     } else {
