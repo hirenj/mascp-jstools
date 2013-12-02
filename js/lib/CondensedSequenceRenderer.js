@@ -1555,14 +1555,17 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     objects.forEach(function(object) {
         var click_reveal;
         var rendered;
-        if (object.aa !== null && (isNaN(object.aa) || ! renderer.getAA(parseInt(object.aa))) ) {
+        if (object.aa && ( ! renderer.getAA(parseInt(object.aa))) ) {
+            return;
+        }
+        if ((typeof object.aa !== 'undefined') && isNaN(object.aa)) {
             return;
         }
         if (object.type === "box") {
             if (object.aa) {
                 rendered = renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,1,object.options);
             }
         }
         if (object.type == "shape") {
