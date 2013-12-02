@@ -803,7 +803,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         var new_nodes = new_owner._importNode(doc,true);
         if (typeof XPathResult !== 'undefined') {
-            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return svgns; } ,XPathResult.ANY_TYPE);
+            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return svgns; } ,XPathResult.ANY_TYPE,null);
             var el = iterator.iterateNext();
             var to_append = [];
             while (el) {
@@ -1555,6 +1555,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     objects.forEach(function(object) {
         var click_reveal;
         var rendered;
+        if (object.aa !== null && (isNaN(object.aa) || ! renderer.getAA(parseInt(object.aa))) ) {
+            return;
+        }
         if (object.type === "box") {
             if (object.aa) {
                 rendered = renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
