@@ -877,7 +877,7 @@ var SVGCanvas = SVGCanvas || (function() {
 
 
             var text = this.text(0,dim.CY-0.5*dim.R,txt);
-            text.setAttribute('font-size',(opts.font_size || r)*RS);
+            text.setAttribute('font-size',10*RS);
             text.setAttribute('font-weight',opts.weight || 'bolder');
             text.setAttribute('fill',opts.text_fill || '#ffffff');
             text.setAttribute('style','font-family: sans-serif; text-anchor: middle;');
@@ -888,7 +888,7 @@ var SVGCanvas = SVGCanvas || (function() {
             if ( ! opts.stretch ) {
                 back = this.circle(0,dim.CY,9/10*dim.R);
             } else {
-                var text_width = 1.2 * text.getBBox().width / RS;
+                var text_width = 1.2 * (opts.font_size || r) * text.getBBox().width / (10 * RS);
                 var text_height = 3/2 * dim.R;
                 var left_pos = -0.5*text_width;
                 if (text_width > (3*dim.R)) {
@@ -907,6 +907,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 text.setAttribute('x',(0.5*text_width + left_pos)*RS);
                 back = this.roundRect(left_pos,dim.CY-0.5*text_height,text_width,text_height,{'x' : 0.5*dim.R, 'y' : 0.5*text_height },{});
             }
+            text.setAttribute('font-size',(opts.font_size || r)*RS);
 
             back.setAttribute('fill',opts.fill || 'url(#simple_gradient)');
             window.matchMedia('print').addListener(function(match) {
