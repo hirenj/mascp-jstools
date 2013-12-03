@@ -221,6 +221,7 @@ MASCP.cloneService = function(service,name) {
 
 
 (function() {
+    var already_seen_set = {};
     var service_from_config = function(set,pref,callback) {
         if ( ! pref ) {
             return;
@@ -286,7 +287,7 @@ MASCP.cloneService = function(service,name) {
 
             // Right now we only download stuff from Google Drive
             // We should be able to download stuff from other datasources too
-            if (/^http/.test(set)) {
+            if (/^(https?:)?\/?\//.test(set)) {
                 MASCP.Service.request(set,function(err,data) {
                     if (err) {
                         callback.call(null,{"error" : err},pref);
@@ -294,7 +295,16 @@ MASCP.cloneService = function(service,name) {
                     }
 
                     var reader = new MASCP.UserdataReader(null,null);
+
                     reader.datasetname = pref.title;
+
+                    if (already_seen_set[set]) {
+                        MASCP.Service.CacheService(reader);
+                        callback.call(null,null,pref,reader);
+                        return;
+                    }
+                    already_seen_set[set] = true;
+
 
                     reader.bind('ready',function() {
                         if (parser) {
