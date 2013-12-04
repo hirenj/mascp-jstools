@@ -631,6 +631,14 @@ var do_request = function(request_data) {
                 },request_data.last_wait);
                 return;
             }
+            if (request.status == 403) {
+                // Make sure our S3 buckets expose the Server header cross-origin
+                var server = request.getResponseHeader('Server');
+                if (server === 'AmazonS3') {
+                    request_data.success.call(null,{"error" : "No data"},403,request);
+                    return;
+                }
+            }
             if (request.status >= 200 && request.status < 300) {
                 var data_block;
                 if (request_data.dataType == 'xml') {
