@@ -269,8 +269,10 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         reader.gotResult = function() {
             var index = 0;
             var wanted_id = reader.acc || reader.agi || "";
+            var curr_sequence = renderer.sequence;
             for (var i = 0; i < self.sequences.length; i++) {
                 if (self.sequences[i].agi && self.sequences[i].agi.toUpperCase() == wanted_id.toUpperCase()) {
+                    renderer.sequence = self.sequences[i].toString();
                     index = i;
                 }
             }
@@ -350,6 +352,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 return this.getAminoAcidsByPosition(positions);
             };
             old.call(reader);
+            renderer.sequence = curr_sequence;
             renderer.getAminoAcidsByPosition = old_get_aas;
             renderer.getAminoAcidsByPeptide = old_get_pep;
         }
