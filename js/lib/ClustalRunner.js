@@ -266,6 +266,16 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             return;
         }
         var old = reader.gotResult;
+        reader.getSequence = function() {
+            var wanted_id = reader.acc || reader.agi || "";
+            for (var i = 0; i < self.sequences.length; i++) {
+                if (self.sequences[i].agi && self.sequences[i].agi.toUpperCase() == wanted_id.toUpperCase()) {
+                    return self.sequences[i].toString();
+                }
+            }
+            return renderer.sequence;
+        };
+
         reader.gotResult = function() {
             var index = 0;
             var wanted_id = reader.acc || reader.agi || "";
