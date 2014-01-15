@@ -444,10 +444,10 @@ var SVGCanvas = SVGCanvas || (function() {
             a_rect.setAttribute('stroke','#000000');
             this.appendChild(a_rect);
             if ( typeof(opts.offset) !== "undefined" ) {
-                this.offset = opts.offset;
+                a_rect.offset = opts.offset;
                 a_rect.setAttribute('transform','translate('+a_rect.getAttribute('x')+','+a_rect.getAttribute('y')+')');
                 a_rect.setAttribute('x','0');
-                a_rect.setAttribute('y',this.offset*RS);
+                a_rect.setAttribute('y',a_rect.offset*RS);
             }
 
             a_rect.move = function(new_x,new_width) {
