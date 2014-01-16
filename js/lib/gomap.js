@@ -1255,6 +1255,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     }
     
     targetElement.addEventListener('touchstart',function(e) {
+        if ( ! self.enabled ) {
+            return;
+        }
         var targ = self.targetElement ? self.targetElement : targetElement;
         if (self.momentum) {
             window.clearTimeout(self.momentum);
@@ -1284,12 +1287,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             self._momentum_shrinker = setInterval(function() {
                 momentum.shift();
             },20);
-            
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
                 targ.dispatchEvent(evObj);
             }
+            e.preventDefault();
         }
     },false);
 
@@ -1368,6 +1371,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             return true;
         }
         if ( ! self.dragging ) {
+            clearInterval(self._momentum_shrinker);
             mouseUp(e);
             return;
         }
@@ -1403,7 +1407,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
             start = start+delta;
             delta = delta * 0.5;
             
-            if (Math.abs(start_delta / delta) < 10) {
+            if (delta > 0 && Math.abs(start_delta / delta) < 10) {
                 window.requestAnimFrame(arguments.callee, targ);
 //                window.setTimeout(arguments.callee,50);
             } else {
@@ -1485,29 +1489,31 @@ GOMap.Diagram.Dragger.prototype.addTouchZoomControls = function(zoomElement,touc
         }
     },false);
 
-    touchElement.addEventListener('gesturestart',function(e) {
+
+    // touchElement.addEventListener('gesturestart',function(e) {
+    Hammer(touchElement).on("touch",function(e) {
         if ( ! self.enabled ) {
             return;
         }
-        zoomElement.zoomLeft = null;
+        // zoomElement.zoomLeft = null;
         var zoomStart = zoomElement.zoom;
 
         var zoomscale = function(ev) {
             if ( zoomElement.zoomCenter ) {
-                zoomElement.zoom = zoomStart * ev.scale;
+                zoomElement.zoom = zoomStart * ev.gesture.scale;
             }
             ev.preventDefault();
         };
-        this.addEventListener('gesturechange',zoomscale,false);
-        this.addEventListener('gestureend',function(ev) {
-            touchElement.removeEventListener('gesturechange',zoomscale);
-            touchElement.removeEventListener('gestureend',arguments.callee);
+        Hammer(touchElement).on('pinch',zoomscale,false);
+        Hammer(touchElement).on('release',function(ev) {
+            Hammer(touchElement).off('pinch',zoomscale);
+            Hammer(touchElement).off('release',arguments.callee);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
             if (zoomElement.trigger) {
                 zoomElement.trigger('gestureend');
             }
-        },false);  
+        },false);
         e.preventDefault();
     },false);
 

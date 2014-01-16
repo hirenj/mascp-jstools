@@ -106,6 +106,7 @@
 
         <concat destfile="build/mascp-jstools.js" force="yes">
             <fileset dir="js" includes="bean.js"/>
+            <fileset dir="js" includes="hammer.js"/>
             <fileset dir="build" includes="mascp-jstools.services.js"/>
             <fileset dir="build" includes="mascp-jstools.renderers.js"/>
             <fileset dir="build" includes="mascp-jstools.map.js"/>
