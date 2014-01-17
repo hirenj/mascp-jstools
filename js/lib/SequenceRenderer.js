@@ -311,7 +311,7 @@ MASCP.SequenceRenderer = (function() {
             }
     //        this._container.style.width = '100%';
 
-            jQuery(this).bind('sequenceChange', function(e){
+            bean.add(this,'sequenceChange', function(e){
                 jQuery(sequenceContainer).text("");
                 jQuery(sequenceContainer).append(this._sequence_els);
                 jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
@@ -437,7 +437,7 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
         this._renderer = renderer;
     });
     this._sequence_els = sequence_els;   
-    jQuery(this).trigger('sequenceChange');
+    bean.fire(this,'sequenceChange');
 };
 
 /**

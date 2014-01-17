@@ -21,9 +21,9 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
 
     // We want to unbind the default handler for sequence change that we get from
     // inheriting from CondensedSequenceRenderer
-    jQuery(this).unbind('sequenceChange');
+    bean.remove(this,'sequenceChange');
 
-    jQuery(this).bind('sequenceChange',function() {
+    bean.add(this,'sequenceChange',function() {
         for (var layername in MASCP.layers) {
             if (MASCP.layers.hasOwnProperty(layername)) {
                 MASCP.layers[layername].disabled = true;
@@ -537,7 +537,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     clazz.prototype.setSequence = function(sequence) {
         var new_sequence = this._cleanSequence(sequence);
         if (new_sequence == this.sequence && new_sequence !== null) {
-            jQuery(this).trigger('sequenceChange');
+            bean.fire(this,'sequenceChange');
             return;
         }
     
@@ -706,7 +706,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 }
             });
 
-            jQuery(renderer).trigger('sequenceChange');
+            bean.fire(renderer,'sequenceChange');
         });
         var canvas = createCanvasObject.call(this);
         if (! this._canvas) {
@@ -722,8 +722,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
         var seq_change_func = function(other_func) {
             if ( ! rend._canvas ) {
-                rend.bind('sequenceChange',function() {
-                    jQuery(rend).unbind('sequenceChange',arguments.callee);
+                bean.add(rend,'sequenceChange',function() {
+                    bean.remove(rend,'sequenceChange',arguments.callee);
                     other_func.apply();
                 });
             } else {
@@ -834,8 +834,8 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,values);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -927,8 +927,8 @@ var addElementToLayer = function(layerName,opts) {
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1039,8 +1039,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1095,8 +1095,8 @@ var addTextToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1142,8 +1142,8 @@ var addShapeToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1217,8 +1217,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,url,width);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1251,8 +1251,8 @@ var addCalloutToLayer = function(layerName,element,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1283,8 +1283,8 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -2120,9 +2120,9 @@ clazz.prototype.addTrack = function(layer) {
     var renderer = this;
     
     if ( ! this._canvas ) {
-        this.bind('sequencechange',function() {
+        bean.add(this,'sequencechange',function() {
             this.addTrack(layer);
-            this.unbind('sequencechange',arguments.callee);
+            bean.remove(this,'sequencechange',arguments.callee);
         });
         console.log("No canvas, cannot add track, waiting for sequencechange event");
         return;
