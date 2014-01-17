@@ -275,9 +275,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
         };
         var canvas = renderer._canvas;
-        canvas.addEventListener('zoomChange', zoomchange, false);
+        bean.add(canvas,'zoomChange', zoomchange);
         bean.add(aas,'removed',function() {
-            canvas.removeEventListener('zoomChange',zoomchange);
+            bean.remove(canvas,'zoomChange',zoomchange);
         });
         return aas;
     };
@@ -439,9 +439,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    }
                }
         };
-        canvas.addEventListener('zoomChange', zoomchange, false);
+        bean.add(canvas,'zoomChange', zoomchange);
         bean.add(axis,'removed',function() {
-            canvas.removeEventListener('zoomChange',zoomchange);
+            bean.remove(canvas,'zoomChange',zoomchange);
             var remover = function(el) {
                 if (el.parentNode) {
                     el.parentNode.removeChild(el);
@@ -485,8 +485,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var renderer = this;
         var curr = renderer.zoom;
         var delta = (zoom - curr)/50;
-        jQuery(renderer).bind('zoomChange',function() {
-            jQuery(renderer).unbind('zoomChange',arguments.callee);
+        bean.add(renderer,'zoomChange',function() {
+            bean.remove(renderer,'zoomChange',arguments.callee);
             delete renderer.zoomCenter;
             if (callback) {
                 callback.call(null);
@@ -1441,7 +1441,7 @@ var zoomFunctions = [];
 
 MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
     if (zoomFunctions.length == 0) {
-        this.bind('zoomChange',function() {
+        bean.add(this,'zoomChange',function() {
             for (var i = zoomFunctions.length - 1; i >=0; i--) {
                 zoomFunctions[i].call(this, this.zoom, this._canvas);
             }
@@ -1789,11 +1789,11 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         container.panevents = true;
     }
        
-    canvas.addEventListener('zoomChange', zoomchange,false);
+    bean.add(canvas,'zoomChange', zoomchange,false);
     bean.add(amino_acids[0],'removed',function() {
         canvas.removeEventListener('panstart',panstart);
         bean.remove(canvas,'panend',panend);
-        canvas.removeEventListener('zoomChange',zoomchange);
+        bean.remove(canvas,'zoomChange',zoomchange);
         delete container.panevents;
     });
     return amino_acids;
@@ -2533,7 +2533,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 bean.fire(self._canvas,'panend');
                 bean.fire(self._canvas,'_anim_end');
 
-                jQuery(self._canvas).one('zoomChange',function() {
+                bean.add(self._canvas,'zoomChange',function() {
+                    bean.remove(self._canvas,'zoomChange',arguments.callee);
                     self.refresh();
                     if (typeof center_residue != 'undefined') {
                         var delta = ((start_zoom - zoom_level)/(25))*center_residue;
@@ -2553,15 +2554,9 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             
                 if (self._canvas) {
                     self._canvas.zoom = parseFloat(zoom_level);
-                    if (document.createEvent) {
-                        var evObj = document.createEvent('Events');
-                        evObj.initEvent('zoomChange',false,true);
-                        self._canvas.dispatchEvent(evObj);
-                    } else {
-                        jQuery(self._canvas).trigger('zoomChange');
-                    }
+                    bean.fire(self._canvas,'zoomChange');
                 }
-                jQuery(self).trigger('zoomChange');
+                bean.fire(self,'zoomChange');
             };
         
             if (("ontouchend" in document) && self.zoomCenter && ! no_touch_center ) {
