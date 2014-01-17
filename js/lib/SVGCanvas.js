@@ -264,7 +264,7 @@ var SVGCanvas = SVGCanvas || (function() {
         }
         if ( ! in_anim ) {
             extended_elements.forEach(function(canv) {
-                jQuery(canv).trigger('_anim_begin');
+                bean.fire(canv,'_anim_begin');
             });
             in_anim = true;
         }
@@ -276,7 +276,7 @@ var SVGCanvas = SVGCanvas || (function() {
                 anim_clock_funcs = null;
                 in_anim = false;
                 extended_elements.forEach(function(canv) {
-                    jQuery(canv).trigger('_anim_end');
+                    bean.fire(canv,'_anim_end');
                 });
                 return;
             }

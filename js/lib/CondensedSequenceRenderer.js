@@ -122,15 +122,15 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     return oldAddEventListener.apply(canv,[ev,func,bubbling]);
                 };
 
-                jQuery(canv).bind('_anim_begin',function() {
+                bean.add(canv,'_anim_begin',function() {
                     for (var i = 0; i < mouse_moves.length; i++ ) {
                         canv.removeEventListener('mousemove', mouse_moves[i], false );
                     }
-                    jQuery(canv).bind('_anim_end',function() {
+                    bean.add(canv,'_anim_end',function() {
                         for (var j = 0; j < mouse_moves.length; j++ ) {
                             oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
                         }                        
-                        jQuery(canv).unbind('_anim_end',arguments.callee);
+                        bean.remove(canv,'_anim_end',arguments.callee);
                     });
                 });
             }
@@ -166,12 +166,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 }
             });
         
-            jQuery(canv).bind('_anim_begin',function() {
+            bean.add(canv,'_anim_begin',function() {
                 left_fade.setAttribute('visibility','hidden');
             });
         
-            jQuery(canv).bind('_anim_end',function() {
-                jQuery(canv).trigger('pan');
+            bean.add(canv,'_anim_end',function() {
+                bean.fire(canv,'pan');
             });
 
             if (canv.currentTranslate.x >= 0) {
@@ -253,8 +253,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         if ( ! MASCP.IE ) {
         jQuery(this._canvas).bind('panstart',hide_chrome);
         bean.add(this._canvas,'panend',show_chrome);
-        jQuery(this._canvas).bind('_anim_begin',hide_chrome);
-        jQuery(this._canvas).bind('_anim_end',show_chrome);
+        bean.add(this._canvas,'_anim_begin',hide_chrome);
+        bean.add(this._canvas,'_anim_end',show_chrome);
         nav_canvas.addEventListener('DOMMouseScroll',wheel_fn,false);
         nav_canvas.addEventListener('wheel',wheel_fn,false);
         nav_canvas.onmousewheel = wheel_fn;
@@ -2509,7 +2509,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             var scale_value = Math.abs(parseFloat(zoomLevel)/start_zoom);
             curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
             self._canvas.parentNode.setAttribute('transform',curr_transform);
-            jQuery(self._canvas).trigger('_anim_begin');
+            bean.fire(self._canvas,'_anim_begin');
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
@@ -2531,7 +2531,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 self._canvas.parentNode.setAttribute('transform',curr_transform);
 
                 bean.fire(self._canvas,'panend');
-                jQuery(self._canvas).trigger('_anim_end');
+                bean.fire(self._canvas,'_anim_end');
 
                 jQuery(self._canvas).one('zoomChange',function() {
                     self.refresh();
@@ -2565,8 +2565,11 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             };
         
             if (("ontouchend" in document) && self.zoomCenter && ! no_touch_center ) {
-                jQuery(self).unbind('gestureend');
-                jQuery(self).one('gestureend',end_function);
+                bean.remove(self,'gestureend');
+                bean.add(self,'gestureend',function(){
+                    bean.remove(self,'gestureend',arguments.callee);
+                    end_function();
+                });
                 timeout = 1;
             } else {
                 if (! this.refresh.suspended) {
