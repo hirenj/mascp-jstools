@@ -2098,7 +2098,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 
 (function(clazz) {
 
-var vis_change_event = function(e,renderer,visibility) {
+var vis_change_event = function(renderer,visibility) {
     var self = this;
     if ( ! renderer._layer_containers[self.name] || renderer._layer_containers[self.name].length <= 0 ) {
         return;
@@ -2136,7 +2136,8 @@ clazz.prototype.addTrack = function(layer) {
         if ( ! layer_containers[layer.name].track_height) {
             layer_containers[layer.name].track_height = renderer.trackHeight || 4;
         }
-        jQuery(layer).unbind('visibilityChange',vis_change_event).bind('visibilityChange',vis_change_event);
+        bean.remove(layer,'visibilityChange',vis_change_event);
+        bean.add(layer,'visibilityChange',vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         var ev_function = function(ev,original_event,element) {
             bean.fire(layer,ev.type,[original_event,element.position_start,element.position_end]);

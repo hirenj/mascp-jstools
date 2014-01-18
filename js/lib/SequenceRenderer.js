@@ -550,7 +550,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
     jQuery(this._container).toggleClass(layerName+'_active');
     jQuery(this._container).toggleClass(layerName+'_inactive');
     if ( ! consumeChange ) {
-        jQuery(layer).trigger('visibilityChange',[this,this.isLayerActive(layer)]);
+        bean.fire(layer,'visibilityChange',[this,this.isLayerActive(layer)]);
     }
     return this;
 };
@@ -570,7 +570,7 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
     jQuery(this._container).addClass('active_layer');    
     jQuery(this._container).removeClass(layer.name+'_inactive');
     if ( ! consumeChange ) {
-        jQuery(layer).trigger('visibilityChange',[this,true]);
+        bean.fire(layer,'visibilityChange',[this,true]);
     }
     return this;
 };
@@ -591,7 +591,7 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     jQuery(this._container).removeClass('active_layer');
     jQuery(this._container).addClass(layer.name+'_inactive');
     if (! consumeChange ) {
-        jQuery(layer).trigger('visibilityChange',[this,false]);
+        bean.fire(layer,'visibilityChange',[this,false]);
     }
     return this;
 };
@@ -638,7 +638,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,co
         }
     });
     if (visibility !== null && ! consumeChange) {
-        jQuery(group).trigger('visibilityChange',[renderer,visibility]);
+        bean.fire(group,'visibilityChange',[renderer,visibility]);
     }
 };
 
@@ -847,7 +847,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
     var layer_func = null;
 
     if (layerObj && the_input._current_bindings.length === 0) {
-        layer_func = function(e,rend,visibility) {
+        layer_func = function(rend,visibility) {
             if (rend != renderer) {
                 return;
             }
@@ -858,7 +858,7 @@ MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputEleme
                 the_input.removeAttribute('checked');
             }
         };
-        jQuery(layerObj).bind("visibilityChange",layer_func);
+        bean.add(layerObj,'visibilityChange',layer_func);
         if (the_input.parentNode) {
             the_input.parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+layerObj.color+'; width: 1em; height: 1em;"></div>')[0],the_input);
         }
@@ -927,13 +927,13 @@ MASCP.SequenceRenderer.prototype._removeOtherBindings = function(object,inputEle
         var cb = inputElement._current_bindings[i];
         
         if ( cb.layer && cb.layer != object.name ) {
-            jQuery(MASCP.getLayer(cb.layer)).unbind('visibilityChange',cb.object_function);
-            jQuery(inputElement).unbind('change',cb.input_function);
+            bean.remove(MASCP.getLayer(cb.layer),'visibilityChange',cb.object_function);
+            bean.remove(inputElement,'change',cb.input_function);
         }
         
         if ( cb.group && cb.group != object.name ) {
-            jQuery(MASCP.getGroup(cb.group)).unbind('visibilityChange',cb.object_function);
-            jQuery(inputElement).unbind('change',cb.input_function);
+            bean.remove(MASCP.getGroup(cb.group),'visibilityChange',cb.object_function);
+            bean.remove(inputElement,'change',cb.input_function);
         }
         cb.group = null;
         cb.layer = null;
@@ -991,7 +991,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
     var group_func = null;
 
     if (groupObject && the_input[0]._current_bindings.length === 0) {
-        group_func = function(e,rend,visibility) {
+        group_func = function(rend,visibility) {
             if (rend != renderer) {
                 return;
             }
@@ -1000,7 +1000,7 @@ MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputEleme
                 the_input[0].removeAttribute('checked');
             }
         };
-        jQuery(MASCP.getGroup(group)).bind('visibilityChange', group_func);
+        bean.add(MASCP.getGroup(group),'visibilityChange', group_func);
         
         if (the_input[0].parentNode) {
             the_input[0].parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+groupObject.color+'; width: 1em; height: 1em;"></div>')[0],the_input[0]);
@@ -1027,7 +1027,7 @@ MASCP.SequenceRenderer.prototype.createGroupController = function(lay,grp) {
     var group = MASCP.getGroup(grp);
 
     var self = this;
-    jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+    bean.add(layer,'visibilityChange',function(rend,visible) {
         if (rend == self) {
             self.setGroupVisibility(group, visible);
             self.refresh();
