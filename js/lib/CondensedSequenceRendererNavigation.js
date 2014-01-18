@@ -121,13 +121,13 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 self.setGroupVisibility(group);
             });
 
-            jQuery(layer).bind('visibilityChange',function(ev,rend,visible) {
+            bean.add(layer,'visibilityChange',function(rend,visible) {
                 if (group.size() > 0) {            
                     self.setGroupVisibility(group, expanded_map[layer.name] && visible,true);
                     renderer.refresh();
                 }
             });
-            jQuery(group).bind('visibilityChange',function(ev,rend,visible) {
+            bean.add(group,'visibilityChange',function(rend,visible) {
                 if (visible) {
                     self.showLayer(layer,true);
                     expanded_map[layer.name] = true;
