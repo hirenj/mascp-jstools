@@ -117,7 +117,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             
             var self = this;
 
-            jQuery(layer).bind('removed',function(ev,rend) {
+            bean.add(layer,'removed',function(ev,rend) {
                 self.setGroupVisibility(group);
             });
 
