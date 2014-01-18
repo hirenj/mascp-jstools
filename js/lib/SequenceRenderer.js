@@ -290,7 +290,7 @@ MASCP.SequenceRenderer = (function() {
                 if (this.refresh) {
                     this.refresh(true);
                 }
-                jQuery(renderer).trigger('orderChanged', [ track_order ] );
+                bean.fire(renderer,'orderChanged', [ track_order ] );
 
             }
         };
