@@ -277,8 +277,12 @@ MASCP.SequenceRenderer = (function() {
                     if (track_order.indexOf(renderer_track_order[i]) < 0) {
                         this.hideLayer(renderer_track_order[i]);
                         this.hideGroup(renderer_track_order[i]);
-                        jQuery(MASCP.getLayer(renderer_track_order[i])).trigger('removed',[renderer]);
-                        jQuery(MASCP.getGroup(renderer_track_order[i])).trigger('removed',[renderer]);
+                        if (MASCP.getLayer(renderer_track_order[i])) {
+                            bean.fire(MASCP.getLayer(renderer_track_order[i]),'removed',[renderer]);
+                        }
+                        if (MASCP.getGroup(renderer_track_order[i])) {
+                            bean.fire(MASCP.getGroup(renderer_track_order[i]),'removed',[renderer]);
+                        }
                     }
                 }
                 renderer_track_order = track_order;
