@@ -2139,11 +2139,11 @@ clazz.prototype.addTrack = function(layer) {
         jQuery(layer).unbind('visibilityChange',vis_change_event).bind('visibilityChange',vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         var ev_function = function(ev,original_event,element) {
-            jQuery(layer).trigger(ev.type,[original_event,element.position_start,element.position_end]);
+            bean.fire(layer,ev.type,[original_event,element.position_start,element.position_end]);
         };
-        for (var i = 0 ; i < event_names.length; i++) {
-            jQuery(layer_containers[layer.name]._event_proxy).bind(event_names[i],ev_function);
-        }
+        // for (var i = 0 ; i < event_names.length; i++) {
+        //     bean.add(layer_containers[layer.name]._event_proxy,event_names[i],ev_function);
+        // }
         jQuery(layer).unbind('removed').bind('removed',function(e,rend) {
             if (rend) {
                 rend.removeTrack(this);
