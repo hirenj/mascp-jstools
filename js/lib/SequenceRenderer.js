@@ -1161,17 +1161,17 @@ MASCP.SequenceRenderer.prototype.refresh = function()
 
 MASCP.SequenceRenderer.prototype.bind = function(ev,func)
 {
-    jQuery(this).bind(ev,func);
+    bean.add(this,ev,func);
 };
 
 MASCP.SequenceRenderer.prototype.unbind = function(ev,func)
 {
-    jQuery(this).unbind(ev,func);
+    bean.remove(this,ev,func);
 };
 
 
 MASCP.SequenceRenderer.prototype.trigger = function(ev,args)
 {
-    jQuery(this).trigger(ev,args);
+    bean.fire(this,ev,args);
 };
 
