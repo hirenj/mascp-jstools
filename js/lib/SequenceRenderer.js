@@ -1093,8 +1093,8 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fract
     }
     var event_names = ['mouseover','mousedown','mousemove','mouseout','click','dblclick','mouseup','mouseenter','mouseleave'];
     for (var i = 0 ; i < event_names.length; i++) {
-        jQuery(new_el).bind(event_names[i],function() { return function(e) {
-            jQuery(MASCP.getLayer(layerName)).trigger(e.type,[e,'SequenceRenderer']);
+        bean.add(new_el,event_names[i],function() { return function(e) {
+            bean.fire(MASCP.getLayer(layerName),e.type,[e,'SequenceRenderer']);
         };}(i));
     }    
     return this;
