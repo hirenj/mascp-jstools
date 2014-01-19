@@ -183,7 +183,7 @@ MASCP.SnpReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         });
         renderer.redrawAnnotations('insertions_controller');
-        jQuery(renderer).trigger('resultsRendered',[reader]);
+        renderer.trigger('resultsRendered',[reader]);
         
     });
 };
@@ -292,7 +292,7 @@ MASCP.RnaEditReader.prototype.setupSequenceRenderer = function(renderer) {
         }
         
         });
-        jQuery(renderer).trigger('resultsRendered',[reader]);
+        renderer.trigger('resultsRendered',[reader]);
     });
 };
 

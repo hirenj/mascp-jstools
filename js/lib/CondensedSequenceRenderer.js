@@ -21,9 +21,9 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
 
     // We want to unbind the default handler for sequence change that we get from
     // inheriting from CondensedSequenceRenderer
-    jQuery(this).unbind('sequenceChange');
+    bean.remove(this,'sequenceChange');
 
-    jQuery(this).bind('sequenceChange',function() {
+    bean.add(this,'sequenceChange',function() {
         for (var layername in MASCP.layers) {
             if (MASCP.layers.hasOwnProperty(layername)) {
                 MASCP.layers[layername].disabled = true;
@@ -122,15 +122,15 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                     return oldAddEventListener.apply(canv,[ev,func,bubbling]);
                 };
 
-                jQuery(canv).bind('_anim_begin',function() {
+                bean.add(canv,'_anim_begin',function() {
                     for (var i = 0; i < mouse_moves.length; i++ ) {
                         canv.removeEventListener('mousemove', mouse_moves[i], false );
                     }
-                    jQuery(canv).bind('_anim_end',function() {
+                    bean.add(canv,'_anim_end',function() {
                         for (var j = 0; j < mouse_moves.length; j++ ) {
                             oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
                         }                        
-                        jQuery(canv).unbind('_anim_end',arguments.callee);
+                        bean.remove(canv,'_anim_end',arguments.callee);
                     });
                 });
             }
@@ -158,7 +158,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                                                                 'style':'fill: url(#right_fade);'});
 
 
-            jQuery(canv).bind('pan',function() {
+            bean.add(canv,'pan',function() {
                 if (canv.currentTranslate.x >= 0) {
                     left_fade.setAttribute('visibility','hidden');
                 } else {
@@ -166,12 +166,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 }
             });
         
-            jQuery(canv).bind('_anim_begin',function() {
+            bean.add(canv,'_anim_begin',function() {
                 left_fade.setAttribute('visibility','hidden');
             });
         
-            jQuery(canv).bind('_anim_end',function() {
-                jQuery(canv).trigger('pan');
+            bean.add(canv,'_anim_end',function() {
+                bean.fire(canv,'pan');
             });
 
             if (canv.currentTranslate.x >= 0) {
@@ -226,7 +226,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             renderer._object = this;
             renderer._canvas = canv;
             renderer._canvas._canvas_height = 0;
-            jQuery(renderer).trigger('svgready');
+            bean.fire(renderer,'svgready');
         },false);
     
         return canvas;
@@ -251,10 +251,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         };
 
         if ( ! MASCP.IE ) {
-        jQuery(this._canvas).bind('panstart',hide_chrome);
+        bean.add(this._canvas,'panstart',hide_chrome);
         bean.add(this._canvas,'panend',show_chrome);
-        jQuery(this._canvas).bind('_anim_begin',hide_chrome);
-        jQuery(this._canvas).bind('_anim_end',show_chrome);
+        bean.add(this._canvas,'_anim_begin',hide_chrome);
+        bean.add(this._canvas,'_anim_end',show_chrome);
         nav_canvas.addEventListener('DOMMouseScroll',wheel_fn,false);
         nav_canvas.addEventListener('wheel',wheel_fn,false);
         nav_canvas.onmousewheel = wheel_fn;
@@ -275,9 +275,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
         };
         var canvas = renderer._canvas;
-        canvas.addEventListener('zoomChange', zoomchange, false);
+        bean.add(canvas,'zoomChange', zoomchange);
         bean.add(aas,'removed',function() {
-            canvas.removeEventListener('zoomChange',zoomchange);
+            bean.remove(canvas,'zoomChange',zoomchange);
         });
         return aas;
     };
@@ -439,9 +439,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    }
                }
         };
-        canvas.addEventListener('zoomChange', zoomchange, false);
+        bean.add(canvas,'zoomChange', zoomchange);
         bean.add(axis,'removed',function() {
-            canvas.removeEventListener('zoomChange',zoomchange);
+            bean.remove(canvas,'zoomChange',zoomchange);
             var remover = function(el) {
                 if (el.parentNode) {
                     el.parentNode.removeChild(el);
@@ -485,8 +485,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var renderer = this;
         var curr = renderer.zoom;
         var delta = (zoom - curr)/50;
-        jQuery(renderer).bind('zoomChange',function() {
-            jQuery(renderer).unbind('zoomChange',arguments.callee);
+        bean.add(renderer,'zoomChange',function() {
+            bean.remove(renderer,'zoomChange',arguments.callee);
             delete renderer.zoomCenter;
             if (callback) {
                 callback.call(null);
@@ -537,7 +537,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     clazz.prototype.setSequence = function(sequence) {
         var new_sequence = this._cleanSequence(sequence);
         if (new_sequence == this.sequence && new_sequence !== null) {
-            jQuery(this).trigger('sequenceChange');
+            bean.fire(this,'sequenceChange');
             return;
         }
     
@@ -559,12 +559,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
         var build_sequence_els = function() {
             var seq_els = [];
-            jQuery(renderer.sequence.split('')).each( function(i) {
+            renderer.sequence.split('').forEach( function(aa,i) {
                 var el = {};
                 el._index = i;
                 el._renderer = renderer;
                 renderer._extendElement(el);
-                el.amino_acid = this;
+                el.amino_acid = aa;
                 seq_els.push(el);
             });
             renderer._sequence_els = seq_els;
@@ -574,7 +574,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
         var RS = this._RS;
 
-        jQuery(this).unbind('svgready').bind('svgready',function(cnv) {
+        bean.remove(this,'svgready');
+        bean.add(this,'svgready',function(cnv) {
             var canv = renderer._canvas;
             canv.RS = RS;
             canv.setAttribute('background', '#000000');
@@ -706,7 +707,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 }
             });
 
-            jQuery(renderer).trigger('sequenceChange');
+            bean.fire(renderer,'sequenceChange');
         });
         var canvas = createCanvasObject.call(this);
         if (! this._canvas) {
@@ -722,8 +723,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
         var seq_change_func = function(other_func) {
             if ( ! rend._canvas ) {
-                rend.bind('sequenceChange',function() {
-                    jQuery(rend).unbind('sequenceChange',arguments.callee);
+                bean.add(rend,'sequenceChange',function() {
+                    bean.remove(rend,'sequenceChange',arguments.callee);
                     other_func.apply();
                 });
             } else {
@@ -834,8 +835,8 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,values);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -927,8 +928,8 @@ var addElementToLayer = function(layerName,opts) {
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1039,8 +1040,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1095,8 +1096,8 @@ var addTextToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1142,8 +1143,8 @@ var addShapeToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1217,8 +1218,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,url,width);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1251,8 +1252,8 @@ var addCalloutToLayer = function(layerName,element,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1283,8 +1284,8 @@ var addAnnotationToLayer = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        this._renderer.bind('sequencechange',function() {
-            this._renderer.unbind('sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequencechange',function() {
+            bean.remove(this._renderer,'sequencechange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1441,7 +1442,7 @@ var zoomFunctions = [];
 
 MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
     if (zoomFunctions.length == 0) {
-        this.bind('zoomChange',function() {
+        bean.add(this,'zoomChange',function() {
             for (var i = zoomFunctions.length - 1; i >=0; i--) {
                 zoomFunctions[i].call(this, this.zoom, this._canvas);
             }
@@ -1789,11 +1790,11 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         container.panevents = true;
     }
        
-    canvas.addEventListener('zoomChange', zoomchange,false);
+    bean.add(canvas,'zoomChange', zoomchange,false);
     bean.add(amino_acids[0],'removed',function() {
         canvas.removeEventListener('panstart',panstart);
         bean.remove(canvas,'panend',panend);
-        canvas.removeEventListener('zoomChange',zoomchange);
+        bean.remove(canvas,'zoomChange',zoomchange);
         delete container.panevents;
     });
     return amino_acids;
@@ -2097,7 +2098,7 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 
 (function(clazz) {
 
-var vis_change_event = function(e,renderer,visibility) {
+var vis_change_event = function(renderer,visibility) {
     var self = this;
     if ( ! renderer._layer_containers[self.name] || renderer._layer_containers[self.name].length <= 0 ) {
         return;
@@ -2120,9 +2121,9 @@ clazz.prototype.addTrack = function(layer) {
     var renderer = this;
     
     if ( ! this._canvas ) {
-        this.bind('sequencechange',function() {
+        bean.add(this,'sequencechange',function() {
             this.addTrack(layer);
-            this.unbind('sequencechange',arguments.callee);
+            bean.remove(this,'sequencechange',arguments.callee);
         });
         console.log("No canvas, cannot add track, waiting for sequencechange event");
         return;
@@ -2135,15 +2136,17 @@ clazz.prototype.addTrack = function(layer) {
         if ( ! layer_containers[layer.name].track_height) {
             layer_containers[layer.name].track_height = renderer.trackHeight || 4;
         }
-        jQuery(layer).unbind('visibilityChange',vis_change_event).bind('visibilityChange',vis_change_event);
+        bean.remove(layer,'visibilityChange',vis_change_event);
+        bean.add(layer,'visibilityChange',vis_change_event);
         var event_names = ['click','mouseover','mousedown','mousemove','mouseout','mouseup','mouseenter','mouseleave'];
         var ev_function = function(ev,original_event,element) {
-            jQuery(layer).trigger(ev.type,[original_event,element.position_start,element.position_end]);
+            bean.fire(layer,ev.type,[original_event,element.position_start,element.position_end]);
         };
-        for (var i = 0 ; i < event_names.length; i++) {
-            jQuery(layer_containers[layer.name]._event_proxy).bind(event_names[i],ev_function);
-        }
-        jQuery(layer).unbind('removed').bind('removed',function(e,rend) {
+        // for (var i = 0 ; i < event_names.length; i++) {
+        //     bean.add(layer_containers[layer.name]._event_proxy,event_names[i],ev_function);
+        // }
+        bean.remove(layer,'removed');
+        bean.add(layer,'removed',function(e,rend) {
             if (rend) {
                 rend.removeTrack(this);
             } else{
@@ -2509,7 +2512,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             var scale_value = Math.abs(parseFloat(zoomLevel)/start_zoom);
             curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
             self._canvas.parentNode.setAttribute('transform',curr_transform);
-            jQuery(self._canvas).trigger('_anim_begin');
+            bean.fire(self._canvas,'_anim_begin');
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
                 evObj.initEvent('panstart',false,true);
@@ -2531,9 +2534,10 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 self._canvas.parentNode.setAttribute('transform',curr_transform);
 
                 bean.fire(self._canvas,'panend');
-                jQuery(self._canvas).trigger('_anim_end');
+                bean.fire(self._canvas,'_anim_end');
 
-                jQuery(self._canvas).one('zoomChange',function() {
+                bean.add(self._canvas,'zoomChange',function() {
+                    bean.remove(self._canvas,'zoomChange',arguments.callee);
                     self.refresh();
                     if (typeof center_residue != 'undefined') {
                         var delta = ((start_zoom - zoom_level)/(25))*center_residue;
@@ -2553,20 +2557,17 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             
                 if (self._canvas) {
                     self._canvas.zoom = parseFloat(zoom_level);
-                    if (document.createEvent) {
-                        var evObj = document.createEvent('Events');
-                        evObj.initEvent('zoomChange',false,true);
-                        self._canvas.dispatchEvent(evObj);
-                    } else {
-                        jQuery(self._canvas).trigger('zoomChange');
-                    }
+                    bean.fire(self._canvas,'zoomChange');
                 }
-                jQuery(self).trigger('zoomChange');
+                bean.fire(self,'zoomChange');
             };
         
             if (("ontouchend" in document) && self.zoomCenter && ! no_touch_center ) {
-                jQuery(self).unbind('gestureend');
-                jQuery(self).one('gestureend',end_function);
+                bean.remove(self,'gestureend');
+                bean.add(self,'gestureend',function(){
+                    bean.remove(self,'gestureend',arguments.callee);
+                    end_function();
+                });
                 timeout = 1;
             } else {
                 if (! this.refresh.suspended) {

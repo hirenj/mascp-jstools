@@ -83,7 +83,7 @@ MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
             }
             data_func.call(this,my_data);
         }
-        jQuery(renderer).trigger('resultsRendered',[reader]);        
+        renderer.trigger('resultsRendered',[reader]);        
     });
 };
 

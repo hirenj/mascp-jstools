@@ -77,7 +77,7 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
                 sequenceRenderer.createGroupController('prippdb_experimental','prippdb_peptides');
             }
             
-            jQuery(MASCP.getGroup('prippdb_peptides')).bind('visibilityChange',function(e,rend,vis) {
+            bean.add(MASCP.getGroup('prippdb_peptides'),'visibilityChange',function(rend,vis) {
                 if (rend != sequenceRenderer) {
                     return;
                 }
@@ -114,7 +114,7 @@ MASCP.RippdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
 
             }
         }
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

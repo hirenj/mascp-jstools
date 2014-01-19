@@ -1510,9 +1510,7 @@ GOMap.Diagram.Dragger.prototype.addTouchZoomControls = function(zoomElement,touc
             Hammer(touchElement).off('release',arguments.callee);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
-            if (zoomElement.trigger) {
-                zoomElement.trigger('gestureend');
-            }
+            bean.fire(zoomElement,'gestureend')
         },false);
         e.preventDefault();
     },false);
@@ -1679,7 +1677,11 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
         if (disabled || ! console) {
             return;
         }
-        bean.fire(controlElement,'panstart');
+        if (document.createEvent) {
+            var evObj = document.createEvent('Events');
+            evObj.initEvent('panstart',false,true);
+            controlElement.dispatchEvent(evObj);
+        }
         var width = scroller.cached_width || scroller.clientWidth;
         target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / width));
         bean.fire(controlElement,'panend');
