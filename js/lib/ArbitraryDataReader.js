@@ -138,7 +138,7 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
         var reader = self._extend(set);
         (self.renderers || []).forEach(function(rrend) {
             reader.setupSequenceRenderer(rrend);
-            rrend.bind('resultsRendered',function(e,rdr) {
+            rrend.bind('resultsRendered',function(rdr) {
                 if (rdr == reader) {
                     rrend.trigger('resultsRendered',[self]);
                 }
