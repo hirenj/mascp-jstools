@@ -253,7 +253,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
 
         var exp_peptides = this.result.getAllExperimentalPhosphoPeptides();
         if (exp_peptides.length === 0) {
-            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            sequenceRenderer.trigger('resultsRendered',[reader]);
             return;         
         }
 
@@ -263,24 +263,24 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
         if (sequenceRenderer.createGroupController) {
             sequenceRenderer.createGroupController('phosphat_experimental','phosphat_peptides');
         }
-        jQuery(exp_peptides).each(function(i) {
+        exp_peptides.forEach(function(pep,i) {
             MASCP.registerLayer('phosphat_peptide_'+i, { 'fullname': 'PhosPhAt MS/MS', 'group':'phosphat_peptides', 'color' : '#000000', 'css' : '.active { background: #999999; color: #000000; } .tracks .active { background: #000000; fill: #000000; } .inactive { display: none; }' });
 
-            var start = this.shift();
-            var end = this.shift();
+            var start = pep.shift();
+            var end = pep.shift();
             var aa = sequenceRenderer.getAminoAcidsByPosition([start+1])[0];
             if (aa) {
                 aa.addBoxOverlay('phosphat_peptide_'+i,end,0.5);
                 icons.push(aa.addBoxOverlay('phosphat_experimental',end,0.5));
             }
-	        jQuery(sequenceRenderer.getAminoAcidsByPosition(this)).each(function() {
-	            this.addToLayer('phosphat_peptide_'+i, { 'height' : 20, 'offset': -2.5 });
-	            icons = icons.concat(this.addToLayer('phosphat_experimental',{ 'height' : 20, 'offset': -2.5}));
+	        sequenceRenderer.getAminoAcidsByPosition(this).forEach(function(aa) {
+	            aa.addToLayer('phosphat_peptide_'+i, { 'height' : 20, 'offset': -2.5 });
+	            icons = icons.concat(aa.addToLayer('phosphat_experimental',{ 'height' : 20, 'offset': -2.5}));
 	        });
         });
 
 
-        jQuery(MASCP.getGroup('phosphat_peptides')).bind('visibilityChange',function(e,rend,vis) {
+        bean.add(MASCP.getGroup('phosphat_peptides'),'visibilityChange',function(rend,vis) {
             if (rend != sequenceRenderer) {
                 return;
             }
@@ -296,7 +296,7 @@ MASCP.PhosphatReader.prototype.setupSequenceRenderer = function(sequenceRenderer
             MASCP.getLayer('phosphat_experimental').href = 'http://phosphat.mpimp-golm.mpg.de/app.html?agi='+this.result.agi;        
         }
         
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

@@ -165,7 +165,7 @@ MASCP.PpdbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
                 peptide_bits.addToLayer(overlay_name);
             }
         }
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
+        sequenceRenderer.trigger('resultsRendered',[reader]);        
 
 
 
