@@ -2447,6 +2447,10 @@ None of the Safari browsers work with this, giving DOM Exception 18
 
 http://stackoverflow.com/questions/8158312/rasterizing-an-in-document-svg-to-canvas
 
+I think this is the relevant bug.
+
+https://bugs.webkit.org/show_bug.cgi?id=119492
+
 */
 
 var svgDataURL = function(svg) {
