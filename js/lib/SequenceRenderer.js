@@ -178,12 +178,7 @@ MASCP.registerLayer = function(layerName, options, renderers)
     this.layers[layerName] = layer;
     
     if (options.css) {
-        layerCss = options.css;
-        layerCss = layerCss.replace(/\.inactive/g, '.'+layerName+'_inactive .'+layerName);
-        layerCss = layerCss.replace(/\.tracks\s+\.active/g, '.'+layerName+'_active .track .'+layerName);
-        layerCss = layerCss.replace(/\.active/g, '.'+layerName+'_active .'+layerName);
-        layerCss = layerCss.replace(/\.overlay/g, '.'+layerName+'_overlay');
-        jQuery('<style type="text/css">'+layerCss+'</style>').appendTo('head');
+        console.log("options.css is deprecated");
     }
     layer.layer_id = new Date().getMilliseconds();
     bean.fire(MASCP,'layerRegistered',[layer].concat(renderers));
@@ -239,7 +234,6 @@ MASCP.Layer = function() {
  * @author  hjjoshi
  * @param   {Element} sequenceContainer Container element that the sequence currently is found in, and also 
  *                                      the container that data will be re-inserted into.
- * @requires jQuery
  */
 MASCP.SequenceRenderer = (function() {
 
@@ -316,14 +310,20 @@ MASCP.SequenceRenderer = (function() {
     //        this._container.style.width = '100%';
 
             bean.add(this,'sequenceChange', function(e){
-                jQuery(sequenceContainer).text("");
-                jQuery(sequenceContainer).append(this._sequence_els);
-                jQuery(sequenceContainer).append(jQuery('<div style="clear: both; float: none; height: 0px; width: 100%;"></div>'));
+                while (sequenceContainer.firstChild) {
+                    sequenceContainer.removeChild(sequenceContainer.firstChild);
+                }
+                this._sequence_els.forEach(function(el) {
+                    sequenceContainer.appendChild(el);
+                });
+                var float_clear = document.createElement('div');
+                float_clear.setAttribute('style','clear: both; float: none; height: 0px; width: 100%;');
+                sequenceContainer.appendChild(float_clear);
                 sequenceContainer.style.width = (this._sequence_els.length)+'em';
     //            this.showRowNumbers();            
             });
 
-            this.setSequence(jQuery(sequenceContainer).text());
+            this.setSequence(sequenceContainer.textContent);
         }
         
         setupTrackOrder(this);
@@ -411,11 +411,13 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
     for (var i =0; i < seq_chars.length; i++) {
         var aa = seq_chars[i];
         if (aa.match(/[A-Za-z]/)) {
-            sequence_els.push(jQuery('<span>'+aa+'</span>')[0]);
+            var span_el = document.createElement('span');
+            span_el.textContent = aa;
+            sequence_els.push(span_el);
         }
     }
 
-    jQuery(sequence_els).each( function(i) {
+    sequence_els.forEach( function(el,i) {
         // if ( (i % 10) == 0 && i > 0 && ((i % 50) != 0)) {
         //     this.style.margin = '0px 0px 0px 1em';
         // }
@@ -427,18 +429,18 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
         //     this.style.clear = 'both';
         // }
         
-        this._index = i;
+        el._index = i;
         
-        this.style.display = 'block';
-        this.style.cssFloat = 'left';
-        this.style.styleFloat = 'left';
-        this.style.height = '1.1em';
-        this.style.position = 'relative';
+        el.style.display = 'block';
+        el.style.cssFloat = 'left';
+        el.style.styleFloat = 'left';
+        el.style.height = '1.1em';
+        el.style.position = 'relative';
 
-        this.addToLayer = MASCP.SequenceRenderer.addElementToLayer;
-        this.addBoxOverlay = MASCP.SequenceRenderer.addBoxOverlayToElement;
-        this.addToLayerWithLink = MASCP.SequenceRenderer.addElementToLayerWithLink;
-        this._renderer = renderer;
+        el.addToLayer = MASCP.SequenceRenderer.addElementToLayer;
+        el.addBoxOverlay = MASCP.SequenceRenderer.addBoxOverlayToElement;
+        el.addToLayerWithLink = MASCP.SequenceRenderer.addElementToLayerWithLink;
+        el._renderer = renderer;
     });
     this._sequence_els = sequence_els;   
     bean.fire(this,'sequenceChange');
@@ -520,21 +522,6 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
     return results;
 };
 
-/*
- * Show the row numbers on the display of the sequence.
- */
-MASCP.SequenceRenderer.prototype.showRowNumbers = function() {
-    var numbers = jQuery('<div style="position: absolute; top: 0px; left: 0px; width: 2em;"></div>');
-    jQuery(this._sequence_els).each( function(i) {
-        if ( (i % 50) === 0) {
-            this.style.marginLeft = '3em';
-            numbers.append(jQuery('<div style="text-align: right; height: 1.1em;">'+(i+1)+'</div>')[0]);
-        }
-    });
-    jQuery(this._container).append(numbers);
-    return this;
-};
-
 /**
  * Toggle the display of the given layer
  * @param {String|Object} layer Layer name, or layer object
@@ -547,8 +534,8 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
     } else {
         layer = MASCP.layers[layer];
     }
-    jQuery(this._container).toggleClass(layerName+'_active');
-    jQuery(this._container).toggleClass(layerName+'_inactive');
+    this._container.classList.toggle(layerName+'_active');
+    this._container.classList.toggle(layerName+'_inactive');
     if ( ! consumeChange ) {
         bean.fire(layer,'visibilityChange',[this,this.isLayerActive(layer)]);
     }
@@ -566,9 +553,9 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
     if (! layer || layer.disabled) {
         return;
     }
-    jQuery(this._container).addClass(layer.name+'_active');
-    jQuery(this._container).addClass('active_layer');    
-    jQuery(this._container).removeClass(layer.name+'_inactive');
+    this._container.classList.add(layer.name+'_active');
+    this._container.classList.add('active_layer');    
+    this._container.classList.remove(layer.name+'_inactive');
     if ( ! consumeChange ) {
         bean.fire(layer,'visibilityChange',[this,true]);
     }
@@ -587,9 +574,9 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
         return;
     }
         
-    jQuery(this._container).removeClass(layer.name+'_active');
-    jQuery(this._container).removeClass('active_layer');
-    jQuery(this._container).addClass(layer.name+'_inactive');
+    this._container.classList.remove(layer.name+'_active');
+    this._container.classList.remove('active_layer');
+    this._container.classList.add(layer.name+'_inactive');
     if (! consumeChange ) {
         bean.fire(layer,'visibilityChange',[this,false]);
     }
@@ -680,7 +667,7 @@ MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
     if (typeof layer != 'string') {
         layerName = layer.name;
     }
-    return (! layer.disabled) && jQuery(this._container).hasClass(layerName+'_active');
+    return (! layer.disabled) && this._container.classList.contains(layerName+'_active');
 };
 
 /**
@@ -696,106 +683,9 @@ MASCP.SequenceRenderer.prototype._setHighlight = function(layer,isHighlighted) {
  * Create a layer controller for this sequence renderer. Attach the controller to the containing box, and shift the box across 20px.
  */
 MASCP.SequenceRenderer.prototype.createLayerController = function() {
-    var controller_box = jQuery('<div style="position: absolute; top: 0px; font-family: Helvetica, Arial, Sans-serif; margin-left: 20px; left: 100%; width: 250px;"></div>');
-    var container = jQuery(this._container);
-    container.append(controller_box);
-
-    if ( ! this._controllers ) {
-        this._controllers = [];
-    }
-    this._controllers.push(controller_box);
-
-    var renderer = this;
-    
-    jQuery(MASCP).bind('layerRegistered', function(e) {
-		jQuery(controller_box).accordion('destroy');
-		jQuery(controller_box).accordion({header : 'h3', collapsible : true, autoHeight: true, active: false });
-	});
-    
-    
-    controller_box.add_layer = function(layer) {
-        var layer_controller = jQuery('<div><input type="checkbox"/>'+layer.fullname+'</div>');
-        if (layer.group) {
-            jQuery(layer.group._layer_container).append(layer_controller);
-        } else {
-            jQuery(this).append(layer_controller);
-        }
-        
-        renderer.createLayerCheckbox(layer,jQuery('input',layer_controller)[0]);
-    };
-
-    controller_box.add_group = function(group) {
-        var layer_controller = jQuery('<h3><input style="margin-left: 25px;" type="checkbox"/>'+group.fullname+'</h3>');
-        jQuery(this).append(layer_controller);
-        var children_container = jQuery('<div style="max-height: 200px; overflow: auto;"></div>');
-        jQuery(this).append(children_container);
-        
-        group._layer_container = children_container[0];
-        group._controller = layer_controller;
-        
-        group._check_intermediate = function() {
-            var checked = 0;
-            jQuery(group._layers).each(function(i) {
-                if (renderer.isLayerActive(this.name)) {
-                    checked++;
-                }
-            });
-            var input_el = jQuery('input',layer_controller)[0];
-            input_el.indeterminate = (checked !== 0 && checked != group._layers.length);
-            if (! input_el.indeterminate ) {
-                input_el.checked = (checked !== 0);
-            }
-        };
-        
-        jQuery(jQuery('input',layer_controller)[0]).bind('mouseup',function(e) {
-            if (this.indeterminate) {
-                jQuery(this).trigger('change');
-            }
-        });
-
-        renderer.createGroupCheckbox(group,jQuery('input',layer_controller)[0]);
-        
-    };
-
-    
-    bean.add(MASCP,"layerRegistered",function(e,layer) {
-        if (layer.group && layer.group.hide_member_controllers) {
-            return;
-        }
-        controller_box.add_layer(layer);
-    });
-
-    bean.add(MASCP,"groupRegistered",function(e,group) {
-        if (group.hide_group_controller) {
-            return;
-        }
-        controller_box.add_group(group);
-    });
-
-    
-    if (MASCP.layers) {
-        for (var layerName in MASCP.layers) {
-            if (MASCP.layers.hasOwnProperty(layerName)) {
-                var layer = MASCP.layers[layerName];
-                if (layer.group && layer.group.hide_member_controllers) {
-                    continue;
-                }
-                controller_box.add_layer(layer);
-            }
-        }
-    }
-    return this;
+    console.log("createLayerController is deprected");
+    return;
 };
-
-/*
- * Create a hydropathy plot for this renderer
- * @returns Element with the hydropathy plot
- * @type Element
-MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
-    var base_url = 'http://www.plantenergy.uwa.edu.au/applications/hydropathy/hydropathy.php?title=Hydropathy&amp;sequence=';
-    return jQuery('<img style="width: '+(this.sequence.length * 2)+'px;" src="'+base_url+this.sequence+'"/>')[0];
-};
-*/
 
 /**
  * Create a checkbox that is used to control the given layer
@@ -805,82 +695,8 @@ MASCP.SequenceRenderer.prototype.getHydropathyPlot = function() {
  * @type Object
  */
 MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement,exclusive) {
-    var renderer = this;
-
-    if (! MASCP.layers[layer]) {
-        return;
-    }
-
-
-    var layerObj = null;
-    
-    if (typeof layer == 'string' && MASCP.layers ) {
-        layerObj = MASCP.layers[layer];
-    } else if (typeof layer == 'object') {
-        layerObj = layer;
-    }
-
-    if ( ! layerObj ) {
-        return;
-    }
-    
-    
-    
-    var the_input = inputElement || jQuery('<input type="checkbox" value="true"/>')[0];
-    
-    the_input._current_bindings = the_input._current_bindings || [];
-    
-    if (exclusive) {
-        this._removeOtherBindings(layerObj,the_input);
-    }
-    
-    for (var i = 0; i < the_input._current_bindings.length; i++) {
-        if (    the_input._current_bindings[i].layer == layer && 
-                the_input._current_bindings[i].renderer == renderer ) {
-            return;
-        }
-    }
-    
-    the_input.removeAttribute('checked');
-    the_input.checked = this.isLayerActive(layer);
-
-    var layer_func = null;
-
-    if (layerObj && the_input._current_bindings.length === 0) {
-        layer_func = function(rend,visibility) {
-            if (rend != renderer) {
-                return;
-            }
-            if (visibility) {
-                the_input.checked = visibility;
-            } else {
-                the_input.checked = false;
-                the_input.removeAttribute('checked');
-            }
-        };
-        bean.add(layerObj,'visibilityChange',layer_func);
-        if (the_input.parentNode) {
-            the_input.parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+layerObj.color+'; width: 1em; height: 1em;"></div>')[0],the_input);
-        }
-    }
-
-
-    var input_func = function(e) {
-        if (this.checked) {
-            renderer.showLayer(layer,false);
-        } else {
-//            renderer.hideLayer(layer,false);
-        }
-        if (MASCP.getLayer(layer).group && MASCP.getLayer(layer).group._check_intermediate) {
-            MASCP.getLayer(layer).group._check_intermediate();
-        }
-    };
-
-    jQuery(the_input).bind( (MASCP.IE ? 'click' : 'change'),input_func);
-    
-    the_input._current_bindings.push({ 'layer' : layer , 'renderer' : renderer, 'input_function' : input_func, 'object_function' : layer_func });    
-    
-    return the_input;    
+    console.log("createLayerCheckbox is deprecated");
+    return;
 };
 
 /**
@@ -948,72 +764,8 @@ MASCP.SequenceRenderer.prototype._removeOtherBindings = function(object,inputEle
  * @type Object
  */
 MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputElement,exclusive) {
-    var renderer = this;
-    var the_input = inputElement ? jQuery(inputElement) : jQuery('<input type="checkbox" value="true"/>');
-    var groupObject = MASCP.getGroup(group);
-    
-    if (! groupObject ) {
-        return;
-    }
-
-    the_input[0]._current_bindings = the_input[0]._current_bindings || [];
-
-    if (exclusive) {
-        this._removeOtherBindings(groupObject,the_input[0]);
-    }
-    
-    for (var i = 0; i < the_input[0]._current_bindings.length; i++) {
-        if (    the_input[0]._current_bindings[i].group == group && 
-                the_input[0]._current_bindings[i].renderer == renderer ) {
-            return;
-        }
-    }
-    
-    the_input[0].removeAttribute('checked');
-    var input_func = function(e) {        
-        group_obj = MASCP.getGroup(group);
-        if (! group_obj ) {
-            return;
-        }
-        if (this.checked) {
-            jQuery(group_obj._layers).each(function(i) {
-                renderer.showLayer(this.name,false);
-            });
-        } else {
-            jQuery(group_obj._layers).each(function(i) {
-//                renderer.hideLayer(this.name,false);
-            });                
-        }
-    };
-    
-    the_input.bind((MASCP.IE ? 'click' : 'change'),input_func);
-
-    var group_func = null;
-
-    if (groupObject && the_input[0]._current_bindings.length === 0) {
-        group_func = function(rend,visibility) {
-            if (rend != renderer) {
-                return;
-            }
-            the_input[0].checked = visibility;
-            if ( ! visibility ) {
-                the_input[0].removeAttribute('checked');
-            }
-        };
-        bean.add(MASCP.getGroup(group),'visibilityChange', group_func);
-        
-        if (the_input[0].parentNode) {
-            the_input[0].parentNode.insertBefore(jQuery('<div style="position: relative; left: 0px; top: 0px; float: left; background-color: '+groupObject.color+'; width: 1em; height: 1em;"></div>')[0],the_input[0]);
-        }
-    }
-
-    the_input[0]._current_bindings.push({ 'group' : group , 'renderer' : renderer, 'input_function' : input_func, 'object_function' : group_func });
-
-    the_input.bind('click',function(e) {
-        e.stopPropagation();
-    });
-    
-    return the_input;
+    console.log("createGroupCheckbox is deprecated");
+    return;
 };
 
 /**
@@ -1058,14 +810,19 @@ MASCP.SequenceRenderer.addElementToLayer = function(layerName)
  */
 MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, width)
 {
-    jQuery(this).addClass(layerName);
-    var new_el = jQuery(this).append(jQuery('<a href="'+url+'" class="'+layerName+'_overlay" style="display: box; left: 0px; top: 0px; width: 100%; position: absolute; height: 100%;">&nbsp;</a>'))[0];
+    this.classList.add(layerName);
+    var anchor = document.createElement('a');
+    anchor.setAttribute('href',url);
+    anchor.classList.add(layerName+'_overlay');
+    anchor.setAttribute('style','display: box; left: 0px; top: 0px; width: 100%; position: absolute; height: 100%;');
+    anchor.textContent = '&nbsp;';
+    this.appendChild(anchor);
     while (width && width > 0) {
         this._renderer._sequence_els[this._index + width].addToLayerWithLink(layerName,url);
         width -= 1;
     }
     if (this._z_indexes && this._z_indexes[layerName]) {
-        new_el.style.zIndex = this._z_indexes[layerName];
+        anchor.style.zIndex = this._z_indexes[layerName];
     }
     return this;    
 };
@@ -1082,8 +839,12 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fract
     if (typeof fraction == 'undefined') {
         fraction = 1;
     }
-    jQuery(this).addClass(layerName);
-    var new_el = jQuery(this).append(jQuery('<div class="'+layerName+'_overlay" style="top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';"></div>'))[0];
+
+    this.classList.add(layerName);
+    var new_el = document.createElement('div');
+    new_el.classList.add(layerName+'_overlay');
+    new_el.setAttribute('style','top: 0px; width: 100%; position: absolute; height: 100%; opacity:'+fraction+';');
+    this.appendChild(new_el);
     while (width && width > 1) {
         this._renderer._sequence_els[this._index + width - 1].addBoxOverlay(layerName,0,fraction);
         width -= 1;
@@ -1106,7 +867,9 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fract
  */
 MASCP.SequenceRenderer.prototype.reset = function()
 {
-    jQuery(this._container).attr('class',null);
+    while(this._container.classList.length > 0) {
+        this._container.classList.remove(this._container.classList.item(0));
+    }
     for ( var group in MASCP.groups) {
         if (MASCP.groups.hasOwnProperty(group)) {
             this.hideGroup(group);
@@ -1151,7 +914,9 @@ MASCP.SequenceRenderer.prototype.refresh = function()
         if (! this.isLayerActive(this.trackOrder[i])) {
             continue;
         }
-        jQuery('.'+this.trackOrder[i]+'_overlay').css('z-index',z_index);
+        Array.prototype.slice.call(document.querySelectorAll('.'+this.trackOrder[i]+'_overlay')).forEach(function(el) {
+            el.style.zIndex = z_index;
+        });
         this._z_indexes[this.trackOrder[i]] = z_index;
         z_index -= 1;
     }
