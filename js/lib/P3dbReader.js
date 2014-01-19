@@ -143,7 +143,7 @@ MASCP.P3dbReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
             sequenceRenderer.createGroupController('p3db_controller','p3db_experimental');
         }        
         
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

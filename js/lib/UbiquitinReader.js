@@ -77,7 +77,7 @@ MASCP.UbiquitinReader.prototype.setupSequenceRenderer = function(sequenceRendere
                 sequenceRenderer.createGroupController(overlay_name,group_name);
             }
             
-            jQuery(MASCP.getGroup(group_name)).bind('visibilityChange',function(e,rend,vis) {
+            bean.add(MASCP.getGroup(group_name),'visibilityChange',function(e,rend,vis) {
                 if (rend != sequenceRenderer) {
                     return;
                 }
@@ -105,7 +105,7 @@ MASCP.UbiquitinReader.prototype.setupSequenceRenderer = function(sequenceRendere
                 peptide_bits[peps[i].positions[k] - 1].addToLayer(layer_name);
             }
         }
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

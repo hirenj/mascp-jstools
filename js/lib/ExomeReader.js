@@ -115,6 +115,6 @@ MASCP.ExomeReader.prototype.setupSequenceRenderer = function(renderer) {
      }
 
      });
-     jQuery(renderer).trigger('resultsRendered',[reader]);
+     renderer.trigger('resultsRendered',[reader]);
  });
 };

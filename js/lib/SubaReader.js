@@ -209,44 +209,7 @@ MASCP.SubaReader.Result.prototype.getPredictedLocalisations = function()
 
 MASCP.SubaReader.Result.prototype.mapController = function(inputElement)
 {
-    if ( ! this._map ) {
-        return null;
-    }
-    var map = this._map;
-    inputElement = inputElement ? jQuery(inputElement) : jQuery('<ul><li class="ms"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #ff0000; width: 1em; height: 1em;"></div><input class="ms" type="checkbox"/> MS</li><li class="gfp"><div style="position: relative; left: 0px; top: 0px; float: left; background-color: #00ff00; width: 1em; height: 1em;"></div><input class="gfp" type="checkbox"/> GFP</li></ul>');
-    
-    if ( ! this.getMassSpecLocalisation() )  {
-        jQuery('li.ms', inputElement).css({ 'display': 'none' });
-    } else {
-        var ms_loc = this._sortLocalisation(this.getMassSpecLocalisation());
-        jQuery('input.ms', inputElement).unbind('change').bind('change', function() {
-            var i;
-            for ( i = ms_loc.length - 1; i >= 0; i--) {
-                if (this.checked) {
-                    map.showKeyword(ms_loc[i], '#ff0000');
-                } else {
-                    map.hideKeyword(ms_loc[i], '#ff0000');                    
-                }
-            }                            
-        }).attr('checked', (ms_loc.length > 0));
-    }
-    if ( ! this.getGfpLocalisation() )  {
-        jQuery('li.gfp', inputElement).css({ 'display': 'none' });
-    } else {
-        var gfp_loc = this._sortLocalisation(this.getGfpLocalisation());
-        jQuery('input.gfp', inputElement).unbind('change').bind('change', function() {
-            var i;
-            for ( i = gfp_loc.length - 1; i >= 0; i--) {
-                if (this.checked) {
-                    map.showKeyword(gfp_loc[i], '#00ff00');
-                } else {
-                    map.hideKeyword(gfp_loc[i], '#00ff00');                    
-                }
-            }                            
-        }).attr('checked', (gfp_loc.length > 0));
-    }
-
-    return inputElement[0];
+    console.log("Deprecated mapController");
 };
 
 MASCP.SubaReader.Result.prototype.render = function()

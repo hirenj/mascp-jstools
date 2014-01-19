@@ -130,7 +130,7 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
     if (this._SERVER_DATASETS.length == 0){
         MASCP.Service.prototype.retrieve.call(self,"dummy",cback);
         (self.renderers || []).forEach(function(rrend) {
-            jQuery(rrend).trigger('resultsRendered',[self]);
+            rrend.trigger('resultsRendered',[self]);
         });
         return;
     }
@@ -140,7 +140,7 @@ MASCP.ArbitraryDataReader.prototype.retrieve = function(in_agi,cback)
             reader.setupSequenceRenderer(rrend);
             rrend.bind('resultsRendered',function(e,rdr) {
                 if (rdr == reader) {
-                    jQuery(rrend).trigger('resultsRendered',[self]);
+                    rrend.trigger('resultsRendered',[self]);
                 }
             });
         });
@@ -196,7 +196,7 @@ MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRen
                 
         var peps = this.result.getPeptides();
         if (peps.length <= 0) {
-            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            sequenceRenderer.trigger('resultsRendered',[reader]);
             return;
         }
         MASCP.registerGroup('arbitrary_datasets', {'fullname' : 'Other data', 'color' : '#ff5533' });
@@ -223,7 +223,7 @@ MASCP.ArbitraryDataReader.prototype.setupSequenceRenderer = function(sequenceRen
             sequenceRenderer.createGroupController('arbitrary_controller','arbitrary_datasets');
         }
         
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

@@ -137,7 +137,7 @@ MASCP.InterproReader.prototype.setupSequenceRenderer = function(sequenceRenderer
             sequenceRenderer.createGroupController('interpro_controller','interpro_domains');
         }
 
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);        
+        sequenceRenderer.trigger('resultsRendered',[reader]);
 
     });
     return this;
