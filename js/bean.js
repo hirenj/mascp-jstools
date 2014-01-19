@@ -245,7 +245,7 @@
     result.preventDefault = fixEvent.preventDefault(e);
     result.stopPropagation = fixEvent.stopPropagation(e);
     result.target = target && target.nodeType == 3 ? target.parentNode : target;
-    if (~type.indexOf('key')) {
+    if (type && type.indexOf('key')) {
       result.keyCode = e.which || e.keyCode;
     } else if ((/click|mouse|menu/i).test(type)) {
       result.rightClick = e.which == 3 || e.button == 2;
