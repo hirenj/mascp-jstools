@@ -74,7 +74,7 @@ MASCP.ProcessingReader.prototype.setupSequenceRenderer = function(sequenceRender
             aa.addAnnotation('processing',1, { 'border' : 'rgb(150,0,0)', 'content' : 'Mat', 'angle': 0 });
         }
 
-        jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+        sequenceRenderer.trigger('resultsRendered',[reader]);
     });
     return this;
 };

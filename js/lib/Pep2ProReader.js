@@ -133,18 +133,6 @@ MASCP.Pep2ProReader.Result.prototype._populate_peptides = function(data)
 
 MASCP.Pep2ProReader.Result.prototype.render = function()
 {
-    var params = jQuery.param(this.reader.requestData().data);
-    var total = 0;
-    for (var i in this.spectra) {
-        if (this.spectra.hasOwnProperty(i)) {
-            total += parseInt(this.spectra[i],10);
-        }
-    }
-    var a_container = jQuery('<div>MS/MS spectra <input type="checkbox" class="group_toggle"/><a style="display: block; float: right;" href="http://fgcz-pep2pro.unizh.ch/index.php?'+params+'">Pep2Pro</a></div>');
-    jQuery(this.reader.renderers).each ( function(i){
-        this.createGroupCheckbox('pep2pro',jQuery('input.group_toggle',a_container));
-    });
-    return a_container;
 };
 
 MASCP.Pep2ProReader.prototype._rendererRunner = function(sequenceRenderer) {
@@ -267,18 +255,18 @@ MASCP.Pep2ProReader.prototype.setupSequenceRenderer = function(sequenceRenderer)
         MASCP.registerGroup('pep2pro',{ 'fullname' : 'Pep2Pro data','hide_member_controllers' : true, 'hide_group_controller' : true, 'color' : '#000099' });
 
         if ( sequenceRenderer.sequence != this.result.sequence && this.result.sequence != '' ) {
-            jQuery(sequenceRenderer).bind('sequenceChange',function() {
-                jQuery(sequenceRenderer).unbind('sequenceChange',arguments.callee);
+            sequenceRenderer.bind('sequenceChange',function() {
+                sequenceRenderer.unbind('sequenceChange',arguments.callee);
                 reader._groupSummary(sequenceRenderer);
                 reader._rendererRunner(sequenceRenderer);
-                jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+                sequenceRenderer.trigger('resultsRendered',[reader]);
             });
             sequenceRenderer.setSequence(this.result.sequence);
             return;
         } else {
             reader._groupSummary(sequenceRenderer);
             reader._rendererRunner(sequenceRenderer);
-            jQuery(sequenceRenderer).trigger('resultsRendered',[reader]);
+            sequenceRenderer.trigger('resultsRendered',[reader]);
         }
     });
 
