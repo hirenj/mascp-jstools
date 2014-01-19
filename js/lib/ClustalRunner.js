@@ -258,7 +258,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
 
     var elements_to_move = [];
 
-    jQuery(renderer).bind('readerRegistered',function(ev,reader) {
+    renderer.bind('readerRegistered',function(reader) {
         if (self == reader) {
             return;
         }
@@ -362,7 +362,15 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 for (var i = 0; i < peptide.length; i++ ) {
                     positions.push(start+i);
                 }
-                return this.getAminoAcidsByPosition(positions);
+                var results = this.getAminoAcidsByPosition(positions);
+                if (results.length) {
+                    results.addToLayer = function(layername, fraction, options) {
+                        return results[0].addBoxOverlay(layername,results.length,fraction,options);
+                    };
+                } else {
+                    results.addToLayer = function() {};
+                }
+                return results;
             };
             old.call(reader);
             renderer.sequence = curr_sequence;
