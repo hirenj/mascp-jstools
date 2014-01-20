@@ -1226,7 +1226,7 @@ MASCP.GoogledataReader.prototype.writePreferences = function(prefs_domain,callba
 };
 
 MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
-    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session" }, "application/json; data-type=domaintool-session",function(err,content,file_id) {
+    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session.domaintoolsession" }, "application/json; data-type=domaintool-session",function(err,content,file_id) {
         callback.call(null,err,content,file_id,"New annotation session");
     });
 };
