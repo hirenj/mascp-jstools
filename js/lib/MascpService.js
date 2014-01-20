@@ -696,6 +696,9 @@ var do_request = function(request_data) {
 
 MASCP.Service.request = function(url,callback,noparse) {
     var method =  MASCP.IE ? do_request_ie : do_request;
+    if (MASCP.IE && ! url.match(/^https?\:/)) {
+        method = do_request;
+    }
     var params =  { async: true, url: url, timeout: 5000, type : "GET",
                     error: function(response,req,status) {
                         callback.call(null,{"status" : status });
@@ -729,7 +732,9 @@ var do_request_ie = function(dataHash)
     var xdr = new XDomainRequest();
     var loaded = false;
     var counter = 0;
-    xdr.onerror = dataHash.error;
+    xdr.onerror = function(ev) {
+        dataHash.error(xdr,xdr,{"message" : "XDomainRequest error"});
+    };
     xdr.onprogress = function() { };
     xdr.open("GET",dataHash.url+"?"+make_params(dataHash.data));
     xdr.onload = function() {
@@ -744,7 +749,7 @@ var do_request_ie = function(dataHash)
             try {
                 parsed = JSON.parse(xdr.responseText);
             } catch(err) {
-                dataHash.error(xdr,xdr,{});           
+                dataHash.error(xdr,xdr,{"message" : "JSON parsing error"});
             }
             if (parsed) {
                 dataHash.success(parsed,'success',xdr);
