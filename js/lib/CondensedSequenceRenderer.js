@@ -1738,6 +1738,10 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
         var container_width = renderer._container_canvas.parentNode.cached_width;
         if ( ! container_width ) {
             container_width = renderer._container_canvas.parentNode.getBoundingClientRect().width;
+            var docwidth = document.documentElement.clientWidth;
+            if (docwidth > container_width) {
+                container_width = docwidth;
+            }
         }
         max_size = Math.ceil(10*container_width / RS);
         if (max_size > seq.length) {
