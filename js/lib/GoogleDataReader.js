@@ -859,6 +859,8 @@ if (typeof module != 'undefined' && module.exports){
     MASCP.GoogledataReader.authenticate = authenticate;
 
 } else {
+    // We should be tracking this bug here:
+    // http://stackoverflow.com/questions/15579079/cannot-share-document-in-google-drive-with-per-file-auth-scope
     scope = "https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
 
     var get_document_using_script = function(doc_id,callback,tryauth) {
