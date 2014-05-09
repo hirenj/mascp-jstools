@@ -177,6 +177,8 @@ MASCP.UniprotSecondaryStructureReader = MASCP.buildService(function(data) {
                                 return null;
                             }
                             this._raw_data = data;
+                        } else if (data) {
+                            this._raw_data = data;
                         }
                         return this;
                     });
