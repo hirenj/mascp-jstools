@@ -291,7 +291,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var axis = canvas.set();
 
         var axis_back = canvas.rect(0,0,lineLength,1.5);
-        axis_back.setAttribute('fill',"url('#axis_pattern')");
+        axis_back.setAttribute('fill',"url('#"+self.axis_pattern_id+"')");
         axis_back.removeAttribute('stroke');
         axis_back.removeAttribute('stroke-width');
         axis_back.setAttribute('id','axis_back');
@@ -344,7 +344,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var zoomchange = function() {
             var renderer = self;
                renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
-               var pattern = renderer._canvas.ownerDocument.getElementById('axis_pattern');
+               var pattern = renderer._canvas.ownerDocument.getElementById(renderer.axis_pattern_id);
                thousand_mark_labels.forEach(function(label) {
                 label.setAttribute('visibility','hidden');
                });
@@ -659,15 +659,17 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             minus_icon.appendChild(canv.minus(0,0,100/canv.RS));
 
             defs.appendChild(minus_icon);
-
+            var axis_pattern_id = 'axis_pattern_'+(new Date()).getTime();
             var pattern = canv.makeEl('pattern', {
                 'patternUnits' : 'userSpaceOnUse',
                 'x'            : '0',
                 'y'            : '0',
                 'width'        : 10*canv.RS,
                 'height'       : 2*canv.RS,
-                'id'           : 'axis_pattern'
+                'id'           : axis_pattern_id
             });
+            renderer.axis_pattern_id = axis_pattern_id;
+
             var line = canv.makeEl('rect',{
                 'x'     : '0',
                 'y'     : '0',
@@ -2196,11 +2198,11 @@ clazz.prototype.enablePrintResizing = function() {
         if ( self.grow_container ) {
             if (matcher.matches) {
                 var left_pos = 10*parseInt(self.leftVisibleResidue() / 10)+10;
-                self._canvas.ownerDocument.getElementById('axis_pattern').setAttribute('x',(left_pos*self._RS));
+                self._canvas.ownerDocument.getElementById(self.axis_pattern_id).setAttribute('x',(left_pos*self._RS));
                 delete self._container_canvas.parentNode.cached_width;
                 bean.fire(self._canvas,'panend');
             } else {
-                self._canvas.ownerDocument.getElementById('axis_pattern').setAttribute('x','0');
+                self._canvas.ownerDocument.getElementById(self.axis_pattern_id).setAttribute('x','0');
             }
             return;
         }
