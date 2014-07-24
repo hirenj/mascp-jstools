@@ -981,7 +981,7 @@ if (typeof module != 'undefined' && module.exports){
                 });
                 waiting_callbacks = [];
                 return;
-            } else if (result && result.error) {
+            } else if (result && result.error && result.error !== 'immediate_failed') {
                 initing_auth = false;
                 var error = { "cause" : result.error };
                 cback.call(null,error);
