@@ -860,7 +860,7 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
         offset_scale = options.offset / this._layer_containers[layerName].track_height;
     }
     var recalculate_plot  = function(scale) {
-        var plot_path = 'm0 0';
+        var plot_path = 'm'+(-0.5*RS)+' 0';
         var last_value = null;
         values.forEach(function(value) {
             if ( typeof(last_value) == 'undefined' ) {
@@ -869,7 +869,7 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
             }
             last_value = value;
             if (isNaN(max_value) || (value > max_value)) {
-                max_value = value;            
+                max_value = value;
             }
             if (isNaN(min_value) || (value < min_value)) {
                 min_value = value;
@@ -1577,6 +1577,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
             } else if (object.peptide) {
                 rendered = renderer.getAminoAcidsByPeptide(object.peptide)[0].addShapeOverlay(track, object.peptide.length, object.options);
             }
+        }
+        if (object.type == 'line') {
+            rendered = renderer.addValuesToLayer(track,object.values,object.options);
         }
         if (object.type == "marker") {
             var content = (object.options || {}).content;
