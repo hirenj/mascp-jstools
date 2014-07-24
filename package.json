@@ -1,53 +1,69 @@
 {
-   "name": "mascp-jstools",
-   "version": "1.0.0",
-   "homepage" : "http://hirenj.github.com/mascp-jstools/",
-   "description": "MASCP tools for manipulation and mashup of data. Contains basic data retrieval and display classes.",
-   "keywords": [
-       "bioinformatics",
-       "node",
-       "javascript" 
-   ],
-   "maintainers": [
-       {
-           "name": "Hiren Joshi",
-           "email": "",
-           "web": "" 
-       } 
-   ],
-   "licenses": [
-       {
-           "type": "GPLv2",
-           "url": "http://www.example.org/licenses/gpl.html" 
-       } 
-   ],
-   "repository": [
-       {
-           "type": "git",
-           "url": "https://hirenj@github.com/hirenj/mascp-jstools.git" 
-       } 
-   ],
-   "dependencies": {
-       "xmlhttprequest": "1.0.x",
-       "jsdom": "0.6.x",
-       "nconf"   : "0.6.x",
-       "optimist": "0.2.x",
-       "carrier" : "0.1.x",
-       "sqlite3": "2.1.x"
-   },
-   "main" : "dist/js/mascp-jstools.services.js",
-   "bin" : {
-       "gator-cli" : "bin/cli",
-       "gator-managedb" : "bin/data-manager.js",
-       "gator-loadcsv"  : "bin/load-csv.js"
-   },
-   "implements": ["mascp-jstools","cli"],
-   "os": ["linux", "macos", "win"],
-   "engines": ["v8", "node >= 0.6.x"],
-   "directories": {
-       "lib": "js/lib",
-       "bin": "bin",
-       "jars": "extlib/java" 
-   },
-   "private" : "true"
+  "name": "mascp-jstools",
+  "version": "1.0.0",
+  "homepage": "http://hirenj.github.com/mascp-jstools/",
+  "description": "MASCP tools for manipulation and mashup of data. Contains basic data retrieval and display classes.",
+  "keywords": [
+    "bioinformatics",
+    "node",
+    "javascript"
+  ],
+  "maintainers": [
+    {
+      "name": "Hiren Joshi",
+      "email": "",
+      "web": ""
+    }
+  ],
+  "licenses": [
+    {
+      "type": "GPLv2",
+      "url": "http://www.example.org/licenses/gpl.html"
+    }
+  ],
+  "repository": [
+    {
+      "type": "git",
+      "url": "https://hirenj@github.com/hirenj/mascp-jstools.git"
+    }
+  ],
+  "dependencies": {
+    "xmlhttprequest": "1.0.x",
+    "jsdom": "0.6.x",
+    "nconf": "0.6.x",
+    "optimist": "0.2.x",
+    "carrier": "0.1.x",
+    "sqlite3": "2.1.x"
+  },
+  "main": "dist/js/mascp-jstools.services.js",
+  "bin": {
+    "gator-cli": "bin/cli",
+    "gator-managedb": "bin/data-manager.js",
+    "gator-loadcsv": "bin/load-csv.js"
+  },
+  "implements": [
+    "mascp-jstools",
+    "cli"
+  ],
+  "os": [
+    "linux",
+    "macos",
+    "win"
+  ],
+  "engines": [
+    "v8",
+    "node >= 0.6.x"
+  ],
+  "directories": {
+    "lib": "js/lib",
+    "bin": "bin",
+    "jars": "extlib/java"
+  },
+  "private": "true",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-concat": "^0.5.0",
+    "grunt-contrib-copy": "^0.5.0",
+    "grunt-contrib-uglify": "^0.5.0"
+  }
 }
