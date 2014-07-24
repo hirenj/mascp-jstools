@@ -253,7 +253,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
 
 };
 
-MASCP.UserdataReader.datasets = function(cback) {
+MASCP.UserdataReader.datasets = function(cback,done) {
     MASCP.Service.FindCachedService(this,function(services) {
         var result = [];
         for (var i = 0, len = services.length; i < len; i++){
@@ -261,6 +261,9 @@ MASCP.UserdataReader.datasets = function(cback) {
         }
         if (result.forEach) {
             result.forEach(cback);
+        }
+        if (done) {
+            done();
         }
     });
 };
