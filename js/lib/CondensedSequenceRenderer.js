@@ -860,7 +860,7 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
         offset_scale = options.offset / this._layer_containers[layerName].track_height;
     }
     var recalculate_plot  = function(scale) {
-        var plot_path = 'm'+(-0.5*RS)+' 0';
+        var plot_path = ' m'+(-0.5*RS)+' 0';
         var last_value = null;
         values.forEach(function(value) {
             if ( typeof(last_value) == 'undefined' ) {
@@ -877,23 +877,32 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
         });
         return plot_path;
     };
-    var axis = this._canvas.path('M0 0 m0 '+(RS*((max_value || 0) - (min_value || 0)))+' l'+this._sequence_els.length*RS+' 0');
     var plot = this._canvas.path('M0 0 M0 0 m0 '+((max_value || 0))*RS+' '+recalculate_plot(1));
     var abs_min_val = min_value;
     var abs_max_val = max_value;
-    plot.setAttribute('stroke','#ff0000');
-    plot.setAttribute('stroke-width', 0.35*RS);
+    plot.setAttribute('stroke',options.color || '#ff0000');
+    plot.setAttribute('stroke-width', (options.thickness || 0.35)*RS);
     plot.setAttribute('fill', 'none');
     plot.setAttribute('visibility','hidden');
-    axis.setAttribute('stroke-width',0.2*RS);
-    axis.setAttribute('visibility','hidden');
-    axis.setAttribute('transform','translate(1,0)');
     plot.setAttribute('pointer-events','none');
-    axis.setAttribute('pointer-events','none');
-    
     this._layer_containers[layerName].push(plot);
     plot.setAttribute('transform','translate(1,10) scale(1,1)');
-    this._layer_containers[layerName].push(axis);
+    if (! options.hide_axis) {
+        var axis = this._canvas.path('M0 0 m0 '+(RS*((max_value || 0) - (min_value || 0)))+' l'+this._sequence_els.length*RS+' 0');
+        axis.setAttribute('stroke-width',0.2*RS);
+        axis.setAttribute('visibility','hidden');
+        axis.setAttribute('transform','translate(1,0)');
+        axis.setAttribute('pointer-events','none');
+        axis.setHeight = function(height) {
+            if (abs_min_val < 0 && abs_max_val > 0) {
+                axis.setAttribute('d','M0 0 M0 0 m0 '+(height*offset_scale)+' m0 '+(0.5*height*height_scale)+' l'+renderer._sequence_els.length*RS+' 0');
+            } else {
+                axis.setAttribute('d','M0 0 M0 0 m0 '+(height*offset_scale)+' m0 '+(0.5*(1-abs_min_val)*height*height_scale)+' l'+renderer._sequence_els.length*RS+' 0');
+            }
+            axis.setAttribute('stroke-width',0.2*RS/renderer.zoom);
+        };
+        this._layer_containers[layerName].push(axis);
+    }
     var renderer = this;
 
     if (options.label) {
@@ -909,17 +918,9 @@ MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,
 
     plot.setHeight = function(height) {
         var path_vals = recalculate_plot(0.5*height/RS);
-        plot.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' '+path_vals);
-        plot.setAttribute('stroke-width',RS/renderer.zoom);
+        plot.setAttribute('d','M0 0 M0 0 m0 '+(height*offset_scale)+' m0 '+(0.5*height*height_scale)+' '+path_vals);
+        plot.setAttribute('stroke-width',((options.thickness || 0.35)*RS)/renderer.zoom);
     };
-    axis.setHeight = function(height) {
-        if (abs_min_val < 0 && abs_max_val > 0) {
-            axis.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
-        } else {
-            axis.setAttribute('d','M0 0 M0 0 m0 '+height*offset_scale+'m0 '+0.5*(1-abs_min_val)*height*height_scale+' l'+renderer._sequence_els.length*RS+' 0');
-        }
-        axis.setAttribute('stroke-width',0.2*RS/renderer.zoom);
-    }
     return plot;
 };
 
