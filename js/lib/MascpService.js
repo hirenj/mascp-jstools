@@ -1331,8 +1331,8 @@ base.retrieve = function(agi,callback)
                     if (ts >= timestamps[0] && ts <= timestamps[1] ) {
                         if (ts > max_stamp && c_acc == acc && serv == service) {
                             result = cursor.value;
-                            max_stamp = cursor.primaryKey.retrieved;
-                            result.retrieved = new Date(cursor.primaryKey.retrieved);
+                            max_stamp = ts;
+                            result.retrieved = new Date(ts);
                         }
                     }
                     cursor.continue();
@@ -1375,7 +1375,7 @@ base.retrieve = function(agi,callback)
                 var cursor = event.target.result;
                 if (cursor) {
                     if (cursor.key[0] == service && timestamps[0] <= cursor.key[1] && timestamps[1] >= cursor.key[1] ) {
-                        results.push(new Date(cursor.key[1]));
+                        results.push(new Date(parseInt(cursor.key[1])));
                     }
                     cursor.continue();
                 } else {
@@ -1640,7 +1640,7 @@ base.retrieve = function(agi,callback)
                 records.forEach(function(record) {
                     var data = typeof record.data === 'string' ? JSON.parse(record.data) : record.data;
                     if (data) {
-                        data.retrieved = new Date(record.retrieved);
+                        data.retrieved = new Date(parseInt(record.retrieved));
                     }
                     if (results[record.acc] && results[record.acc].retrieved > record.retrieved) {
                         return;
@@ -1694,7 +1694,7 @@ base.retrieve = function(agi,callback)
                 if (records && records.length > 0 && typeof records[0] != "undefined") {
                     var data = typeof records[0].data === 'string' ? JSON.parse(records[0].data) : records[0].data;
                     if (data) {
-                        data.retrieved = new Date(records[0].retrieved);
+                        data.retrieved = new Date(parseInt(records[0].retrieved));
                     }
                     cback.call(null,null,data);
                 } else {
@@ -1713,7 +1713,7 @@ base.retrieve = function(agi,callback)
                 var result = [];
                 if (records && records.length > 0 && typeof records[0] != "undefined") {
                     for (var i = records.length - 1; i >= 0; i--) {
-                        result.push(new Date(records[i].retrieved));
+                        result.push(new Date(parseInt(records[i].retrieved)));
                     }
                 }
                 cback.call(null,result);
@@ -1831,7 +1831,7 @@ base.retrieve = function(agi,callback)
             var data = localStorage[service.toString()+".#"+(acc || '').toLowerCase()];
             if (data && typeof data === 'string') {
                 var datablock = JSON.parse(data);
-                datablock.retrieved = new Date(datablock.retrieved);
+                datablock.retrieved = new Date(parseInt(datablock.retrieved));
                 cback.call(null,null,datablock);
             } else {
                 cback.call(null,null,null);
