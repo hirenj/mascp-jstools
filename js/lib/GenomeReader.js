@@ -92,10 +92,10 @@ MASCP.GenomeReader.prototype.requestData = function()
             }
             if ( ! mapped[uniprot] ) {
                 mapped[uniprot] = [];
-                self.sequences.push({ "agi" : uniprot });
             }
             self.exons[nuc]._id = nuc;
             mapped[uniprot].push(self.exons[nuc]);
+            self.sequences.push({ "agi" : uniprot, "exon" : self.exons[nuc] });
         });
         return defaultDataReceived.call(this,{"data":mapped},status);
     };
@@ -124,8 +124,33 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     return results;
 };
 
+MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx,pos) {
+    var wanted_uniprot = self.sequences[idx].agi;
+    var inserts = this._raw_data.data.sequences[idx].insertions || {};
+    var result = pos;
+    var actual_position = 0;
+    var seq = this._raw_data.data.sequences[idx].toString();
+    for (var i = 0 ; i < seq.length; i++ ) {
+        if (inserts[i]) {
+            actual_position += inserts[i].length;
+        }
+        actual_position += 1;
+        if (seq.charAt(i) == '-') {
+            actual_position -= 1;
+        }
+        if (pos <= actual_position) {
+            if (pos == actual_position) {
+                return (i+1);
+            } else {
+                return -1 * i;
+            }
+        }
+    }
+    return -1 * seq.length;
+};
+
 (function(serv) {
-    var extender = function(genomereader,aas,elements_to_move) {
+    var extender = function(genomereader,aas,elements_to_move,index) {
         return function(el) {
             var orig_functions = {};
             genomereader.renderer._extendElement(orig_functions);
@@ -213,7 +238,6 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
                 var curr_sequence = renderer.sequence;
                 for (var i = 0; i < genomereader.sequences.length; i++) {
                     if (genomereader.sequences[i].agi && genomereader.sequences[i].agi.toUpperCase() == wanted_id.toUpperCase()) {
-                        renderer.sequence = genomereader.sequences[i].toString();
                         index = i;
                     }
                 }
@@ -222,23 +246,23 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
 
                 renderer.getAminoAcidsByPosition = function(aas) {
                     var new_aas = aas.map(function(aa) { return Math.abs(genomereader.result.calculatePositionForSequence(index,aa)); });
-                    return old_get_aas.call(this,new_aas).map(extender(genomereader,aas,elements_to_move));
+                    return old_get_aas.call(this,new_aas).map(extender(genomereader,aas,elements_to_move,index));
                 };
                 renderer.getAminoAcidsByPeptide = function(peptide) {
-                    var positions = [];
-                    var start = genomereader.sequences[index].toString().indexOf(peptide);
-                    for (var i = 0; i < peptide.length; i++ ) {
-                        positions.push(start+i);
-                    }
-                    var results = this.getAminoAcidsByPosition(positions);
-                    if (results.length) {
-                        results.addToLayer = function(layername, fraction, options) {
-                            return results[0].addBoxOverlay(layername,results.length,fraction,options);
-                        };
-                    } else {
-                        results.addToLayer = function() {};
-                    }
-                    return results;
+                    // var positions = [];
+                    // var start = genomereader.sequences[index].toString().indexOf(peptide);
+                    // for (var i = 0; i < peptide.length; i++ ) {
+                    //     positions.push(start+i);
+                    // }
+                    // var results = this.getAminoAcidsByPosition(positions);
+                    // if (results.length) {
+                    //     results.addToLayer = function(layername, fraction, options) {
+                    //         return results[0].addBoxOverlay(layername,results.length,fraction,options);
+                    //     };
+                    // } else {
+                    //     results.addToLayer = function() {};
+                    // }
+                    // return results;
                 };
                 old.call(reader);
                 renderer.sequence = curr_sequence;
