@@ -302,6 +302,9 @@ MASCP.SequenceRenderer = (function() {
     };
 
     return function(sequenceContainer) {
+        if (! sequenceContainer) {
+            return this;
+        }
         if (typeof sequenceContainer !== 'undefined') {
             this._container = sequenceContainer;
             if ( ! this._container.style.position) {
@@ -323,7 +326,7 @@ MASCP.SequenceRenderer = (function() {
     //            this.showRowNumbers();            
             });
 
-            this.setSequence(sequenceContainer.textContent);
+            this.setSequence(sequenceContainer.textContent || '');
         }
         
         setupTrackOrder(this);
