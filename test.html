@@ -1,0 +1,29 @@
+<html>
+<head>
+<script src="dist/js/mascp-jstools.js"></script>
+</head>
+<body>
+	<div id="container" style="postion: relative; width: 100%; height: 400px;"></div>
+	<script>
+		MASCP.ready = function() {
+			var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
+			MASCP.Service.BeginCaching();
+			// (new MASCP.UniprotReader()).retrieve('q14118',function() {
+			// 	renderer.setSequence(this.result.getSequence());
+			// });
+			renderer.refresh();
+			renderer.grow_container = false;
+			window.the_rend = renderer;
+			window.doGenome();
+		};
+		window.doGenome = function() {
+			var reader = new MASCP.GenomeReader();
+			reader.registerSequenceRenderer(the_rend);
+			//p12830
+			reader.retrieve('q14118',function(err) {
+				the_rend.zoom = 0.01;
+			});
+		};
+	</script>
+</body>
+</html>
