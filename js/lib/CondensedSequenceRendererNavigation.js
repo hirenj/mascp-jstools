@@ -441,7 +441,9 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
     var buildNavPane = function(back_canvas) {
         var self = this;
-        var nav_width = 200+(touch_scale - 1)*100;
+        self.nav_width_base = 200+(touch_scale - 1)*100;
+        var nav_width = self.nav_width_base;
+        self.nav_width = self.nav_width_base;
         var panel_back = back_canvas.group();
         var button_group = back_canvas.group();
         
@@ -540,16 +542,16 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             } else {
                 self.demote();
 
-                close_group._button.setAttribute('filter','url(#drop_shadow)');            
-                close_group.setAttribute('style',needs_transition+transform_origin_statement+translate(-0.75*nav_width,"405deg"));
+                close_group._button.setAttribute('filter','url(#drop_shadow)');
+                close_group.setAttribute('style',needs_transition+transform_origin_statement+translate(-0.75*self.nav_width_base,"405deg"));
                 if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
                     close_transform = close_group.getAttribute('transform') || ' ';
-                    close_transform = close_transform + ' translate('+-0.75*nav_width+',0) rotate(45,'+(nav_width-(10 + touch_scale*11))+','+(12*touch_scale)+') ';
+                    close_transform = close_transform + ' translate('+-0.75*self.nav_width_base+',0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+','+(12*touch_scale)+') ';
                     close_group.setAttribute('transform',close_transform);
                     panel_back.setAttribute('visibility','hidden');
                 } else {
-                    panel_back.setAttribute('style',needs_transition+translate(-1*nav_width));
-                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*nav_width));
+                    panel_back.setAttribute('style',needs_transition+translate(-1*self.nav_width));
+                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*self.nav_width));
                 }
             }
             return true;
@@ -569,7 +571,11 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         self.setZoom = function(zoom) {
             close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
             rect.setAttribute('transform','scale('+zoom+',1) ');
-            rect.setAttribute('ry', (zoom*base_rounded_corner[1]).toString());
+            rect.setAttribute('ry', (base_rounded_corner[1]).toString());
+            rect.setAttribute('rx', (base_rounded_corner[0]/zoom).toString());
+            self.nav_width = self.nav_width_base / zoom;
+            rect.setAttribute('width', (self.nav_width).toString());
+            toggler.call(this,visible);
             self.refresh();
         };
 
