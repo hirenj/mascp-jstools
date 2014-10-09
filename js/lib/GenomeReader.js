@@ -124,7 +124,7 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     return results;
 };
 
-MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx,pos) {
+MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,pos) {
     var wanted_uniprot = self.sequences[idx].agi;
     var inserts = this._raw_data.data.sequences[idx].insertions || {};
     var result = pos;
