@@ -1,4 +1,5 @@
 MASCP.CondensedSequenceRenderer.Navigation = (function() {
+    var svgns = MASCP.svgns;
 
     var touch_scale = 1, touch_enabled = false;
     if ("ontouchend" in document) {
