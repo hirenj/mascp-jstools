@@ -15,8 +15,17 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     var self = this;
 
     MASCP.CondensedSequenceRenderer.Zoom(self);
-    window.addEventListener('resize',function() {
+    var resizeTimeout;
+    var resize_callback = function() {
         sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
+    };
+    window.addEventListener('resize',function() {
+        clearTimeout(resizeTimeout);
+        if (window.requestAnimationFrame) {
+            window.requestAnimationFrame(resize_callback)
+        } else {
+            resizeTimeout = setTimeout(resize_callback,100);
+        }
     },true);
     sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
 
