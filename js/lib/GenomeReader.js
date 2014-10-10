@@ -61,9 +61,9 @@ MASCP.GenomeReader.prototype.requestData = function()
     {
         var self = this;
         if (data.data && status === "db") {
-            self.sequences = [];
+            self.sequences = [{ "agi" : "genome" }];
             Object.keys(data.data).forEach(function(uniprot) {
-                self.sequences.push({ "agi" : uniprot });
+                self.sequences.push({ "agi" : uniprot.toLowerCase() });
             });
             return defaultDataReceived.call(this,data,status);
         }
@@ -82,10 +82,13 @@ MASCP.GenomeReader.prototype.requestData = function()
             return;
         }
         var mapped = {};
-        self.sequences = [];
+        self.sequences = [{ "agi" : "genome" }];
         (data || "").split('\n').forEach(function(row) {
             var bits = row.split('\t');
-            var uniprot = bits[1];
+            if ( ! bits[1]) {
+                return;
+            }
+            var uniprot = bits[1].toLowerCase();
             var nuc = bits[0];
             if (! self.exons[nuc]) {
                 return;
@@ -95,7 +98,7 @@ MASCP.GenomeReader.prototype.requestData = function()
             }
             self.exons[nuc]._id = nuc;
             mapped[uniprot].push(self.exons[nuc]);
-            self.sequences.push({ "agi" : uniprot, "exon" : self.exons[nuc] });
+            self.sequences.push({ "agi" : uniprot.toLowerCase() });
         });
         return defaultDataReceived.call(this,{"data":mapped},status);
     };
@@ -124,36 +127,62 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     return results;
 };
 
-MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,pos) {
-    var wanted_uniprot = self.sequences[idx].agi;
-    var inserts = this._raw_data.data.sequences[idx].insertions || {};
-    var result = pos;
-    var actual_position = 0;
-    var seq = this._raw_data.data.sequences[idx].toString();
-    for (var i = 0 ; i < seq.length; i++ ) {
-        if (inserts[i]) {
-            actual_position += inserts[i].length;
-        }
-        actual_position += 1;
-        if (seq.charAt(i) == '-') {
-            actual_position -= 1;
-        }
-        if (pos <= actual_position) {
-            if (pos == actual_position) {
-                return (i+1);
-            } else {
-                return -1 * i;
+MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
+    var self = this;
+    var wanted_identifier = self.sequences[idx].agi;
+    var empty_regions =  [];
+
+    if (wanted_identifier == 'genome') {
+        var calculated_pos = pos;
+        for (var i = 0; i < empty_regions.length; i++) {
+            if (pos > empty_regions[i][1]) {
+                calculated_pos -= (empty_regions[i][1] - empty_regions[i][0]);
+            }
+            if (pos < empty_regions[i][1] && pos > empty_regions[i][0]) {
+                calculated_pos = -1;
             }
         }
+        return (calculated_pos);
     }
-    return -1 * seq.length;
+
+    var position_genome = pos * 3;
+    var cds = self.result._raw_data.data[wanted_uniprot.toLowerCase()];
+    var target_cds = cds[0];
+    var exons = target_cds.exons;
+    var target_position;
+
+    for (var i = 0; i < exons.length; i++) {
+        if (target_cds.cdsstart > exons[i][1] & target_cds.cdsstart > exons[i][0]) {
+            continue;
+        }
+        var start = target_cds.cdsstart > exons[i][0] ? target_cds.cdsstart : exons[i][0];
+        var bases = (exons[i][1] - start);
+        if (bases >= position_genome) {
+            target_position = start + position_genome - self.result.min;
+            break;
+        } else {
+            position_genome -= bases;
+        }
+    }
+
+    var calculated_pos = Math.floor(target_position / 3);
+    for (var i = 0; i < empty_regions.length; i++) {
+        if (pos > empty_regions[i][1]) {
+            calculated_pos -= (empty_regions[i][1] - empty_regions[i][0]);
+        }
+        if (pos < empty_regions[i][1] && pos > empty_regions[i][0]) {
+            calculated_pos = -1;
+        }
+    }
+    return (calculated_pos);
+
 };
 
 (function(serv) {
-    var extender = function(genomereader,aas,elements_to_move,index) {
+    var extender = function(genomereader,aas,elements_to_move,index,renderer) {
         return function(el) {
             var orig_functions = {};
-            genomereader.renderer._extendElement(orig_functions);
+            renderer._extendElement(orig_functions);
 
             var result = {};
             result.original_index = aas.shift();
@@ -212,7 +241,7 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
             return result;
         };
     };
-    var reader_extender = function(genomereader,elements_to_move) {
+    var reader_extender = function(genomereader,elements_to_move,renderer) {
         return function(reader) {
             if (genomereader == reader) {
                 return;
@@ -221,7 +250,6 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
                 return;
             }
             var old = reader.gotResult;
-            var renderer = genomereader.renderer;
             reader.getSequence = function() {
                 var wanted_id = reader.acc || reader.agi || "";
                 for (var i = 0; i < genomereader.sequences.length; i++) {
@@ -246,7 +274,7 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
 
                 renderer.getAminoAcidsByPosition = function(aas) {
                     var new_aas = aas.map(function(aa) { return Math.abs(genomereader.result.calculatePositionForSequence(index,aa)); });
-                    return old_get_aas.call(this,new_aas).map(extender(genomereader,aas,elements_to_move,index));
+                    return old_get_aas.call(this,new_aas).map(extender(genomereader,aas,elements_to_move,index,renderer));
                 };
                 renderer.getAminoAcidsByPeptide = function(peptide) {
                     // var positions = [];
@@ -280,14 +308,15 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
         var return_data = [];
         var base_offset = 0;
         uniprots.forEach(function(uniprot) {
-            var ends = cds_data[uniprot].reverse().map(function(cd,idx) {
+            var ends = cds_data[uniprot].map(function(cd,idx) {
                 var exons = cd.exons;
-                var color = (idx == (cds_data[uniprot].length - 1)) ? '#000' : '#f99';
+                var color = (idx == 0) ? '#000' : '#f99';
                 exons.forEach(function(exon) {
-                    return_data.push({ "aa": Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.2, "fill" : color, "merge" : false  }});
+                    return_data.push({ "aa": 1+Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.2, "fill" : color, "merge" : false  }});
                 });
                 base_offset += 1;
             });
+            base_offset += 2;
         });
         return return_data;
     };
@@ -297,16 +326,21 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
 
         var elements_to_move = [];
 
-        renderer.bind('readerRegistered',reader_extender(self,elements_to_move));
+        renderer.bind('readerRegistered',reader_extender(self,elements_to_move,renderer));
 
         var controller_name = 'isoform_controller';
         var group_name = 'isoforms';
 
         var redraw_alignments = function(sequence_index) {
+
             if ( ! sequence_index ) {
                 sequence_index = 0;
             }
             var result = self.result;
+            result.calculatePositionForSequence = function(idx,aa) {
+                return self.calculatePositionForSequence(idx,aa);
+            };
+
 
             MASCP.registerGroup(group_name, 'Aligned');
             MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
@@ -331,7 +365,6 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
             });
             var aligned = result.getSequences();
 
-
             if ( ! renderer.sequence ) {
                 // Not sure what to do with this bit here
 
@@ -344,16 +377,22 @@ MASCP.GenomeReader.Result.prototype.calculatePositionForSequence = function(idx,
                 renderer.redrawAxis();
             }
             for (var i = 0 ; i < aligned.length; i++) {
-                var layname = self.sequences[i].agi.toUpperCase() || "missing"+i;
+                var layname = self.sequences[i+1].agi.toUpperCase() || "missing"+i;
                 MASCP.registerGroup(group_name, 'Aligned');
-                var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
-                lay.fullname = self.sequences[i].name || layname.toUpperCase();
+                var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i+1].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
+                lay.fullname = self.sequences[i+1].name || layname.toUpperCase();
                 if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
                   renderer.trackOrder.push(layname.toUpperCase());
                 }
             }
-
-            renderer.renderObjects(controller_name,get_exon_boxes(result));
+            var proxy_reader = {
+                agi: "exons",
+                gotResult: function() {
+                    renderer.renderObjects(controller_name,get_exon_boxes(result));
+                }
+            };
+            MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
+            proxy_reader.gotResult();
 
             renderer.zoom = 1;
             bean.fire(MASCP.getGroup(group_name),'visibilityChange',[renderer,true]);
