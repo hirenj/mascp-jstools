@@ -312,7 +312,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 var exons = cd.exons;
                 var color = (idx == 0) ? '#000' : '#f99';
                 exons.forEach(function(exon) {
-                    return_data.push({ "aa": 1+Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.2, "fill" : color, "merge" : false  }});
+                    return_data.push({ "aa": 1+Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.3, "fill" : color, "merge" : false  }});
                 });
                 base_offset += 1;
             });
