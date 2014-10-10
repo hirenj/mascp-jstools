@@ -146,7 +146,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     }
 
     var position_genome = pos * 3;
-    var cds = self.result._raw_data.data[wanted_uniprot.toLowerCase()];
+    var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
     var target_cds = cds[0];
     var exons = target_cds.exons;
     var target_position;
