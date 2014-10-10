@@ -22,13 +22,13 @@
 			//p12830
 			var up = 'P02768';
 			reader.retrieve(up,function(err) {
-				the_rend.zoom = 0.01;
+				the_rend.zoom = 3;
 
 	            var proxy_reader = {
 	                agi: up,
 	                gotResult: function() {
 	                    // the_rend.getAA(100).addToLayer(up,1,{'fill' : '#000'});
-	                    the_rend.getAA(1).addToLayer(up,1,{'fill' : '#000'});
+	                    the_rend.getAA(1).addToLayer(up,{'fill' : '#f00', 'height': 12 });
 	                    // the_rend.getAA(200).addToLayer(up,1,{'fill' : '#000'});
 	                }
 	            };
