@@ -129,7 +129,7 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
 
 MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
     var self = this;
-    var wanted_identifier = self.sequences[idx].agi;
+    var wanted_identifier = idx;
     var position_genome = pos * 3;
     var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
     var target_cds = cds[0];
@@ -177,127 +177,6 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 };
 
 (function(serv) {
-    var extender = function(genomereader,aas,elements_to_move,index,renderer) {
-        return function(el) {
-            var orig_functions = {};
-            renderer._extendElement(orig_functions);
-
-            var result = {};
-            result.original_index = aas.shift();
-            if ( ! el ) {
-                el = { "_index" : -100, "_renderer" : renderer };
-            }
-            if ( ! el['_renderer']) {
-                el['_renderer'] = renderer;
-            }
-
-            result._index = el._index;
-
-            result.addShapeOverlay = function(layername,width,opts) {
-                elements_to_move.push(orig_functions['addShapeOverlay'].call(el,layername,Math.abs(genomereader.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,opts));
-                elements_to_move.slice(-1)[0].layer_idx = index;
-                elements_to_move.slice(-1)[0].aa = result.original_index;
-                elements_to_move.slice(-1)[0].aa_width = width;
-                return elements_to_move.slice(-1)[0];
-            };
-            result.addBoxOverlay = function(layername,width,fraction,opts) {
-                elements_to_move.push(orig_functions['addBoxOverlay'].call(el,layername,Math.abs(genomereader.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,fraction,opts));
-                elements_to_move.slice(-1)[0].layer_idx = index;
-                elements_to_move.slice(-1)[0].aa_width = width;
-                elements_to_move.slice(-1)[0].aa = result.original_index;
-                return elements_to_move.slice(-1)[0];
-            };
-            result.addTextOverlay = function(layername,width,opts) {
-                elements_to_move.push(orig_functions['addTextOverlay'].call(el,layername,Math.abs(genomereader.result.calculatePositionForSequence(index,result.original_index+width)) - el._index,opts));
-                elements_to_move.slice(-1)[0].layer_idx = index;
-                elements_to_move.slice(-1)[0].aa = result.original_index;
-                elements_to_move.slice(-1)[0].aa_width = width;
-                return elements_to_move.slice(-1)[0];
-            };
-            result.addToLayerWithLink = function(layername,url,width) {
-                elements_to_move.push(orig_functions['addToLayerWithLink'].call(el,layername,url,Math.abs(genomereader.result.calculatePositionForSequence(index,result.original_index+width)) - el._index));
-                elements_to_move.slice(-1)[0].layer_idx = index;
-                return elements_to_move.slice(-1)[0];
-            };
-            result.addToLayer = function(layername,opts) {
-                elements_to_move.push(orig_functions['addToLayer'].call(el,layername,opts));
-                elements_to_move.slice(-1)[0].layer_idx = index;
-                elements_to_move.slice(-1)[0].aa = result.original_index;
-                elements_to_move.slice(-1)[0].aa_width = 1;
-                return elements_to_move.slice(-1)[0];
-            };
-            for (var method in orig_functions) {
-                if ( ! result[method] ) {
-                    result[method] = (function(method){
-                        return function() {
-                            elements_to_move.push(orig_functions[method].apply(el,arguments));
-                            return elements_to_move.slice(-1)[0];
-                        };
-                    })(method);
-                }
-            }
-            return result;
-        };
-    };
-    var reader_extender = function(genomereader,elements_to_move,renderer) {
-        return function(reader) {
-            if (genomereader == reader) {
-                return;
-            }
-            if ( ! genomereader.result ) {
-                return;
-            }
-            var old = reader.gotResult;
-            reader.getSequence = function() {
-                var wanted_id = reader.acc || reader.agi || "";
-                for (var i = 0; i < genomereader.sequences.length; i++) {
-                    if (genomereader.sequences[i].agi && genomereader.sequences[i].agi.toUpperCase() == wanted_id.toUpperCase()) {
-                        return genomereader.sequences[i].toString();
-                    }
-                }
-                return renderer.sequence;
-            };
-
-            reader.gotResult = function() {
-                var index = 0;
-                var wanted_id = reader.acc || reader.agi || "";
-                var curr_sequence = renderer.sequence;
-                for (var i = 0; i < genomereader.sequences.length; i++) {
-                    if (genomereader.sequences[i].agi && genomereader.sequences[i].agi.toUpperCase() == wanted_id.toUpperCase()) {
-                        index = i;
-                    }
-                }
-                var old_get_aas = renderer.getAminoAcidsByPosition;
-                var old_get_pep = renderer.getAminoAcidsByPeptide;
-
-                renderer.getAminoAcidsByPosition = function(aas) {
-                    var new_aas = aas.map(function(aa) { return Math.abs(genomereader.result.calculatePositionForSequence(index,aa)); });
-                    return old_get_aas.call(this,new_aas).map(extender(genomereader,aas,elements_to_move,index,renderer));
-                };
-                renderer.getAminoAcidsByPeptide = function(peptide) {
-                    // var positions = [];
-                    // var start = genomereader.sequences[index].toString().indexOf(peptide);
-                    // for (var i = 0; i < peptide.length; i++ ) {
-                    //     positions.push(start+i);
-                    // }
-                    // var results = this.getAminoAcidsByPosition(positions);
-                    // if (results.length) {
-                    //     results.addToLayer = function(layername, fraction, options) {
-                    //         return results[0].addBoxOverlay(layername,results.length,fraction,options);
-                    //     };
-                    // } else {
-                    //     results.addToLayer = function() {};
-                    // }
-                    // return results;
-                };
-                old.call(reader);
-                renderer.sequence = curr_sequence;
-                renderer.getAminoAcidsByPosition = old_get_aas;
-                renderer.getAminoAcidsByPeptide = old_get_pep;
-            };
-        };
-    };
-
     var get_exon_boxes = function(result) {
         var cds_data = result._raw_data.data;
         var uniprots = Object.keys(cds_data);
@@ -321,46 +200,29 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
+        renderer.addAxisScale('genome',function(pos,layer) {
+            if (layer && layer.genomic) {
+                return pos;
+            }
+            return self.calculateProteinPositionForSequence(layer.name,pos);
+        });
 
-        var elements_to_move = [];
-
-        renderer.bind('readerRegistered',reader_extender(self,elements_to_move,renderer));
-
-        var controller_name = 'isoform_controller';
-        var group_name = 'isoforms';
+        var controller_name = 'cds';
 
         var redraw_alignments = function(sequence_index) {
-
             if ( ! sequence_index ) {
                 sequence_index = 0;
             }
-            var result = self.result;
-            result.calculatePositionForSequence = function(idx,aa) {
-                return self.calculatePositionForSequence(idx,aa);
-            };
+            MASCP.registerLayer(controller_name, { 'fullname' : 'CDS', 'color' : '#000000' });
+            MASCP.getLayer(controller_name).genomic = true;
 
-
-            MASCP.registerGroup(group_name, 'Aligned');
-            MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
             if (renderer.trackOrder.indexOf(controller_name) < 0) {
                 renderer.trackOrder.push(controller_name);
             }
             renderer.showLayer(controller_name);
-            renderer.createGroupController(controller_name,group_name);
 
-            elements_to_move.forEach(function(el) {
-                if (el.move) {
-                    var aa = result.calculatePositionForSequence(el.layer_idx,el.aa);
-                    var aa_width = result.calculatePositionForSequence(el.layer_idx,el.aa+el.aa_width);
-                    if (aa < 0) {
-                        aa *= -1;
-                    }
-                    if (aa_width < 0) {
-                        aa_width *= -1;
-                    }
-                    el.move(aa,aa_width-aa);
-                }
-            });
+            var result = this.result;
+
             var aligned = result.getSequences();
 
             if ( ! renderer.sequence ) {
@@ -374,28 +236,15 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 renderer.sequence = aligned[sequence_index];
                 renderer.redrawAxis();
             }
-            for (var i = 0 ; i < aligned.length; i++) {
-                var layname = self.sequences[i+1].agi.toUpperCase() || "missing"+i;
-                MASCP.registerGroup(group_name, 'Aligned');
-                var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i+1].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
-                lay.fullname = self.sequences[i+1].name || layname.toUpperCase();
-                if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
-                  renderer.trackOrder.push(layname.toUpperCase());
-                }
-            }
+
             var proxy_reader = {
-                agi: "exons",
+                agi: controller_name,
                 gotResult: function() {
                     renderer.renderObjects(controller_name,get_exon_boxes(result));
                 }
             };
             MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
             proxy_reader.gotResult();
-
-            renderer.zoom = 1;
-            bean.fire(MASCP.getGroup(group_name),'visibilityChange',[renderer,true]);
-            renderer.refresh();
-
         };
 
         this.bind('resultReceived',redraw_alignments);

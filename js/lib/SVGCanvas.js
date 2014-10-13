@@ -11,6 +11,10 @@ var SVGCanvas = SVGCanvas || (function() {
             var curr_disp = 'hidden';
 
             for (var i = 0 ; i < an_array.length; i++ ) {
+                if (Array.isArray(an_array[i])) {
+                    continue;
+                }
+
                 a_disp = an_array[i].getAttribute('visibility');
                 if (a_disp && a_disp != 'hidden') {
                     curr_disp = a_disp;
@@ -22,9 +26,9 @@ var SVGCanvas = SVGCanvas || (function() {
         
         an_array.currenty = function() {
             var a_y;
-            
-            if (an_array[0] && an_array[0].getAttribute('transform')) {
-                a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(an_array[0].getAttribute('transform'));
+            var filtered = an_array.filter(function(el) { return ! Array.isArray(el); });
+            if (filtered[0] && filtered[0].getAttribute('transform')) {
+                a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(filtered[0].getAttribute('transform'));
                 if (a_y !== null && (typeof(a_y) !== 'undefined')) {
                     a_y = a_y[2];
                 }
@@ -157,6 +161,9 @@ var SVGCanvas = SVGCanvas || (function() {
                         if ( ! an_array[i]) {
                             continue;
                         }
+                        if (Array.isArray(an_array[i])) {
+                            continue;
+                        }
                         if ( an_array[i].style.display == 'none' ){
                             continue;
                         }
@@ -225,6 +232,10 @@ var SVGCanvas = SVGCanvas || (function() {
 
         an_array.refresh_zoom = function() {
             for (var i = 0; i < an_array.length; i++ ) {
+                if (Array.isArray(an_array[i])) {
+                    continue;
+                }
+
                 if (an_array[i].zoom_level && an_array[i].zoom_level == 'text') {
                     if (an_array[i].ownerSVGElement && an_array[i].ownerSVGElement.zoom > 3.5) {
                         an_array[i].setAttribute('display', 'inline');

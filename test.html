@@ -8,27 +8,56 @@
 		MASCP.ready = function() {
 			var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
 			MASCP.Service.BeginCaching();
-			// (new MASCP.UniprotReader()).retrieve('q14118',function() {
-			// 	renderer.setSequence(this.result.getSequence());
-			// });
+			(new MASCP.UniprotReader()).retrieve('q14118',function() {
+				renderer.setSequence(this.result.getSequence());
+			});
+			renderer.bind('sequenceChange',function() {
+				// window.doProteome();
+			})
 			renderer.refresh();
 			renderer.grow_container = false;
 			window.the_rend = renderer;
 			window.doGenome();
 		};
+		window.doProteome = function() {
+			var up = 'q14118';
+            var proxy_reader = {
+                agi: up,
+                gotResult: function() {
+                	MASCP.registerLayer(up,{'fullname' : "foo"});
+                	the_rend.addAxisScale('foo',function(aa) {  return aa * (window.scaleval || 1); });
+                    // the_rend.getAA(100).addToLayer(up,1,{'fill' : '#000'});
+                    var an_aa = the_rend.getAA(101);
+                    console.log(an_aa);
+                    an_aa.addToLayer(up,{'fill' : '#f00', 'height': 12 });
+                    the_rend.trackOrder.push('q14118');
+                    the_rend.showLayer('q14118');
+                    the_rend.refresh();
+                    // the_rend.getAA(200).addToLayer(up,1,{'fill' : '#000'});
+                }
+            };
+            MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,the_rend);
+            proxy_reader.gotResult();
+		};
 		window.doGenome = function() {
 			var reader = new MASCP.GenomeReader();
 			reader.registerSequenceRenderer(the_rend);
 			//p12830
-			var up = 'P02768';
+			// var up = 'p02768';
+			var up = 'q14118';
 			reader.retrieve(up,function(err) {
-				the_rend.zoom = 3;
+				the_rend.zoom = 0.01;
 
 	            var proxy_reader = {
 	                agi: up,
 	                gotResult: function() {
 	                    // the_rend.getAA(100).addToLayer(up,1,{'fill' : '#000'});
-	                    the_rend.getAA(1).addToLayer(up,{'fill' : '#f00', 'height': 12 });
+	                	MASCP.registerLayer(up,{'fullname' : "prot"});
+	                    var an_aa = the_rend.getAA(300);
+	                    an_aa.addToLayer(up,{'fill' : '#f00', 'height': 12 });
+	                    the_rend.trackOrder.push(up);
+	                    the_rend.showLayer(up);
+
 	                    // the_rend.getAA(200).addToLayer(up,1,{'fill' : '#000'});
 	                }
 	            };
