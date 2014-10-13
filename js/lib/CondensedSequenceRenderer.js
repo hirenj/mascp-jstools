@@ -592,7 +592,13 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     clazz.prototype.getAminoAcidsByPeptide = function(peptide,layer) {
         var self = this;
         var positions = [];
-        var start = self.sequences[layer].toString().indexOf(peptide);
+        var self_seq;
+        if (self.sequences) {
+            self_seq = self.sequences [ ( self.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(layer.toLowerCase()) ].toString();
+        } else {
+            self_seq = self.sequence;
+        }
+        var start = self_seq.indexOf(peptide);
         for (var i = 0; i < peptide.length; i++ ) {
             positions.push(start+i);
         }
@@ -620,6 +626,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
     
         this.sequence = new_sequence;
+        delete this.sequences;
     
         var seq_chars = this.sequence.split('');
         var line_length = seq_chars.length;
@@ -1541,11 +1548,11 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
             var old_get_aas = renderer.getAminoAcidsByPosition;
             var old_get_pep = renderer.getAminoAcidsByPeptide;
 
-            renderer.getAminoAcidsByPosition = function(aas) {
-                return old_get_aas.call(this,aas,wanted_id);
+            renderer.getAminoAcidsByPosition = function(aas,lay) {
+                return old_get_aas.call(this,aas,lay || wanted_id);
             };
-            renderer.getAminoAcidsByPeptide = function(peptide) {
-                return old_get_pep.call(this,peptide,wanted_id);
+            renderer.getAminoAcidsByPeptide = function(peptide,lay) {
+                return old_get_pep.call(this,peptide,lay || wanted_id);
             };
             old_result.call(reader);
 

@@ -884,7 +884,8 @@ MASCP.SequenceRenderer.prototype.reset = function()
             MASCP.layers[layer].disabled = true;
         }
     }
-    
+    delete this._scalers;
+
     if (this.resetAnnotations) {
         this.resetAnnotations();
     }
