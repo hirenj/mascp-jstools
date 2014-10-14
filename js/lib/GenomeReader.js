@@ -228,6 +228,74 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         return return_data;
     };
 
+    var get_removed_labels = function(result) {
+        var removed = result.removed_regions || [];
+        var results = [];
+        var max = result.max;
+        var min = result.min;
+
+        removed.forEach(function(vals) {
+            var start = vals[0];
+            var end = vals[1];
+            var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
+            var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
+
+            results.push({"aa" : Math.floor( (start - min) / 3 ) - 2, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
+            results.push({"aa" : Math.floor( (end - min) / 3 ) + 2, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
+            results.push({"aa" : Math.floor( (start - min) / 3 ) - 1, "type" : "box", width : Math.floor( (end - start) / 3) + 3, "options" : {"fill" : "#999", "height_scale" : 10, "offset" : -8 } });
+        });
+        return results;
+    };
+
+    var calculate_removed_regions = function(result,margin) {
+        var introns =  result.getIntrons(margin);
+
+        var intervals = [{ "index" : result.min - 2, "start" : true, "idx" : -1 } , {"index" : result.min, "start" : false, "idx" : -1 }];
+        introns.forEach(function(intron,idx) {
+            intervals.push({ "index" : intron[0], "start" : true,  "idx" : idx });
+            intervals.push({ "index" : intron[1], "start" : false , "idx" : idx });
+        });
+
+        intervals.sort(function(a,b) {
+            if (a.index < b.index ) {
+                return -1;
+            }
+            if (a.index > b.index ) {
+                return 1;
+            }
+            if (a.index == b.index) {
+                return a.start ? -1 : 1;
+            }
+        });
+        var results = [];
+        intervals.forEach(function(intr,idx) {
+            if (intr.start && intervals[idx+1] && intervals[idx+1].start == false) {
+                if (intr.index != intervals[idx+1].index && intervals[idx+1].index != result.min) {
+                    results.push( [intr.index , intervals[idx+1].index ]);
+                }
+            }
+        });
+        result.removed_regions = results;
+    };
+    var generate_scaler_function = function(reader) {
+        return function(in_pos,layer) {
+            var pos = in_pos * 3;
+            var calculated_pos = pos;
+            if ( ! reader.result ) {
+                return in_pos;
+            }
+            var introns = reader.result.removed_regions || [];
+            for (var i = 0; i < introns.length; i++) {
+                if (pos > (introns[i][1] - reader.result.min)) {
+                    calculated_pos -= (introns[i][1] - introns[i][0]);
+                }
+                if (pos < (introns[i][1] - reader.result.min) && pos > (introns[i][0] - reader.result.min) ) {
+                    calculated_pos = -1 * (introns[i][0] - reader.result.min);
+                }
+            }
+            return (Math.floor(calculated_pos / 3));
+        };
+    };
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
         renderer.addAxisScale('genome',function(pos,layer) {
@@ -236,49 +304,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             }
             return self.calculateProteinPositionForSequence(layer.name,pos);
         });
-        renderer.addAxisScale('removeIntrons',function(in_pos,layer) {
-            var introns =  self.result.getIntrons(300);
-            var pos = in_pos * 3;
-            var calculated_pos = pos;
-
-            var intervals = [];
-            introns.forEach(function(intron,idx) {
-                intervals.push({ "index" : intron[0], "start" : true,  "idx" : idx });
-                intervals.push({ "index" : intron[1], "start" : false , "idx" : idx });
-            });
-
-            intervals.sort(function(a,b) {
-                if (a.index < b.index ) {
-                    return -1;
-                }
-                if (a.index > b.index ) {
-                    return 1;
-                }
-                if (a.index == b.index) {
-                    return a.start ? -1 : 1;
-                }
-            });
-            introns = [];
-            intervals.forEach(function(intr,idx) {
-                if (intr.start && intervals[idx+1] && intervals[idx+1].start == false) {
-                    introns.push( [intr.index , intervals[idx+1].index ]);
-                }
-            });
-            for (var i = 0; i < introns.length; i++) {
-                if (pos > (introns[i][1] - self.result.min)) {
-                    calculated_pos -= (introns[i][1] - introns[i][0]);
-                }
-                if (pos < (introns[i][1] - self.result.min) && pos > (introns[i][0] - self.result.min) ) {
-                    calculated_pos = -1 * (introns[i][0] - self.result.min);
-                }
-            }
-            if (pos >= (self.result.max - self.result.min)) {
-                renderer.sequence = Array( (Math.floor(calculated_pos / 3)) ).join('.') ;
-            }
-            return (Math.floor(calculated_pos / 3));
-        });
         var controller_name = 'cds';
-
         var redraw_alignments = function(sequence_index) {
             if ( ! sequence_index ) {
                 sequence_index = 0;
@@ -294,23 +320,42 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var result = this.result;
 
             var aligned = result.getSequences();
+            var scaler_function = generate_scaler_function(self);
+
+            renderer.addAxisScale('removeIntrons',scaler_function);
+
+            calculate_removed_regions(self.result,self.exon_margin || 300);
+
 
             if ( ! renderer.sequence ) {
                 // Not sure what to do with this bit here
 
-                renderer.setSequence(aligned[sequence_index])(function() {
+                renderer.setSequence(Array( scaler_function(result.max) ).join('.'))(function() {
                     redraw_alignments(sequence_index);
                 });
                 return;
             } else {
-                renderer.sequence = aligned[sequence_index];
+                renderer.sequence = Array( scaler_function(Math.floor ( (result.max - result.min) / 3)) ).join('.');
                 renderer.redrawAxis();
             }
-
             var proxy_reader = {
                 agi: controller_name,
                 gotResult: function() {
                     renderer.renderObjects(controller_name,get_exon_boxes(result));
+                    var labs = renderer.renderObjects(controller_name,get_removed_labels(result));
+                    renderer.bind('zoomChange',function() {
+                        if (! labs.length > 0 && labs[0].parentNode) {
+                            renderer.unbind('zoom',arguments.callee);
+                            return;
+                        }
+                        var hidden = false;
+                        for (var i = 0 ; ! hidden && i < (labs.length - 3); i += 3) {
+                            if (labs[i].getBoundingClientRect().right > labs[i+3].getBoundingClientRect().left) {
+                                hidden = true;
+                            }
+                        }
+                        labs.forEach(function(lab) { if(lab.nodeName == 'rect') { return; } if (hidden) { lab.setAttribute('display','none') } else { lab.removeAttribute('display') } });
+                    });
                 }
             };
             MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
