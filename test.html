@@ -12,10 +12,11 @@
 				renderer.setSequence(this.result.getSequence());
 			});
 			renderer.bind('sequenceChange',function() {
+				renderer.hideAxis();
 				// window.doProteome();
 			})
 			renderer.refresh();
-			renderer.grow_container = false;
+			renderer.grow_container = true;
 			window.the_rend = renderer;
 			window.doGenome();
 		};
@@ -45,9 +46,10 @@
 			//p12830
 			// var up = 'p02768';
 			var up = 'q14118';
+			reader.exon_margin = 300;
 			reader.retrieve(up,function(err) {
 				the_rend.zoom = 0.01;
-
+				console.log(this.result);
 	            var proxy_reader = {
 	                agi: up,
 	                gotResult: function() {
