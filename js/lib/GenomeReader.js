@@ -127,6 +127,34 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     return results;
 };
 
+MASCP.GenomeReader.Result.prototype.getIntrons = function(margin) {
+    var self = this;
+    var results = [];
+    var uprots = Object.keys(self._raw_data.data);
+    uprots.forEach(function(up) {
+        var cds = self._raw_data.data[up];
+        cds.forEach(function(target_cds) {
+            var exons = target_cds.exons;
+            var target_position;
+
+            for (var i = 0; i < exons.length; i++) {
+                if (i == 0) {
+                    results.push([ self.min, exons[i][0] - margin ]);
+                } else {
+                    results.push([ exons[i-1][1] + margin, exons[i][0] - margin]);
+                }
+                if (i == (exons.length - 1)) {
+                    results.push([ exons[i][1] + margin, self.max ]);
+                }
+                if (results.slice(-1)[0][0] > results.slice(-1)[0][1]) {
+                    results.splice(results.length - 1,1);
+                }
+            }
+        });
+    });
+    return results;
+};
+
 MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
     var self = this;
     var wanted_identifier = idx;
@@ -191,10 +219,12 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 exons.forEach(function(exon) {
                     return_data.push({ "aa": 1+Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.3, "fill" : color, "merge" : false  }});
                 });
+                return_data.push({"aa" : Math.floor( (cd.cdsstart - min) / 3), "type" : "box" , "width" : 0.5, "options" : { "fill" : "#0000ff", "height_scale" : 0.3, "offset" : base_offset , "merge" : false } });
                 base_offset += 1;
             });
             base_offset += 2;
         });
+        return_data.push({"aa" : Math.floor((max - min) / 3), "type" : "box", "width" : 1 });
         return return_data;
     };
 
@@ -206,7 +236,47 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             }
             return self.calculateProteinPositionForSequence(layer.name,pos);
         });
+        renderer.addAxisScale('removeIntrons',function(in_pos,layer) {
+            var introns =  self.result.getIntrons(300);
+            var pos = in_pos * 3;
+            var calculated_pos = pos;
 
+            var intervals = [];
+            introns.forEach(function(intron,idx) {
+                intervals.push({ "index" : intron[0], "start" : true,  "idx" : idx });
+                intervals.push({ "index" : intron[1], "start" : false , "idx" : idx });
+            });
+
+            intervals.sort(function(a,b) {
+                if (a.index < b.index ) {
+                    return -1;
+                }
+                if (a.index > b.index ) {
+                    return 1;
+                }
+                if (a.index == b.index) {
+                    return a.start ? -1 : 1;
+                }
+            });
+            introns = [];
+            intervals.forEach(function(intr,idx) {
+                if (intr.start && intervals[idx+1] && intervals[idx+1].start == false) {
+                    introns.push( [intr.index , intervals[idx+1].index ]);
+                }
+            });
+            for (var i = 0; i < introns.length; i++) {
+                if (pos > (introns[i][1] - self.result.min)) {
+                    calculated_pos -= (introns[i][1] - introns[i][0]);
+                }
+                if (pos < (introns[i][1] - self.result.min) && pos > (introns[i][0] - self.result.min) ) {
+                    calculated_pos = -1 * (introns[i][0] - self.result.min);
+                }
+            }
+            if (pos >= (self.result.max - self.result.min)) {
+                renderer.sequence = Array( (Math.floor(calculated_pos / 3)) ).join('.') ;
+            }
+            return (Math.floor(calculated_pos / 3));
+        });
         var controller_name = 'cds';
 
         var redraw_alignments = function(sequence_index) {
