@@ -441,6 +441,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
     var buildNavPane = function(back_canvas) {
         var self = this;
+        self.zoom = 1;
         self.nav_width_base = 200+(touch_scale - 1)*100;
         var nav_width = self.nav_width_base;
         self.nav_width = self.nav_width_base;
@@ -550,8 +551,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                     close_group.setAttribute('transform',close_transform);
                     panel_back.setAttribute('visibility','hidden');
                 } else {
-                    panel_back.setAttribute('style',needs_transition+translate(-1*self.nav_width));
-                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*self.nav_width));
+                    panel_back.setAttribute('style',needs_transition+translate(-1*self.nav_width*self.zoom));
+                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*self.nav_width*self.zoom));
                 }
             }
             return true;
@@ -573,8 +574,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             rect.setAttribute('transform','scale('+zoom+',1) ');
             rect.setAttribute('ry', (base_rounded_corner[1]).toString());
             rect.setAttribute('rx', (base_rounded_corner[0]/zoom).toString());
+            rect.setAttribute('x', parseInt(-10 / zoom).toString());
             self.nav_width = self.nav_width_base / zoom;
             rect.setAttribute('width', (self.nav_width).toString());
+            self.zoom = zoom;
             toggler.call(this,visible);
             self.refresh();
         };
@@ -634,8 +637,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 return;
             }
 
-            var ctm = document.getElementById('nav_back').getTransformToElement(track_canvas);
-            var back_width = (document.getElementById('nav_back').getBBox().width + document.getElementById('nav_back').getBBox().x);
+            var ctm = track_canvas.ownerSVGElement.getElementById('nav_back').getTransformToElement(track_canvas);
+            var back_width = (track_canvas.ownerSVGElement.getElementById('nav_back').getBBox().width + track_canvas.ownerSVGElement.getElementById('nav_back').getBBox().x);
             var point = track_canvas.createSVGPoint();
             point.x = back_width;
             point.y = 0;

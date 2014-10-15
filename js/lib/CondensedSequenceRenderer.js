@@ -57,12 +57,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 (function(clazz) {
     var createCanvasObject = function() {
         var renderer = this;
-        this.win = function() {
-            if (this._container && this._container.ownerDocument && this._container.ownerDocument.defaultView) {
-                return this._container.ownerDocument.defaultView;
-            }
-            return null;
-        };
 
         if (this._object) {
             if (typeof svgweb != 'undefined') {
@@ -354,13 +348,13 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var zoomchange = function() {
             var renderer = self;
                renderer._axis_height = parseInt( base_axis_height / renderer.zoom);
-               var pattern = renderer._canvas.ownerDocument.getElementById(renderer.axis_pattern_id);
+               var pattern = renderer._canvas.ownerSVGElement.getElementById(renderer.axis_pattern_id);
+
                thousand_mark_labels.forEach(function(label) {
                 label.setAttribute('visibility','hidden');
                });
 
                if (this.zoom > 3.6) {
-
                    axis_back.setAttribute('transform','translate(-5,'+(0.3*renderer._axis_height*RS)+')');
                    axis_back.setAttribute('height',0.25*renderer._axis_height*RS);
                    pattern.setAttribute('width',10*RS);
@@ -620,6 +614,13 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             results.addToLayer = function() {};
         }
         return results;
+    };
+
+    clazz.prototype.win = function() {
+        if (this._container && this._container.ownerDocument && this._container.ownerDocument.defaultView) {
+            return this._container.ownerDocument.defaultView;
+        }
+        return null;
     };
 
 
@@ -907,7 +908,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     };
 
     MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc) {
-        var new_owner = this._container_canvas.ownerDocument;
+        var new_owner = this._container_canvas.ownerSVGElement;
         if (this._container_canvas.getElementById('defs_'+namespace)){
             return;
         }
@@ -1966,7 +1967,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
                 container_width = docwidth;
             }
         }
-        max_size = Math.ceil(10*container_width / RS);
+        max_size = Math.ceil(10*container_width * renderer.zoom / RS);
         if (max_size > seq.length) {
             max_size = seq.length;
         }
@@ -2406,6 +2407,10 @@ clazz.prototype.removeTrack = function(layer) {
     
 };
 var refresh_id = 0;
+clazz.prototype.disablePrintResizing = function() {
+    delete this._media_func;
+};
+
 clazz.prototype.enablePrintResizing = function() {
     if ( ! (this.win() || window).matchMedia ) {
         return;
@@ -2413,19 +2418,19 @@ clazz.prototype.enablePrintResizing = function() {
     if (this._media_func) {
         return this._media_func;
     }
-    var old_zoom;
-    var old_translate;
-    var old_viewbox;
     this._media_func = function(matcher) {
         var self = this;
+        if ( ! self._canvas ) {
+            return;
+        }
         if ( self.grow_container ) {
             if (matcher.matches) {
                 var left_pos = 10*parseInt(self.leftVisibleResidue() / 10)+10;
-                self._canvas.ownerDocument.getElementById(self.axis_pattern_id).setAttribute('x',(left_pos*self._RS));
+                self._canvas.ownerSVGElement.getElementById(self.axis_pattern_id).setAttribute('x',(left_pos*self._RS));
                 delete self._container_canvas.parentNode.cached_width;
                 bean.fire(self._canvas,'panend');
             } else {
-                self._canvas.ownerDocument.getElementById(self.axis_pattern_id).setAttribute('x','0');
+                self._canvas.ownerSVGElement.getElementById(self.axis_pattern_id).setAttribute('x','0');
             }
             return;
         }
@@ -2438,8 +2443,8 @@ clazz.prototype.enablePrintResizing = function() {
                 self.withoutRefresh(function() {
                   self.zoom = a_zoom;
                 });
-                self._canvas.setCurrentTranslateXY(old_translate,0);
-                self._container_canvas.setAttribute('viewBox',old_viewbox);
+                self._canvas.setCurrentTranslateXY(self.old_translate,0);
+                self._container_canvas.setAttribute('viewBox',self.old_viewbox);
                 // self._container.style.height = 'auto';
                 self.old_zoom = null;
                 self.old_translate = null;
@@ -2470,9 +2475,14 @@ clazz.prototype.enablePrintResizing = function() {
         // self.grow_container = false;
     };
     var rend = this;
-    (this.win() || window).matchMedia('print').addListener(function(matcher) {
-        rend._media_func(matcher);
-    });
+    if ( ! rend._bound_media ) {
+        (this.win() || window).matchMedia('print').addListener(function(matcher) {
+            if (rend._media_func) {
+                rend._media_func(matcher);
+            }
+        });
+    }
+    rend._bound_media = true;
 };
 
 clazz.prototype.wireframe = function() {
@@ -2779,11 +2789,22 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 zoomLevel = 10;
             }
 
+            var self = this;
+
             if (zoomLevel == zoom_level) {
+                if (self._canvas && self._canvas.zoom !== parseFloat(zoom_level)) {
+                    self._canvas.zoom = parseFloat(zoom_level);
+                    var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
+                    curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
+                    var scale_value = 1;
+                    curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
+                    self._canvas.parentNode.setAttribute('transform',curr_transform);
+
+                    bean.fire(self._canvas,'zoomChange');
+                }
                 return;
             }
 
-            var self = this;
 
             if (! self._canvas) {
                 return;
@@ -2883,7 +2904,14 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 }
             }
         },
-
+        fitZoom: function() {
+            var container_width = renderer._container.cached_width;
+            if ( ! container_width ) {
+                container_width = renderer._container.clientWidth;
+            }
+            var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
+            renderer.zoom = min_zoom_level;
+        },
         getZoom: function() {
             return zoom_level || 1;
         }
@@ -2895,6 +2923,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             set : accessors.setZoom
         });
     }
+
+    renderer.fitZoom = accessors.fitZoom;
 
 };
 
