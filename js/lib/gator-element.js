@@ -1,44 +1,53 @@
 if ('registerElement' in document) {
   (function() {
-    var proto = Object.create(HTMLElement.prototype,{
-        sequence: {
-          set: function(sequence) { this.renderer.setSequence(sequence); },
-          get: function() { return this.renderer.sequence; }
-        },
-        zoom : {
-          set: function(zoom) { this.zoomval = zoom; if (zoom === "auto") { this.renderer.enablePrintResizing(); this.renderer.fitZoom(); } else { this.renderer.disablePrintResizing(); this.renderer.zoom = zoom; } },
-          get: function(zoom) { return this.renderer.zoom; }
-        }
-    });
-    proto.createdCallback = function() {
-      var self = this;
-      var shadow = this.createShadowRoot();
-      shadow.appendChild(shadow.ownerDocument.createElement('div'));
-      this.style.display = 'block';
-      shadow.firstChild.style.overflow = 'hidden';
-      this.renderer = new MASCP.CondensedSequenceRenderer(shadow.firstChild);
-      this.renderer.bind('sequenceChange',function() {
-        self.setAttribute('sequence',self.renderer.sequence);
-        if (self.zoomval == "auto") {
-          self.renderer.fitZoom();
-        }
+    var gatorViewer = (function() {
+      var proto = Object.create(HTMLElement.prototype,{
+          sequence: {
+            set: function(sequence) { this.renderer.setSequence(sequence); },
+            get: function() { return this.renderer.sequence; }
+          },
+          zoom : {
+            set: function(zoom) { this.zoomval = zoom; if (zoom === "auto") { this.renderer.enablePrintResizing(); this.renderer.fitZoom(); } else { this.renderer.disablePrintResizing(); this.renderer.zoom = zoom; } },
+            get: function(zoom) { return this.renderer.zoom; }
+          }
       });
-      this.renderer.bind('zoomChange',function() {
-        if (self.zoomval !== 'auto') {
-          self.setAttribute('zoom',self.renderer.zoom);
+      proto.createdCallback = function() {
+        var self = this;
+        var shadow = this.createShadowRoot();
+        shadow.appendChild(shadow.ownerDocument.createElement('div'));
+        this.style.display = 'block';
+        shadow.firstChild.style.overflow = 'hidden';
+        this.renderer = new MASCP.CondensedSequenceRenderer(shadow.firstChild);
+
+        if ( ! this.getAttribute('zoom')) {
+          this.setAttribute('zoom','auto');
+        } else {
+          self.renderer.zoom = parseFloat(this.getAttribute('zoom'));
         }
-      });
-      this.setAttribute('zoom','auto');
-    };
-    proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
-      if (attrName == 'sequence' && this.sequence !== newVal) {
-        this.sequence = newVal;
-      }
-      if (attrName == 'zoom' && this.zoomval !== newVal) {
-        this.zoom = newVal;
-      }
-    };
-    document.registerElement('gator-viewer', { prototype: proto });
+
+        this.renderer.bind('sequenceChange',function() {
+          self.setAttribute('sequence',self.renderer.sequence);
+          if (self.zoomval == "auto") {
+            self.renderer.fitZoom();
+          }
+        });
+        this.renderer.bind('zoomChange',function() {
+          if (self.zoomval !== 'auto') {
+            self.setAttribute('zoom',self.renderer.zoom);
+          }
+        });
+      };
+      proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
+        if (attrName == 'sequence' && this.sequence !== newVal) {
+          this.sequence = newVal;
+        }
+        if (attrName == 'zoom' && this.zoomval !== newVal) {
+          this.zoom = newVal;
+        }
+      };
+      document.registerElement('gator-viewer', { prototype: proto });
+      return proto;
+    })();
 
     var get_reader = function(clazz,caching) {
       var reader = new clazz();
@@ -48,65 +57,127 @@ if ('registerElement' in document) {
       return reader;
     };
 
-    var uniprot_proto = document.registerElement('gator-uniprot', {
-      prototype: Object.create(proto, {
-        createdCallback : {
-          value : function() {
-            proto.createdCallback.apply(this);
-            if (this.getAttribute('caching')) {
-              this.caching = this.getAttribute('caching');
-            }
+    var gatorUniprot = (function() {
+        var uniprot_proto = document.registerElement('gator-uniprot', {
+        prototype: Object.create(gatorViewer, {
+          createdCallback : {
+            value : function() {
+              gatorViewer.createdCallback.apply(this);
+              if (this.getAttribute('caching')) {
+                this.caching = this.getAttribute('caching');
+              }
 
-            if (this.getAttribute('accession')) {
-              this.accession = this.getAttribute('accession');
-            }
-          }
-        },
-        attributeChangedCallback: {
-          value : function (attrName,oldVal,newVal) {
-            proto.attributeChangedCallback.call(this,attrName,oldVal,newVal);
-            if (attrName == 'accession' && this.accession !== newVal) {
-              this.accession = newVal;
-            }
-            if (attrName == 'caching') {
-              if (newVal && ! this.caching) {
-                this.caching = newVal;
-              } else if (! newVal && this.caching) {
-                this.caching = false;
+              if (this.getAttribute('accession')) {
+                this.accession = this.getAttribute('accession');
               }
             }
-          }
-        },
-        accession: {
-          set: function(acc) {
-            var self = this;
-            self.acc = acc;
-            self.setAttribute('accession',acc);
-            MASCP.ready = function() {
-              get_reader(MASCP.UniprotReader,self.caching).retrieve(self.acc, function(err) {
-                if (!err) {
-                  self.renderer.setSequence(this.result.getSequence());
-                }
-              });
-            };
           },
-          get: function() { return this.acc; }
-        },
-        caching: {
-          set: function(val) {
-            if (val) {
-              this.cachingval = true;
-              this.setAttribute('caching',true);
-            } else {
-              this.removeAttribute('caching');
+          attributeChangedCallback: {
+            value : function (attrName,oldVal,newVal) {
+              gatorViewer.attributeChangedCallback.call(this,attrName,oldVal,newVal);
+              if (attrName == 'accession' && this.accession !== newVal) {
+                this.accession = newVal;
+              }
+              if (attrName == 'caching') {
+                if (newVal && ! this.caching) {
+                  this.caching = newVal;
+                } else if (! newVal && this.caching) {
+                  this.caching = false;
+                }
+              }
             }
           },
-          get: function() {
-            return this.cachingval;
+          accession: {
+            set: function(acc) {
+              var self = this;
+              self.acc = acc;
+              self.setAttribute('accession',acc);
+              MASCP.ready = function() {
+                get_reader(MASCP.UniprotReader,self.caching).retrieve(self.acc, function(err) {
+                  if (!err) {
+                    self.renderer.setSequence(this.result.getSequence());
+                  }
+                });
+              };
+            },
+            get: function() { return this.acc; }
+          },
+          caching: {
+            set: function(val) {
+              if (val) {
+                this.cachingval = true;
+                this.setAttribute('caching',true);
+              } else {
+                this.removeAttribute('caching');
+              }
+            },
+            get: function() {
+              return this.cachingval;
+            }
           }
-        }
-      })
-    });
+        })
+      });
+      return uniprot_proto.prototype;
+    })();
+    var gatorGene = (function() {
+        var gene_proto = document.registerElement('gator-gene', {
+        prototype: Object.create(gatorUniprot, {
+          createdCallback : {
+            value : function() {
+              gatorUniprot.createdCallback.apply(this);
+              this.renderer.hide_axis = true;
+              if (this.getAttribute('geneid')) {
+                this.geneid = this.getAttribute('geneid');
+              }
+              if (this.getAttribute('exonmargin')) {
+                this.exonmargin = parseInt(this.getAttribute('exonmargin'));
+              }
+            }
+          },
+          attributeChangedCallback: {
+            value : function (attrName,oldVal,newVal) {
+              gatorUniprot.attributeChangedCallback.call(this,attrName,oldVal,newVal);
+              if (attrName == 'geneid' && this.geneid !== newVal) {
+                this.geneid = newVal;
+              }
+            }
+          },
+          accession : {
+            set: function(acc) {
+              this.acc = acc;
+              this.setAttribute('accession',acc);
+            },
+            get : function() {
+              return this.acc;
+            }
+          },
+          geneid: {
+            set: function(geneid) {
+              var self = this;
+              self.ncbigene = geneid;
+              self.setAttribute('geneid',geneid);
+              self.renderer.trackOrder = [];
+              var old_zoom = self.zoom;
+              self.renderer.setSequence("M");
+              MASCP.ready = function() {
+                var reader = get_reader(MASCP.GenomeReader,self.caching);
+                reader.geneid = self.geneid;
+                reader.exon_margin = self.exonmargin;
+                reader.registerSequenceRenderer(self.renderer);
+                reader.retrieve(self.accession, function(err) {
+                  self.renderer.hideAxis();
+                  self.zoom = old_zoom;
+                });
+              };
+            },
+            get: function() { return this.ncbigene; }
+          }
+        })
+      });
+      return gene_proto.prototype;
+    })();
 
   })();
+
+
 }

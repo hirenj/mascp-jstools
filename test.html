@@ -3,23 +3,12 @@
 <script src="dist/js/mascp-jstools.js"></script>
 </head>
 <body>
-	<div id="container" style="postion: relative; width: 100%; height: 400px;"></div>
+	<div id="container" style="postion: absolute; width: 100%; height: 400px; top: 0px; overflow: hidden;"></div>
+	<div style="padding: 30px;">
+	<gator-uniprot style="width: 100%; height: 300px;" accession="q14118" caching="true"></gator-uniprot>
+	<gator-gene style="width: 100%; height: 300px;" zoom="0.03" geneid="1605" accession="q14118" exonmargin="300" caching="true"></gator-gene>
+	</div>
 	<script>
-		MASCP.ready = function() {
-			var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
-			MASCP.Service.BeginCaching();
-			(new MASCP.UniprotReader()).retrieve('q14118',function() {
-				renderer.setSequence(this.result.getSequence());
-			});
-			renderer.bind('sequenceChange',function() {
-				renderer.hideAxis();
-				// window.doProteome();
-			})
-			renderer.refresh();
-			renderer.grow_container = true;
-			window.the_rend = renderer;
-			window.doGenome();
-		};
 		window.doProteome = function() {
 			var up = 'q14118';
             var proxy_reader = {
@@ -69,6 +58,21 @@
 
 			});
 
+		};
+		MASCP.ready = function() {
+			var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
+			MASCP.Service.BeginCaching();
+			(new MASCP.UniprotReader()).retrieve('q14118',function() {
+				renderer.setSequence(this.result.getSequence());
+			});
+			renderer.bind('sequenceChange',function() {
+				renderer.hideAxis();
+				// window.doProteome();
+			})
+			renderer.refresh();
+			renderer.grow_container = true;
+			window.the_rend = renderer;
+			window.doGenome();
 		};
 	</script>
 </body>

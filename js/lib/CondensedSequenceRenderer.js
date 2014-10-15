@@ -2376,7 +2376,7 @@ clazz.prototype.addTrack = function(layer) {
         //     bean.add(layer_containers[layer.name]._event_proxy,event_names[i],ev_function);
         // }
         bean.remove(layer,'removed');
-        bean.add(layer,'removed',function(e,rend) {
+        bean.add(layer,'removed',function(rend) {
             if (rend) {
                 rend.removeTrack(this);
             } else{
@@ -2781,6 +2781,10 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             if ( ! container_width ) {
                 container_width = renderer._container.clientWidth;
             }
+            if ( ! renderer.sequence ) {
+                zoom_level = zoomLevel;
+                return;
+            }
             var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
             if (zoomLevel < min_zoom_level) {
                 zoomLevel = min_zoom_level;
@@ -2807,6 +2811,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
 
 
             if (! self._canvas) {
+                zoom_level = zoomLevel;
                 return;
             }
 
