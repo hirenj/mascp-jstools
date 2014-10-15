@@ -53,6 +53,10 @@ if ('registerElement' in document) {
         createdCallback : {
           value : function() {
             proto.createdCallback.apply(this);
+            if (this.getAttribute('caching')) {
+              this.caching = this.getAttribute('caching');
+            }
+
             if (this.getAttribute('accession')) {
               this.accession = this.getAttribute('accession');
             }
@@ -61,8 +65,15 @@ if ('registerElement' in document) {
         attributeChangedCallback: {
           value : function (attrName,oldVal,newVal) {
             proto.attributeChangedCallback.call(this,attrName,oldVal,newVal);
-            if (attrName == 'accession' && this.acc !== newVal) {
+            if (attrName == 'accession' && this.accession !== newVal) {
               this.accession = newVal;
+            }
+            if (attrName == 'caching') {
+              if (newVal && ! this.caching) {
+                this.caching = newVal;
+              } else if (! newVal && this.caching) {
+                this.caching = false;
+              }
             }
           }
         },
@@ -71,13 +82,28 @@ if ('registerElement' in document) {
             var self = this;
             self.acc = acc;
             self.setAttribute('accession',acc);
-            get_reader(MASCP.UniprotReader,self.caching).retrieve(self.acc, function(err) {
-              if (!err) {
-                self.renderer.setSequence(this.result.getSequence());
-              }
-            });
+            MASCP.ready = function() {
+              get_reader(MASCP.UniprotReader,self.caching).retrieve(self.acc, function(err) {
+                if (!err) {
+                  self.renderer.setSequence(this.result.getSequence());
+                }
+              });
+            };
           },
           get: function() { return this.acc; }
+        },
+        caching: {
+          set: function(val) {
+            if (val) {
+              this.cachingval = true;
+              this.setAttribute('caching',true);
+            } else {
+              this.removeAttribute('caching');
+            }
+          },
+          get: function() {
+            return this.cachingval;
+          }
         }
       })
     });

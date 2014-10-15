@@ -15,6 +15,39 @@
  */
 var MASCP = MASCP || {};
 
+if (Object.defineProperty && ! MASCP.IE8 ) {
+    (function() {
+        var ready_callbacks = [];
+        var is_ready = false;
+        Object.defineProperty(MASCP,"ready", {
+            get : function() {
+                if ((ready_callbacks.length === 0) && (! is_ready )) {
+                    return false;
+                }
+                return function() {
+                    ready_callbacks.forEach(function(cb) {
+                        cb.call();
+                    });
+                };
+            },
+            set : function(cb) {
+                if (cb === false || cb === true) {
+                    ready_callbacks = [];
+                    if (cb) {
+                        is_ready = true;
+                    }
+                    return is_ready;
+                } else {
+                    if (is_ready) {
+                        cb.call();
+                        return;
+                    }
+                    ready_callbacks.push(cb);
+                }
+            }
+        });
+    })();
+}
 
 /** Default constructor for Services
  *  @class      Super-class for all MASCP services to retrieve data from
