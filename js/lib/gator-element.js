@@ -6,6 +6,10 @@ if ('registerElement' in document) {
             set: function(sequence) { this.renderer.setSequence(sequence); },
             get: function() { return this.renderer.sequence; }
           },
+          trackmargin: {
+            set: function(margin) { this.renderer.trackGap = margin + 4; },
+            get: function(margin) { return this.renderer.trackGap - 4;}
+          },
           zoom : {
             set: function(zoom) { this.zoomval = zoom; if (zoom === "auto") { this.renderer.enablePrintResizing(); this.renderer.fitZoom(); } else { this.renderer.disablePrintResizing(); this.renderer.zoom = zoom; } },
             get: function(zoom) { return this.renderer.zoom; }
@@ -22,7 +26,10 @@ if ('registerElement' in document) {
         if ( ! this.getAttribute('zoom')) {
           this.setAttribute('zoom','auto');
         } else {
-          self.renderer.zoom = parseFloat(this.getAttribute('zoom'));
+          this.renderer.zoom = parseFloat(this.getAttribute('zoom'));
+        }
+        if (this.getAttribute('trackmargin')) {
+          this.trackmargin = parseInt(this.getAttribute('trackmargin'));
         }
 
         this.renderer.bind('sequenceChange',function() {
@@ -43,6 +50,9 @@ if ('registerElement' in document) {
         }
         if (attrName == 'zoom' && this.zoomval !== newVal) {
           this.zoom = newVal;
+        }
+        if (attrName == 'trackmargin' && this.trackmargin !== newVal ) {
+          this.trackmargin = parseInt(newVal);
         }
       };
       document.registerElement('gator-viewer', { prototype: proto });

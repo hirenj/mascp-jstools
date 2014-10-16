@@ -692,10 +692,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             var shadow = canv.makeEl('filter',{
                 'id':'drop_shadow',
                 'filterUnits':'objectBoundingBox',
-                'x': '0',
-                'y': '0',
-                'width':'150%',
-                'height':'130%'
+                'x': '-50%',
+                'y': '-50%',
+                'width':'200%',
+                'height':'200%'
             });
 
             shadow.appendChild(canv.makeEl('feGaussianBlur',{'in':'SourceGraphic', 'stdDeviation':'4', 'result' : 'blur_out'}));
@@ -703,7 +703,6 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             shadow.appendChild(canv.makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
         
             defs.appendChild(shadow);
-
             var link_icon = canv.makeEl('svg',{
                 'width' : '100%',
                 'height': '100%',
