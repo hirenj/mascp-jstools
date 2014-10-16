@@ -1771,7 +1771,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
 
         var click_reveal;
         var rendered;
-        if (object.aa && ( ! renderer.getAA(parseInt(object.aa))) ) {
+        if (object.aa && ( ! renderer.getAA(parseInt(object.aa),track)) ) {
             return;
         }
         if ((typeof object.aa !== 'undefined') && isNaN(object.aa)) {
@@ -1779,23 +1779,23 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if (object.type == "text") {
             if (object.aa) {
-                rendered = renderer.getAA(parseInt(object.aa)).addTextOverlay(track,1,object.options);
+                rendered = renderer.getAA(parseInt(object.aa),track).addTextOverlay(track,1,object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide).addTtextOverlay(track,1,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTtextOverlay(track,1,object.options);
             }
         }
         if (object.type === "box") {
             if (object.aa) {
-                rendered = renderer.getAA(parseInt(object.aa)).addBoxOverlay(track,parseInt(object.width),1,object.options);
+                rendered = renderer.getAA(parseInt(object.aa),track).addBoxOverlay(track,parseInt(object.width),1,object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide).addToLayer(track,1,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addToLayer(track,1,object.options);
             }
         }
         if (object.type == "shape") {
             if (object.aa) {
-                rendered = renderer.getAA(parseInt(object.aa)).addShapeOverlay(track,parseInt(object.width),object.options);
+                rendered = renderer.getAA(parseInt(object.aa),track).addShapeOverlay(track,parseInt(object.width),object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide)[0].addShapeOverlay(track, object.peptide.length, object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track)[0].addShapeOverlay(track, object.peptide.length, object.options);
             }
         }
         if (object.type == 'line') {
@@ -1813,7 +1813,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                     }
                 }
 
-                click_reveal = renderer.getAA(parseInt(object.aa)).addToLayer(track,cloned_options_array);
+                click_reveal = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options_array);
                 click_reveal = click_reveal[1];
                 click_reveal.style.display = 'none';
                 object.options.content = object.options.alt_content;
@@ -1836,7 +1836,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                     cloned_options[key] = object.options[key];
                 }
             }
-            var added = renderer.getAA(parseInt(object.aa)).addToLayer(track,cloned_options);
+            var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {
                 added[1].addEventListener('click',function() {
                     if (click_reveal.style.display === 'none') {

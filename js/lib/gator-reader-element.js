@@ -246,7 +246,7 @@ if ('registerElement' in document) {
 
       proto.go = function() {
         var self = this;
-        var config = this.readers.reduce(function(result,reader) { for(var key in reader.configuration) { result[key] = reader.configuration[key] }; return result; },{});
+        var config = this.readers.reduce(function(result,reader) { var confblock = reader.configuration; for(var key in confblock) { result[key] = confblock[key] }; return result; },{});
         MASCP.IterateServicesFromConfig(config,function(err,pref,reader) {
           iterate_readers(err,pref,reader,self.parentNode.accession,self.parentNode.renderer);
         });
@@ -276,7 +276,7 @@ if ('registerElement' in document) {
         },
         genomic: {
           get: function() { return this.trackGenomic; },
-          set: function(is) { if(is) { this.trackGenomic = true; } else { this.trackGenomic = false; } }
+          set: function(is) { if(is) { this.trackGenomic = true; this.setAttribute('genomic',true)} else { this.trackGenomic = false; this.removeAttribute('genomic'); } }
         }
       });
       proto.createdCallback = function() {
@@ -284,13 +284,16 @@ if ('registerElement' in document) {
         if (this.getAttribute('name')) {
           this.name = this.getAttribute('name');
         }
+        if (this.getAttribute('genomic')) {
+          this.genomic = this.getAttribute('genomic');
+        }
       };
       proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
         if (attrName == "name" && this.name !== newVal) {
           this.name = newVal;
         }
         if (attrName == "genomic") {
-          if ( newVal) {
+          if ( newVal ) {
             this.genomic = true;
           } else {
             this.genomic = false;
@@ -307,7 +310,12 @@ if ('registerElement' in document) {
       };
       proto.go = function() {
         var self = this;
-        MASCP.registerLayer(this.name, { fullname: this.name }, [self.parentNode.renderer] );
+        var lay = MASCP.registerLayer(this.name, { fullname: this.name }, [self.parentNode.renderer] );
+        if (this.genomic) {
+          lay.genomic = this.genomic;
+        } else {
+          delete lay.genomic;
+        }
         update_readers.apply(this);
         readerRenderer.go.apply(this);
       };

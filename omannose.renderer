@@ -1,0 +1,31 @@
+function renderData(seq,datas) {
+
+var return_data = [];
+
+var render_sites = function(sites) {
+	var base_offset = 0;
+	sites.forEach(function renderSite(site_dat) {
+		var site = site_dat;
+		site = site.replace(/[STY]/,'');
+		return_data.push({ "aa" : parseInt(site), "type" : "marker" , "options" : { "content" : '#sugar_man', "fill" : "none", "text_fill" : "#f00", "border" : "none", "height": 10, "offset" : base_offset - 5, "bare_element" : true }});
+	});
+};
+
+var render_peptides = function(peptides) {
+	peptides.forEach(function(peptide) {
+		return_data.push({ "peptide" : peptide, "type" : "box" , "width" : peptide.length, "options" : { "offset" : 0, "height_scale" : 0.1, "fill" : "#999", "merge" : false }});
+	});
+};
+
+if (datas.peptides) {
+	render_peptides(datas.peptides);
+}
+
+if (datas.sites) {
+	render_sites(datas.sites);
+}
+
+
+
+return return_data;
+}

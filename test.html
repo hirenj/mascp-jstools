@@ -3,12 +3,22 @@
 <script src="dist/js/mascp-jstools.js"></script>
 </head>
 <body>
-	<div id="container" style="postion: absolute; width: 100%; height: 400px; top: 0px; overflow: hidden;"></div>
 	<div style="padding: 30px;">
-	<gator-uniprot style="width: 100%; height: 300px;" accession="q14118" caching="true"></gator-uniprot>
-	<gator-gene style="width: 100%; height: 300px;" zoom="0.03" geneid="1605" accession="q14118" exonmargin="300" caching="true"></gator-gene>
+	<gator-gene auto="true" style="width: 100%; height: 300px;" zoom="0.03" geneid="1605" accession="q14118" exonmargin="300" caching="true">
+	<gator-track name="mannose" ><!-- default to using the accession on the parent otherwise use an id also set genomic attribute-->
+		<gator-gatorurl href="http://glycodomain-data.glycocode.com/data/latest/pnas-omannose/" rendererUrl="/omannose.renderer" name="Oman" caching="true"></gator-gatorurl>
+	</gator-track>
+	<gator-track name="mutations" genomic="true">
+		<gator-localdata caching="true" ></gator-localdata>
+	</gator-track>
+	</gator-gene>
 	</div>
 	<script>
+		window.fakeblah = function() {
+			return function renderData(seq,datas) {
+				return [{ 'aa' : 49548000, 'type' : 'marker', 'width' : 1 }];
+			};
+		}
 		window.doProteome = function() {
 			var up = 'q14118';
             var proxy_reader = {
@@ -36,6 +46,7 @@
 			// var up = 'p02768';
 			var up = 'q14118';
 			reader.exon_margin = 300;
+			// reader.geneid = 2590;
 			reader.retrieve(up,function(err) {
 				the_rend.zoom = 0.01;
 				console.log(this.result);
@@ -60,19 +71,19 @@
 
 		};
 		MASCP.ready = function() {
-			var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
-			MASCP.Service.BeginCaching();
-			(new MASCP.UniprotReader()).retrieve('q14118',function() {
-				renderer.setSequence(this.result.getSequence());
-			});
-			renderer.bind('sequenceChange',function() {
-				renderer.hideAxis();
-				// window.doProteome();
-			})
-			renderer.refresh();
-			renderer.grow_container = true;
-			window.the_rend = renderer;
-			window.doGenome();
+			// var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
+			// MASCP.Service.BeginCaching();
+			// (new MASCP.UniprotReader()).retrieve('q14118',function() {
+			// 	renderer.setSequence(this.result.getSequence());
+			// });
+			// renderer.bind('sequenceChange',function() {
+			// 	renderer.hideAxis();
+			// 	// window.doProteome();
+			// })
+			// renderer.refresh();
+			// renderer.grow_container = true;
+			// window.the_rend = renderer;
+			// window.doGenome();
 		};
 	</script>
 </body>
