@@ -174,10 +174,11 @@ if ('registerElement' in document) {
                 reader.geneid = self.geneid;
                 reader.exon_margin = self.exonmargin;
                 reader.registerSequenceRenderer(self.renderer);
-                reader.retrieve(self.accession, function(err) {
+                reader.bind('requestComplete',function() {
                   self.renderer.hideAxis();
                   self.zoom = old_zoom;
                 });
+                reader.retrieve(self.accession);
               };
             },
             get: function() { return this.ncbigene; }

@@ -361,6 +361,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                         }
                         labs.forEach(function(lab) { if(lab.nodeName == 'rect') { return; } if (hidden) { lab.setAttribute('display','none') } else { lab.removeAttribute('display') } });
                     });
+                    renderer.refresh();
                 }
             };
             MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
