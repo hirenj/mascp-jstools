@@ -11,7 +11,15 @@ if ('registerElement' in document) {
             get: function(margin) { return this.renderer.trackGap - 4;}
           },
           zoom : {
-            set: function(zoom) { this.zoomval = zoom; if (zoom === "auto") { this.renderer.enablePrintResizing(); this.renderer.fitZoom(); } else { this.renderer.disablePrintResizing(); this.renderer.zoom = zoom; } },
+            set: function(zoom) {
+              this.zoomval = zoom;
+              if (zoom === "auto") {
+                this.renderer.enablePrintResizing(); this.renderer.fitZoom();
+              } else {
+                this.renderer.disablePrintResizing();
+                this.renderer.zoom = zoom;
+              }
+            },
             get: function(zoom) { return this.renderer.zoom; }
           }
       });
@@ -76,14 +84,14 @@ if ('registerElement' in document) {
               if (this.getAttribute('caching')) {
                 this.caching = this.getAttribute('caching');
               }
+              if (this.getAttribute('auto')) {
+                this.auto = this.getAttribute('auto');
+              }
 
               if (this.getAttribute('accession')) {
                 this.accession = this.getAttribute('accession');
               }
 
-              if (this.getAttribute('auto')) {
-                this.auto = this.getAttribute('auto');
-              }
             }
           },
           attributeChangedCallback: {
@@ -124,8 +132,9 @@ if ('registerElement' in document) {
             get: function() { return this.acc; }
           },
           go: { value : function() {
+            var self = this;
             MASCP.ready = function() {
-              get_reader(MASCP.UniprotReader,self.caching).retrieve(self.acc, function(err) {
+              get_reader(MASCP.UniprotReader,self.caching).retrieve(self.accession, function(err) {
                 if (!err) {
                   self.renderer.setSequence(this.result.getSequence());
                 }
@@ -183,7 +192,6 @@ if ('registerElement' in document) {
           },
           go : { value: function() {
             var self = this;
-            self.renderer.grow_container = true;
             self.renderer.trackOrder = [];
             var old_zoom = self.zoom;
             self.renderer.setSequence("M");
