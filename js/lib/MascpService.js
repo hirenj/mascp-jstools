@@ -283,6 +283,30 @@ MASCP.cloneService = function(service,name) {
             return;
         }
 
+        if ( pref.type == "data" ) {
+            var reader = new MASCP.UserdataReader();
+            reader.map = function(data) {
+                var results = {};
+                for (var key in data) {
+                    if (key == "retrieved" || key == "title") {
+                        continue;
+                    }
+                    if ( ! data[key].data ) {
+                        results[key] = {'data' : data[key]};
+                    } else {
+                        results[key] = data;
+                    }
+                }
+                results.retrieved = data.retrieved;
+                results.title = data.title;
+                return results;
+            };
+            reader.bind('ready',function() {
+                callback.call(null,null,pref,reader);
+            });
+            reader.setData(set,pref.data);
+            return;
+        }
 
         // If we wish to load complete datasets
         // and store them browser-side, we need

@@ -908,7 +908,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     };
 
     MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc) {
-        var new_owner = this._container_canvas.ownerSVGElement;
+        var new_owner = this._container_canvas.ownerDocument;
         if (this._container_canvas.getElementById('defs_'+namespace)){
             return;
         }
