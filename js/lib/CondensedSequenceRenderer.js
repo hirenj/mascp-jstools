@@ -579,7 +579,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
     clazz.prototype.getAminoAcidsByPosition = function(aas,layer,acc) {
         var self = this;
-        var new_aas = aas.map(function(aa) { return Math.abs(self.scalePosition(aa,acc ? acc : layer)); });
+        var new_aas = aas.map(function(aa) { return Math.abs(self.scalePosition(aa,layer ? layer : acc)); });
         var results = MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition.call(this,new_aas);
 
         for (var i = 0; i < new_aas.length; i++) {

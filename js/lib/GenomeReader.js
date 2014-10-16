@@ -222,14 +222,13 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 var exons = cd.exons;
                 var color = (idx == 0) ? '#000' : '#f99';
                 exons.forEach(function(exon) {
-                    return_data.push({ "aa": 1+Math.floor((exon[0] - min)/3), "type" : "box" , "width" : (Math.floor((exon[1] - exon[0])/3)), "options" : { "offset" : base_offset, "height_scale" : 0.3, "fill" : color, "merge" : false  }});
+                    return_data.push({ "aa": 1+exon[0], "type" : "box" , "width" : exon[1] - exon[0], "options" : { "offset" : base_offset, "height_scale" : 0.3, "fill" : color, "merge" : false  }});
                 });
-                return_data.push({"aa" : Math.floor( (cd.cdsstart - min) / 3), "type" : "box" , "width" : 0.5, "options" : { "fill" : "#0000ff", "height_scale" : 0.3, "offset" : base_offset , "merge" : false } });
+                return_data.push({"aa" : cd.cdsstart, "type" : "box" , "width" : 0.5, "options" : { "fill" : "#0000ff", "height_scale" : 0.3, "offset" : base_offset , "merge" : false } });
                 base_offset += 1;
             });
             base_offset += 2;
         });
-        return_data.push({"aa" : Math.floor((max - min) / 3), "type" : "box", "width" : 1 });
         return return_data;
     };
 
@@ -245,9 +244,9 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
             var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
 
-            results.push({"aa" : Math.floor( (start - min) / 3 ) - 2, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
-            results.push({"aa" : Math.floor( (end - min) / 3 ) + 2, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
-            results.push({"aa" : Math.floor( (start - min) / 3 ) - 1, "type" : "box", width : Math.floor( (end - start) / 3) + 3, "options" : {"fill" : "#999", "height_scale" : 10, "offset" : -8 } });
+            results.push({"aa" : start - 2, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
+            results.push({"aa" : end + 2, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
+            results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : 10, "offset" : -8 } });
         });
         return results;
     };
@@ -284,17 +283,17 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     };
     var generate_scaler_function = function(reader) {
         return function(in_pos,layer) {
-            var pos = in_pos * 3;
-            var calculated_pos = pos;
+            var pos = in_pos;
+            var calculated_pos = pos - reader.result.min;
             if ( ! reader.result ) {
-                return in_pos;
+                return Math.floor(pos / 3);
             }
             var introns = reader.result.removed_regions || [];
             for (var i = 0; i < introns.length; i++) {
-                if (pos > (introns[i][1] - reader.result.min)) {
+                if (pos > introns[i][1]) {
                     calculated_pos -= (introns[i][1] - introns[i][0]);
                 }
-                if (pos < (introns[i][1] - reader.result.min) && pos > (introns[i][0] - reader.result.min) ) {
+                if (pos < introns[i][1] && pos > introns[i][0]) {
                     calculated_pos = -1 * (introns[i][0] - reader.result.min);
                 }
             }
@@ -331,7 +330,6 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
             calculate_removed_regions(self.result,self.exon_margin || 300);
 
-
             if ( ! renderer.sequence ) {
                 // Not sure what to do with this bit here
 
@@ -340,7 +338,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 });
                 return;
             } else {
-                renderer.sequence = Array( scaler_function(Math.floor ( (result.max - result.min) / 3)) ).join('.');
+                renderer.sequence = Array( scaler_function(result.max)).join('.');
                 renderer.redrawAxis();
             }
             var proxy_reader = {
