@@ -766,8 +766,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 'x'     : '0',
                 'y'     : '0',
                 'width' : '10%',
-                'height': '100%',
-                'fill'  : '#000'
+                'height': '1000%',
+                'fill'  : '#000',
+                'stroke': '0',
             });
             pattern.appendChild(line);
 
@@ -1765,6 +1766,10 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     }
     var results = [];
     objects.forEach(function(object) {
+        if (object.options && object.options.offset > renderer._layer_containers[track].track_height) {
+            renderer._layer_containers[track].fixed_track_height = object.options.offset;
+        }
+
         var click_reveal;
         var rendered;
         if (object.aa && ( ! renderer.getAA(parseInt(object.aa))) ) {
