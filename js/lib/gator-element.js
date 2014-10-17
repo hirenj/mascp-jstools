@@ -184,6 +184,9 @@ if ('registerElement' in document) {
                 if (this._genomereader) {
                   this._genomereader.exon_margin = this.exonmargin;
                   this.renderer.refreshScale();
+                  if (this.getAttribute('zoom') == 'auto') {
+                    this.renderer.fitZoom();
+                  }
                 }
               }
             }
@@ -205,7 +208,8 @@ if ('registerElement' in document) {
             var self = this;
             self.renderer.trackOrder = [];
             self.renderer.reset();
-            var old_zoom = self.zoom;
+            var old_zoom = self.getAttribute('zoom');
+            self.removeAttribute('zoom');
             self.renderer.setSequence("M");
             MASCP.ready = function() {
               var reader = get_reader(MASCP.GenomeReader,self.caching);
@@ -215,7 +219,7 @@ if ('registerElement' in document) {
               reader.registerSequenceRenderer(self.renderer);
               reader.bind('requestComplete',function() {
                 self.renderer.hideAxis();
-                self.zoom = old_zoom;
+                self.setAttribute('zoom',old_zoom);
               });
               reader.retrieve(self.accession || ""+self.geneid);
             };

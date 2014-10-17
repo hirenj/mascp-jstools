@@ -299,6 +299,9 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     calculated_pos = -1 * (introns[i][0] - reader.result.min);
                 }
             }
+            if (calculated_pos < 3) {
+                calculated_pos = 3;
+            }
             return (Math.floor(calculated_pos / 3));
         };
     };
@@ -313,7 +316,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         get: function() { return this._exon_margin; }
     });
 
-    var redrawIntrons = function(renderer,controller_name) {
+    var redrawIntrons = function(renderer,controller_name,scaler_function) {
         var labs = [];
         var zoomCheck = function() {
             if (labs.length < 1 || ! labs[0].parentNode) {
@@ -321,6 +324,10 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             }
             var hidden = false;
             for (var i = 0 ; ! hidden && i < (labs.length - 3); i += 3) {
+                if (labs[i].hasAttribute('display')) {
+                    hidden = true;
+                    continue;
+                } 
                 if (labs[i].getBoundingClientRect().right > labs[i+3].getBoundingClientRect().left) {
                     hidden = true;
                 }
@@ -330,13 +337,15 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         renderer.bind('zoomChange',zoomCheck);
 
         return function() {
+            var result = this.result;
+            renderer.sequence = Array( scaler_function(result.max)).join('.');
+
             if (labs.length > 0) {
                 labs.forEach(function(lab) {
                     renderer.remove(controller_name,lab);
                 });
                 labs = [];
             }
-            var result = this.result;
             var proxy_reader = {
                 agi: controller_name,
                 gotResult: function() {
@@ -400,7 +409,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
             proxy_reader.gotResult();
 
-            self.redrawIntrons = redrawIntrons(renderer,controller_name);
+            self.redrawIntrons = redrawIntrons(renderer,controller_name,scaler_function);
             self.redrawIntrons();
         };
 
