@@ -246,8 +246,8 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
             var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
 
-            results.push({"aa" : start - 2, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
-            results.push({"aa" : end + 2, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
+            results.push({"aa" : start - 1, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
+            results.push({"aa" : end + 1, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
             results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : 10, "offset" : -8 } });
         });
         return results;
@@ -302,6 +302,54 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             return (Math.floor(calculated_pos / 3));
         };
     };
+    Object.defineProperty(serv.prototype, 'exon_margin', {
+        set: function(val) {
+            this._exon_margin = val;
+            if (this.result) {
+                calculate_removed_regions(this.result,val);
+                this.redrawIntrons();
+            }
+        },
+        get: function() { return this._exon_margin; }
+    });
+
+    var redrawIntrons = function(renderer,controller_name) {
+        var labs = [];
+        var zoomCheck = function() {
+            if (labs.length < 1 || ! labs[0].parentNode) {
+                return;
+            }
+            var hidden = false;
+            for (var i = 0 ; ! hidden && i < (labs.length - 3); i += 3) {
+                if (labs[i].getBoundingClientRect().right > labs[i+3].getBoundingClientRect().left) {
+                    hidden = true;
+                }
+            }
+            labs.forEach(function(lab) { if(lab.nodeName == 'rect') { return; } if (hidden) { lab.setAttribute('display','none') } else { lab.removeAttribute('display') } });
+        };
+        renderer.bind('zoomChange',zoomCheck);
+
+        return function() {
+            if (labs.length > 0) {
+                labs.forEach(function(lab) {
+                    renderer.remove(controller_name,lab);
+                });
+                labs = [];
+            }
+            var result = this.result;
+            var proxy_reader = {
+                agi: controller_name,
+                gotResult: function() {
+                    labs = renderer.renderObjects(controller_name,get_removed_labels(result));
+                    renderer.refresh();
+                    zoomCheck();
+                }
+            };
+            MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
+            proxy_reader.gotResult();
+        };
+    };
+
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
         renderer.addAxisScale('genome',function(pos,layer) {
@@ -347,25 +395,13 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 agi: controller_name,
                 gotResult: function() {
                     renderer.renderObjects(controller_name,get_exon_boxes(result));
-                    var labs = renderer.renderObjects(controller_name,get_removed_labels(result));
-                    renderer.bind('zoomChange',function() {
-                        if (! labs.length > 0 || ! labs[0].parentNode) {
-                            renderer.unbind('zoomChange',arguments.callee);
-                            return;
-                        }
-                        var hidden = false;
-                        for (var i = 0 ; ! hidden && i < (labs.length - 3); i += 3) {
-                            if (labs[i].getBoundingClientRect().right > labs[i+3].getBoundingClientRect().left) {
-                                hidden = true;
-                            }
-                        }
-                        labs.forEach(function(lab) { if(lab.nodeName == 'rect') { return; } if (hidden) { lab.setAttribute('display','none') } else { lab.removeAttribute('display') } });
-                    });
-                    renderer.refresh();
                 }
             };
             MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
             proxy_reader.gotResult();
+
+            self.redrawIntrons = redrawIntrons(renderer,controller_name);
+            self.redrawIntrons();
         };
 
         this.bind('resultReceived',redraw_alignments);

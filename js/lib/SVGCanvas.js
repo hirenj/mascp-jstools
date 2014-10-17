@@ -1007,7 +1007,15 @@ var SVGCanvas = SVGCanvas || (function() {
             a_text.setAttribute('x',typeof x == 'string' ? x : x * RS);
             a_text.setAttribute('y',typeof y == 'string' ? y : y * RS);        
             a_text.move = function(new_x,new_width) {
-                this.setAttribute('x',new_x*RS);
+                if ((typeof(this.offset) !== "undefined") && this.getAttribute('transform')) {
+                    var transform_attr = this.getAttribute('transform');
+                    var matches = /translate\(.*[,\s](.*)\)/.exec(transform_attr);
+                    if (matches[1]) {
+                      this.setAttribute('transform','translate('+(new_x*RS)+','+matches[1]+')');
+                    }
+                } else {
+                    this.setAttribute('x',new_x*RS);
+                }
             };
 
             this.appendChild(a_text);

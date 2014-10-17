@@ -179,6 +179,13 @@ if ('registerElement' in document) {
               if (attrName == 'geneid' && this.geneid !== newVal) {
                 this.geneid = newVal;
               }
+              if (attrName == 'exonmargin' && this.exonmargin != newVal) {
+                this.exonmargin = parseInt(newVal);
+                if (this._genomereader) {
+                  this._genomereader.exon_margin = this.exonmargin;
+                  this.renderer.refreshScale();
+                }
+              }
             }
           },
           accession : {
@@ -204,6 +211,7 @@ if ('registerElement' in document) {
               var reader = get_reader(MASCP.GenomeReader,self.caching);
               reader.geneid = self.geneid;
               reader.exon_margin = self.exonmargin;
+              self._genomereader = reader;
               reader.registerSequenceRenderer(self.renderer);
               reader.bind('requestComplete',function() {
                 self.renderer.hideAxis();
