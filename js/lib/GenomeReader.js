@@ -28,6 +28,8 @@ MASCP.GenomeReader.prototype.requestData = function()
                     'email'    : 'joshi%40sund.ku.dk'
             }
         };
+    } else if ( ! this.acc ) {
+        this.acc = this.agi = ""+this.geneid;
     }
 
     if (! this.exons ) {
@@ -347,8 +349,8 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     renderer.renderObjects(controller_name,get_exon_boxes(result));
                     var labs = renderer.renderObjects(controller_name,get_removed_labels(result));
                     renderer.bind('zoomChange',function() {
-                        if (! labs.length > 0 && labs[0].parentNode) {
-                            renderer.unbind('zoom',arguments.callee);
+                        if (! labs.length > 0 || ! labs[0].parentNode) {
+                            renderer.unbind('zoomChange',arguments.callee);
                             return;
                         }
                         var hidden = false;

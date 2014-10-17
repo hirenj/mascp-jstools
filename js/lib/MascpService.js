@@ -296,9 +296,10 @@ MASCP.cloneService = function(service,name) {
                     } else {
                         results[key] = data;
                     }
+                    results[key].retrieved = data.retrieved;
+                    results[key].title = data.title;
+
                 }
-                results.retrieved = data.retrieved;
-                results.title = data.title;
                 return results;
             };
             reader.bind('ready',function() {
