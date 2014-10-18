@@ -1440,8 +1440,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 };
 
 
-GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement) {
-    GOMap.Diagram.Dragger.prototype.addTouchZoomControls.call({"enabled" : true },zoomElement,touchElement);
+GOMap.Diagram.addTouchZoomControls = function(zoomElement,touchElement,controller) {
+    if ( ! controller ) {
+        controller = {"enabled" : true};
+    }
+    GOMap.Diagram.Dragger.prototype.addTouchZoomControls.call(controller,zoomElement,touchElement);
+    return controller;
 };
 
 GOMap.Diagram.Dragger.prototype.addTouchZoomControls = function(zoomElement,touchElement) {
@@ -1706,9 +1710,13 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
  */
 GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) {
     precision = precision || 0.5;
+    var self;
 
-    var self = this;
-
+    if (this.enabled === null ) {
+        self = {'enabled' : true };
+    } else {
+        self = this;
+    }
     var hookEvent = function(element, eventName, callback) {
       if (typeof(element) == 'string') {
         element = document.getElementById(element);
@@ -1731,6 +1739,9 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
 
 
     var mousePosition = function(evt) {
+          if ( ! self.enabled ) {
+            return;
+          }
           var posx = 0;
           var posy = 0;
           if (!evt) {
@@ -1762,6 +1773,9 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
     };
 
     var mouseWheel = function(e) {
+      if ( ! self.enabled ) {
+        return;
+      }
       e = e ? e : window.event;
       var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
       if ( ! wheelData ) {
@@ -1800,10 +1814,15 @@ GOMap.Diagram.addScrollZoomControls = function(target,controlElement,precision) 
     }
 
     hookEvent(controlElement,'mousemove', function(e) {
+        if (! self.enabled ) {
+            return;
+        }
         if (target.zoomCenter && Math.abs(target.zoomCenter.x - mousePosition(e).x) > 100) {
             target.zoomCenter = null;
             target.zoomLeft = null;
         }
     });
+
+    return self;
 };
 

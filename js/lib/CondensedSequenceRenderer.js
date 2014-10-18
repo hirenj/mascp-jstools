@@ -2319,10 +2319,11 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
         
         if (this.grow_container) {
             this._container_canvas.setAttribute('height',height);
-            this._container.style.height = height+'px';        
+            // this._container.style.height = height+'px';        
         } else {
             this._container_canvas.setAttribute('height','100%');
             this._container_canvas.setAttribute('width','100%');
+            // this._container.style.height = 'auto';
             this.navigation.setZoom(this.zoom);
         }        
     }
@@ -2476,7 +2477,6 @@ clazz.prototype.enablePrintResizing = function() {
             console.log(err);
             console.log(err.stack);
         }
-        // self.grow_container = false;
     };
     var rend = this;
     if ( ! rend._bound_media ) {
@@ -2658,6 +2658,8 @@ clazz.prototype.refresh = function(animated) {
     outer_viewbox[3] = (this.zoom)*2*(this._axis_height + (track_heights / this.zoom)+ (this.padding / this.zoom));
     if (! this.grow_container ) {
         this._container_canvas.setAttribute('viewBox', outer_viewbox.join(' '));
+    } else {
+        this._container_canvas.removeAttribute('viewBox');
     }
 
     this._resizeContainer();
@@ -2918,7 +2920,13 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             if ( ! container_width ) {
                 container_width = renderer._container.clientWidth;
             }
-            var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
+            var min_zoom_level = 0.5;
+            if (renderer.sequence) {
+                min_zoom_level = container_width / (2 * renderer.sequence.length);
+                if  (! renderer.grow_container ) {
+                    min_zoom_level = 0.3 / 2 * min_zoom_level;
+                }
+            }
             renderer.zoom = min_zoom_level;
         },
         getZoom: function() {

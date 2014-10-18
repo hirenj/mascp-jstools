@@ -29,7 +29,51 @@ if ('registerElement' in document) {
         shadow.appendChild(shadow.ownerDocument.createElement('div'));
         this.style.display = 'block';
         shadow.firstChild.style.overflow = 'hidden';
-        this.renderer = new MASCP.CondensedSequenceRenderer(shadow.firstChild);
+        self.renderer = new MASCP.CondensedSequenceRenderer(shadow.firstChild);
+
+        var dragger = new GOMap.Diagram.Dragger();
+
+        var scroll_box = shadow.ownerDocument.createElement('div');
+        scroll_box.style.height = '1em';
+        shadow.appendChild(scroll_box);
+
+        self.renderer.getVisibleLength = function() {
+          return this.rightVisibleResidue() - this.leftVisibleResidue();
+        };
+        self.renderer.getTotalLength = function() {
+          return this.sequence.length;
+        };
+        self.renderer.getLeftPosition = function() {
+          return this.leftVisibleResidue();
+        };
+        self.renderer.setLeftPosition = function(pos) {
+          return this.setLeftVisibleResidue(pos);
+        };
+
+        Object.defineProperty(this.renderer,"grow_container",{
+          get: function() { return self.style.overflow == "auto"; },
+          set: function() { }
+        });
+
+        Object.defineProperty(self,"interactive",{
+          get: function() { if (self.getAttribute('interactive')) { return true } else { return false }},
+          set: function(val) { is_interactive.enabled = val }
+        });
+
+        var is_interactive = {'enabled' : self.interactive };
+        var observer = new MutationObserver(function() {
+          if (self.renderer.grow_container) {
+            dragger.enabled = true;
+          } else {
+            dragger.enabled = false;
+            self.renderer.setLeftVisibleResidue(0);
+          }
+          self.renderer.refresh();
+        });
+        observer.observe(self, {
+            attributes:    true,
+            attributeFilter: ["style"]
+        });
 
         if ( ! this.getAttribute('zoom')) {
           this.setAttribute('zoom','auto');
@@ -41,6 +85,13 @@ if ('registerElement' in document) {
         }
 
         this.renderer.bind('sequenceChange',function() {
+          dragger.applyToElement(self.renderer._canvas);
+          dragger.enabled = self.renderer.grow_container;
+          GOMap.Diagram.addScrollBar(self.renderer, self.renderer._canvas,scroll_box);
+
+          dragger.addTouchZoomControls(self.renderer, self.renderer._canvas,is_interactive);
+          GOMap.Diagram.addScrollZoomControls.call(is_interactive,self.renderer, self.renderer._canvas,0.1);
+
           self.setAttribute('sequence',self.renderer.sequence);
           if (self.zoomval == "auto") {
             self.renderer.fitZoom();
@@ -61,6 +112,9 @@ if ('registerElement' in document) {
         }
         if (attrName == 'trackmargin' && this.trackmargin !== newVal ) {
           this.trackmargin = parseInt(newVal);
+        }
+        if (attrName == 'interactive') {
+          this.interactive = newVal ? true : false;
         }
       };
       document.registerElement('gator-viewer', { prototype: proto });
