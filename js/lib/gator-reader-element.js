@@ -271,7 +271,7 @@ if ('registerElement' in document) {
     var gatorTrack = (function() {
       var proto = Object.create(readerRenderer,{
         name: {
-          get: function() { return this.trackName; },
+          get: function() { return this.trackName || this.parentNode.accession; },
           set: function(name) { this.trackName = name; this.setAttribute('name',name); update_readers.apply(this); }
         },
         genomic: {

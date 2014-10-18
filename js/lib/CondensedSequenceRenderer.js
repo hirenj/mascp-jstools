@@ -553,8 +553,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         lays.forEach(function(lay) {
             self._layer_containers[lay].forEach(function(el) {
                 if (el.move && el.aa) {
-                    var aa = self.scalePosition(el.aa,el.acc ? el.acc : lay);
-                    var aa_width = self.scalePosition(el.aa+el.aa_width,el.acc ? el.acc : lay ) ;
+                    var aa = self.scalePosition(el.aa,lay ? lay : el.acc);
+                    var aa_width = self.scalePosition(el.aa+el.aa_width,lay ? lay : el.acc ) ;
                     if (aa < 0) {
                         aa *= -1;
                     }
@@ -1134,6 +1134,9 @@ var addElementToLayer = function(layerName,opts) {
 
     this._renderer._layer_containers[layerName].push(tracer_marker);
     var result = [tracer,tracer_marker,bobble];
+    tracer.setAttribute('pointer-events','none');
+    bobble.setAttribute('pointer-events','none');
+    tracer_marker.setAttribute('class',layerName);
     result.move = function(x,width) {
         var transform_attr = tracer_marker.getAttribute('transform');
         var matches = /translate\(.*[,\s](.*)\) scale\((.*)\)/.exec(transform_attr);
@@ -1852,6 +1855,17 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if ((object.options || {}).zoom_level) {
             rendered.zoom_level = object.options.zoom_level;
+        }
+        if ((object.options || {}).events ) {
+            object.options.events.forEach(function(ev) {
+                (ev.type || "").split(",").forEach(function(evtype) {
+                    rendered.addEventListener(evtype,function(e) {
+                        e.event_data = ev.data;
+                        e.layer = track;
+                        e.aa = object.aa;
+                    });
+                });
+            });
         }
         results.push(rendered);
     });

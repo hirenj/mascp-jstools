@@ -178,13 +178,13 @@ MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,
         var start = target_cds.cdsstart > exons[i][0] ? target_cds.cdsstart : exons[i][0];
         var bases = (exons[i][1] - start);
         if (bases >= position_genome) {
-            target_position = start + position_genome - self.result.min;
+            target_position = start + position_genome;
             break;
         } else {
             position_genome -= bases;
         }
     }
-    return Math.floor(target_position / 3);
+    return target_position;
 };
 
 MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
