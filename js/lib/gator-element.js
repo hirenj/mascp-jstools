@@ -14,10 +14,12 @@ if ('registerElement' in document) {
             set: function(zoom) {
               this.zoomval = zoom;
               if (zoom === "auto") {
-                this.renderer.enablePrintResizing(); this.renderer.fitZoom();
-              } else {
+                this.renderer.enablePrintResizing();
+                this.renderer.fitZoom();
+              } else if (zoom !== null && zoom !== "null") {
                 this.renderer.disablePrintResizing();
-                this.renderer.zoom = zoom;
+                this.renderer.zoom = parseFloat(zoom);
+                this.zoomval = parseFloat(zoom);
               }
             },
             get: function(zoom) { return this.renderer.zoom; }
@@ -78,7 +80,7 @@ if ('registerElement' in document) {
         if ( ! this.getAttribute('zoom')) {
           this.setAttribute('zoom','auto');
         } else {
-          this.renderer.zoom = parseFloat(this.getAttribute('zoom'));
+          this.zoom = this.getAttribute('zoom');
         }
         if (this.getAttribute('trackmargin')) {
           this.trackmargin = parseInt(this.getAttribute('trackmargin'));
@@ -262,10 +264,10 @@ if ('registerElement' in document) {
             var self = this;
             self.renderer.trackOrder = [];
             self.renderer.reset();
-            var old_zoom = self.getAttribute('zoom');
+            var old_zoom = self.getAttribute('zoom') || 'auto';
             self.removeAttribute('zoom');
-            self.renderer.setSequence("M");
-            MASCP.ready = function() {
+            self.renderer.bind('sequenceChange',function() {
+              self.renderer.unbind('sequenceChange',arguments.callee);
               var reader = get_reader(MASCP.GenomeReader,self.caching);
               reader.geneid = self.geneid;
               reader.exon_margin = self.exonmargin;
@@ -276,6 +278,9 @@ if ('registerElement' in document) {
                 self.setAttribute('zoom',old_zoom);
               });
               reader.retrieve(self.accession || ""+self.geneid);
+            });
+            MASCP.ready = function() {
+              self.renderer.setSequence('M');
             };
           }},
           geneid: {
