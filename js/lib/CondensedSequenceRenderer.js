@@ -2816,7 +2816,7 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             var self = this;
 
             if (zoomLevel == zoom_level) {
-                if (self._canvas && self._canvas.zoom !== parseFloat(zoom_level)) {
+                if (this.refresh.suspended && self._canvas && self._canvas.zoom !== parseFloat(zoom_level)) {
                     self._canvas.zoom = parseFloat(zoom_level);
                     var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
                     curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
