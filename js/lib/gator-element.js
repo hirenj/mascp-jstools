@@ -1,4 +1,4 @@
-if ('registerElement' in document) {
+if (typeof document !== 'undefined' && 'registerElement' in document) {
   (function() {
     var gatorViewer = (function() {
       var proto = Object.create(HTMLElement.prototype,{

@@ -1,4 +1,4 @@
-if ('registerElement' in document) {
+if (typeof document !== 'undefined' && 'registerElement' in document) {
   (function() {
 
     var get_renderer = function(renderer_url,callback) {

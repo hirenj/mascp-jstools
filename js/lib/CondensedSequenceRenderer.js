@@ -1119,6 +1119,8 @@ var addElementToLayer = function(layerName,opts) {
         };
         this._renderer._layer_containers[layerName].tracers.push(tracer);
         this._renderer._layer_containers[layerName].tracers.push(bobble);
+        tracer.setAttribute('pointer-events','none');
+        bobble.setAttribute('pointer-events','none');
         canvas.tracers.push(tracer);
     }
     if (typeof opts.offset == 'undefined' || opts.offset === null) {
@@ -1134,8 +1136,6 @@ var addElementToLayer = function(layerName,opts) {
 
     this._renderer._layer_containers[layerName].push(tracer_marker);
     var result = [tracer,tracer_marker,bobble];
-    tracer.setAttribute('pointer-events','none');
-    bobble.setAttribute('pointer-events','none');
     tracer_marker.setAttribute('class',layerName);
     result.move = function(x,width) {
         var transform_attr = tracer_marker.getAttribute('transform');
