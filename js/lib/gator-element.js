@@ -131,6 +131,12 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
       return reader;
     };
 
+    var fire_event = function(targ,name) {
+      var ev = document.createEvent("Events");
+      ev.initEvent(name, false, true);
+      targ.dispatchEvent(ev);
+    };
+
     var gatorUniprot = (function() {
         var uniprot_proto = document.registerElement('gator-uniprot', {
         prototype: Object.create(gatorViewer, {
@@ -192,6 +198,10 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
             MASCP.ready = function() {
               get_reader(MASCP.UniprotReader,self.caching).retrieve(self.accession, function(err) {
                 if (!err) {
+                  self.renderer.bind('sequenceChange',function() {
+                    self.renderer.unbind('sequenceChange',arguments.callee);
+                    fire_event(self,'ready');
+                  });
                   self.renderer.setSequence(this.result.getSequence());
                 }
               });
@@ -215,6 +225,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
       return uniprot_proto.prototype;
     })();
     var gatorGene = (function() {
+
         var gene_proto = document.registerElement('gator-gene', {
         prototype: Object.create(gatorUniprot, {
           createdCallback : {
@@ -273,6 +284,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
               reader.bind('requestComplete',function() {
                 self.renderer.hideAxis();
                 self.setAttribute('zoom',old_zoom);
+                fire_event(self,'ready');
               });
               reader.retrieve(self.accession || ""+self.geneid);
             });

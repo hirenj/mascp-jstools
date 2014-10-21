@@ -1193,8 +1193,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     }
     this._renderer._layer_containers[layerName].push(rect);
     rect.setAttribute('class',layerName);
-    rect.style.strokeWidth = '0px';
     rect.setAttribute('visibility', 'hidden');
+    rect.setAttribute('stroke-width','0px');
     if (typeof(fraction) !== 'undefined') {
         rect.setAttribute('opacity',fraction);
         rect.value = fraction;
@@ -1855,6 +1855,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if ((object.options || {}).zoom_level) {
             rendered.zoom_level = object.options.zoom_level;
+        }
+        if (object.identifier) {
+            rendered.setAttribute('identifier',object.identifier);
         }
         if ((object.options || {}).events ) {
             object.options.events.forEach(function(ev) {
