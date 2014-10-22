@@ -92,7 +92,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           GOMap.Diagram.addScrollBar(self.renderer, self.renderer._canvas,scroll_box);
 
           dragger.addTouchZoomControls(self.renderer, self.renderer._canvas,is_interactive);
-          GOMap.Diagram.addScrollZoomControls.call(is_interactive,self.renderer, self.renderer._canvas,0.1);
+          GOMap.Diagram.addScrollZoomControls.call(is_interactive,self.renderer, self.renderer._canvas,0.001);
 
           self.setAttribute('sequence',self.renderer.sequence);
           if (self.zoomval == "auto") {
