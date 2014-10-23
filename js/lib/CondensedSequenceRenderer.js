@@ -2808,7 +2808,12 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                 zoom_level = zoomLevel;
                 return;
             }
-            var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
+            var min_zoom_level = container_width / (2 * renderer.sequence.length);
+            if  (! renderer.grow_container ) {
+                min_zoom_level = 0.3 / 2 * min_zoom_level;
+            }
+
+            // var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
             if (zoomLevel < min_zoom_level) {
                 zoomLevel = min_zoom_level;
             }
