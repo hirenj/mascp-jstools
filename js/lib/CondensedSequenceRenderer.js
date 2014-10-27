@@ -1205,8 +1205,13 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     if ((typeof(opts.offset) !== "undefined") || opts.height_scale) {
         var offset_val = opts.offset;
         rect.setHeight = function(hght) {
-            this.setAttribute('y',offset_val*renderer._RS/renderer.zoom);
-            this.setAttribute('height',hght*(opts.height_scale || 1));
+            if (opts.align == 'bottom') {
+                this.setAttribute('y',(offset_val*renderer._RS/renderer.zoom)-(hght*(opts.height_scale || 1)) );
+                this.setAttribute('height',hght*(opts.height_scale || 1));
+            } else {
+                this.setAttribute('y',offset_val*renderer._RS/renderer.zoom);
+                this.setAttribute('height',hght*(opts.height_scale || 1));
+            }
         };
     }
     return rect;
@@ -1769,7 +1774,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     var results = [];
     objects.forEach(function(object) {
         if (object.options && object.options.offset > renderer._layer_containers[track].track_height) {
-            renderer._layer_containers[track].fixed_track_height = object.options.offset;
+            renderer._layer_containers[track].fixed_track_height = object.options.offset + (object.options.height || 0);
         }
 
         var click_reveal;

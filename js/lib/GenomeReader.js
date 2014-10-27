@@ -118,7 +118,12 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     var uniprots = Object.keys(cds_data);
     var min = max = null;
     uniprots.forEach(function(uniprot) {
-        var ends = cds_data[uniprot].map(function(cd) { return [ cd.txstart, cd.txend ]; });
+        var ends = cds_data[uniprot].map(function(cd) {
+            if ( Array.isArray(cd) ) {
+                cd = cd.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
+            }
+            return [ cd.txstart, cd.txend ];
+        });
         ends.forEach(function(cd) {
             if (! min || cd[0] < min) {
                 min = cd[0];
@@ -141,6 +146,13 @@ MASCP.GenomeReader.Result.prototype.getIntrons = function(margin) {
     uprots.forEach(function(up) {
         var cds = self._raw_data.data[up];
         cds.forEach(function(target_cds) {
+            if ( Array.isArray(target_cds) ) {
+                target_cds = target_cds.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
+                if ( ! target_cds ) {
+                    return null;
+                }
+            }
+
             var exons = target_cds.exons;
             var target_position;
 
@@ -167,8 +179,25 @@ MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,
     var wanted_identifier = idx;
     var position_genome = pos * 3;
     var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
-    var target_cds = cds[0];
-    var exons = target_cds.exons;
+
+    if (! cds ) {
+        return -1;
+    }
+
+    if (! cds.txstart ) {
+        cds = cds.map( function(cd) {
+            if ( Array.isArray(cd) ) {
+                cd = cd.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
+                if ( ! cd ) {
+                    return null;
+                }
+            }
+            return cd;
+        });
+    }
+
+    var target_cds = cds[0] || {};
+    var exons = target_cds.exons || [];
     var target_position;
 
     for (var i = 0; i < exons.length; i++) {
@@ -221,6 +250,13 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         var base_offset = 0;
         uniprots.forEach(function(uniprot) {
             var ends = cds_data[uniprot].map(function(cd,idx) {
+                if ( Array.isArray(cd) ) {
+                    cd = cd.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
+                    if ( ! cd ) {
+                        return;
+                    }
+                }
+
                 var exons = cd.exons;
                 var color = (idx == 0) ? '#000' : '#f99';
                 exons.forEach(function(exon) {

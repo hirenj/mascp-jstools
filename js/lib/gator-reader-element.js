@@ -33,7 +33,9 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
     };
 
     var iterate_readers = function(err,pref,reader,acc,renderer) {
-
+      reader.preferences = { getPreferences: function(cb) {
+        cb.call(reader,null,pref);
+      } };
       var track_name = (pref.render_options || {})["track"] ? pref.render_options["track"] : acc;
       if (pref && pref.icons || (pref.render_options || {}).icons ) {
         var icon_block = pref.icons || (pref.render_options || {}).icons;
@@ -42,6 +44,9 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
             renderer.importIcons(icon_block.namespace,doc.documentElement);
           }
         },"xml");
+      }
+      if (pref.type == 'liveClass') {
+        reader.registerSequenceRenderer(renderer,pref.render_options || {} );
       }
 
       reader.retrieve(acc,function() {
@@ -162,15 +167,18 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           });
         }
       };
-
-      Object.defineProperty(proto, 'configuration', {
-        get: function() {
+      proto._generateConfig = function() {
           var config = {};
           if ( ! this.config_id ) {
             return config;
           }
           config [ this.config_id ] = { type: this.type, title: this.name, render_options: { track: this.track, renderer: "var renderData = "+this.renderFunc.toString(), icons : { "url" : "/sugars.svg", "namespace" : "sugar" } }, data: this.data };
           return config;
+      };
+
+      Object.defineProperty(proto, 'configuration', {
+        get: function() {
+          return this._generateConfig();
         }
       });
       gatorReaderProto = proto;
@@ -232,6 +240,53 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
       document.registerElement('gator-localdata', { prototype: proto });
       return proto;
     })();
+
+
+    var domainReader = (function() {
+      var proto = Object.create( gatorReaderProto,{
+        'type' : {
+          get: function() { return "liveClass"; }
+        },
+        'endpoint' : {
+          get: function() { return this._endpoint },
+          set: function(endpoint) { this._endpoint = endpoint }
+        },
+        'config_id' : {
+          get: function() { return "DomainRetriever"; }
+        }
+      });
+
+      proto.createdCallback = function() {
+        var self = this;
+        if (this.getAttribute('accepted')) {
+          this.accepted = this.getAttribute('accepted');
+        }
+        if (this.getAttribute('href')) {
+          this.endpoint = this.getAttribute('href');
+        }
+
+        gatorReaderProto.createdCallback.apply(this);
+      };
+
+      proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
+        gatorReaderProto.attributeChangedCallback.apply(this);
+      };
+
+      proto._generateConfig = function() {
+        var config = gatorReaderProto._generateConfig.call(this);
+        config['DomainRetriever'].accepted_domains = { 'type' : 'url', url : this.accepted };
+        if (this.endpoint) {
+          config['DomainRetriever'].url = this.endpoint;
+        }
+        config['DomainRetriever']['render_options']['renderer'] = null;
+        return config;
+      };
+
+      document.registerElement('gator-domains', { prototype: proto });
+      return proto;
+    })();
+
+
 
     var readerRenderer = (function() {
       var proto = Object.create(HTMLElement.prototype,{
