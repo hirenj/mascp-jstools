@@ -274,11 +274,14 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
 
       proto._generateConfig = function() {
         var config = gatorReaderProto._generateConfig.call(this);
-        config['DomainRetriever'].accepted_domains = { 'type' : 'url', url : this.accepted };
+        config['DomainRetriever'].accepted_domains = { 'type' : 'gatorURL', url : "http://glycodomain-data.glycocode.com/data/latest/spreadsheet:0Ai48KKDu9leCdHM5ZXRjdUdFWnQ4M2xYcjM3S0Izdmc" };
         if (this.endpoint) {
           config['DomainRetriever'].url = this.endpoint;
         }
         config['DomainRetriever']['render_options']['renderer'] = null;
+        config['DomainRetriever']['render_options']['offset'] = -4;
+        config['DomainRetriever']['render_options']['height'] = 16;
+
         return config;
       };
 

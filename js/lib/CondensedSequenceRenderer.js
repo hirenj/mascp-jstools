@@ -1341,9 +1341,35 @@ var addShapeToElement = function(layerName,width,opts) {
         };
     }
 
-    this._renderer._layer_containers[layerName].push(shape);
-    shape.setAttribute('class',layerName);
-    shape.setAttribute('visibility', 'hidden');
+    if (((typeof opts.offset) !== 'undefined') && (opts.shape == "hexagon" || opts.shape == "pentagon" )) {
+        var offset_val = opts.offset || 0;
+        var orig_height = opts.height || 4;
+        var adjustment_g = canvas.group();
+        adjustment_g.setAttribute('transform',shape.getAttribute('transform'));
+        adjustment_g.push(shape);
+        shape.setAttribute('transform','translate(0,'+offset_val*this._renderer._RS+')');
+        adjustment_g.setHeight = function(height) {
+            if ( ! shape._orig_stroke_width ) {
+                shape._orig_stroke_width = parseInt(shape.getAttribute('stroke-width')) || 0;
+            }
+            shape.setHeight(orig_height*renderer._RS/renderer.zoom);
+            shape.setAttribute('stroke-width',this._orig_stroke_width/renderer.zoom);
+            shape.setAttribute('transform','translate(0,'+(offset_val*renderer._RS/renderer.zoom)+')');
+        };
+        this._renderer._layer_containers[layerName].push(adjustment_g);
+        adjustment_g.setAttribute('visibility', 'hidden');
+        adjustment_g.setAttribute('class',layerName);
+        adjustment_g.position_start = this._index;
+        adjustment_g.position_end = this._index + width;
+
+    } else {
+        this._renderer._layer_containers[layerName].push(shape);
+        shape.setAttribute('visibility', 'hidden');
+        shape.setAttribute('class',layerName);
+        shape.position_start = this._index;
+        shape.position_end = this._index + width;
+
+    }
     shape.setAttribute('fill',opts.fill || MASCP.layers[layerName].color);
     if (opts.stroke) {
         shape.setAttribute('stroke',opts.stroke);
@@ -1353,8 +1379,6 @@ var addShapeToElement = function(layerName,width,opts) {
     } else {
         shape.style.strokeWidth = '0';
     }
-    shape.position_start = this._index;
-    shape.position_end = this._index + width;
     return shape;
 };
 
@@ -1773,8 +1797,8 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     }
     var results = [];
     objects.forEach(function(object) {
-        if (object.options && object.options.offset > renderer._layer_containers[track].track_height) {
-            renderer._layer_containers[track].fixed_track_height = object.options.offset + (object.options.height || 0);
+        if (object.options && ((object.options.height || renderer._layer_containers[track].track_height) + object.options.offset) > renderer._layer_containers[track].track_height) {
+            renderer._layer_containers[track].fixed_track_height = renderer._layer_containers[track].track_height + object.options.offset + (object.options.height || renderer._layer_containers[track].track_height);
         }
 
         var click_reveal;
