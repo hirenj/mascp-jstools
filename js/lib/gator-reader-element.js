@@ -280,7 +280,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
         }
         config['DomainRetriever']['render_options']['renderer'] = null;
         config['DomainRetriever']['render_options']['offset'] = -4;
-        config['DomainRetriever']['render_options']['height'] = 16;
+        config['DomainRetriever']['render_options']['height'] = 8;
 
         return config;
       };

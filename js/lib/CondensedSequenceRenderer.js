@@ -1330,6 +1330,13 @@ var addShapeToElement = function(layerName,width,opts) {
             shape.setAttribute('y', (offset_val*renderer._RS/renderer.zoom));
             shape.setAttribute('height',(orig_height*renderer._RS)/renderer.zoom);
             shape.setAttribute('stroke-width',this._orig_stroke_width/renderer.zoom);
+            if ( opts.shape == 'ellipse' ) {
+                shape.setAttribute('ry', 0.5*(orig_height*renderer._RS)/renderer.zoom );
+            }
+            if (opts.shape == 'roundrect') {
+                shape.setAttribute('rx', 0.25*(orig_height*renderer._RS)/renderer.zoom );
+                shape.setAttribute('ry', 0.25*(orig_height*renderer._RS)/renderer.zoom );
+            }
         };
         shape.move = function(new_x,new_width) {
             var transform_attr = this.getAttribute('transform');
