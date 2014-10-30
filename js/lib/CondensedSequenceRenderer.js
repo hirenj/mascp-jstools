@@ -1114,12 +1114,20 @@ var addTextToElement = function(layerName,width,opts) {
     var text = canvas.text(this._index,0,opts.txt || "Text");
     text.setAttribute('font-size',0.75*height*this._renderer._RS);
     text.setAttribute('font-weight','bolder');
-    text.setAttribute('fill','#ffffff');
+    text.setAttribute('fill',opts.fill || '#ffffff');
     text.setAttribute('stroke','#000000');
     text.setAttribute('stroke-width','5');
     text.setAttribute('style','font-family: '+canvas.font_order);
     text.firstChild.setAttribute('dy','2ex');
     text.setAttribute('text-anchor','middle');
+    if (opts.align) {
+        if (opts.align == "left") {
+            text.setAttribute('text-anchor', 'start');
+        }
+        if (opts.align == 'right') {
+            text.setAttribute('text-anchor', 'end');
+        }
+    }
     if (opts.offset) {
         text.setAttribute('transform','translate('+text.getAttribute('x')+','+text.getAttribute('y')+')');
         text.offset = opts.offset;
@@ -1565,6 +1573,13 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         }
         if ((typeof object.aa !== 'undefined') && isNaN(object.aa)) {
             return;
+        }
+        if (object.type == "text") {
+            if (object.aa) {
+                rendered = renderer.getAA(parseInt(object.aa),track).addTextOverlay(track,1,object.options);
+            } else if (object.peptide) {
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTtextOverlay(track,1,object.options);
+            }
         }
         if (object.type === "box") {
             if (object.aa) {
