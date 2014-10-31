@@ -4,7 +4,7 @@
 </head>
 <body>
 	<div style="padding: 30px;">
-	<gator-gene auto="true" style="height: 300px; overflow: auto;" interactive="true" zoom="auto" geneid="1605" accession="q14118" exonmargin="12" caching="true">
+	<gator-gene id="blaz" auto="true" style="height: 300px; overflow: auto;" interactive="true" zoom="auto" geneid="1605" accession="q14118" exonmargin="300" caching="true">
 	<gator-track><!-- default to using the accession on the parent otherwise use an id also set genomic attribute-->
 		<gator-gatorurl href="http://glycodomain-data.glycocode.com/data/latest/pnas-omannose/" rendererUrl="/omannose.renderer" name="Oman" caching="true"></gator-gatorurl>
 		<gator-domains href="http://glycodomain-data.glycocode.com/data/latest/fulldomains/"></gator-domains>
@@ -21,7 +21,18 @@
 					'offset' : 1,
 					'height' : 24,
 					'events' : [{ 'type' : 'mousemove,mouseup,click,touchstart', 'data' : {'blah' : 'blaz'} }]
-				} } ];
+				} },
+				{ 'aa' : 49568800, 'type' : 'marker', 'width' : 1 ,'options': {
+					'offset' : 1,
+					'height' : 24,
+					'content' : 'Foo',
+					'events' : [{ 'type' : 'mousemove,mouseup,click,touchstart', 'data' : {'blah' : 'blaz'} }]
+				} },
+				{ 'aa' : 49548000, 'type' : 'box', 'width' : 20800, 'options' : { 'offset' : 1, 'height' : 6, 'fill' : '#0f0'}},
+				{ 'aa' : 49548000, 'type' : 'box', 'width' : 20800, 'options' : { 'offset' : 6, 'height' : 6, 'fill' : '#ff0'}},
+
+				{ 'aa' : 49548000, 'type' : 'text', 'width' : 20800, 'options' : { 'offset' : 3 ,'height' : 8, 'txt' : 'FoobarzFoobarz FoobarzFoobarz', 'fill' : '#000'}} ];
+
 			};
 		}
 		window.doProteome = function() {
@@ -75,9 +86,12 @@
 
 		};
 		window.blah = function() {
+			document.getElementById('blaz').go();
+			setTimeout(function() {
 			document.getElementById('foo').data = {'q14118' : {'foo' : 'bar'}};
 			document.getElementById('foo').renderer = window.fakeblah();
 			document.getElementById('foo').parentNode.go();
+			},300);
 			// var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
 			// MASCP.Service.BeginCaching();
 			// (new MASCP.UniprotReader()).retrieve('q14118',function() {
