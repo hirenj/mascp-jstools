@@ -332,7 +332,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     calculated_pos -= (introns[i][1] - introns[i][0]);
                 }
                 if (pos < introns[i][1] && pos > introns[i][0]) {
-                    calculated_pos = -1 * (introns[i][0] - reader.result.min);
+                    calculated_pos = (introns[i][1] - reader.result.min);
                 }
             }
             if (calculated_pos < 3) {

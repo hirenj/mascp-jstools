@@ -352,7 +352,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 
   var render_domains = function(renderer,domains,acc,track,offset,height,namespace) {
       var target_layer = track || acc.toString();
-      renderer.text_els = [];
+
       MASCP.registerLayer(target_layer, { 'fullname' : "All domains", 'color' : '#aaaaaa' },[renderer]);
       var domain_keys = [];
       for (var domain in domains) {
@@ -461,11 +461,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
                 results[target_layer].push( { "aa" : start, "type" : "box", "width": end-start+1, "options" : { "offset" : offset, "height" : height } });
                 results[lay_name].push( { "aa" : start, "type" : "box", "width": end-start+1, "options" : { } });
             }
-
-            // var a_text = renderer.getAA(parseInt(0.5*(start+end))).addTextOverlay(target_layer,0,{ "offset" : offset, 'txt' : domains[dom].name });
-            // a_text.setAttribute('fill','#111111');
-            // a_text.setAttribute('stroke','#999999');
-            // renderer.text_els.push([a_text,all_box]);
+            results[target_layer].push( { "aa" : start, "type" : "text", "width" : end-start+1, "options" :{ "txt" : domains[dom].name, "offset" : offset, 'fill' : '#111', 'stroke' : '#999' } });
           }
           done_anno = true;
         });

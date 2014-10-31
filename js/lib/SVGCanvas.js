@@ -433,6 +433,16 @@ var SVGCanvas = SVGCanvas || (function() {
             return a_g;
         };
 
+        canvas.clipPath = function() {
+            var el = document.createElementNS(svgns,'clipPath');
+            this.appendChild(el);
+            el.push = function(new_el) {
+                el.appendChild(new_el);
+            };
+            return el;
+        };
+
+
         canvas.line = function(x,y,x2,y2) {
             var a_line = document.createElementNS(svgns,'line');
             a_line.setAttribute('x1', typeof x == 'string' ? x : x * RS);
