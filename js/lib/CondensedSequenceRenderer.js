@@ -1265,7 +1265,7 @@ var addTextToElement = function(layerName,width,opts) {
         var mask = canvas.rect(-0.5*width,opts.offset || 0,width,height);
         clip.push(mask);
         mask.removeAttribute('y');
-        var mask_id = 'id' + (new Date()).getTime();
+        var mask_id = 'id' + (new Date()).getTime()+"_"+clip.parentNode.childNodes.length;
         clip.setAttribute('id',mask_id);
         text.setAttribute('clip-path','url(#'+mask_id+')');
     }
