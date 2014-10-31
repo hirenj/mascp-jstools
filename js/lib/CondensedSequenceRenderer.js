@@ -1578,7 +1578,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
             if (object.aa) {
                 rendered = renderer.getAA(parseInt(object.aa),track).addTextOverlay(track,1,object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTtextOverlay(track,1,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTextOverlay(track,1,object.options);
             }
         }
         if (object.type === "box") {
