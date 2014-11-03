@@ -302,16 +302,18 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         var results = [];
         var max = result.max;
         var min = result.min;
-
+        var cds_data = result._raw_data.data;
+        var uniprots = Object.keys(cds_data);
+        var total = uniprots.reduce(function(prev,up) { return prev + cds_data[up].length;  },0);
         removed.forEach(function(vals) {
             var start = vals[0];
             var end = vals[1];
             var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
             var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
 
-            results.push({"aa" : start - 1, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 8, "offset" : -8, "align" : "right" } });
-            results.push({"aa" : end + 1, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 8, "offset" : 24, "align" : "left" } });
-            results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : 10, "offset" : -8 } });
+            results.push({"aa" : start - 3, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 4, "offset" : -5*total, "align" : "right" } });
+            results.push({"aa" : end + 3, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 4, "offset" : total*5, "align" : "left" } });
+            results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : total*3, "offset" : -1*total } });
         });
         return results;
     };
