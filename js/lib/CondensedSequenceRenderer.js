@@ -618,7 +618,11 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
     clazz.prototype.win = function() {
         if (this._container && this._container.ownerDocument && this._container.ownerDocument.defaultView) {
-            return this._container.ownerDocument.defaultView;
+            var return_val = this._container.ownerDocument.defaultView;
+            if (typeof return_val === 'object') {
+                return_val = return_val[Object.keys(return_val)[0]];
+            }
+            return return_val;
         }
         return null;
     };
