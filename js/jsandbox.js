@@ -54,8 +54,14 @@ var JSandbox = (function (self) {
 		if (!(sandbox instanceof Sandbox)) {
 			return new Sandbox();
 		}
-		
-		sandbox[$worker] = new Worker(Sandbox.url);
+		try {
+			sandbox[$worker] = new Worker(Sandbox.url);
+		} catch(exception) {
+			// Internet Explorer closes the BLOB before we can use it
+			if (exception.name === "SecurityError") {
+				sandbox[$worker] = new Worker(window.URL.createObjectURL(new Blob(['('+default_worker_function.toString()+'(self,eval))'], {'type' : 'text/javascript'})));
+			}
+		}
 		sandbox[$requests] = {};
 		
 		sandbox[$worker].onmessage = function (event) {
