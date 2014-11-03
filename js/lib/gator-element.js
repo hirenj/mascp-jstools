@@ -279,6 +279,9 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
               var reader = get_reader(MASCP.GenomeReader,self.caching);
               reader.geneid = self.geneid;
               reader.exon_margin = self.exonmargin;
+              if (self.nt_mapping) {
+                reader.nt_mapping = self.nt_mapping;
+              }
               self._genomereader = reader;
               reader.registerSequenceRenderer(self.renderer);
               reader.bind('requestComplete',function() {

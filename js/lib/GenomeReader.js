@@ -38,7 +38,7 @@ MASCP.GenomeReader.prototype.requestData = function()
             url : 'http://mygene.info/v2/gene/'+this.geneid,
             dataType: "json",
             data: {
-                'fields' : 'exons'
+                'fields' : 'exons_hg19'
             }
         };
     }
@@ -79,9 +79,12 @@ MASCP.GenomeReader.prototype.requestData = function()
             return;
         }
         if ( ! this.exons ) {
-            this.exons = data.exons;
-            this.retrieve(this.acc || this.agi);
-            return;
+            this.exons = data.exons_hg19 || data.exons;
+            if ( ! this.nt_mapping ) {
+                this.retrieve(this.acc || this.agi);
+                return;
+            }
+            data = this.nt_mapping.map(function(map) { return map.join('\t'); } ).join('\n');
         }
         var mapped = {};
         self.sequences = [{ "agi" : "genome" }];
@@ -92,6 +95,7 @@ MASCP.GenomeReader.prototype.requestData = function()
             }
             var uniprot = bits[1].toLowerCase();
             var nuc = bits[0];
+            nuc = nuc.replace(/\..*$/,'');
             if (! self.exons[nuc]) {
                 return;
             }
