@@ -178,12 +178,28 @@ MASCP.GenomeReader.Result.prototype.getIntrons = function(margin) {
     return results;
 };
 
+MASCP.GenomeReader.prototype.proteinLength = function(target_cds) {
+    var exons = target_cds.exons;
+    var total = 0;
+    for (var i = 0; i < exons.length; i++) {
+        if (target_cds.cdsstart > exons[i][1] & target_cds.cdsstart > exons[i][0]) {
+            continue;
+        }
+        if (target_cds.cdsend < exons[i][0]) {
+            continue;
+        }
+
+        var start = target_cds.cdsstart > exons[i][0] ? target_cds.cdsstart : exons[i][0];
+        var end = target_cds.cdsend < exons[i][1] ? target_cds.cdsend : exons[i][1];
+        total += (end - start);
+    }
+    return Math.floor(total/3)-1;
+};
+
 MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
     var self = this;
     var wanted_identifier = idx;
-    var position_genome = pos * 3;
     var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
-
     if (! cds ) {
         return -1;
     }
@@ -202,6 +218,13 @@ MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,
 
     var target_cds = cds[0] || {};
     var exons = target_cds.exons || [];
+
+    if (target_cds.strand == -1) {
+        pos = self.proteinLength(target_cds) - pos;
+    }
+    var position_genome = pos * 3;
+
+
     var target_position;
 
     for (var i = 0; i < exons.length; i++) {
