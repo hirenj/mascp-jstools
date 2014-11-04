@@ -1978,10 +1978,10 @@ base.retrieve = function(agi,callback)
             cback.call(null,[]);
         };
         
-        begin_transaction = function(callback) {
+        begin_transaction = function(callback,trans) {
             // No support for transactions here. Do nothing.
             setTimeout(function(){
-                callback();
+                callback({"transaction": trans});
             },0);
         };
         end_transaction = function(callback) {

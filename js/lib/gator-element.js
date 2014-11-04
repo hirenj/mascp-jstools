@@ -36,7 +36,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
         var dragger = new GOMap.Diagram.Dragger();
 
         var scroll_box = shadow.ownerDocument.createElement('div');
-        scroll_box.style.height = '1em';
+        scroll_box.style.height = '24px';
         shadow.appendChild(scroll_box);
 
         self.renderer.getVisibleLength = function() {
