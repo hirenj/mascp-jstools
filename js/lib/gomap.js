@@ -1060,6 +1060,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       var targ = self.targetElement ? self.targetElement : targetElement;
       var positions = mousePosition(evt);
       self.dragging = true;
+      targ.setAttribute('dragging','true');
 
       if (self.targetElement) {
 
@@ -1121,7 +1122,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     };
     
     var mouseMove = function(evt) {
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur)';
         var positions = mousePosition(evt);
         if (self.clicktimeout && Math.abs(positions[0] - self.oX) < 10 ) {
             mouseUp();
@@ -1129,7 +1129,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         if (!self.dragging) {
            return;
         }
-        this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/closedhand_8_8.cur)';
 
         targetElement.shiftPosition(positions[0],positions[1]);
         
@@ -1145,6 +1144,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         self.dY = targetElement.getPosition()[1];
         evt.preventDefault(true);
         var targ = self.targetElement ? self.targetElement : targetElement;
+        targ.setAttribute('dragging','true');
         if (document.createEvent) {
             var evObj = document.createEvent('Events');
             evObj.initEvent('panstart',false,true);
@@ -1154,7 +1154,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     var svgMouseMove = function(evt) {
         if (!self.enabled) {
-            this.style.cursor = 'pointer';
             return true;
         }
         // this.style.cursor = 'url(http://maps.gstatic.com/intl/en_us/mapfiles/openhand_8_8.cur), move';
@@ -1216,6 +1215,8 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       evt.preventDefault(true);
       
       var targ = self.targetElement ? self.targetElement : targetElement;      
+
+      targ.removeAttribute('dragging');
       
       if (! targ._snapback) {
         bean.fire(targ,'panend',true);
@@ -1246,7 +1247,6 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         mouseUp(e);
     };
         
-    targetElement.setAttribute('cursor','pointer');    
     
     if ( ! targetElement.addEventListener) {
         targetElement.addEventListener = function(name,func,bool) {

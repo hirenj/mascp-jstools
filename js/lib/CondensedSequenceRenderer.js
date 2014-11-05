@@ -1943,6 +1943,10 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
         if ((object.options || {}).events ) {
             object.options.events.forEach(function(ev) {
                 (ev.type || "").split(",").forEach(function(evtype) {
+                    if (evtype == 'click') {
+                        rendered.style.cursor = 'pointer';
+                    }
+
                     rendered.addEventListener(evtype,function(e) {
                         e.event_data = ev.data;
                         e.layer = track;

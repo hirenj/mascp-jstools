@@ -34,6 +34,25 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
         self.renderer = new MASCP.CondensedSequenceRenderer(shadow.firstChild);
 
         var dragger = new GOMap.Diagram.Dragger();
+        shadow.appendChild(shadow.ownerDocument.createElement('style'));
+        shadow.lastChild.textContent = '[dragenabled] { cursor: move; cursor: -webkit-grab; cursor: -moz-grab; cursor: grab; }' + '\n' + '[dragging] { cursor: move; cursor: -webkit-grabbing; cursor: -moz-grabbing; cursor: grabbing; }'
+
+
+        Object.defineProperty(dragger,"enabled",{
+          get: function() { return this._enabled; },
+          set: function(enabled) {
+            if (self.renderer._canvas) {
+              if (enabled) {
+                self.renderer._canvas.setAttribute('dragenabled','true');
+              } else {
+                self.renderer._canvas.removeAttribute('dragenabled');
+              }
+            }
+            this._enabled = enabled;
+          }
+        });
+
+        dragger.enabled = true;
 
         var scroll_box = shadow.ownerDocument.createElement('div');
         scroll_box.style.height = '24px';

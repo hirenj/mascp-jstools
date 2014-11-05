@@ -222,6 +222,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 window.clearTimeout(timeouts.hover);
                 for (var i = 0; i < targets.length; i++) {
                     if (targets[i] != drag_el) {
+                        targets[i].removeAttribute('dragging');
                         targets[i].removeAttribute('transform');
                         targets[i].setAttribute('pointer-events','all');
                     }
@@ -250,7 +251,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 if (in_drag) {
                     return;                
                 }
-
+                lbl_grp.setAttribute('dragging','true');
 
                 spliceBefore = null;
                 spliceAfter = null;
@@ -674,6 +675,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 (track_rects || []).forEach(function(el) {
                     el.setAttribute('opacity',on ? '1': (touch_enabled ? "0.5" : "0.1") );
                     el.setAttribute('pointer-events', on ? 'all' : 'none');
+                    on ? el.parentNode.setAttribute('dragenabled','true') : el.parentNode.removeAttribute('dragenabled');
                 });
             }
         };
