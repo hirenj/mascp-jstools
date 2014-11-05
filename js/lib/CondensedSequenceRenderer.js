@@ -156,11 +156,13 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 
             var right_fade = container_canv.makeEl('rect',{     'x':'100%',
                                                                 'y':'0',
-                                                                'width':'50',
+                                                                'width':'25',
                                                                 'height':'100%',
-                                                                'transform':'translate(-50,0)',
+                                                                'transform':'translate(-15,0)',
                                                                 'style':'fill: url(#right_fade);'});
 
+            container_canv.appendChild(left_fade);
+            container_canv.appendChild(right_fade);
 
             bean.add(canv,'pan',function() {
                 if (canv.currentTranslate.x >= 0) {
@@ -168,19 +170,26 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                 } else {
                     left_fade.setAttribute('visibility','visible');
                 }
+                if (renderer.rightVisibleResidue() < renderer.sequence.length) {
+                    right_fade.setAttribute('visibility','visible');
+                } else {
+                    right_fade.setAttribute('visibility','hidden');
+                }
             });
         
             bean.add(canv,'_anim_begin',function() {
                 left_fade.setAttribute('visibility','hidden');
+                right_fade.setAttribute('visibility','hidden');
             });
         
             bean.add(canv,'_anim_end',function() {
                 bean.fire(canv,'pan');
             });
-
             if (canv.currentTranslate.x >= 0) {
                 left_fade.setAttribute('visibility','hidden');
             }
+            right_fade.setAttribute('visibility','hidden');
+
             var nav_group = container_canv.makeEl('g');
             container_canv.appendChild(nav_group);
             var nav_canvas = container_canv.makeEl('svg');
@@ -226,7 +235,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             container_canv.setAttribute('preserveAspectRatio','xMinYMin meet');
             container_canv.setAttribute('width','100%');
             container_canv.setAttribute('height','100%');
-            canv.appendChild(canv.makeEl('rect', {'x':0,'y':0,'width':'100%','height':'100%','stroke-width':'0','fill':'#ffffff'}));
+            canv.appendChild(canv.makeEl('rect', {'x':0,'y':0,'opacity': 0,'width':'100%','height':'100%','stroke-width':'0','fill':'#ffffff'}));
             renderer._object = this;
             renderer._canvas = canv;
             renderer._canvas._canvas_height = 0;
