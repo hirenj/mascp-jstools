@@ -1916,6 +1916,13 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 if (content.type == "circle") {
                     content_el = renderer._canvas.circle(-0.5,-0.5,1,1);
                 }
+                if (content.type == "left_triangle") {
+                    content_el = renderer._canvas.poly('-100,0 0,-100 0,100');
+                }
+                if (content.type == "right_triangle") {
+                    content_el = renderer._canvas.poly('0,100 100,0 0,-100');
+                }
+
                 ["fill","stroke","stroke-width","fill-opacity","stroke-opacity"].forEach(function(prop) {
                     if (content[prop]) {
                         content_el.setAttribute(prop,content[prop]);
