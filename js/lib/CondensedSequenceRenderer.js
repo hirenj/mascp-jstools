@@ -1161,6 +1161,10 @@ var addElementToLayer = function(layerName,opts) {
             bobble.move(x+0.5);
         }
     };
+    if (tracer) {
+        tracer_marker.tracer = tracer;
+        tracer_marker.bobble = bobble;
+    }
     this._renderer._layer_containers[layerName].push(result);
     return result;
 };
@@ -1733,6 +1737,12 @@ MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
         bean.fire(el,'removed');
         if (el.parentNode) {
             el.parentNode.removeChild(el);
+        }
+        if (el.tracer && el.tracer.parentNode) {
+            el.tracer.parentNode.removeChild(el.tracer);
+        }
+        if (el.bobble && el.bobble.parentNode) {
+            el.bobble.parentNode.removeChild(el.bobble);
         }
     }
 };

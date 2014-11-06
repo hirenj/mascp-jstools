@@ -308,6 +308,10 @@ MASCP.cloneService = function(service,name) {
             reader.setData(set,pref.data);
             return;
         }
+        if ( pref.type == "reader" ) {
+            callback.call(null,null,pref,pref.reader);
+            return;
+        }
 
         // If we wish to load complete datasets
         // and store them browser-side, we need
@@ -1027,7 +1031,7 @@ base.retrieve = function(agi,callback)
                     if (cback) {
                         self.result = null;
                         var done_func = function(err) {
-                            bean.remove(self,"resultRecieved",arguments.callee);
+                            bean.remove(self,"resultReceived",arguments.callee);
                             bean.remove(self,"error",arguments.callee);
                             cback.call(self,err);
                         };
@@ -2044,6 +2048,18 @@ MASCP.Service.prototype.registerSequenceRenderer = function(sequenceRenderer,opt
     sequenceRenderer.trigger('readerRegistered',[this]);
     return this;
 };
+
+MASCP.Service.prototype.resetOnResult = function(sequenceRenderer,rendered,track) {
+    var self = this;
+    var clear_func = function() {
+        self.unbind('resultReceived',clear_func);
+        rendered.forEach(function(obj) {
+            sequenceRenderer.remove(track,obj);
+        });
+    };
+    this.bind('resultReceived',clear_func);
+};
+
 
 /**
  * For this service, set up a sequence renderer so that the events are connected up with receiving data.
