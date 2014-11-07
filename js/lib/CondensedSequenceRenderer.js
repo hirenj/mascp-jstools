@@ -1091,7 +1091,11 @@ var addElementToLayer = function(layerName,opts) {
     tracer_marker.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale('+scale+')');
     tracer_marker.setAttribute('height','250');
     tracer_marker.firstChild.setAttribute('transform', 'translate(-100,0) rotate(0,100,0.001)');
-
+    if ( opts.break_viewbox ) {
+        tracer_marker.container.removeAttribute('viewBox');
+        tracer_marker.container.setAttribute('width', '100%');
+        tracer_marker.container.setAttribute('height','100%');
+    }
     if (! opts.no_tracer ) {
 
         var bobble = canvas.circle(this._index+0.5,10,0.25);
@@ -1926,6 +1930,10 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 if (content.type == "circle") {
                     content_el = renderer._canvas.circle(-0.5,-0.5,1,1);
                 }
+                if (content.type == 'text_circle') {
+                    content_el = renderer._canvas.text_circle(0.5,0.5,1,content.text,content.options || {});
+                    object.options.break_viewbox = true;
+                }
                 if (content.type == "left_triangle") {
                     content_el = renderer._canvas.poly('-100,0 0,-100 0,100');
                 }
@@ -1933,7 +1941,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                     content_el = renderer._canvas.poly('0,100 100,0 0,-100');
                 }
 
-                ["fill","stroke","stroke-width","fill-opacity","stroke-opacity"].forEach(function(prop) {
+                ["fill","stroke","stroke-width","fill-opacity","stroke-opacity","opacity"].forEach(function(prop) {
                     if (content[prop]) {
                         content_el.setAttribute(prop,content[prop]);
                     }
