@@ -197,13 +197,17 @@ var get_file_by_filename = function(filename,mime,callback) {
         }
 
         if (err) {
-            callback.call(null,err);
+            if (callback) {
+                callback.call(null,err);
+            }
             return;
         }
 
         if (data.items.length == 0) {
             cached_files[filename] = {};
-            callback.call(null,null,cached_files[filename]);
+            if (callback) {
+                callback.call(null,null,cached_files[filename]);
+            }
             return;
         }
 
