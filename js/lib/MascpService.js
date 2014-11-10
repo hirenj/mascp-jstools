@@ -269,7 +269,8 @@ MASCP.cloneService = function(service,name) {
             reader.datasetname = pref.title;
             reader.requestData = function() {
                 var agi = this.agi.toLowerCase();
-                var gatorURL = set.slice(-1) == '/' ? set+agi : set+'/'+agi;
+                var urlpart = set.split('#')[0];
+                var gatorURL = urlpart.slice(-1) == '/' ? urlpart+agi : urlpart+'/'+agi;
                 return {
                     type: "GET",
                     dataType: "json",
