@@ -782,16 +782,16 @@ var SVGCanvas = SVGCanvas || (function() {
                 marker.push(marker.contentElement);
             } else if (Array.isArray && Array.isArray(symbol)) {
                 marker.contentElement = this.group();
-                var phase = (2 * Math.PI / symbol.length);
-//                phase -= (Math.PI / 2);
+                var phase = ( Math.PI / symbol.length);
+                // phase -= (Math.PI / 2);
                 var needs_stretch = opts.stretch;
                 symbol.forEach(function(symb,i) {
                     var new_el;
-                    var x_pos = r + (r*symbol.length * Math.cos(i*phase - Math.PI/2));
-                    var y_pos = 0 + (r*symbol.length * Math.sin(i*phase - Math.PI/2));
+                    var x_pos = r + (r*symbol.length * Math.cos(i*phase - 0*Math.PI/2));
+                    var y_pos = 0 + (r*symbol.length * Math.sin(i*phase - 0*Math.PI/2));
 
-                    var rotate_amount = 360*i/symbol.length;
-                    rotate_amount -= 90;
+                    var rotate_amount = 180*i/symbol.length;
+                    rotate_amount -= 0*90;
                     if (needs_stretch) {
                         if (rotate_amount >= -90 && rotate_amount <= 90 ) {
                             opts.stretch = 'right';
