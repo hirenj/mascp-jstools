@@ -396,6 +396,9 @@ var create_file = function(file,mime,callback) {
 };
 
 var write_file = function(file,mime,callback) {
+    const boundary = '-------314159265358979323846';
+    const delimiter = "\r\n--" + boundary + "\r\n";
+    const close_delim = "\r\n--" + boundary + "--";
     if ( typeof(file) === 'string' ) {
         write_file_by_filename(file,mime,callback);
         return;
@@ -433,12 +436,22 @@ var write_file = function(file,mime,callback) {
         // headers_block['If-Match'] = file.etag;
     }
 
+    var request_body = delimiter +
+        'Content-Type: application/json\r\n\r\n' +
+        JSON.stringify({'mimeType' : mime }) +
+        delimiter +
+        'Content-Type: ' + mime + '\r\n' +
+        '\r\n' +
+        string_rep +
+        '\r\n' +
+        close_delim;
+
     var req = gapi.client.request({
         'path' : "/upload/drive/v2/files/"+item_id,
         'method' : "PUT",
-        'params' : { "uploadType" : "media"},
-        'headers' : headers_block,
-        'body' : string_rep
+        'params' : { "uploadType" : "multipart" },
+        'headers' : { 'Content-Type' : 'multipart/mixed; boundary="' + boundary + '"' }, //headers_block,
+        'body' : request_body
     });
 
     req.execute(function(isjson,data) {
@@ -1225,15 +1238,15 @@ MASCP.GoogledataReader.prototype.getPreferences = function(prefs_domain,callback
     if ( ! prefs_domain ) {
         prefs_domain = "MASCP GATOR PREFS";
     }
-    return get_file(prefs_domain,"application/json; data-type=domaintool-session",callback);
+    return get_file(prefs_domain,"application/json+domaintool-session",callback);
 };
 
 MASCP.GoogledataReader.prototype.writePreferences = function(prefs_domain,callback) {
-    return write_file(prefs_domain,"application/json; data-type=domaintool-session",callback);
+    return write_file(prefs_domain,"application/json+domaintool-session",callback);
 };
 
 MASCP.GoogledataReader.prototype.createPreferences = function(folder,callback) {
-    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session.domaintoolsession" }, "application/json; data-type=domaintool-session",function(err,content,file_id) {
+    return create_file({ "parent" : folder, "content" : {}, "name" : "New annotation session.domaintoolsession" }, "application/json+domaintool-session",function(err,content,file_id) {
         callback.call(null,err,content,file_id,"New annotation session");
     });
 };
