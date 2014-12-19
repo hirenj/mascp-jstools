@@ -463,6 +463,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         var clipping = document.createElementNS(svgns,'clipPath');
         clipping.id = self.clipping_id;
         var rect2 = rect.cloneNode();
+        rect2.removeAttribute('id');
+        rect2.removeAttribute('opacity');
     
         back_canvas.insertBefore(clipping,back_canvas.firstChild);
         clipping.appendChild(rect2);
