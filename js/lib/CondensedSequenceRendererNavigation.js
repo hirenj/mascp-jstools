@@ -466,7 +466,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         rect2.removeAttribute('id');
         rect2.removeAttribute('opacity');
         rect2.setAttribute('x','0');
-        rect2.setAttribute('width',""+(parseInt(rect2.getAttribute('width') - 10));
+        rect2.setAttribute('width',""+(parseInt(rect2.getAttribute('width')) - 10));
     
         back_canvas.insertBefore(clipping,back_canvas.firstChild);
         clipping.appendChild(rect2);
