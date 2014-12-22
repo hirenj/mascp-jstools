@@ -25,7 +25,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         track_group.appendChild(track_canvas);
 
-        track_group.setAttribute('clip-path','url(#nav_clipping)');
+        track_group.setAttribute('clip-path','url(#'+this.clipping_id+')');
 
         this.disable = function() {
             parent_canvas.style.display = 'none';
@@ -463,10 +463,16 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         panel_back.push(rect);
 
+        self.clipping_id = 'nav_clipping'+(new Date()).getTime();
         var clipping = document.createElementNS(svgns,'clipPath');
-        clipping.id = 'nav_clipping';
-        var rect2 = document.createElementNS(svgns,'use');
-        rect2.setAttributeNS('http://www.w3.org/1999/xlink','href','#nav_back');
+        clipping.id = self.clipping_id;
+        var rect2 = rect.cloneNode();
+        rect2.removeAttribute('id');
+        rect2.removeAttribute('opacity');
+        rect2.setAttribute('x','0');
+        rect2.setAttribute('width',""+(parseInt(rect2.getAttribute('width')) - 10));
+        rect2.removeAttribute('style');
+        rect2.setAttribute('height','10000');
     
         back_canvas.insertBefore(clipping,back_canvas.firstChild);
         clipping.appendChild(rect2);
@@ -490,7 +496,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         var tracks_button = MASCP.IE ? back_canvas.svgbutton(10,5,65,25,'Edit') : back_canvas.button(10,5,65,25,'Edit');
         tracks_button.id = 'controls';
-        tracks_button.parentNode.setAttribute('clip-path','url(#nav_clipping)');
+        tracks_button.parentNode.setAttribute('clip-path','url(#'+self.clipping_id+')');
 
         panel_back.push(MASCP.IE ? tracks_button : tracks_button.parentNode);
 
