@@ -545,8 +545,8 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 self.refresh();
             } else {
                 self.demote();
-
-                close_group._button.setAttribute('filter','url(#drop_shadow)');            
+                // Chrome bug Jan 2015 with the drop shadow
+                //close_group._button.setAttribute('filter','url(#drop_shadow)');            
                 close_group.setAttribute('style',needs_transition+transform_origin_statement+translate(-0.75*nav_width,"405deg"));
                 if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
                     close_transform = close_group.getAttribute('transform') || ' ';
