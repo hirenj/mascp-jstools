@@ -816,8 +816,8 @@ var SVGCanvas = SVGCanvas || (function() {
                 var needs_stretch = opts.stretch;
                 symbol.forEach(function(symb,i) {
                     var new_el;
-                    var x_pos = r + (r*symbol.length * Math.cos(i*phase - 0*Math.PI/2));
-                    var y_pos = 0 + (r*symbol.length * Math.sin(i*phase - 0*Math.PI/2));
+                    var x_pos = 1.2*r + (r*symbol.length * Math.cos(i*phase - 0*Math.PI/2));
+                    var y_pos = r + (r*(4*r/symbol.length)*symbol.length * Math.sin(i*phase - 0*Math.PI/2));
 
                     var rotate_amount = 180*i/symbol.length;
                     rotate_amount -= 0*90;
@@ -828,7 +828,12 @@ var SVGCanvas = SVGCanvas || (function() {
                             opts.stretch = 'left';
                         }
                         if ((rotate_amount % 90) == 0 && rotate_amount != 90 && rotate_amount != -90) {
-                            opts.stretch = true;
+                            if (rotate_amount == 0) {
+                                opts.stretch = 'right';
+                            }
+                            if (symbol.length == 1) {
+                                opts.stretch = true;
+                            }
                         }
 
                     }
