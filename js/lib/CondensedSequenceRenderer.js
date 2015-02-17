@@ -651,7 +651,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         this.sequence = new_sequence;
 
         delete this.sequences;
-    
+
         var seq_chars = this.sequence.split('');
         var line_length = seq_chars.length;
 
@@ -830,7 +830,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             renderer.enableScaling();
 
             // When we have a layer registered with the global MASCP object
-            // add a track within this rendererer.
+            // add a track within this renderer.
             bean.add(MASCP,'layerRegistered', function(layer,rend) {
                 if (! rend || rend === renderer) {
                     renderer.addTrack(layer);
@@ -1708,14 +1708,29 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
 
             var old_get_aas = renderer.getAminoAcidsByPosition;
             var old_get_pep = renderer.getAminoAcidsByPeptide;
-
+            var old_sequence = renderer.sequence;
+            if (renderer.sequences) {
+                renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
+            } else {
+                renderer.sequence = renderer.sequence;
+            }
             renderer.getAminoAcidsByPosition = function(aas,lay,accession) {
-                return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
+                if (renderer.forceTrackAccs) {
+                    return old_get_aas.call(this,aas,wanted_id,wanted_id);
+                } else {
+                    return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
+                }
             };
             renderer.getAminoAcidsByPeptide = function(peptide,lay,accession) {
-                return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
+                if (renderer.forceTrackAccs) {
+                    return old_get_pep.call(this,peptide,wanted_id,wanted_id);
+                } else {
+                    return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
+                }
             };
             old_result.call(reader);
+
+            renderer.sequence = old_sequence;
 
             renderer.getAminoAcidsByPosition = old_get_aas;
             renderer.getAminoAcidsByPeptide = old_get_pep;

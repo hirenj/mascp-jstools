@@ -885,6 +885,7 @@ MASCP.SequenceRenderer.prototype.reset = function()
         }
     }
     delete this._scalers;
+    delete this.forceTrackAccs;
 
     if (this.resetAnnotations) {
         this.resetAnnotations();

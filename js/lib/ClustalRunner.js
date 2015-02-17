@@ -269,6 +269,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         return self.result.calculatePositionForSequence(idx,pos);
     });
 
+    renderer.forceTrackAccs = true;
     var rendered_bits = [];
     var controller_name = 'isoform_controller';
     var group_name = 'isoforms';
