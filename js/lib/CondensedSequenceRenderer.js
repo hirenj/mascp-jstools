@@ -2566,7 +2566,7 @@ clazz.prototype.removeTrack = function(layer) {
 
 clazz.prototype.emptyTrack = function(layer) {
     var self = this;
-    if (! this._layer_containers ) {
+    if (! this._layer_containers || ! layer) {
         return;
     }
     var layer_containers = this._layer_containers || [];

@@ -39,7 +39,7 @@
 				console.log("Saw a change");
 				window.annotationRenderer.retrieve();
 			});
-			window.anno_block = { 'self' : [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Tagthing" } ] };
+			window.anno_block = [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Tagthing" } ];
 			window.annotationRenderer.annotations = anno_block;
 			window.annotationRenderer.registerSequenceRenderer(document.getElementById('blaz').renderer, {'track' : 'mutations'});
 		};

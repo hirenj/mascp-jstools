@@ -190,6 +190,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       var click_point = svgPosition(ev,canvas);
       var pie = PieMenu.create(canvas,click_point.x/canvas.RS,click_point.y/canvas.RS,pie_contents,{ "size" : 7, "ellipse" : true });
       annotation.pie = pie;
+
       var end_pie = function(ev) {
         canvas.removeEventListener('mouseout',end_pie);
         canvas.removeEventListener('mouseup',end_pie);
@@ -220,10 +221,66 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       });
     });
   };
+  if (Object.defineProperty) {
+      Object.defineProperty(MASCP.EditableReader.prototype,"annotations", {
+          get : function() {
+            if (! this._annotations ) {
+              this._annotations = setupAnnotations(this);
+            }
+            return this._annotations;
+          },
+          set : function(annotations) {
+            console.log(this);
+            if (! this._annotations ) {
+              this._annotations = setupAnnotations(this);
+            }
+            console.log("Set annotations");
+            console.log(this);
+            Array.prototype.splice.apply(this._annotations,[0,this._annotations.length].concat(annotations));
+          }
+      });
+  }
+
+  var setupAnnotations = function(self) {
+    if (! self._annotations ) {
+      self._annotations = [];
+    }
+
+    var new_annotation = function() {
+      bean.fire(self,'resultReceived');
+    };
+
+    var arr_observer = new ArrayObserver(self._annotations);
+    self._annotations.forEach(function(ann) {
+      (new ObjectObserver(ann)).open(new_annotation);
+    });
+
+    arr_observer.open(function(splices) {
+      var any_change = false;
+      splices.forEach(function(splice) {
+        while(splice.addedCount > 0) {
+          var ann = self._annotations[splice.index + splice.addedCount - 1];
+          (new ObjectObserver(ann)).open(new_annotation);
+
+          if (ann.acc == self.acc) {
+            any_change = true;
+          }
+          splice.addedCount -= 1;
+        }
+      });
+
+      if (any_change) {
+        console.log("Got a new annotation");
+        new_annotation();
+      }
+    });
+
+    return self._annotations;
+  }
 
   MASCP.EditableReader.prototype.getAnnotation = function(id) {
     for (var type in this.annotations) {
-      var annos = this.annotations[type].filter(function(anno) { return anno.id === id; });
+      var annos = this.annotations.filter(function(anno) { return anno.id === id; });
       if (annos.length == 1) {
         return annos[0];
       }
@@ -292,9 +349,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     return objects;
   };
 
-  MASCP.EditableReader.prototype.intervalSortAnnotations = function(type) {
+  MASCP.EditableReader.prototype.intervalSortAnnotations = function() {
     var self = this;
-    var annos = self.annotations[type];
+    var annos = self.annotations;
     var intervals = [];
     annos.forEach(function(annotation) {
       var start;
@@ -329,44 +386,43 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     if ( ! track ) {
       return;
     }
-    for (var annotation_type in self.annotations) {
-      var current = [];
-      var to_draw = [];
-      self.intervalSortAnnotations(annotation_type).forEach(function(interval) {
-        var annotation = interval.annotation;
-        if (wanted_accs.indexOf(annotation.acc) < 0 ) {
-          return;
-        }
-        if ( MASCP.getLayer(track) && MASCP.getLayer(track).disabled ) {
-          return;
-        }
-        if ( ! MASCP.getLayer(track) ) {
-          MASCP.registerLayer(track, {name: track});
-        }
-        if (annotation.deleted) {
-          return;
-        }
+    var current = [];
+    var to_draw = [];
+    self.intervalSortAnnotations().forEach(function(interval) {
+      var annotation = interval.annotation;
+      if (wanted_accs.indexOf(annotation.acc) < 0 ) {
+        return;
+      }
+      if ( MASCP.getLayer(track) && MASCP.getLayer(track).disabled ) {
+        return;
+      }
+      if ( ! MASCP.getLayer(track) ) {
+        MASCP.registerLayer(track, {name: track});
+      }
+      if (annotation.deleted) {
+        return;
+      }
 
-        if (! interval.start) {
-          current.splice(current.indexOf(annotation),1,null);
-          while (current.length > 0 && current[current.length - 1] === null) {
-            current.splice(current.length - 1,1);
-          }
-          return;
+      if (! interval.start) {
+        current.splice(current.indexOf(annotation),1,null);
+        while (current.length > 0 && current[current.length - 1] === null) {
+          current.splice(current.length - 1,1);
         }
+        return;
+      }
 
-        var click_el = null;
-        var label_el = null;
-        to_draw = to_draw.concat(self.renderAnnotation(annotation,track,(annotation.class == "potential") ? -1 : (current.length)));
+      var click_el = null;
+      var label_el = null;
+      to_draw = to_draw.concat(self.renderAnnotation(annotation,track,(annotation.class == "potential") ? -1 : (current.length)));
 
-        current.push(annotation);
-      });
-      var obj = { "gotResult" : function() {
-        self.renderer.renderObjects(track,to_draw);
-      }, "agi" : acc };
-      self.renderer.trigger('readerRegistered',[obj]);
-      obj.gotResult();
-    }
+      current.push(annotation);
+    });
+    var obj = { "gotResult" : function() {
+      self.renderer.renderObjects(track,to_draw);
+    }, "agi" : acc };
+    self.renderer.trigger('readerRegistered',[obj]);
+    obj.gotResult();
+
     if (self.renderer.trackOrder.indexOf(track) < 0) {
       self.renderer.trackOrder.push(track);
     }

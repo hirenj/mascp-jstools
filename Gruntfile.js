@@ -29,7 +29,7 @@ module.exports = function(grunt) {
           'build/<%= pkg.name %>.services.js' : ['js/lib/MascpService.js','js/lib/*Reader.js','js/lib/*Runner.js','js/lib/MascotToJSON.js', 'js/lib/gator-reader-element.js' ],
           'build/<%= pkg.name %>.map.js' : [ 'js/lib/gomap.js'],
           'build/<%= pkg.name %>.renderers.js' : [ 'js/hammer.js','js/jsandbox.js','js/piemenu.js','js/lib/SequenceRenderer.js','js/lib/SVGCanvas.js','js/lib/CondensedSequenceRenderer.js','js/lib/CondensedSequenceRendererNavigation.js','js/lib/TagVisualisation.js','js/lib/gator-element.js' ],
-          'build/<%= pkg.name %>.js' : [ 'js/bean.js','js/object-observe-lite.js','build/<%= pkg.name %>.services.js','build/<%= pkg.name %>.renderers.js','build/<%= pkg.name %>.map.js' ]
+          'build/<%= pkg.name %>.js' : [ 'js/bean.js','js/observe.js','build/<%= pkg.name %>.services.js','build/<%= pkg.name %>.renderers.js','build/<%= pkg.name %>.map.js' ]
         }
       }
     }
