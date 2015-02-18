@@ -1751,6 +1751,9 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
 };
 
 MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
+    if ( ! el ) {
+        return false;
+    }
     if (this._layer_containers[lay] && this._layer_containers[lay].indexOf(el) >= 0) {
         this._layer_containers[lay].splice(this._layer_containers[lay].indexOf(el),1);
         bean.fire(el,'removed');
@@ -1763,7 +1766,9 @@ MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
         if (el.bobble && el.bobble.parentNode) {
             el.bobble.parentNode.removeChild(el.bobble);
         }
+        return true;
     }
+    return false;
 };
 
 var zoomFunctions = [];
@@ -2550,18 +2555,32 @@ clazz.prototype.removeTrack = function(layer) {
         return;
     }
     var layer_containers = this._layer_containers || [];
-    if ( layer_containers[layer.name] ) {                
-        layer_containers[layer.name].forEach(function(el) {
-            if (el.parentNode) {
-                el.parentNode.removeChild(el);
-            }
-        });
+    if ( layer_containers[layer.name] ) {
+        this.emptyTrack(layer);
         this.removeAnnotations(layer);
         this._layer_containers[layer.name] = null;
         layer.disabled = true;
     }
-    
+
 };
+
+clazz.prototype.emptyTrack = function(layer) {
+    var self = this;
+    if (! this._layer_containers ) {
+        return;
+    }
+    var layer_containers = this._layer_containers || [];
+    if ( layer_containers[layer.name] ) {
+        while (self.remove(layer.name, layer_containers[layer.name][0])) {
+
+        }
+        // layer_containers[layer.name].forEach(function(el) {
+        //     console.log(el);
+        //     self.remove(layer.name,el);
+        // });
+    }
+};
+
 var refresh_id = 0;
 clazz.prototype.disablePrintResizing = function() {
     delete this._media_func;

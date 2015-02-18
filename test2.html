@@ -5,9 +5,12 @@
 <body>
 	<div style="padding: 30px;">
 	<gator-uniprot id="blaz" auto="true" style="height: 300px; overflow: auto;" interactive="true" zoom="auto" geneid="1605" accession="q14118" exonmargin="300" caching="true">
-	<gator-track  name="mutations" genomic="true">
+	<gator-track id="fooz" name="mutations">
 		<gator-localdata id="foo" caching="true" ></gator-localdata>
 	</gator-track>
+	<gator-track  name="muppets">
+	</gator-track>
+
 	</gator-uniprot>
 	</div>
 	<script>
@@ -24,13 +27,20 @@
 		window.blah = function() {
 			// document.getElementById('blaz').go();
 			setTimeout(function() {
-				// document.getElementById('foo').data = {'q14118' : {'foo' : 'bar'}};
+				document.getElementById('foo').data = {'q14118' : {'Faz' : 'bar'}};
 				document.getElementById('foo').renderer = window.fakeblah();
 				document.getElementById('foo').parentNode.go();
+				document.getElementById('fooz').go();
 				window.annotationRenderer.retrieve();
 			},1000);
 			window.annotationRenderer = new MASCP.EditableReader();
-			window.annotationRenderer.annotations = { 'self' : [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Foo" } ] };
+			window.anno_block = {};
+			Object.observe(anno_block,function() {
+				console.log("Saw a change");
+				window.annotationRenderer.retrieve();
+			});
+			window.anno_block = { 'self' : [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Tagthing" } ] };
+			window.annotationRenderer.annotations = anno_block;
 			window.annotationRenderer.registerSequenceRenderer(document.getElementById('blaz').renderer, {'track' : 'mutations'});
 		};
 	</script>
