@@ -206,13 +206,29 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     };
   };
 
+  var generate_empty_function = function(els,track) {
+    return function(renderer) {
+      if ( ! els ) {
+        return;
+      }
+      els.forEach(function(el) {
+        renderer.remove(track, el);
+      });
+    };
+  };
+
   MASCP.EditableReader.prototype.setupSequenceRenderer = function(renderer,options) {
     var self = this;
+    var empty_track = function() {
+    };
+
     self.bind('resultReceived',function() {
       self.acc = self.agi;
       self.renderer = renderer;
-      self.renderer.emptyTrack(MASCP.getLayer(options.track));
-      self.redrawAnnotations(self.acc,options.track);
+      empty_track(renderer);
+
+      empty_track = generate_empty_function(self.redrawAnnotations(self.acc,options.track), options.track );
+
       if (renderer._canvas) {
         setup_mouse_events.call(self,renderer._canvas);
       }
@@ -415,8 +431,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 
       current.push(annotation);
     });
+    var drawn = [];
     var obj = { "gotResult" : function() {
-      self.renderer.renderObjects(track,to_draw);
+      drawn = drawn.concat(self.renderer.renderObjects(track,to_draw));
     }, "agi" : acc };
     self.renderer.trigger('readerRegistered',[obj]);
     obj.gotResult();
@@ -426,6 +443,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     }
     self.renderer.showLayer(track);
     self.renderer.refresh();
+    return drawn;
   };
 
 })();

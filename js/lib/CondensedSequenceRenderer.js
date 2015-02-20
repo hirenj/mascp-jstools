@@ -2564,23 +2564,6 @@ clazz.prototype.removeTrack = function(layer) {
 
 };
 
-clazz.prototype.emptyTrack = function(layer) {
-    var self = this;
-    if (! this._layer_containers || ! layer) {
-        return;
-    }
-    var layer_containers = this._layer_containers || [];
-    if ( layer_containers[layer.name] ) {
-        while (self.remove(layer.name, layer_containers[layer.name][0])) {
-
-        }
-        // layer_containers[layer.name].forEach(function(el) {
-        //     console.log(el);
-        //     self.remove(layer.name,el);
-        // });
-    }
-};
-
 var refresh_id = 0;
 clazz.prototype.disablePrintResizing = function() {
     delete this._media_func;
