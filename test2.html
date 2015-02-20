@@ -31,16 +31,10 @@
 				document.getElementById('foo').renderer = window.fakeblah();
 				document.getElementById('foo').parentNode.go();
 				document.getElementById('fooz').go();
-				window.annotationRenderer.retrieve();
 			},1000);
 			window.annotationRenderer = new MASCP.EditableReader();
-			window.anno_block = {};
-			Object.observe(anno_block,function() {
-				console.log("Saw a change");
-				window.annotationRenderer.retrieve();
-			});
 			window.anno_block = [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Tagthing" } ];
-			window.annotationRenderer.annotations = anno_block;
+			window.annotationRenderer.data = anno_block;
 			window.annotationRenderer.registerSequenceRenderer(document.getElementById('blaz').renderer, {'track' : 'mutations'});
 		};
 	</script>

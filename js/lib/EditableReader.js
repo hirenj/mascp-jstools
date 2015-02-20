@@ -252,6 +252,14 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
             Array.prototype.splice.apply(this._annotations,[0,this._annotations.length].concat(annotations));
           }
       });
+      Object.defineProperty(MASCP.EditableReader.prototype,"data", {
+          get : function() {
+            return this.annotations;
+          },
+          set : function(data) {
+            this.annotations = data;
+          }
+      });
   }
 
   var setupAnnotations = function(self) {
@@ -371,7 +379,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       var start;
       var end;
       start = annotation.index;
-      end = annotation.index + annotation.length;
+      end = annotation.index + (annotation.length || 1);
       intervals.push({ "index" : start, "start" : true,  "annotation" : annotation });
       intervals.push({ "index" : end, "start" : false , "annotation" : annotation });
     });
