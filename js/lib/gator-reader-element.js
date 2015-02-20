@@ -45,7 +45,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           }
         },"xml");
       }
-      if (pref.type == 'liveClass') {
+      if (pref.type == 'liveClass' || pref.type == 'reader') {
         reader.registerSequenceRenderer(renderer,pref.render_options || {} );
       }
       var render_func = function() {
@@ -288,6 +288,47 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
         gatorReaderProto.attributeChangedCallback.apply(this);
       };
       document.registerElement('gator-localdata', { prototype: proto });
+      return proto;
+    })();
+
+    var editableReader = (function() {
+      var proto = Object.create( gatorReaderProto,{
+        'type' : {
+          get: function() { return "reader"; }
+        },
+        'config_id' : {
+          get: function() { return this._config_id; }
+        },
+        'data' : {
+          get: function() { return this._reader.data; },
+          set: function(data) {
+            this._reader.data = data;
+          }
+        }
+      });
+
+      var create_reader = function() {
+        var reader = new MASCP.EditableReader();
+        return reader;
+      };
+
+      proto.createdCallback = function() {
+        var self = this;
+        this._config_id = "editable-"+((new Date()).getTime());
+        gatorReaderProto.createdCallback.apply(this);
+        this._reader = create_reader.call(this);
+      };
+      proto._generateConfig = function() {
+        var config = gatorReaderProto._generateConfig.call(this);
+        config[this._config_id].reader = this._reader;
+        return config;
+      };
+
+      proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
+        gatorReaderProto.attributeChangedCallback.apply(this);
+      };
+
+      document.registerElement('gator-editabledata', { prototype: proto });
       return proto;
     })();
 

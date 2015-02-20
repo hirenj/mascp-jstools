@@ -38,53 +38,8 @@ MASCP.UserdataReader.prototype.requestData = function()
 
 
 MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
-    var reader = this;
-    
-    var is_array = function(arr) {
-        return Object.prototype.toString.call(arr) == '[object Array]';
-    };
-    
-    reader.bind('resultReceived',function() {
-        var results = [].concat(this.result.data);
-        while(results.length > 0) {
-            var my_data = results.shift();
-            if ( ! my_data ) {
-                continue;
-            }
-            MASCP.registerLayer(reader.datasetname,{'fullname' : reader.datasetname,'color' : '#00ff00'});
-            var data_func = function() { return function(row) {
-                renderer.getAminoAcidsByPeptide(row).addToLayer(reader.datasetname);
-            }; }();
-            if (is_array(my_data) && (! (is_array(my_data[0])))) {
-                data_func = function() { return function(row) {
-                    var start = parseInt(row[0],10);
-                    var end = parseInt(row[1],10);
-                    if (! isNaN(start) && ! isNaN(end)) {
-                        renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);
-                    } else {
-                        row.forEach(function(cell) {
-                            renderer.getAminoAcidsByPeptide(cell).addToLayer(reader.datasetname);                            
-                        });
-                    }
-                }; }();
-            } else if (is_array(my_data) && ( is_array(my_data[0]) )) {
-                data_func = function() { return function(peps) {
-                    peps.forEach(function(row) {
-                        var start = parseInt(row[0],10);
-                        var end = parseInt(row[1],10);
-                        renderer.getAA(start).addBoxOverlay(reader.datasetname,end-start);
-                    });
-                }; }();                
-            } else if (my_data === parseInt(my_data[0],10)) {
-                data_func = function() { return function(row) {
-                    var pos = row;
-                    renderer.getAA(pos).addAnnotation(reader.datasetname,1);
-                }; }();
-            }
-            data_func.call(this,my_data);
-        }
-        renderer.trigger('resultsRendered',[reader]);        
-    });
+// We don't have any default rendering for the UserDataReader
+// since it's all going to be custom stuff anyway
 };
 
 (function() {
