@@ -249,7 +249,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
             if (! this._annotations ) {
               this._annotations = setupAnnotations(this);
             }
-            Array.prototype.splice.apply(this._annotations,[0,this._annotations.length].concat(annotations));
+            if (annotations) {
+              Array.prototype.splice.apply(this._annotations,[0,this._annotations.length].concat(annotations));
+            }
           }
       });
       Object.defineProperty(MASCP.EditableReader.prototype,"data", {
@@ -385,7 +387,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     });
     intervals.sort(function(a,b) {
       var sameAcc = (a.annotation.acc || "").localeCompare(b.annotation.acc);
-      if (sameAcc !== 0) {
+      if (sameAcc !== 0 && a.annotation.acc && b.annotation.acc) {
         return sameAcc;
       }
 
@@ -410,35 +412,51 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     }
     var current = [];
     var to_draw = [];
-    self.intervalSortAnnotations().forEach(function(interval) {
-      var annotation = interval.annotation;
-      if (wanted_accs.indexOf(annotation.acc) < 0 ) {
-        return;
+
+    var sorted_intervals = self.intervalSortAnnotations();
+    var current_end = -1;
+
+    var needs_to_draw = true;
+    var depth = 0;
+
+    if ( MASCP.getLayer(track) && MASCP.getLayer(track).disabled ) {
+      return;
+    }
+    var passes = 0;
+    while ( needs_to_draw && passes < 5) {
+      needs_to_draw = false;
+      for ( var i = 0; i < sorted_intervals.length; i++ ) {
+        if ( ! sorted_intervals[i]) {
+          continue;
+        }
+        var annotation = sorted_intervals[i].annotation;
+
+        if (wanted_accs.indexOf(annotation.acc) < 0 ) {
+          continue;
+        }
+        if (annotation.deleted) {
+          continue;
+        }
+        if (sorted_intervals[i].start) {
+          if (sorted_intervals[i].index > current_end) {
+            current_end = annotation.index + (annotation.length || 1);
+            to_draw = to_draw.concat(self.renderAnnotation(annotation,track,(annotation.class == "potential") ? -1 : depth));
+            sorted_intervals[i] = null;
+          } else {
+            needs_to_draw = true;
+          }
+        }
       }
-      if ( MASCP.getLayer(track) && MASCP.getLayer(track).disabled ) {
-        return;
-      }
+      current_end = 0;
+      passes += 1;
+      depth += 10;
+    }
+    if (to_draw.length > 0) {
       if ( ! MASCP.getLayer(track) ) {
         MASCP.registerLayer(track, {name: track});
       }
-      if (annotation.deleted) {
-        return;
-      }
+    }
 
-      if (! interval.start) {
-        current.splice(current.indexOf(annotation),1,null);
-        while (current.length > 0 && current[current.length - 1] === null) {
-          current.splice(current.length - 1,1);
-        }
-        return;
-      }
-
-      var click_el = null;
-      var label_el = null;
-      to_draw = to_draw.concat(self.renderAnnotation(annotation,track,(annotation.class == "potential") ? -1 : (current.length)));
-
-      current.push(annotation);
-    });
     var drawn = [];
     var obj = { "gotResult" : function() {
       drawn = drawn.concat(self.renderer.renderObjects(track,to_draw));

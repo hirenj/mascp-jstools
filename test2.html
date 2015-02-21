@@ -28,12 +28,18 @@
 		window.blah = function() {
 			setTimeout(function() {
 				document.getElementById('fooz').go();
-			},1000);
+			},100);
+			window.anno_block = [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 },
+								  {"id" : 5, "length": 20 ,"index" : 150, "color" : "#f0f", "tag" : "Tagthing" },
+								  {"id" : 2, "length": 100 ,"index" : 150, "color" : "#f00", "tag" : "Tagthing" },
+								  {"id" : 3, "length": 100 ,"index" : 300, "color" : "#0f0", "tag" : "Tagthing" },
+								  {"id" : 4, "length": 100 ,"index" : 220, "color" : "#ff0", "tag" : "Tagthing" },
+								   ];
+
 			document.getElementById('foo').data = {'q14118' : {'Faz' : 'bar'}};
 			document.getElementById('foo').renderer = window.fakeblah();
 			document.getElementById('baz').data = window.anno_block;
 
-			window.anno_block = [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 }, {"id" : 2, "length": 100 ,"index" : 300, "color" : "#f00", "tag" : "Tagthing" } ];
 		};
 	</script>
 </body>
