@@ -1712,7 +1712,7 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
             if (renderer.sequences) {
                 renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
             } else {
-                renderer.sequence = renderer.sequence;
+                old_sequence = null;
             }
             renderer.getAminoAcidsByPosition = function(aas,lay,accession) {
                 if (renderer.forceTrackAccs) {
@@ -1730,7 +1730,9 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
             };
             old_result.call(reader);
 
-            renderer.sequence = old_sequence;
+            if (old_sequence) {
+                renderer.sequence = old_sequence;
+            }
 
             renderer.getAminoAcidsByPosition = old_get_aas;
             renderer.getAminoAcidsByPeptide = old_get_pep;
