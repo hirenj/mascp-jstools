@@ -144,7 +144,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
   };
 
   var trash_content = function(self,annotation) {
-    return { 'symbol' :  '/icons.svg#trash', 'text_alt' : 'Delete', "select_function" : function() { self.demoteAnnotation('self',annotation); } };
+    return { 'symbol' :  '#icon_trash', 'text_alt' : 'Delete', "select_function" : function() { self.demoteAnnotation('self',annotation); } };
   };
 
   MASCP.EditableReader.prototype.generatePieContent = function(type,annotation,vals) {
@@ -154,7 +154,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       contents.push(type.call(null,self,annotation,val));
     });
     if (type == tag_content || type == color_content) {
-      contents.push({'symbol' : "/icons.svg#prefs", 'text_alt' : 'Prefs', "select_function" : function() { bean.fire(self,'editclick'); } });
+      contents.push({'symbol' : "#icon_prefs", 'text_alt' : 'Prefs', "select_function" : function() { bean.fire(self,'editclick'); } });
     }
     contents.push(trash_content(self,annotation));
     return contents;

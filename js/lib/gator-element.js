@@ -81,6 +81,12 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           set: function(val) { is_interactive.enabled = val }
         });
 
+        Object.defineProperty(this.renderer,"selecting",{
+          get: function() { return ! dragger.enabled; },
+          set: function(val) { dragger.enabled = ! val; return val; }
+        });
+
+
         var is_interactive = {'enabled' : self.interactive };
         var observer = new MutationObserver(function() {
           if (self.renderer.grow_container) {
