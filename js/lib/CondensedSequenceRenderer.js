@@ -2548,9 +2548,8 @@ MASCP.CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             local_end = parseInt(end/50);
             local_start = parseInt(start/50);
         }
-        console.log(local_start + " " +local_end);
         self.select(local_start+1,local_end);
-        selected = (self.sequence.substr(local_start, local_end - local_start ));
+        // selected = (self.sequence.substr(local_start, local_end - local_start ));
     };
 
 
