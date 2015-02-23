@@ -226,10 +226,16 @@ MASCP.GenomeReader.prototype.calculateSequencePositionFromProteinPosition = func
 
     if (pos < target_cds.cdsstart) {
         target_position = 6;
+        if (target_cds.strand == -1) {
+            target_position = 3;
+        }
     }
 
     if (pos > target_cds.cdsend) {
         target_position = self.proteinLength(target_cds) * 3;
+        if (target_cds.strand == 1) {
+            target_position += 3;
+        }
     }
     if ( target_position == 0) {
         for (var i = 0; i < exons.length; i++) {
@@ -252,8 +258,6 @@ MASCP.GenomeReader.prototype.calculateSequencePositionFromProteinPosition = func
         }
     }
     target_position = Math.floor(target_position / 3) - 1;
-
-    //FIXME - missing one residue at the end of the selection
 
     if (target_cds.strand == -1) {
         target_position = self.proteinLength(target_cds) - target_position;
