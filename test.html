@@ -12,6 +12,10 @@
 	<gator-track  name="mutations" genomic="true">
 		<gator-localdata id="foo" caching="true" ></gator-localdata>
 	</gator-track>
+	<gator-track  name="q14118">
+		<gator-editabledata id="foobar"></gator-editabledata>
+	</gator-track>
+
 	</gator-gene>
 	</div>
 	<script>
@@ -90,7 +94,11 @@
 			setTimeout(function() {
 			document.getElementById('foo').data = {'q14118' : {'foo' : 'bar'}};
 			document.getElementById('foo').renderer = window.fakeblah();
+			document.getElementById('foobar').data = [{"id" : 1, "acc" : "q14118", "type": "symbol" , "color" : "#0f0", "index" : 200 }];
 			document.getElementById('foo').parentNode.go();
+			document.getElementById('foobar').parentNode.go();
+			document.getElementById('blaz').renderer.selecting = true;
+
 			},300);
 			// var renderer = new MASCP.CondensedSequenceRenderer(document.getElementById('container'));
 			// MASCP.Service.BeginCaching();

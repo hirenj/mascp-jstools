@@ -576,9 +576,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         });
     };
 
-    clazz.prototype.scalePosition = function(aa,layer) {
+    clazz.prototype.scalePosition = function(aa,layer,inverse) {
         var layer_obj = MASCP.getLayer(layer);
-        var new_aa = (this._scalers || []).reduce(function(val,fn) {  return fn(val,layer_obj || { 'name' : layer }); },aa);
+        var new_aa = (inverse ? (this._scalers || []).concat([]).reverse() : (this._scalers || [])).reduce(function(val,fn) {  return fn(val,layer_obj || { 'name' : layer },inverse); },aa);
         return new_aa;
     };
 
@@ -828,6 +828,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             renderer._layer_containers = {};
             renderer.enablePrintResizing();
             renderer.enableScaling();
+            renderer.enableSelection();
 
             // When we have a layer registered with the global MASCP object
             // add a track within this renderer.

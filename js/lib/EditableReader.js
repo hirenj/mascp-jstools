@@ -10,7 +10,11 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     return this;
   });
 
-  MASCP.EditableReader.prototype.retrieve = function() {
+  MASCP.EditableReader.prototype.retrieve = function(acc) {
+    if (acc) {
+      this.acc = acc;
+      this.agi = acc;
+    }
     bean.fire(this,'resultReceived');
   };
 
@@ -223,7 +227,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     };
 
     self.bind('resultReceived',function() {
-      self.acc = self.agi;
+      self.acc = self.acc || self.agi;
       self.renderer = renderer;
       empty_track(renderer);
 

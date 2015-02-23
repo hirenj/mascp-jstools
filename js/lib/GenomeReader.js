@@ -196,6 +196,72 @@ MASCP.GenomeReader.prototype.proteinLength = function(target_cds) {
     return Math.floor(total/3)-1;
 };
 
+MASCP.GenomeReader.prototype.calculateSequencePositionFromProteinPosition = function(idx,pos) {
+    var self = this;
+    var wanted_identifier = idx;
+    var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
+    if (! cds ) {
+        return -1;
+    }
+
+    if (! cds.txstart ) {
+        cds = cds.map( function(cd) {
+            if ( Array.isArray(cd) ) {
+                cd = cd.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
+                if ( ! cd ) {
+                    return null;
+                }
+            }
+            return cd;
+        });
+    }
+
+    var target_cds = cds[0] || {};
+    var exons = target_cds.exons || [];
+
+    var position_genome = Math.floor(pos / 3);
+
+
+    var target_position = 0;
+
+    if (pos < target_cds.cdsstart) {
+        target_position = 6;
+    }
+
+    if (pos > target_cds.cdsend) {
+        target_position = self.proteinLength(target_cds) * 3;
+    }
+    if ( target_position == 0) {
+        for (var i = 0; i < exons.length; i++) {
+            if (target_cds.cdsstart > exons[i][1] & target_cds.cdsstart > exons[i][0]) {
+                continue;
+            }
+            var start = target_cds.cdsstart > exons[i][0] ? target_cds.cdsstart : exons[i][0];
+            var end = target_cds.cdsend < exons[i][1] ? target_cds.cdsend: exons[i][1];
+
+            if (pos < start) {
+                break;
+            }
+
+            if (pos <= end && pos >= start) {
+                target_position += (pos - start);
+                break;
+            } else {
+                target_position += end - start;
+            }
+        }
+    }
+    target_position = Math.floor(target_position / 3) - 1;
+
+    //FIXME - missing one residue at the end of the selection
+
+    if (target_cds.strand == -1) {
+        target_position = self.proteinLength(target_cds) - target_position;
+    }
+
+    return target_position;
+};
+
 MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
     var self = this;
     var wanted_identifier = idx;
@@ -356,13 +422,30 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         result.removed_regions = results;
     };
     var generate_scaler_function = function(reader) {
-        return function(in_pos,layer) {
+        return function(in_pos,layer,inverse) {
             var pos = in_pos;
-            var calculated_pos = pos - reader.result.min;
+
             if ( ! reader.result ) {
-                return Math.floor(pos / 3);
+                return inverse ? (pos * 3) : Math.floor(pos / 3);
             }
+
             var introns = reader.result.removed_regions || [];
+
+            if (inverse) {
+                pos = (in_pos * 3);
+                calculated_pos = pos;
+                for (var i = 0; i < introns.length && pos > 0; i++) {
+                    var left_exon = i > 0 ? introns[i-1] : [null,reader.result.min];
+                    var right_exon = introns[i] || [reader.result.max,null];
+                    pos -= (right_exon[0] - left_exon[1]);
+                    if (pos > 0) {
+                        calculated_pos += introns[i][1] - introns[i][0];
+                    }
+                }
+                return calculated_pos + reader.result.min;
+            }
+
+            var calculated_pos = pos - reader.result.min;
             for (var i = 0; i < introns.length; i++) {
                 if (pos > introns[i][1]) {
                     calculated_pos -= (introns[i][1] - introns[i][0]);
@@ -433,9 +516,12 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
-        renderer.addAxisScale('genome',function(pos,layer) {
+        renderer.addAxisScale('genome',function(pos,layer,inverse) {
             if (layer && layer.genomic) {
                 return pos;
+            }
+            if (inverse) {
+                return self.calculateSequencePositionFromProteinPosition(layer.name,pos);
             }
             return self.calculateProteinPositionForSequence(layer.name,pos);
         });

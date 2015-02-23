@@ -252,6 +252,26 @@ MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx
     return -1 * seq.length;
 };
 
+MASCP.ClustalRunner.Result.prototype.calculateSequencePositionFromPosition = function(idx,pos) {
+    var inserts = this._raw_data.data.sequences[idx].insertions || {};
+    var result = pos;
+    var actual_position = 0;
+    var seq = this._raw_data.data.sequences[idx].toString();
+    for (var i = 0 ; i < pos; i++ ) {
+        if (inserts[i]) {
+            actual_position += inserts[i].length;
+        }
+        actual_position += 1;
+        if (seq.charAt(i) == '-') {
+            actual_position -= 1;
+        }
+    }
+    if (actual_position == 0) {
+        actual_position += 1;
+    }
+    return actual_position;
+};
+
 
 })();
 //1265 (P)
@@ -261,10 +281,13 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
 
     renderer.sequences = self.sequences;
 
-    renderer.addAxisScale('clustal',function(pos,layer) {
+    renderer.addAxisScale('clustal',function(pos,layer,inverse) {
         var idx = self.sequences.map(function(seq) { return seq.agi; }).indexOf(layer.name.toLowerCase());
         if (idx < 0) {
             return pos;
+        }
+        if ( inverse ) {
+            return self.result.calculateSequencePositionFromPosition(idx,pos);
         }
         return self.result.calculatePositionForSequence(idx,pos);
     });
