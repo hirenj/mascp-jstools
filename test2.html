@@ -29,17 +29,17 @@
 			setTimeout(function() {
 				document.getElementById('fooz').go();
 			},100);
-			window.anno_block = [ {"id" : 1, "type": "symbol" , "color" : "#0f0", "index" : 200 },
-								  {"id" : 5, "length": 20 ,"index" : 150, "color" : "#f0f", "tag" : "Tagthing" },
-								  {"id" : 2, "length": 100 ,"index" : 150, "color" : "#f00", "tag" : "Tagthing" },
-								  {"id" : 3, "length": 100 ,"index" : 300, "color" : "#0f0", "tag" : "Tagthing" },
-								  {"id" : 4, "length": 100 ,"index" : 220, "color" : "#ff0", "tag" : "Tagthing" },
+			window.anno_block = [ {"id" : 1, 'acc' : 'q14118', "type": "symbol" , "color" : "#0f0", "index" : 200 },
+								  {"id" : 5, 'acc' : 'q14118', "length": 20 ,"index" : 150, "color" : "#f0f", "tag" : "Tagthing" },
+								  {"id" : 2, 'acc' : 'q14118', "length": 100 ,"index" : 150, "color" : "#f00", "tag" : "Tagthing" },
+								  {"id" : 3, 'acc' : 'q14118', "length": 100 ,"index" : 300, "color" : "#0f0", "tag" : "Tagthing" },
+								  {"id" : 4, 'acc' : 'q14118', "length": 100 ,"index" : 220, "color" : "#ff0", "tag" : "Tagthing" },
 								   ];
 
 			document.getElementById('foo').data = {'q14118' : {'Faz' : 'bar'}};
 			document.getElementById('foo').renderer = window.fakeblah();
 			document.getElementById('baz').data = window.anno_block;
-
+			document.getElementById('blaz').renderer.selecting = true;
 		};
 	</script>
 </body>
