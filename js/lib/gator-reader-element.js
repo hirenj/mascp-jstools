@@ -174,7 +174,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           if ( ! this.config_id ) {
             return config;
           }
-          config [ this.config_id ] = { type: this.type, title: this.name, render_options: { track: this.track, renderer: "var renderData = "+this.renderFunc.toString(), icons : { "url" : "/sugars.svg", "namespace" : "sugar" } }, data: this.data };
+          config [ this.config_id ] = { type: this.type, title: this.name, render_options: { track: this.track, renderer: (this.renderFunc && typeof this.renderFunc === 'function') ? "var renderData = "+this.renderFunc.toString() : this.renderFunc, icons : { "url" : "/sugars.svg", "namespace" : "sugar" } }, data: this.data };
           return config;
       };
 
