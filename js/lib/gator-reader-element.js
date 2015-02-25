@@ -98,7 +98,7 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
                               });
                               var objs = renderer.renderObjects(track_name,r);
                               reader.resetOnResult(renderer,objs,track_name);
-                              renderer.trigger('resultsRendered',[this]);
+                              renderer.trigger('resultsRendered',[reader]);
                               renderer.refresh();
                             }, "agi" : acc });
                             renderer.trigger('readerRegistered',[obj]);
@@ -303,6 +303,18 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
           get: function() { return this._reader.data; },
           set: function(data) {
             this._reader.data = data;
+          }
+        },
+        'boxTags' : {
+          get: function() { return this._reader.boxTags; },
+          set: function(boxTags) {
+            this._reader.boxTags = boxTags;
+          }
+        },
+        'symbolTags' : {
+          get: function() { return this._reader.symbolTags; },
+          set: function(symbolTags) {
+            this._reader.symbolTags = symbolTags;
           }
         }
       });

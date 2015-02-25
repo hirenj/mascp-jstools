@@ -18,6 +18,36 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     bean.fire(this,'resultReceived');
   };
 
+  var datablockToAnnotations = function(data) {
+    var result = [];
+    Object.keys(data).forEach(function(key) {
+      if (key === 'symbol_map' || key === 'tag_map') {
+        return;
+      }
+      if (data[key] && Array.isArray(data[key])) {
+        var array_copy = data[key];
+        data[key].forEach(function(anno) {
+          anno.acc = key;
+        });
+        result = result.concat(data[key]);
+      }
+    });
+    return result;
+  };
+
+  var annotationsToDatablock = function(annotations) {
+    var result = {};
+    annotations.forEach(function(anno) {
+      if (anno.acc) {
+        if ( ! result[anno.acc] ) {
+          result[anno.acc] = [];
+        }
+        result[anno.acc].push(anno);
+      }
+    });
+    return result;
+  };
+
   var mousePosition = function(evt) {
       var posx = 0;
       var posy = 0;
@@ -143,11 +173,11 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
   };
 
   var icon_content = function(self,annotation,symbol) {
-    return { 'symbol' : symbol, "hover_function" : function() { console.log("Set symbol to "+symbol); annotation.icon = symbol; }  };
+    return { 'symbol' : self.symbolTags[symbol], "hover_function" : function() { console.log("Set symbol to "+symbol); annotation.tag = symbol; }  };
   };
 
   var tag_content = function(self,annotation,tag) {
-    return { 'text' : tag.name, "hover_function" : function() { annotation.color = null; annotation.tag = tag.id; }  };
+    return { 'text' : tag, "hover_function" : function() { annotation.tag = tag; }  };
   };
 
   var trash_content = function(self,annotation) {
@@ -160,9 +190,6 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     vals.forEach(function(val) {
       contents.push(type.call(null,self,annotation,val));
     });
-    if (type == tag_content || type == color_content) {
-      contents.push({'symbol' : "#icon_prefs", 'text_alt' : 'Prefs', "select_function" : function() { bean.fire(self,'editclick'); } });
-    }
     contents.push(trash_content(self,annotation));
     return contents;
   };
@@ -183,16 +210,10 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       var pie_contents;
       if ( ! set_col ) {
         if (annotation.type == 'symbol') {
-          pie_contents = self.generatePieContent(icon_content,annotation,["#sugar_galnac","#sugar_man","#sugar_xyl","#sugar_fuc","#sugar_glcnac","#sugar_glcnac(b1-4)glcnac"]);
-        } else {
-          var tags = [];
-          for (var tag in self.tags) {
-            tags.push(self.tags[tag]);
-          }
-          pie_contents = self.generatePieContent(tag_content,annotation,tags);
+          pie_contents = self.generatePieContent(icon_content,annotation,Object.keys(self.symbolTags));
         }
       } else {
-        pie_contents = self.generatePieContent(color_content,annotation,["#00FF00","#0000FF","#FFFF00","#FF0000","#00FFFF"]);
+        pie_contents = self.generatePieContent(tag_content,annotation,Object.keys(self.boxTags));
       }
       var click_point = svgPosition(ev,canvas);
       var pie = PieMenu.create(canvas,click_point.x/canvas.RS,click_point.y/canvas.RS,pie_contents,{ "size" : 7, "ellipse" : true });
@@ -219,7 +240,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
     var empty_track = function() {
     };
     bean.add(MASCP.getLayer(options.track),'selection', function(start,end) {
-      self.potential_annos = [ { 'id' : 'potential', 'type' : 'box', 'acc' : self.acc, "length": Math.abs(start-end) ,"index" : start, "class" : "potential" } ];
+      self.potential_annos = [ { 'id' : 'potential', 'type' : Math.abs(start - end) == 1 ? 'symbol' : 'box', 'acc' : self.acc, "length": Math.abs(start-end) ,"index" : Math.min(start,end), "class" : "potential" } ];
       bean.fire(self,'resultReceived');
     });
     if (renderer._canvas) {
@@ -239,7 +260,14 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
   if (Object.defineProperty) {
       Object.defineProperty(MASCP.EditableReader.prototype,"result", {
         get: function() {
-          return { "_raw_data" : { "data" : [].concat(this.data).concat(this.potential_annos) } };
+          var block = this.data;
+          if (this.potential_annos && this.potential_annos[0]) {
+            if ( ! block[this.potential_annos[0].acc]) {
+              block[this.potential_annos[0].acc] = [];
+            }
+            block[this.potential_annos[0].acc].push(this.potential_annos[0]);
+          }
+          return { "_raw_data" : { "data" : block } };
         }
       });
 
@@ -261,12 +289,45 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       });
       Object.defineProperty(MASCP.EditableReader.prototype,"data", {
           get : function() {
-            return this.annotations;
+            var datablock = annotationsToDatablock(this.annotations);
+            datablock.symbol_map = this.symbolTags;
+            datablock.tag_map = this.boxTags;
+            return datablock;
           },
           set : function(data) {
-            this.annotations = data;
+            this.annotations = datablockToAnnotations(data);
           }
       });
+      Object.defineProperty(MASCP.EditableReader.prototype,"symbolTags", {
+        get: function() {
+          return {
+            "GalNAc": "#sugar_galnac",
+            "Man" : "#sugar_man",
+            "Xyl" : "#sugar_xyl",
+            "Fuc" : "#sugar_fuc",
+            "GlcNAc" : "#sugar_glcnac",
+            "N-linked" : "#sugar_glcnac(b1-4)glcnac"
+          };
+        }
+      });
+      Object.defineProperty(MASCP.EditableReader.prototype,"boxTags", {
+        get: function() {
+          if ( ! this._box_tags) {
+            this._box_tags = {
+              "Red" : "#f00",
+              "Green" : "#0f0",
+              "Blue" : "#00f"
+            };
+          }
+          return this._box_tags;
+        },
+        set: function(tags) {
+          Object.keys(tags).forEach(function(tag) {
+            this._box_tags[tag] = tags[tag];
+          });
+        }
+      });
+
   }
 
   var setupAnnotations = function(self) {
@@ -324,16 +385,16 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
   };
 
   MASCP.EditableReader.renderer = function(seq,data,acc) {
-    var renderAnnotation = function(annotation,top_offset) {
+    var renderAnnotation = function(annotation,symbol_map,tag_map,top_offset) {
       var objects = [];
       var object;
 
-      if (annotation.type == "symbol") {
+      if (annotation.type == 'symbol' || annotation.length == 1) {
         object = {  'aa'    : annotation.index,
                     'type'  : 'marker',
                     'options':
-                    { "content" : annotation.icon ? annotation.icon : "X" ,
-                      "bare_element" : (annotation.icon && (! ("ontouchstart" in window))) ? true : false,
+                    { "content" : symbol_map[annotation.tag] ? symbol_map[annotation.tag] : "X" ,
+                      "bare_element" : true,
                       "border" : "#f00",
                       "offset" : 6 + top_offset,
                       "height" : 12
@@ -344,6 +405,9 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 
         var added = [];
         object = { 'aa' : annotation.index, 'type' :'shape', 'width' : annotation.length, 'options' : {"shape" : "rectangle","height" : 4, "offset" : 0 + top_offset } };
+        if (tag_map[annotation.tag]) {
+          object.options.fill = tag_map[annotation.tag];
+        }
 
         objects.push(object);
 
@@ -377,12 +441,27 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
                               {'type' : 'mousedown','data' : { 'annotationid' : annotation.id, 'is_annotation' : ! obj.tag_marker } },
                               {'type' : 'touchstart','data' : { 'annotationid' : annotation.id, 'is_annotation' : ! obj.tag_marker } },
                               {'type' : 'touchend','data' : { 'annotationid' : annotation.id, 'is_annotation' : ! obj.tag_marker } }];
-        if (annotation.color) {
-          obj.options.fill = annotation.color;
-        }
       });
       return objects;
     };
+
+    var datablockToAnnotations = function(data) {
+      var result = [];
+      Object.keys(data).forEach(function(key) {
+        if (key === 'symbol_map' || key === 'tag_map') {
+          return;
+        }
+        if (data[key] && Array.isArray(data[key])) {
+          var array_copy = data[key];
+          data[key].forEach(function(anno) {
+            anno.acc = key;
+          });
+          result = result.concat(data[key]);
+        }
+      });
+      return result;
+    };
+
     var intervalSortAnnotations = function(annotations) {
       var annos = annotations;
       var intervals = [];
@@ -428,7 +507,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       return intervals;
     };
 
-    var drawAnnotations = function(annotations,acc) {
+    var drawAnnotations = function(annotations,symbol_map,tag_map,acc) {
       var wanted_accs = [acc];
       var to_draw = [];
 
@@ -455,7 +534,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
           if (sorted_intervals[i].start) {
             if (sorted_intervals[i].index > current_end) {
               current_end = annotation.index + (annotation.length || 1);
-              to_draw = to_draw.concat(renderAnnotation(annotation,(annotation.class == "potential") ? -1 : depth));
+              to_draw = to_draw.concat(renderAnnotation(annotation,symbol_map,tag_map,(annotation.class == "potential") ? -1 : depth));
               sorted_intervals[i] = null;
             } else {
               needs_to_draw = true;
@@ -467,8 +546,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
       }
       return to_draw;
     };
-
-    return drawAnnotations(data,acc);
+    return drawAnnotations(datablockToAnnotations(data),data.symbol_map,data.tag_map,acc);
 
   };
 

@@ -2052,13 +2052,21 @@ MASCP.Service.prototype.registerSequenceRenderer = function(sequenceRenderer,opt
 
 MASCP.Service.prototype.resetOnResult = function(sequenceRenderer,rendered,track) {
     var self = this;
-    var clear_func = function() {
-        self.unbind('resultReceived',clear_func);
+    var result_func = function() {
+        self.unbind('resultReceived',result_func);
+        sequenceRenderer.bind('resultsRendered',clear_func);
+    };
+
+    var clear_func = function(reader) {
+        if (reader !== self) {
+            return;
+        }
+        sequenceRenderer.unbind('resultsRendered',clear_func);
         rendered.forEach(function(obj) {
             sequenceRenderer.remove(track,obj);
         });
     };
-    this.bind('resultReceived',clear_func);
+    this.bind('resultReceived',result_func);
 };
 
 

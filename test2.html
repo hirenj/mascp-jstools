@@ -25,6 +25,19 @@
 				} }];
 			};
 		}
+		 window.convertAnnotationsToDatablock = function(annotations) {
+		    var result = {};
+		    annotations.forEach(function(anno) {
+		      if (anno.acc) {
+		        if ( ! result[anno.acc] ) {
+		          result[anno.acc] = [];
+		        }
+		        result[anno.acc].push(anno);
+		      }
+		    });
+		    return result;
+		  };
+
 		window.blah = function() {
 			setTimeout(function() {
 				document.getElementById('fooz').go();
@@ -38,7 +51,7 @@
 
 			document.getElementById('foo').data = {'q14118' : {'Faz' : 'bar'}};
 			document.getElementById('foo').renderer = window.fakeblah();
-			document.getElementById('baz').data = window.anno_block;
+			document.getElementById('baz').data = convertAnnotationsToDatablock(window.anno_block);
 			document.getElementById('blaz').renderer.selecting = true;
 		};
 	</script>
