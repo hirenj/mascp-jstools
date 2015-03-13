@@ -6,8 +6,8 @@ var PieMenu = function() {
 
 PieMenu.zoomIn = function(el,canvas,x,y) {
     var props = {
-            "TransformOriginX" : canvas.RS*x,
-            "TransformOriginY" : canvas.RS*y,
+            "TransformOriginX" : canvas.RS*x + 'px',
+            "TransformOriginY" : canvas.RS*y + 'px',
             "Transform" : 'scale(0)',
             "webkitTransition" : '-webkit-transform 0.2s',
             "mozTransition" : '-moz-transform 0.2s;',
