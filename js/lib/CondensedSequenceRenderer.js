@@ -1614,8 +1614,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 click_reveal = click_reveal[1];
                 click_reveal.style.display = 'none';
                 object.options.content = object.options.alt_content;
-                // delete object.options.stretch;
-            } else if (typeof(content) == 'object') {
+                content = object.options.content;
+            }
+            if (typeof(content) == 'object') {
                 var content_el;
                 if (content.type == "circle") {
                     content_el = renderer._canvas.circle(-0.5,-0.5,1,1);

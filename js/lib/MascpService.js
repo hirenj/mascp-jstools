@@ -1247,7 +1247,7 @@ base.retrieve = function(agi,callback)
                 var acc = row[0];
                 var service = row[1];
                 var data = row[2];
-                if (typeof data != 'object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
+                if (typeof data != 'object' || data.constructor.name !== 'Object' || (((typeof Document) != 'undefined') && data instanceof Document)) {
                     continue;
                 }
                 var dateobj = data.retrieved ? data.retrieved : (new Date());
