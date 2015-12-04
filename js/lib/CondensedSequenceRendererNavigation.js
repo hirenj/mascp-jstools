@@ -647,6 +647,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 return;
             }
             var nav_back = track_canvas.ownerSVGElement.getElementById('nav_back');
+            // getTransformToElement is deprecated, we should
+            // be using :
+            // var ctm = nav_back.getScreenCTM().inverse().multiply(track_canvas.getScreenCTM()).inverse();
+
             var ctm = track_canvas.getTransformToElement(nav_back).inverse();
             var back_width = (nav_back.getBBox().width + nav_back.getBBox().x);
             var point = track_canvas.createSVGPoint();
