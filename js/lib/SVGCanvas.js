@@ -553,8 +553,8 @@ var SVGCanvas = SVGCanvas || (function() {
 
         canvas.button = function(x,y,width,height,text) {
             var fo = document.createElementNS(svgns,'foreignObject');
-            fo.setAttribute('x',0);
-            fo.setAttribute('y',0);
+            fo.setAttribute('x',x);
+            fo.setAttribute('y',y);
             fo.setAttribute('width',x+width);
             fo.setAttribute('height',y+height);
             if ( ! fo.style ) {
@@ -565,9 +565,6 @@ var SVGCanvas = SVGCanvas || (function() {
             this.appendChild(fo);
             var button = document.createElement('button');
             button.style.display = 'block';
-            button.style.position = 'relative';
-            button.style.top = y+'px';
-            button.style.left = x+'px';
             button.textContent = text;
             fo.appendChild(button);
             return button;
