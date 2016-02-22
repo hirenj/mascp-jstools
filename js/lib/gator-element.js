@@ -129,6 +129,9 @@ if (typeof document !== 'undefined' && 'registerElement' in document) {
             self.setAttribute('zoom',self.renderer.zoom);
           }
         });
+        if (self.getAttribute('sequence')) {
+          self.sequence = self.getAttribute('sequence');
+        }
       };
       proto.attributeChangedCallback = function(attrName, oldVal, newVal) {
         if (attrName == 'sequence' && this.sequence !== newVal) {
