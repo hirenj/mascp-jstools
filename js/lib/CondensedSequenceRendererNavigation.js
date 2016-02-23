@@ -577,12 +577,16 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         };
 
         self.setZoom = function(zoom) {
+            self.nav_width = self.nav_width_base / zoom;
             close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
+
+            var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px;";
+            transform_origin_statement = " -webkit-transform-origin: "+transform_origin+" -ms-transform-origin: "+transform_origin+" -moz-transform-origin: "+transform_origin+" transform-origin: "+transform_origin;
+            close_group.move(self.nav_width_base-(10 + touch_scale*11),12*touch_scale);
             rect.setAttribute('transform','scale('+zoom+',1) ');
             rect.setAttribute('ry', (base_rounded_corner[1]).toString());
             rect.setAttribute('rx', (base_rounded_corner[0]/zoom).toString());
             rect.setAttribute('x', parseInt(-10 / zoom).toString());
-            self.nav_width = self.nav_width_base / zoom;
             rect.setAttribute('width', (self.nav_width).toString());
             self.zoom = zoom;
             toggler.call(this,visible);

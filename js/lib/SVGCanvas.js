@@ -1010,12 +1010,29 @@ var SVGCanvas = SVGCanvas || (function() {
 
             close_group.push(a_line);
 
-            a_line = this.line(dim.MID_X1,dim.MID_Y2,dim.MID_X2,dim.MID_Y1);
+            var first_line = a_line;
+
+            var a_line = this.line(dim.MID_X1,dim.MID_Y2,dim.MID_X2,dim.MID_Y1);
             a_line.setAttribute('stroke', '#ffffff');
             a_line.setAttribute('stroke-width', '2');
 
             close_group.push(a_line);
 
+            close_group.move = function(cx,cy) {
+                close_button.setAttribute('cx',cx);
+                dim.MID_X1 = (cx-(r/2));
+                dim.MID_X2 = (cx+(r/2));
+                dim.MID_Y1 = (cy-(r/2));
+                dim.MID_Y2 = (cy+(r/2));
+                first_line.setAttribute('x1',dim.MID_X1);
+                first_line.setAttribute('y1',dim.MID_Y1);
+                first_line.setAttribute('x2',dim.MID_X2);
+                first_line.setAttribute('y2',dim.MID_Y2);
+                a_line.setAttribute('x1',dim.MID_X1);
+                a_line.setAttribute('y1',dim.MID_Y2);
+                a_line.setAttribute('x2',dim.MID_X2);
+                a_line.setAttribute('y2',dim.MID_Y1);
+            };
             return close_group;        
         };
         canvas.text = function(x,y,text) {

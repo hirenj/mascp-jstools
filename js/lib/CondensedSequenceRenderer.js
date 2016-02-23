@@ -3026,7 +3026,7 @@ clazz.prototype.refresh = function(animated) {
 
     viewBox[0] = 0;
     if (this.navigation) {
-
+        this.navigation.nav_width_base = outer_viewbox[3] < 200 ? outer_viewbox[3] : 200;
         if (this.navigation.visible()) {
             this._canvas.style.GomapScrollLeftMargin = 100 * RS / this.zoom;
         } else {
@@ -3288,9 +3288,6 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             var min_zoom_level = 0.5;
             if (renderer.sequence) {
                 min_zoom_level = container_width / (2 * renderer.sequence.length);
-                if  (! renderer.grow_container ) {
-                    min_zoom_level = 0.3 / 2 * min_zoom_level;
-                }
             }
             renderer.zoom = min_zoom_level;
         },
