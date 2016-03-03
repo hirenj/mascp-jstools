@@ -1112,11 +1112,18 @@ var addTextToElement = function(layerName,width,opts) {
     }
     var height = this._renderer._layer_containers[layerName].trackHeight || 4;
     var text = canvas.text(this._index,0,opts.txt || "Text");
-    text.setAttribute('font-size',0.75*height*this._renderer._RS);
+
+    if (! ("height_scale" in opts)) {
+        opts.height_scale = 0.75;
+    }
+    text.setAttribute('font-size',height*opts.height_scale*this._renderer._RS);
     text.setAttribute('font-weight','bolder');
     text.setAttribute('fill',opts.fill || '#ffffff');
     text.setAttribute('stroke','#000000');
-    text.setAttribute('stroke-width','5');
+    if (! ("stroke_width" in opts)) {
+        opts.stroke_width = 5;
+    }
+    text.setAttribute('stroke-width',opts.stroke_width+'');
     text.setAttribute('style','font-family: '+canvas.font_order);
     text.firstChild.setAttribute('dy','2ex');
     text.setAttribute('text-anchor','middle');
@@ -1135,13 +1142,13 @@ var addTextToElement = function(layerName,width,opts) {
             var top_offset = this.offset;
             this.setAttribute('x',0);
             this.setAttribute('y',top_offset*renderer._RS / renderer.zoom);
-            text.setAttribute('stroke-width', 5/renderer.zoom);
-            text.setAttribute('font-size', 0.75*height);
+            text.setAttribute('stroke-width', opts.stroke_width/renderer.zoom);
+            text.setAttribute('font-size', opts.height_scale*height);
         };
     } else {
         text.setHeight = function(height) {
-            text.setAttribute('stroke-width', 5/renderer.zoom);
-            text.setAttribute('font-size', 0.75*height);
+            text.setAttribute('stroke-width', opts.stroke_width/renderer.zoom);
+            text.setAttribute('font-size', opts.height_scale*height);
         };
     }
     this._renderer._layer_containers[layerName].push(text);
