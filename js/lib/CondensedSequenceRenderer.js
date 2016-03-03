@@ -1275,7 +1275,10 @@ var addTextToElement = function(layerName,width,opts) {
     text.setAttribute('font-weight','bolder');
     text.setAttribute('fill', opts.fill || '#ffffff');
     text.setAttribute('stroke','#000000');
-    text.setAttribute('stroke-width','5');
+    if (! ("stroke_width" in opts)) {
+        opts.stroke_width = 5;
+    }
+    text.setAttribute('stroke-width',opts.stroke_width+'');
     text.setAttribute('style','font-family: '+canvas.font_order);
     text.firstChild.setAttribute('dy','1.3ex');
     text.setAttribute('text-anchor','middle');
