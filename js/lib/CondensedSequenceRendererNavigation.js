@@ -637,7 +637,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 return;
             }
 
-            var ctm = document.getElementById('nav_back').getTransformToElement(track_canvas);
+            var ctm = document.getElementById('nav_back').getScreenCTM().inverse().multiply(track_canvas.getScreenCTM()).inverse();
             var back_width = (document.getElementById('nav_back').getBBox().width + document.getElementById('nav_back').getBBox().x);
             var point = track_canvas.createSVGPoint();
             point.x = back_width;

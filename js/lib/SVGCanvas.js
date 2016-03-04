@@ -1049,7 +1049,7 @@ var SVGCanvas = SVGCanvas || (function() {
         canvas.transformedBoundingBox = function(el){
             var bb  = el.getBBox(),
                 svg = el.ownerSVGElement,
-                m   = el.getTransformToElement(el.parentNode);
+                m   = el.parentNode.getScreenCTM().inverse().multiply(el.getScreenCTM()).inverse();
             // Create an array of all four points for the original bounding box
             var pts = [
                 svg.createSVGPoint(), svg.createSVGPoint(),
