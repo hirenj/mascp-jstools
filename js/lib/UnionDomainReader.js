@@ -33,8 +33,16 @@ MASCP.UnionDomainReader.prototype.requestData = function() {
     });
     var merge_hash = function(h1,h2) {
         var key;
-        for (key in h2.data) {
+        var h2_keys = Object.keys(h2.data);
+        h2_keys.forEach(function(key) {
+            if (key == "tmhmm-TMhelix" && h1.data["uniprot-TMhelix"]) {
+                delete h1.data["uniprot-TMhelix"];
+            }
             h1.data[key] = h2.data[key];
+        });
+        if (h1.data["uniprot-TMhelix"]) {
+            h1.data["tmhmm-TMhelix"] = h1.data["uniprot-TMhelix"];
+            delete h1.data["uniprot-TMhelix"];
         }
         return h1;
     }
