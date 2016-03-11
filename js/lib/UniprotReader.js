@@ -96,9 +96,12 @@ MASCP.UniprotReader.readFastaFile = function(datablock,callback) {
 MASCP.UniprotReader.parseDomains = function(datalines) {
     var results = {};
     datalines = datalines.split(/\n/);
+    var domain_re = /FT\s+DOMAIN\s+(\d+)\s+(\d+)\s+(.*)/m;
+    var carb_re = /FT\s+CARBOHYD\s+(\d+)\s+(\d+)\s+(.*)/m;
+    var signal_re = /FT\s+SIGNAL\s+(\d+)\s+(\d+)\s+(.*)/m;
+    var transmem_re = /FT\s+TRANSMEM\s+(\d+)\s+(\d+)\s+(.*)/m;
+
     datalines.forEach(function(data) {
-        var domain_re = /FT\s+DOMAIN\s+(\d+)\s+(\d+)\s+(.*)/m;
-        var carb_re = /FT\s+CARBOHYD\s+(\d+)\s+(\d+)\s+(.*)/m;
         var match = carb_re.exec(data);
         if (match) {
             var name = match[3];
@@ -110,10 +113,27 @@ MASCP.UniprotReader.parseDomains = function(datalines) {
         }
         var match = domain_re.exec(data);
         if (match) {
-            if ( ! results[match[3]]) {
-                results[match[3]] = { "peptides" : [] };
+            var name = match[3];
+            name = name.replace(/\.\s+\{.*\}/,"");
+            name = name.replace(/\.$/,"");
+            if ( ! results[name]) {
+                results[name] = { "peptides" : [], "name" : name };
             }
-            results[match[3]].peptides.push([match[1],match[2]]);
+            results[name].peptides.push([match[1],match[2]]);
+        }
+        match = signal_re.exec(data);
+        if (match) {
+            if ( ! results["SIGNALP"]) {
+                results["SIGNALP"] = { "peptides" : [], "name" : "SIGNALP" };
+            }
+            results["SIGNALP"].peptides.push([ match[1], match[2] ]);
+        }
+        match = transmem_re.exec(data);
+        if (match) {
+            if ( ! results["uniprot-TMhelix"]) {
+                results["uniprot-TMhelix"] = { "peptides" : [], "name" : "TMhelix" };
+            }
+            results["uniprot-TMhelix"].peptides.push([ match[1], match[2] ]);
         }
     });
 
