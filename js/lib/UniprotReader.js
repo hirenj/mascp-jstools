@@ -110,8 +110,27 @@ MASCP.UniprotReader.parseDomains = function(datalines) {
         }
         var match = domain_re.exec(data);
         if (match) {
-            if ( ! results[match[3]]) {
-                results[match[3]] = { "peptides" : [] };
+            var name = match[3];
+            name = name.replace(/;.*/,"");
+            name = name.replace(/\.\s+\{.*\}?/,"");
+            name = name.replace(/\.$/,"");
+            name = name.replace(/\s+\d+$/,"");
+            if ( ! results[name]) {
+                results[name] = { "peptides" : [], "name" : name };
+            }
+            results[name].peptides.push([match[1],match[2]]);
+        }
+        match = signal_re.exec(data);
+        if (match) {
+            if ( ! results["SIGNALP"]) {
+                results["SIGNALP"] = { "peptides" : [], "name" : "SIGNALP" };
+            }
+            results["SIGNALP"].peptides.push([ match[1], match[2] ]);
+        }
+        match = transmem_re.exec(data);
+        if (match) {
+            if ( ! results["uniprot-TMhelix"]) {
+                results["uniprot-TMhelix"] = { "peptides" : [], "name" : "TMhelix" };
             }
             results[match[3]].peptides.push([match[1],match[2]]);
         }
