@@ -114,8 +114,10 @@ MASCP.UniprotReader.parseDomains = function(datalines) {
         var match = domain_re.exec(data);
         if (match) {
             var name = match[3];
+            name = name.replace(/;.*/,"");
             name = name.replace(/\.\s+\{.*\}?/,"");
             name = name.replace(/\.$/,"");
+            name = name.replace(/\s+\d+$/,"");
             if ( ! results[name]) {
                 results[name] = { "peptides" : [], "name" : name };
             }
