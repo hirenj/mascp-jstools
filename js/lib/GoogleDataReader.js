@@ -947,7 +947,7 @@ if (typeof module != 'undefined' && module.exports){
             cback.call(null, { "cause" : "No client ID set (MASCP.GOOGLE_CLIENT_ID)"});
             return;
         }
-        var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : scope, immediate : true };
+        var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : scope, immediate : true, response_type: 'token id_token' };
         //gapi.auth.authorize({immediate: true},function(){});
         initing_auth = true;
         var user_action = true;
