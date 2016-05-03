@@ -1479,6 +1479,29 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
     });
 };
 
+MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
+    // Do the auth dance here
+
+    var reader = new MASCP.UserdataReader(null,url_base+'/data/latest/combined/');
+    reader.datasetname = 'combined';
+    reader.requestData = function() {
+        var agi = this.agi.toLowerCase();
+        var gatorURL = this._endpointURL.slice(-1) == '/' ? this._endpointURL+agi : this._endpointURL+'/'+agi;
+        return {
+            type: "GET",
+            dataType: "json",
+            url : gatorURL,
+            data: { }
+        };
+    };
+
+    MASCP.Service.CacheService(reader);
+    setTimeout(function() {
+        bean.fire(reader,'ready');
+    });
+    return reader;
+};
+
 /*
 map = {
     "peptides" : "column_a",
@@ -1487,6 +1510,8 @@ map = {
 }
 */
 MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
+    return this.newBackendReader(doc);
+    debugger;
     var self = this;
     var reader = new MASCP.UserdataReader(null,null);
     reader.datasetname = doc;

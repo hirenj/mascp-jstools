@@ -340,9 +340,11 @@ MASCP.cloneService = function(service,name) {
                     parser.terminate();
                 }
                 callback.call(null,null,pref,a_reader);
+                callback = function() {};
             });
             a_reader.bind('error',function(err) {
                 callback.call(null,{"error" : err },pref);
+                callback = function() {};
             });
 
 
