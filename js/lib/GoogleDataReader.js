@@ -1051,6 +1051,30 @@ if (typeof module != 'undefined' && module.exports){
         return;
     };
 
+
+    var authenticate_gator = function(auth_done) {
+        if (MASCP.GATOR_AUTH_TOKEN && MASCP.LOGGEDIN) {
+            console.log("Existing token");
+            setTimeout(auth_done,0);
+            return;
+        }
+        self_func = arguments.callee;
+        authenticate_gator = function() {};
+        authenticate(function(done) {
+            MASCP.GATOR_AUTH_TOKEN = gapi.auth.getToken().id_token;
+            MASCP.LOGGEDIN = false;
+            MASCP.GOOGLE_AUTH_TOKEN = MASCP.GATOR_AUTH_TOKEN;
+            do_request(cloudfront_host,'/exchangetoken',null,function(err,token) {
+                console.log("Got auth token");
+                authenticate_gator = self_func;
+                MASCP.LOGGEDIN = true;
+                MASCP.GATOR_AUTH_TOKEN = token;
+                auth_done();
+            },'POST:application/json',null);
+            MASCP.GOOGLE_AUTH_TOKEN = gapi.auth.getToken().access_token;
+        });
+    };
+
     do_request = function(host,path,etag,callback,method,data,backoff) {
         authenticate(function(err) {
             if (err) {
@@ -1081,7 +1105,7 @@ if (typeof module != 'undefined' && module.exports){
                 request.setRequestHeader('Content-Type',req_method.split(':')[1]);
                 req_method = req_method.split(':')[0];
             }
-            if (etag && req_method !== 'PUT') {
+            if (etag && req_method !== 'PUT' && ! req_method.match(/:/)) {
                 request.setRequestHeader('If-None-Match',etag);
             }
             if (etag && req_method == 'PUT' ) {
@@ -1482,23 +1506,29 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
 MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
     // Do the auth dance here
 
+    var reader_conf = {
+            type: "GET",
+            dataType: "json",
+            data: { }
+        };
+
     var reader = new MASCP.UserdataReader(null,url_base+'/data/latest/combined/');
+
     reader.datasetname = 'combined';
     reader.requestData = function() {
         var agi = this.agi.toLowerCase();
         var gatorURL = this._endpointURL.slice(-1) == '/' ? this._endpointURL+agi : this._endpointURL+'/'+agi;
-        return {
-            type: "GET",
-            dataType: "json",
-            url : gatorURL,
-            data: { }
-        };
+        reader_conf.url = gatorURL;
+        return reader_conf;
     };
 
     MASCP.Service.CacheService(reader);
-    setTimeout(function() {
+
+    authenticate_gator(function() {
+        reader_conf.auth = MASCP.GATOR_AUTH_TOKEN;
         bean.fire(reader,'ready');
     });
+
     return reader;
 };
 
@@ -1511,7 +1541,6 @@ map = {
 */
 MASCP.GoogledataReader.prototype.createReader = function(doc, map) {
     return this.newBackendReader(doc);
-    debugger;
     var self = this;
     var reader = new MASCP.UserdataReader(null,null);
     reader.datasetname = doc;
