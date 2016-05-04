@@ -607,7 +607,11 @@ var do_request = function(request_data) {
     if (request.customUA) {
         request.setRequestHeader('User-Agent',request.customUA);
     }
-    
+
+    if (request_data.auth) {
+        request.setRequestHeader('Authorization','Bearer '+request_data.auth);
+    }
+
     var redirect_counts = 5;
 
     request.onreadystatechange = function(evt) {
