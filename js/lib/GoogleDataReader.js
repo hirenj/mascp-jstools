@@ -1062,7 +1062,10 @@ if (typeof module != 'undefined' && module.exports){
             return;
         }
         self_func = arguments.callee;
-        authenticate_gator = function() {};
+        var callbacks = [];
+        authenticate_gator = function(cb) {
+            callbacks.push(cb);
+        };
         authenticate(function(done) {
             MASCP.GATOR_AUTH_TOKEN = gapi.auth.getToken().id_token;
             MASCP.LOGGEDIN = false;
@@ -1073,6 +1076,10 @@ if (typeof module != 'undefined' && module.exports){
                 MASCP.LOGGEDIN = true;
                 MASCP.GATOR_AUTH_TOKEN = token;
                 auth_done();
+                callbacks.forEach(function(cb) {
+                    setTimeout(cb,0);
+                });
+                callbacks = [];
             },'POST:application/json',null);
             MASCP.GOOGLE_AUTH_TOKEN = gapi.auth.getToken().access_token;
         });
@@ -1528,9 +1535,12 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
         var actual_data = data.data.filter(function(set) {
             return set.dataset.indexOf(doc) >= 0;
         })[0];
+        if (doc == 'combined') {
+            actual_data = { 'data' : [].concat.apply([], data.data.map(function(set) {  return set.data; })) };
+        }
         var return_value = Object.getPrototypeOf(reader)._dataReceived.call(reader,actual_data,status);
         if (return_value) {
-            reader.result._raw_data = data;
+            reader.result._raw_data = actual_data;
         }
         return return_value;
     };
