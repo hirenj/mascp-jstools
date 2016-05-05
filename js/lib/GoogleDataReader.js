@@ -14,6 +14,9 @@ MASCP.GoogledataReader =    MASCP.buildService(function(data) {
 
 (function() {
 
+var url_base = '';
+var cloudfront_host = '';
+
 var scope = "https://docs.google.com/feeds/ https://spreadsheets.google.com/feeds/";
 
 var parsedata = function ( data ){
@@ -1521,8 +1524,18 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
         reader_conf.url = gatorURL;
         return reader_conf;
     };
+    reader._dataReceived = function(data,status) {
+        var actual_data = data.data.filter(function(set) {
+            return set.dataset.indexOf(doc) >= 0;
+        })[0];
+        var return_value = Object.getPrototypeOf(reader)._dataReceived.call(reader,actual_data,status);
+        if (return_value) {
+            reader.result._raw_data = data;
+        }
+        return return_value;
+    };
 
-    MASCP.Service.CacheService(reader);
+    // MASCP.Service.CacheService(reader);
 
     authenticate_gator(function() {
         reader_conf.auth = MASCP.GATOR_AUTH_TOKEN;
