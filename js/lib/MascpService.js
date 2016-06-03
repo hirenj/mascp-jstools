@@ -335,6 +335,9 @@ MASCP.cloneService = function(service,name) {
             }
             var a_reader = (new MASCP.GoogledataReader()).createReader(set,parser);
 
+            // Make sure we never hit the endpoint
+            delete a_reader._endpointURL;
+
             a_reader.bind('ready',function() {
                 if (parser) {
                     parser.terminate();
