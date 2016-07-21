@@ -505,12 +505,28 @@ var SVGCanvas = SVGCanvas || (function() {
         }
         canvas.hexagon = function(x,y,width,height,rotate) {
             return this.nagon(x,y,width,height,6,rotate);
-        }
+        };
+
+        var shape_set_attribute = function(attr,val) {
+            this.constructor.prototype.setAttribute.call(this,attr,val);
+            if (attr == 'height' || attr == 'width' || attr == 'x' || attr == 'y') {
+                this.redraw(Math.floor(parseFloat(this.getAttribute('height'))));
+            }
+        };
+
         canvas.nagon = function(x,y,width,height,n,rotate) {
-            var a = 0.5*width*RS;
             var shape = this.poly("");
-            shape.setAttribute('transform','translate('+(x*RS)+','+(RS*y)+')');
-            shape.setHeight = function(hght) {
+            // shape.setAttribute('transform','translate('+(x*RS)+','+(RS*y)+')');
+            shape.setAttribute('x',x*RS);
+            shape.setAttribute('y',y*RS);
+            shape.setAttribute('width',width*RS);
+            shape.redraw = function(hght) {
+                if (hght) {
+                    this.last_height = hght;
+                } else {
+                    hght = this.last_height;
+                }
+                var a = 0.5*Math.floor(parseFloat(shape.getAttribute('width')));
                 var b = 0.5*hght;
                 var points = [];
                 var min_x = null;
@@ -527,6 +543,8 @@ var SVGCanvas = SVGCanvas || (function() {
                         max_x = a_x;
                     }
                 }
+                var x_pos = Math.floor(parseFloat(shape.getAttribute('x')));
+                var y_pos = Math.floor(parseFloat(shape.getAttribute('y')));
                 points.map(function(points) {
                     if (points[0] == min_x) {
                         points[0] = 0;
@@ -534,10 +552,13 @@ var SVGCanvas = SVGCanvas || (function() {
                     if (points[0] == max_x) {
                         points[0] = a*2;
                     }
+                    points[0] += x_pos;
+                    points[1] = y_pos + 0.5*hght*(points[1] / b);
                     return points.join(",");
                 });
                 this.setAttribute('points',points.join(" "));
             };
+            shape.setHeight = shape.redraw;
             shape.move = function(new_x,new_width) {
                 var curr_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(this.getAttribute('transform'));
                 if (curr_y === null) {
@@ -548,7 +569,8 @@ var SVGCanvas = SVGCanvas || (function() {
                 this.setAttribute('transform',curr_transform);
                 a = 0.5*new_width*RS;
             };
-            shape.setHeight(height*RS);
+            shape.setAttribute = shape_set_attribute;
+            shape.redraw(height*RS);
             return shape;
         };
 
