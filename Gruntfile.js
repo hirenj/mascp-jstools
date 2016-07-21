@@ -39,6 +39,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-copy');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat','copy','uglify']);
+  grunt.registerTask('default', ['concat','uglify','copy']);
 
 };
