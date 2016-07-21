@@ -1536,7 +1536,12 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
             return set.dataset.indexOf(doc) >= 0;
         })[0];
         if (doc == 'combined') {
-            actual_data = { 'data' : [].concat.apply([], data.data.map(function(set) {  return set.data; })) };
+            var data_by_mime = {};
+            data.data.forEach(function(set) {
+                var mimetype = set.metadata.mimetype;
+                data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
+            });
+            actual_data = { 'data' : data_by_mime };
         }
         var return_value = Object.getPrototypeOf(reader)._dataReceived.call(reader,actual_data,status);
         if (return_value) {
