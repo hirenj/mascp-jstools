@@ -1531,25 +1531,29 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
         reader_conf.url = gatorURL;
         return reader_conf;
     };
-    reader._dataReceived = function(data,status) {
-        var actual_data = data.data.filter(function(set) {
-            return set.dataset.indexOf(doc) >= 0;
-        })[0];
-        if (doc == 'combined') {
-            var data_by_mime = {};
-            data.data.forEach(function(set) {
-                var mimetype = set.metadata.mimetype;
-                data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
-            });
-            actual_data = { 'data' : data_by_mime };
-        }
-        var return_value = Object.getPrototypeOf(reader)._dataReceived.call(reader,actual_data,status);
-        if (return_value) {
-            reader.result._raw_data = actual_data;
-        }
-        return return_value;
-    };
-
+    if (doc !== 'glycodomain') {
+        reader._dataReceived = function(data,status) {
+            var actual_data = data.data.filter(function(set) {
+                return set.dataset.indexOf(doc) >= 0;
+            })[0];
+            if (doc == 'combined') {
+                var data_by_mime = {};
+                data.data.forEach(function(set) {
+                    var mimetype = set.metadata.mimetype;
+                    data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
+                });
+                actual_data = { 'data' : data_by_mime };
+            }
+            var return_value = Object.getPrototypeOf(reader)._dataReceived.call(reader,actual_data,status);
+            if (return_value) {
+                reader.result._raw_data = actual_data;
+            }
+            return return_value;
+        };
+    } else {
+        reader.datasetname = 'glycodomain';
+        reader._endpointURL = url_base + '/data/latest/public:glycodomain/';
+    }
     // MASCP.Service.CacheService(reader);
 
     authenticate_gator(function() {
