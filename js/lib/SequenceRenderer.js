@@ -138,11 +138,13 @@ MASCP.registerLayer = function(layerName, options, renderers)
     }
 
     if (layer && options.group) {
-        layer.group = this.getGroup(options.group);
+        if (layer.group !== this.getGroup(options.group)) {
+            layer.group = this.getGroup(options.group);
+            layer.group._layers.push(layer);
+        }
         if ( ! layer.group ) {
             throw "Cannot register this layer with the given group - the group has not been registered yet";
         }
-        layer.group._layers.push(layer);
     }
     
     if (layer) {

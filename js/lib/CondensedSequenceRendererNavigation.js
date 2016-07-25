@@ -123,7 +123,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             });
 
             bean.add(layer,'visibilityChange',function(rend,visible) {
-                if (group.size() > 0) {            
+                if (group.size() > 0) {
+                    if (! expanded_map.hasOwnProperty(layer.name)) {
+                        expanded_map[layer.name] = false;
+                    }
                     self.setGroupVisibility(group, expanded_map[layer.name] && visible,true);
                     renderer.refresh();
                 }
