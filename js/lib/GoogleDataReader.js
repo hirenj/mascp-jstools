@@ -1540,6 +1540,9 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
                 var data_by_mime = {};
                 data.data.forEach(function(set) {
                     var mimetype = set.metadata.mimetype;
+                    set.data.forEach(function(dat) {
+                        dat.dataset = set.dataset;
+                    })
                     data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
                 });
                 actual_data = { 'data' : data_by_mime };
