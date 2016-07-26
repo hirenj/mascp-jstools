@@ -1513,6 +1513,8 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
     });
 };
 
+MASCP.AuthenticateGator = authenticate_gator;
+
 MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
     // Do the auth dance here
 
