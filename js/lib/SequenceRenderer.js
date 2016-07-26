@@ -262,6 +262,9 @@ MASCP.SequenceRenderer = (function() {
                 for (var i = 0; i < order.length; i++) {
                     var a_track = order[i];
                     if (MASCP.getLayer(a_track)) {
+                        while (track_order.indexOf(a_track) >= 0) {
+                            track_order.splice(track_order.indexOf(a_track),1);
+                        }
                         track_order.push(a_track);
                     } else if (MASCP.getGroup(a_track)) {
                         MASCP.getGroup(order[i]).eachLayer(function(grp_lay) {
