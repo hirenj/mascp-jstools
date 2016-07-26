@@ -218,7 +218,7 @@ MASCP.Group.prototype.eachLayer = function(func) {
         if (! this._layers[i].disabled) {
             func.call(this._layers[i],this._layers[i]);
         }
-    }    
+    }
 };
 
 /**
@@ -262,9 +262,12 @@ MASCP.SequenceRenderer = (function() {
                 for (var i = 0; i < order.length; i++) {
                     var a_track = order[i];
                     if (MASCP.getLayer(a_track)) {
-                        track_order.push(a_track);                        
+                        track_order.push(a_track);
                     } else if (MASCP.getGroup(a_track)) {
                         MASCP.getGroup(order[i]).eachLayer(function(grp_lay) {
+                            while (track_order.indexOf(grp_lay.name) >= 0) {
+                                track_order.splice(track_order.indexOf(grp_lay.name),1);
+                            }
                             order.splice(i+1,0,grp_lay.name);
                         });
                     }
