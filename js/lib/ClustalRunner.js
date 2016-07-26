@@ -460,7 +460,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                 MASCP.registerGroup(group_name, 'Aligned');
                 MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
                 if (renderer.trackOrder.indexOf(controller_name) < 0) {
-                    renderer.trackOrder.push(controller_name);
+                    renderer.trackOrder = renderer.trackOrder.concat([controller_name]);
                 }
                 renderer.showLayer(controller_name);
                 renderer.createGroupController(controller_name,group_name);
@@ -489,7 +489,8 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
             if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
-              renderer.trackOrder.push(layname.toUpperCase());
+              console.log("Adding ",layname," to renderer");
+              renderer.trackOrder = renderer.trackOrder.concat([group_name]);
             }
             var name = "Isoform "+(i+1);
             if (aligned[i].insertions) {
@@ -538,7 +539,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             }
         }
         renderer.zoom = 1;
-        bean.fire(MASCP.getGroup(group_name),'visibilityChange',[renderer,true]);
+        renderer.showGroup(group_name);
         renderer.refresh();
 
     };
