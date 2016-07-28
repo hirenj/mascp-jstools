@@ -1651,7 +1651,7 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     bean.remove(scrollContainer,'scroll');
     bean.remove(scrollContainer,'mouseenter');
     bean.add(scrollContainer,'mouseenter',function() {
-
+        scroller.cached_width = scroller.clientWidth;
         disabled = true;
         scrollContainer.scrollLeft += 1;
         scrollContainer.scrollLeft -= 1;
@@ -1660,8 +1660,6 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
         },0);
         bean.remove(scrollContainer,'scroll',scroll_func);
         bean.add(scrollContainer,'scroll',scroll_func);
-
-        scroller.cached_width = scroller.clientWidth;
     });
     var disabled = false;
 
@@ -1692,7 +1690,9 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     bean.add(controlElement,'pan',function() {
         var size = 100*target.getTotalLength() / (target.getVisibleLength());
         scroller.style.width = parseInt(size)+'%';
-        var width = scroller.cached_width || scroller.clientWidth;
+        var width = scroller.clientWidth;
+        scroller.cached_width = width;
+
         var left_shift = parseInt(width * (target.getLeftPosition() / target.getTotalLength() ));
         bean.remove(scrollContainer,'scroll',scroll_func);
         setTimeout(function() {
