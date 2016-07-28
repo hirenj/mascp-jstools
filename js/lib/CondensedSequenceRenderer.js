@@ -1183,8 +1183,19 @@ var addShapeToElement = function(layerName,width,opts) {
         opts.rotate = 0;
     }
     var shape = null;
-    if (opts.shape in methods) {
-        shape = methods[opts.shape].call(canvas,this._index,60,width || 1,opts.height || 4,opts.rotate);
+    var shape_name = (opts.shape.split('-') || '')[0];
+    if (shape_name in methods) {
+        var is_rotated = opts.shape.split('-')[1];
+        if (is_rotated == 'left' && ! opts.rotate) {
+            opts.rotate = 90;
+        }
+        if (is_rotated == 'right' && ! opts.rotate) {
+            opts.rotate = 270;
+        }
+        if (is_rotated == 'flip' && ! opts.rotate) {
+            opts.rotate = 180;
+        }
+        shape = methods[shape_name].call(canvas,this._index,60,width || 1,opts.height || 4,opts.rotate);
     } else {
         return;
     }
