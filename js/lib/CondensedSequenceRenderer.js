@@ -398,13 +398,15 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    var last_right = -10000;
                    var changed = false;
                    major_mark_labels.forEach(function(label) {
-
-                    if (label.getBBox().x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 50) != 0) {
+                    if ( ! label.cached_bbox) {
+                        label.cached_bbox = label.getBBox();
+                    }
+                    if (label.cached_bbox.x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 50) != 0) {
                         label.setAttribute('visibility','hidden');
                         changed = true;
                     } else {
                         label.setAttribute('visibility','visible');
-                        last_right = label.getBBox().x + label.getBBox().width;
+                        last_right = label.cached_bbox.x + label.cached_bbox.width;
                     }
                    });
                    if (changed) {
@@ -428,11 +430,14 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    var last_right = -10000;
                    var changed = false;
                    thousand_mark_labels.forEach(function(label) {
-                    if (label.getBBox().x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 250) != 0) {
+                    if ( ! label.cached_bbox) {
+                        label.cached_bbox = label.getBBox();
+                    }
+                    if (label.cached_bbox.x <= (last_right+(RS*10)) || (parseInt(label.textContent) % 250) != 0) {
                         label.setAttribute('visibility','hidden');
                     } else {
                         label.setAttribute('visibility','visible');
-                        last_right = label.getBBox().x + label.getBBox().width;
+                        last_right = label.cached_bbox.x + label.cached_bbox.width;
                     }
                    });
                    if (changed) {
@@ -2589,6 +2594,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
     var zoom_level = null;
     var center_residue = null;
     var start_x = null;
+    var transformer;
+    var shifter;
     var accessors = { 
         setZoom: function(zoomLevel) {
             var container_width = renderer._container.cached_width;
@@ -2636,12 +2643,20 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
 
             zoom_level = parseFloat(zoomLevel);        
 
-
-            var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
-            curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
             var scale_value = Math.abs(parseFloat(zoomLevel)/start_zoom);
-            curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
-            self._canvas.parentNode.setAttribute('transform',curr_transform);
+
+            window.cancelAnimationFrame(transformer);
+            transformer = window.requestAnimationFrame(function() {
+                console.log("Setting transform");
+                var curr_transform = self._canvas.parentNode.getAttribute('transform') || '';
+                curr_transform = curr_transform.replace(/scale\([^\)]+\)/,'');
+                curr_transform = 'scale('+scale_value+') '+(curr_transform || '');
+
+                // Rendering bottleneck
+                self._canvas.parentNode.setAttribute('transform',curr_transform);
+
+            });
+
             bean.fire(self._canvas,'_anim_begin');
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
@@ -2652,7 +2667,13 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
             if (center_residue) {
                 var delta = ((start_zoom - zoom_level)/(scale_value*25))*center_residue;
                 delta += start_x/(scale_value);
-                self._canvas.setCurrentTranslateXY(delta,((start_zoom - zoom_level)/(scale_value))*self._axis_height*2);
+                cancelAnimationFrame(shifter);
+                shifter = window.requestAnimationFrame(function() {
+
+                    // Rendering bottleneck
+                    self._canvas.setCurrentTranslateXY(delta,((start_zoom - zoom_level)/(scale_value))*self._axis_height*2);
+
+                });
             }
         
             var end_function = function() {

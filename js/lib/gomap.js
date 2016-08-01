@@ -1651,7 +1651,8 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
     bean.remove(scrollContainer,'scroll');
     bean.remove(scrollContainer,'mouseenter');
     bean.add(scrollContainer,'mouseenter',function() {
-        scroller.cached_width = scroller.clientWidth;
+        var size = 100*target.getTotalLength() / (target.getVisibleLength());
+        scroller.cached_width = scroller.clientWidth / size;
         disabled = true;
         scrollContainer.scrollLeft += 1;
         scrollContainer.scrollLeft -= 1;
@@ -1680,24 +1681,29 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
             evObj.initEvent('panstart',false,true);
             controlElement.dispatchEvent(evObj);
         }
-        var width = scroller.cached_width || scroller.clientWidth;
+        var size = 100*target.getTotalLength() / (target.getVisibleLength());
+        var width = scroller.cached_width ? parseInt(scroller.cached_width * size) : scroller.clientWidth ;
         target.setLeftPosition(parseInt(scrollContainer.scrollLeft * target.getTotalLength() / width));
         bean.fire(controlElement,'panend');
     };
 
     bean.add(scrollContainer,'scroll',scroll_func);
 
+    var left_setter;
+
     bean.add(controlElement,'pan',function() {
+        cancelAnimationFrame(left_setter);
         var size = 100*target.getTotalLength() / (target.getVisibleLength());
         scroller.style.width = parseInt(size)+'%';
-        var width = scroller.clientWidth;
-        scroller.cached_width = width;
+        var width = scroller.cached_width ? parseInt(scroller.cached_width * size) : scroller.clientWidth ;
+        scroller.cached_width = width / size;
 
         var left_shift = parseInt(width * (target.getLeftPosition() / target.getTotalLength() ));
         bean.remove(scrollContainer,'scroll',scroll_func);
-        setTimeout(function() {
+        left_setter = requestAnimationFrame(function() {
+            // Rendering bottleneck
             scrollContainer.scrollLeft = left_shift;
-        },0);
+        });
     });
 };
 
