@@ -1699,8 +1699,7 @@ GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
         cancelAnimationFrame(left_setter);
         var size = 100*target.getTotalLength() / (target.getVisibleLength());
         scroller.style.width = parseInt(size)+'%';
-//        var width = scroller.cached_width ? parseInt(scroller.cached_width * size) : scroller.clientWidth ;
-        var width = scroller.clientWidth;
+        var width = scroller.cached_width ? parseInt(scroller.cached_width * size) : scroller.clientWidth ;
         scroller.cached_width = width / size;
 
         var left_shift = parseInt(width * (target.getLeftPosition() / target.getTotalLength() ));
