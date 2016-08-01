@@ -703,6 +703,9 @@ var SVGCanvas = SVGCanvas || (function() {
                 container.setAttribute('width','200');
                 container.setAttribute('height','250');
             }
+            if (opts.angle) {
+                result.angle = opts.angle;
+            }
             // var rect = document.createElementNS(svgns,'rect');
             // rect.setAttribute('stroke','#f00');
             // rect.setAttribute('stroke-width','10');
