@@ -89,6 +89,11 @@ var authenticate_gator = function() {
     if (authenticating_promise) {
       return authenticating_promise;
     }
+
+    // Need to put this somewhere for the moment
+    // Temporary code until we move to a single host
+    MASCP.ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
+
     if ( ! MASCP.GatorDataReader.ID_TOKEN ) {
       authenticating_promise = anonymous_login().then(function() { authenticating_promise = null; }).then(authenticate_gator);
       return authenticating_promise;
@@ -109,6 +114,7 @@ var authenticate_gator = function() {
         } else {
           MASCP.GATOR_AUTH_TOKEN = JSON.parse(token);
           MASCP.LOGGEDIN = true;
+          bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
           resolve();
         }
       },true);
@@ -137,6 +143,9 @@ Object.defineProperty(MASCP.GatorDataReader.prototype, 'datasetname', {
       this.__result_class = alt_result;
     }
 });
+MASCP.GatorDataReader.authenticate = function() {
+  authenticate_gator();
+};
 
 MASCP.GatorDataReader.createReader = function(doc) {
     // Do the auth dance here
