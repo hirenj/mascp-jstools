@@ -314,6 +314,22 @@ MASCP.cloneService = function(service,name) {
             return;
         }
 
+        if (pref.type == 'dataset') {
+            var a_reader = MASCP.GatorDataReader.createReader(set);
+            a_reader.bind('ready',function() {
+                if (parser) {
+                    parser.terminate();
+                }
+                callback.call(null,null,pref,a_reader);
+                callback = function() {};
+            });
+            a_reader.bind('error',function(err) {
+                callback.call(null,{"error" : err },pref);
+                callback = function() {};
+            });
+            return;
+        }
+
         // If we wish to load complete datasets
         // and store them browser-side, we need
         // a parser function to grab the dataset.
@@ -322,7 +338,7 @@ MASCP.cloneService = function(service,name) {
           return;
         }
 
-        if (JSandbox) {
+        if (JSandbox && /^(https?:)?\/?\//.test(set)) {
           var sandbox = new JSandbox();
           var parser;
           sandbox.eval('var sandboxed_parser = '+pref.parser_function+';',function() {
@@ -395,20 +411,6 @@ MASCP.cloneService = function(service,name) {
                 });
                 return;
             }
-            var a_reader = (new MASCP.GoogledataReader()).createReader(set,parser);
-
-            a_reader.bind('ready',function() {
-                if (parser) {
-                    parser.terminate();
-                }
-                callback.call(null,null,pref,a_reader);
-                callback = function() {};
-            });
-            a_reader.bind('error',function(err) {
-                callback.call(null,{"error" : err },pref);
-                callback = function() {};
-            });
-
 
           });
 
@@ -640,7 +642,8 @@ var make_params = function(params) {
 
 var do_request = function(request_data) {
     
-    
+    request_data.async = true;
+
     var datablock = null;
     
     if ( ! request_data.url ) {
@@ -662,8 +665,8 @@ var do_request = function(request_data) {
     }
     request.open(request_data.type,request_data.url,request_data.async);
     if (request_data.type == 'POST') {
-        request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
-        datablock = make_params(request_data.data);
+        request.setRequestHeader("Content-Type",request_data.content ? request_data.content : "application/x-www-form-urlencoded");
+        datablock = request_data.content ? request_data.data : make_params(request_data.data);
     }
 
     if (request.customUA) {
@@ -691,7 +694,7 @@ var do_request = function(request_data) {
                 setTimeout(function(){
                     request.open(request_data.type,request_data.url,request_data.async);
                     if (request_data.type == 'POST') {
-                        request.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+                        request.setRequestHeader("Content-Type",request_data.content ? request_data.content : "application/x-www-form-urlencoded");
                     }
                     if (request.customUA) {
                         request.setRequestHeader('User-Agent',request.customUA);
