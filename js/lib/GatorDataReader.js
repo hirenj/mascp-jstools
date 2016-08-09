@@ -17,11 +17,11 @@ var data_parser =   function(data) {
   }
   var actual_data = data.data.filter(function(set) {
       return set.dataset.indexOf(doc) >= 0;
-  })[0];
+  })[0] || {'data' : [] };
   if (doc == 'glycodomain') {
       actual_data = data.data.filter(function(set) {
           return set.metadata.mimetype == 'application/json+glycodomain';
-      })[0];
+      })[0] || {'data' : [] };
       console.log(actual_data);
   }
   if (doc == 'combined') {
