@@ -882,7 +882,7 @@ if (typeof module != 'undefined' && module.exports){
 } else {
     // We should be tracking this bug here:
     // http://stackoverflow.com/questions/15579079/cannot-share-document-in-google-drive-with-per-file-auth-scope
-    scope = "openid profile email https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive https://spreadsheets.google.com/feeds/";
+    scope = "openid profile email https://www.googleapis.com/auth/drive.install https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive";
 
     var get_document_using_script = function(doc_id,callback,tryauth) {
         var head = document.getElementsByTagName('head')[0];
