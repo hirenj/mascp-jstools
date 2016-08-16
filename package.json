@@ -45,15 +45,6 @@
     "mascp-jstools",
     "cli"
   ],
-  "os": [
-    "linux",
-    "macos",
-    "win"
-  ],
-  "engines": [
-    "v8",
-    "node >= 0.10.x"
-  ],
   "directories": {
     "lib": "js/lib",
     "bin": "bin",
