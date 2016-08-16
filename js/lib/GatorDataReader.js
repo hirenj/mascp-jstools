@@ -7,8 +7,8 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 }
 
 (function() {
-var url_base = '';
-var cloudfront_host = '/api/';
+var url_base = '/api';
+var cloudfront_host = '';
 
 var data_parser =   function(data) {
   var doc = this.datasetname || 'combined';
