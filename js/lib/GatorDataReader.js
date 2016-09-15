@@ -16,8 +16,24 @@ var data_parser =   function(data) {
     return this;
   }
   var actual_data = data.data.filter(function(set) {
-      return set.dataset.indexOf(doc) >= 0;
+    return set.dataset.indexOf(doc) >= 0;
   })[0] || {'data' : [] };
+
+  if (doc.split(',').length > 1) {
+    doc = doc.split(',');
+    var data_by_mime = {};
+    data.data.filter(function(set) {
+      return doc.indexOf(set.dataset) >= 0;
+    }).forEach(function(set) {
+        var mimetype = set.metadata.mimetype;
+        set.data.forEach(function(dat) {
+            dat.dataset = set.dataset;
+        })
+        data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
+    });
+    actual_data = { 'data' : data_by_mime };
+  }
+
   if (doc == 'glycodomain') {
       actual_data = data.data.filter(function(set) {
           return set.metadata.mimetype == 'application/json+glycodomain';
