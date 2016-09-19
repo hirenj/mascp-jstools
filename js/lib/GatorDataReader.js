@@ -109,6 +109,7 @@ var authenticate_gator = function() {
     // Need to put this somewhere for the moment
     // Temporary code until we move to a single host
     MASCP.ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
+    MASCP.UniprotReader.SERVICE_URL = url_base + '/data/latest/uniprot';
 
     if ( ! MASCP.GatorDataReader.ID_TOKEN ) {
       authenticating_promise = anonymous_login().then(function() { authenticating_promise = null; }).then(authenticate_gator);
