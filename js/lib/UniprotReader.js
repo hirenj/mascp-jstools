@@ -39,11 +39,9 @@ MASCP.UniprotReader.prototype.requestData = function()
     var self = this;
     return {
         type: "GET",
-        dataType: "txt",
-        'url'   : 'http://www.uniprot.org/uniprot/'+(this.agi).toUpperCase()+'.fasta',
-        data: { 'acc'   : this.agi,
-                'service' : 'uniprot' 
-        }
+        dataType: "json",
+        'auth' : MASCP.GatorDataReader.ID_TOKEN,
+        'url'   : MASCP.UniprotReader.SERVICE_URL+'/'+(this.agi).toUpperCase()
     };
 };
 
