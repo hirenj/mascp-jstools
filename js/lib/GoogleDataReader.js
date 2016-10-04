@@ -245,7 +245,15 @@ var check_current_session = function(callback) {
         callback.call(null,null,false);
     }
     gapi.auth.checkSessionState({'client_id' : MASCP.GOOGLE_CLIENT_ID, 'session_state' : null},function(loggedOut) {
-        callback.call(null,null,loggedOut);
+        if ( ! loggedOut ) {
+            var desired_scopes = MASCP.GOOGLE_SCOPES ? MASCP.GOOGLE_SCOPES : scope;
+            var auth_settings = { client_id : MASCP.GOOGLE_CLIENT_ID, scope : desired_scopes, immediate : true, response_type: 'token id_token' };
+            gapi.auth.authorize(auth_settings,function(result) {
+                callback.call(null,null,! result.status.signed_in);
+            });
+        } else {
+            callback.call(null,null,loggedOut);
+        }
     });
 };
 
