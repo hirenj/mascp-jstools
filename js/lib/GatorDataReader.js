@@ -40,16 +40,23 @@ var data_parser =   function(data) {
       })[0] || {'data' : [] };
       console.log(actual_data);
   }
-  if (doc == 'combined') {
+  if (doc == 'combined' || doc == 'homology') {
       var data_by_mime = {};
       data.data.forEach(function(set) {
           var mimetype = set.metadata.mimetype;
+          if ( ! mimetype ) {
+            return;
+          }
           set.data.forEach(function(dat) {
               dat.dataset = set.dataset;
+              dat.acc = set.acc;
           })
           data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
       });
       actual_data = { 'data' : data_by_mime };
+  }
+  if (doc == 'homology') {
+    actual_data.alignments = data.data.filter(function(set) { return set.dataset == 'homology_alignment'; })[0].data;
   }
   this._raw_data = actual_data;
   return this;
@@ -140,6 +147,188 @@ var authenticate_gator = function() {
     return authenticating_promise;
 };
 
+MASCP.GatorDataReader.prototype.setupSequenceRenderer = function(renderer) {
+    var self = this;
+    if (this.datasetname !== 'homology') {
+      return;
+    }
+    renderer.forceTrackAccs = true;
+    renderer.addAxisScale('homology',function(pos,accession,inverse) {
+        if ( ! self.result || self.agi === accession.name || self.acc === accession.name ) {
+          return pos;
+        }
+        if ( inverse ) {
+            return self.result.calculateSequencePositionFromPosition(self.agi || self.acc,accession.name.toLowerCase(),pos);
+        }
+        return self.result.calculatePositionForSequence(self.agi || self.acc,accession.name.toLowerCase(),pos);
+    });
+};
+
+
+(function() {
+var normalise_insertions = function(inserts) {
+    var pos;
+    var positions = [];
+    var result_data = {};
+    for (pos in inserts) {
+        if (inserts.hasOwnProperty(pos) && parseInt(pos) >= -1) {
+            positions.push(parseInt(pos));
+        }
+    }
+    positions = positions.sort(function sortfunction(a, b){
+        return (a - b);
+    });
+
+    // From highest to lowest position, loop through and
+    // subtract the lengths of previous subtratctions from
+    // the final position value.
+
+    for (var i = positions.length - 1; i >= 0; i--) {
+        var j = i - 1;
+        pos = parseInt(positions[i]);
+        var value = inserts[pos];
+        while (j >= 0) {
+            pos -= inserts[positions[j]].length;
+            j--;
+        }
+        if (! value.match(/^\s+$/)) {
+            result_data[pos+1] = value + (result_data[pos+1] || '');
+        }
+    }
+//    delete result_data[0];
+    return result_data;
+};
+
+var splice_char = function(seqs,index,insertions) {
+    for (var i = 0; i < seqs.length; i++) {
+        var seq = seqs[i].toString();
+        if (seq.charAt(index) != '-') {
+            if ( ! insertions[i] ) {
+                insertions[i] = {};
+                insertions[i][-1] = '';
+            }
+            insertions[i][index - 1] = seq.charAt(index);
+            if (insertions[i][index] && insertions[i][index].match(/\w/)) {
+                insertions[i][index-1] += insertions[i][index];
+                delete insertions[i][index];
+            }
+        } else {
+            if ( insertions[i] ) {
+                insertions[i][index - 1] = ' ';
+                if ((insertions[i][index] || '').match(/^\s+$/)) {
+                    insertions[i][index-1] += insertions[i][index];
+                    delete insertions[i][index];
+                }
+            }
+        }
+        seqs[i] = seq.slice(0,index) + seq.slice(index+1);
+    }
+};
+
+MASCP.GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignments) {
+  var seqs = [];
+  var insertions = [];
+  var accs = [];
+  var ref_cigar = '';
+  alignments.forEach(function(align) {
+    align.cigar = align.cigar.match(/\d*[MD]/g)
+                       .map(function(bit) {
+                          return new Array((parseInt(bit.slice(0,-1)) || 1)+1).join( bit.slice(-1) == 'M' ? '.' : '-' );
+                       }).join('');
+    if (align.uniprot !== ref_acc.toUpperCase()) {
+      accs.push(align.uniprot);
+      seqs.push(align.cigar)
+    } else {
+      ref_cigar = align.cigar;
+    }
+  });
+  var aligning_seq = ref_cigar, i = aligning_seq.length - 1;
+  for (i; i >= 0; i--) {
+      if (aligning_seq.charAt(i) == '-') {
+          splice_char(seqs,i,insertions);
+      }
+  }
+  for (i = 0; i < seqs.length; i++) {
+      if (insertions[i]) {
+          insertions[i] = normalise_insertions(insertions[i]);
+          var seq = seqs[i];
+          seqs[i] = { 'sequence' : seq, 'insertions' : insertions[i] };
+          seqs[i].toString = function() {
+              return this.sequence;
+          };
+      }
+  }
+  var result = {};
+  accs.forEach(function(acc,idx) {
+    result[acc.toLowerCase()] = seqs[idx];
+  });
+  result[ref_acc.toLowerCase()] = ref_cigar.replace('-','');
+  return result;
+};
+})();
+
+
+MASCP.GatorDataReader.Result.prototype.calculatePositionForSequence = function(ref_acc,idx,pos) {
+  if (ref_acc.toLowerCase() === idx.toLowerCase()) {
+    return pos;
+  }
+  if ( ! this.sequences ) {
+    this.sequences = this.makeSequences(ref_acc,this._raw_data.alignments);
+  }
+
+  var inserts = this.sequences[idx.toLowerCase()].insertions || {};
+  var result = pos;
+  var actual_position = 0;
+  var seq = this.sequences[idx.toLowerCase()].toString();
+  for (var i = 0 ; i < seq.length; i++ ) {
+      if (inserts[i]) {
+          actual_position += inserts[i].length;
+      }
+      actual_position += 1;
+      if (seq.charAt(i) == '-') {
+          actual_position -= 1;
+      }
+      if (pos <= actual_position) {
+          if (pos == actual_position) {
+              return (i+1);
+          } else {
+              if (i == 0) {
+                  i = 1;
+              }
+              return -1 * i;
+          }
+      }
+  }
+  return -1 * seq.length;
+};
+
+MASCP.GatorDataReader.Result.prototype.calculateSequencePositionFromPosition = function(ref_acc,idx,pos) {
+  if (ref_acc.toLowerCase() === idx.toLowerCase()) {
+    return pos;
+  }
+  if ( ! this.sequences ) {
+    this.sequences = this.makeSequences(ref_acc,this._raw_data.alignments);
+  }
+  var inserts = this.sequences[idx.toLowerCase()].insertions || {};
+  var result = pos;
+  var actual_position = 0;
+  var seq = this.sequences[idx.toLowerCase()].toString();
+  for (var i = 0 ; i < pos; i++ ) {
+      if (inserts[i]) {
+          actual_position += inserts[i].length;
+      }
+      actual_position += 1;
+      if (seq.charAt(i) == '-') {
+          actual_position -= 1;
+      }
+  }
+  if (actual_position == 0) {
+      actual_position += 1;
+  }
+  return actual_position;
+};
+
+
 
 
 var default_result_proto = MASCP.GatorDataReader.Result.prototype;
@@ -150,7 +339,7 @@ Object.defineProperty(MASCP.GatorDataReader.prototype, 'datasetname', {
     },
     set: function(value) {
       this._datasetname = value;
-      this._requestset = 'combined';
+      this._requestset = (value === 'homology') ? 'homology' : 'combined';
       var alt_result = function(data) {
         this.datasetname = value;
         MASCP.GatorDataReader.Result.apply(this,[data]);
