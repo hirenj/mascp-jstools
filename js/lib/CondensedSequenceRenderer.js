@@ -2769,7 +2769,6 @@ clazz.prototype.removeTrack = function(layer) {
     }
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {
-        this.emptyTrack(layer);
         this.removeAnnotations(layer);
         this._layer_containers[layer.name] = null;
         layer.disabled = true;
