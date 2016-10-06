@@ -28,6 +28,7 @@ var data_parser =   function(data) {
         var mimetype = set.metadata.mimetype;
         set.data.forEach(function(dat) {
             dat.dataset = set.dataset;
+            dat.acc = set.acc;
         })
         data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
     });
