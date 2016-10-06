@@ -354,6 +354,24 @@ MASCP.GatorDataReader.authenticate = function() {
   authenticate_gator();
 };
 
+var running_promises = {};
+
+var new_retrieve = function(acc) {
+  var self = this;
+  var orig_arguments = [].slice.call(arguments);
+  if (running_promises[acc+'-'+this._requestset]) {
+    running_promises[acc+'-'+this._requestset].then(function(result) {
+      MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
+    });
+    return;
+  }
+  running_promises[acc+'-'+this._requestset] = new Promise(function(resolve,reject) {
+    self.bind('resultReceived',resolve);
+    self.bind('error',reject);
+  });
+  MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
+};
+
 MASCP.GatorDataReader.createReader = function(doc) {
     // Do the auth dance here
 
@@ -363,7 +381,8 @@ MASCP.GatorDataReader.createReader = function(doc) {
     // MASCP.Service.CacheService(reader);
 
     authenticate_gator().then(function() {
-        bean.fire(reader,'ready');
+      reader.retrieve = new_retrieve;
+      bean.fire(reader,'ready');
     });
 
     return reader;
