@@ -7,7 +7,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 }
 
 (function() {
-var url_base = 'https://test.glycocode.com/api';
+var url_base = 'https://beta.glycocode.com/api';
 var cloudfront_host = '';
 
 var data_parser =   function(data) {
@@ -29,6 +29,9 @@ var data_parser =   function(data) {
         set.data.forEach(function(dat) {
             dat.dataset = set.dataset;
             dat.acc = set.acc;
+            if (set.metadata.sample) {
+              dat.species = set.metadata.sample.species;
+            }
         })
         data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
     });
@@ -51,7 +54,10 @@ var data_parser =   function(data) {
           set.data.forEach(function(dat) {
               dat.dataset = set.dataset;
               dat.acc = set.acc;
-          })
+              if (set.metadata.sample) {
+                dat.species = set.metadata.sample.species;
+              }
+          });
           data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
       });
       actual_data = { 'data' : data_by_mime };
