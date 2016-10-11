@@ -1726,8 +1726,8 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
         reader.gotResult = function() {
             var wanted_id = reader.acc || reader.agi || "";
 
-            var old_get_aas = renderer.getAminoAcidsByPosition;
-            var old_get_pep = renderer.getAminoAcidsByPeptide;
+            var old_get_aas = MASCP.CondensedSequenceRenderer.prototype.getAminoAcidsByPosition;
+            var old_get_pep = MASCP.CondensedSequenceRenderer.prototype.getAminoAcidsByPeptide;
             var old_sequence = renderer.sequence;
             if (renderer.sequences) {
                 renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
