@@ -40,7 +40,7 @@ MASCP.UniprotReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "json",
-        'auth' : MASCP.GatorDataReader.ID_TOKEN,
+        'auth' : MASCP.GATOR_AUTH_TOKEN,
         'url'   : MASCP.UniprotReader.SERVICE_URL+'/'+(this.agi).toUpperCase()
     };
 };
