@@ -1063,37 +1063,6 @@ if (typeof module != 'undefined' && module.exports){
         return;
     };
 
-
-    var authenticate_gator = function(auth_done) {
-        if (MASCP.GATOR_AUTH_TOKEN && MASCP.LOGGEDIN) {
-            console.log("Existing token");
-            setTimeout(auth_done,0);
-            return;
-        }
-        self_func = arguments.callee;
-        var callbacks = [];
-        authenticate_gator = function(cb) {
-            callbacks.push(cb);
-        };
-        authenticate(function(done) {
-            MASCP.GATOR_AUTH_TOKEN = gapi.auth.getToken().id_token;
-            MASCP.LOGGEDIN = false;
-            MASCP.GOOGLE_AUTH_TOKEN = MASCP.GATOR_AUTH_TOKEN;
-            do_request(cloudfront_host,'/exchangetoken',null,function(err,token) {
-                console.log("Got auth token");
-                authenticate_gator = self_func;
-                MASCP.LOGGEDIN = true;
-                MASCP.GATOR_AUTH_TOKEN = token;
-                auth_done();
-                callbacks.forEach(function(cb) {
-                    setTimeout(cb,0);
-                });
-                callbacks = [];
-            },'POST:application/json',null);
-            MASCP.GOOGLE_AUTH_TOKEN = gapi.auth.getToken().access_token;
-        });
-    };
-
     do_request = function(host,path,etag,callback,method,data,backoff) {
         authenticate(function(err) {
             if (err) {
@@ -1522,8 +1491,6 @@ MASCP.GoogledataReader.prototype.readWatchedDocuments = function(prefs_domain,ca
     });
 };
 
-MASCP.AuthenticateGator = authenticate_gator;
-
 MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
     // Do the auth dance here
 
@@ -1572,7 +1539,7 @@ MASCP.GoogledataReader.prototype.newBackendReader = function(doc) {
     };
     // MASCP.Service.CacheService(reader);
 
-    authenticate_gator(function() {
+    MASCP.GatorDataReader.authenticate.then(function() {
         reader_conf.auth = MASCP.GATOR_AUTH_TOKEN;
         bean.fire(reader,'ready');
     });
