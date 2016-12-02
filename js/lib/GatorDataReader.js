@@ -7,7 +7,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
 }
 
 (function() {
-var url_base = 'https://beta.glycocode.com/api';
+var url_base = window.location.hostname == 'localhost' ? 'https://test.glycocode.com/api' : '/api';
 var cloudfront_host = '';
 
 var data_parser =   function(data) {
