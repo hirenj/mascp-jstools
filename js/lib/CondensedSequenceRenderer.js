@@ -1422,14 +1422,14 @@ var addShapeToElement = function(layerName,width,opts) {
         var adjustment_g = canvas.group();
         adjustment_g.setAttribute('transform',shape.getAttribute('transform'));
         adjustment_g.push(shape);
-        shape.setAttribute('transform','translate(0,'+offset_val*this._renderer._RS+')');
+        shape.setAttribute('transform','translate(0,0)');
         adjustment_g.setHeight = function(height) {
             if ( ! shape._orig_stroke_width ) {
                 shape._orig_stroke_width = parseInt(shape.getAttribute('stroke-width')) || 0;
             }
             shape.setHeight(orig_height*renderer._RS/renderer.zoom);
             shape.setAttribute('stroke-width',this._orig_stroke_width/renderer.zoom);
-            shape.setAttribute('transform','translate(0,'+(offset_val*renderer._RS/renderer.zoom)+')');
+            shape.setAttribute('transform','translate(0,0)');
         };
         this._renderer._layer_containers[layerName].push(adjustment_g);
         adjustment_g.setAttribute('visibility', 'hidden');
