@@ -576,7 +576,8 @@ Hammer.event = {
         touch_triggered = false;
         Hammer.PointerEvent.reset();
       }
-    });
+    },{passive:true});
+    // FIXME - PASSIVE
   },
 
 
