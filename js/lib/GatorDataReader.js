@@ -115,22 +115,58 @@ var anonymous_login = function() {
     });
 };
 
+var reading_was_ok = true;
+
+var reauth_reader = function(reader_class) {
+  var current_retrieve = reader_class.prototype.retrieve;
+  reader_class.prototype.retrieve = function() {
+    var current_arguments = [].slice.call(arguments);
+    var self = this;
+    this.bind('error',function(err) {
+      if (err.status == 401 || err.status == 403) {
+        if ( ! self.tried_auth ) {
+          self.unbind('error');
+          self.tried_auth = true;
+          if (reading_was_ok) {
+            delete MASCP.GATOR_AUTH_TOKEN;
+            authenticating_promise = null;
+            reading_was_ok = false;
+          }
+          authenticate_gator().catch(function(err) {
+            console.log(err);
+          }).then(function() {
+            reading_was_ok = true;
+            self.retrieve.apply(self,current_arguments);
+          });
+        }
+      }
+    });
+    current_retrieve.apply(self,current_arguments);
+  };
+} 
+
+reauth_reader(MASCP.GatorDataReader);
+
+
 var authenticate_gator = function() {
     if (authenticating_promise) {
       return authenticating_promise;
     }
-
     // Need to put this somewhere for the moment
     // Temporary code until we move to a single host
     MASCP.ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
     MASCP.UniprotReader.SERVICE_URL = url_base + '/data/latest/uniprot';
+    if ( ! MASCP.UniprotReader.reauthed ) {
+      reauth_reader(MASCP.UniprotReader);
+    }
+    MASCP.UniprotReader.reauthed = true;
 
     if ( ! MASCP.GatorDataReader.ID_TOKEN ) {
       authenticating_promise = anonymous_login().then(function() { authenticating_promise = null; }).then(authenticate_gator);
       return authenticating_promise;
     }
 
-    if (MASCP.GATOR_AUTH_TOKEN && MASCP.LOGGEDIN) {
+    if (MASCP.GATOR_AUTH_TOKEN) {
         authenticating_promise = Promise.resolve();
         return authenticating_promise;
     }
@@ -149,7 +185,6 @@ var authenticate_gator = function() {
           reject(err);
         } else {
           MASCP.GATOR_AUTH_TOKEN = JSON.parse(token);
-          MASCP.LOGGEDIN = true;
           bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
           resolve();
         }
@@ -373,13 +408,22 @@ var new_retrieve = function(acc) {
   if (running_promises[acc+'-'+this._requestset]) {
     running_promises[acc+'-'+this._requestset].then(function(result) {
       MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
+    }).catch(function(err) {
+      authenticate_gator().then(function(){
+        new_retrieve.apply(self,orig_arguments);
+      });
     });
     return;
   }
   running_promises[acc+'-'+this._requestset] = new Promise(function(resolve,reject) {
     self.bind('resultReceived',resolve);
-    self.bind('error',reject);
+    self.once('error',reject);
   });
+
+  running_promises[acc+'-'+this._requestset].catch(function(err) {
+    authenticate_gator().then(function(){ running_promises[acc+'-'+self._requestset] = null });
+  });
+
   MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
 };
 

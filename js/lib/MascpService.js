@@ -597,6 +597,15 @@ MASCP.Service.prototype.bind = function(type,func)
     return this;
 };
 
+MASCP.Service.prototype.once = function(type,func) {
+    var self = this;
+    var wrapped_func = function() {
+        bean.remove(self,type,wrapped_func);
+        func.apply(self,[].slice.call(arguments));
+    };
+    self.bind(type,wrapped_func);
+};
+
 /**
  *  Unbinds a handler from one or more events. Returns a reference to self, so this method
  *  can be chained.
@@ -1209,7 +1218,7 @@ base.retrieve = function(agi,callback)
                     continue;
                 }
                 var dateobj = data.retrieved ? data.retrieved : (new Date());
-                if (typeof dateobj == 'string') {
+                if (typeof dateobj === 'string' || typeof dateobj === 'number') {
                     dateobj = new Date(dateobj);
                 }
                 dateobj.setUTCHours(0);
@@ -1244,7 +1253,7 @@ base.retrieve = function(agi,callback)
                 return;
             }
             var dateobj = data.retrieved ? data.retrieved : (new Date());
-            if (typeof dateobj == 'string') {
+            if (typeof dateobj === 'string' || typeof dateobj === 'number') {
                 dateobj = new Date(dateobj);
             }
             dateobj.setUTCHours(0);
