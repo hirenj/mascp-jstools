@@ -26,14 +26,14 @@ var SVGCanvas = SVGCanvas || (function() {
         
         an_array.currenty = function() {
             var a_y;
-            var filtered = an_array.filter(function(el) { return ! Array.isArray(el); });
+            var filtered = an_array.filter(function(el) { return el && ! Array.isArray(el); });
             if (filtered[0] && filtered[0].getAttribute('transform')) {
                 a_y = /translate\((-?\d+\.?\d*)\s*,?\s*(-?\d+\.?\d*)\)/.exec(filtered[0].getAttribute('transform'));
                 if (a_y !== null && (typeof(a_y) !== 'undefined')) {
                     a_y = a_y[2];
                 }
             }
-            return an_array[0] ? parseInt( a_y || an_array[0].getAttribute('y') || 0,10) : 0;
+            return filtered[0] ? parseInt( a_y || filtered[0].getAttribute('y') || 0,10) : 0;
         };
         
         an_array.animate = function(hsh) {
