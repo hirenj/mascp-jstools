@@ -260,7 +260,8 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         };
     
         var show_chrome = function() {
-            nav.promote(); 
+            nav.promote();
+            nav.refresh();
         };
 
         if ( ! MASCP.IE ) {
