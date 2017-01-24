@@ -1869,15 +1869,16 @@ var mark_groups = function(renderer,objects) {
           group.forEach(function(site){
             site.options.zoom_level = 'text';
           });
+          var coalesce_options = group[0].coalesce || objects[0].coalesce;
           new_objects.push({
             'aa' : group[0].aa,
             'type' : 'shape',
             'width' : parseInt(current.aa)-parseInt(group[0].aa)+1,
             'options' : {   'zoom_level' : 'summary',
                             'shape' : 'roundrect',
-                            'fill' : group[0].coalesce.fill,
-                            'stroke' : group[0].coalesce.stroke,
-                            'stroke_width' : group[0].coalesce.stroke_width,
+                            'fill' : coalesce_options.fill,
+                            'stroke' : coalesce_options.stroke,
+                            'stroke_width' : coalesce_options.stroke_width,
                             'height' : group[0].options.height,
                             'offset' : group[0].options.offset
                         }

@@ -44,7 +44,7 @@ var data_parser =   function(data) {
       })[0] || {'data' : [] };
       console.log(actual_data);
   }
-  if (doc == 'combined' || doc == 'homology') {
+  if (doc == 'combined' || doc == 'homology' || doc == 'predictions') {
       var data_by_mime = {};
       data.data.forEach(function(set) {
           var mimetype = set.metadata.mimetype;
