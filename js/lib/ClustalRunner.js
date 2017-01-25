@@ -440,9 +440,18 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         self.sequences.forEach(function(seq) {
             accs.push(seq.agi.toUpperCase());
         });
+        var current_order = [];
         renderer.bind('orderChanged',function(order) {
             if (self.result) {
-                self.result.aligned_idx = accs.indexOf(order[(order.indexOf(controller_name)+1)]);
+                var new_order = order.slice((order.indexOf(controller_name)+1),order.length).filter( function(track) {
+                    return accs.indexOf(track) > 0;
+                });
+                if (new_order.join(',') == current_order.join(',')) {
+                    return;
+                }
+                current_order = new_order;
+                self.result.aligned_idx = accs.indexOf(current_order[0]);
+
                 redraw_alignments(self.result.aligned_idx);
                 renderer.refreshScale();
             }
