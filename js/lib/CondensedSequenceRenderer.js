@@ -1273,7 +1273,7 @@ var addTextToElement = function(layerName,width,opts) {
         position = position + Math.floor(0.5*width);
     }
     var text_scale = (4/3);
-    var text = canvas.text(position,0,opts.txt || "Text");
+    var text = canvas.text(position,0,opts.txt || opts.content || "Text");
     text.setAttribute('font-size',text_scale*height);
     text.setAttribute('font-weight','bolder');
     text.setAttribute('fill', opts.fill || '#ffffff');
@@ -1317,6 +1317,13 @@ var addTextToElement = function(layerName,width,opts) {
             } else {
                 this.setAttribute('font-size', text_scale*height);
                 if (mask) mask.setAttribute('height',height);
+            }
+            if (mask && this.getComputedTextLength() > (width *50)) {
+                this.setAttribute('x',-0.5*width*50);
+                this.setAttribute('text-anchor','start');
+            } else {
+                this.setAttribute('x','0');
+                this.setAttribute('text-anchor','middle');
             }
         };
     } else {
@@ -1938,7 +1945,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                     rendered = renderer.getAA(parseInt(object.aa),track).addTextOverlay(track,1,object.options);
                 }
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTtextOverlay(track,1,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addTextOverlay(track,1,object.options);
             }
         }
         if (object.type === "box") {
