@@ -570,8 +570,9 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         lays.forEach(function(lay) {
             self._layer_containers[lay].forEach(function(el) {
                 if (el.move && el.aa) {
-                    var aa = self.scalePosition(el.aa,lay ? lay : el.acc);
-                    var aa_width = self.scalePosition(el.aa+el.aa_width,lay ? lay : el.acc ) ;
+                    var wanted = (self.forceTrackAccs && el.acc) ? el.acc : lay;
+                    var aa = self.scalePosition(el.aa,wanted);
+                    var aa_width = self.scalePosition(el.aa+el.aa_width,wanted) ;
                     if (aa < 0) {
                         aa *= -1;
                     }
