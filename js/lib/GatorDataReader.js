@@ -82,6 +82,7 @@ MASCP.GatorDataReader.prototype.requestData = function() {
   var acc = ( this._requestset || 'combined' ) + '/' + (this.agi || this.acc).toLowerCase();
   var gatorURL = this._endpointURL.slice(-1) == '/' ? this._endpointURL+ acc : this._endpointURL+'/'+acc;
   reader_conf.auth = MASCP.GATOR_AUTH_TOKEN;
+  reader_conf.session_cache = true;
   reader_conf.url = gatorURL;
   return reader_conf;
 };

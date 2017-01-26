@@ -649,6 +649,8 @@ var make_params = function(params) {
     return qpoints.join('&');
 };
 
+var cached_requests = {};
+
 var do_request = function(request_data) {
     
     request_data.async = true;
@@ -672,7 +674,37 @@ var do_request = function(request_data) {
         var has_question =  (index_of_quest >= 0) ? '&' : '?';
         request_data.url = request_data.url.replace(/\?$/,'') + has_question + make_params(request_data.data);
     }
+    if (request_data.type == 'GET' && request_data.session_cache) {
+        if (cached_requests[request_data.url]) {
+            cached_requests[request_data.url].then( function(data) {
+                request_data.success.call(null,data);
+            }).catch(function(error_args) {
+                request_data.error.apply(null,error_args);
+            });
+            return;
+        } else {
+            var success_callback = request_data.success;
+            var error_callback = request_data.success;
+            cached_requests[request_data.url] = new Promise(function(resolve,reject) {
+                request_data.success = function(data){
+                    resolve(data);
+                };
+                request_data.error = function(message,req,error_obj) {
+                    reject([message,req,error_obj]);
+                    delete cached_requests[request_data.url];
+                };
+            });
+            cached_requests[request_data.url].catch(function(error_args) {
+                error_callback.apply(null,error_args);
+            }).then(function(data) {
+                success_callback.call(null,data);
+            });
+        }
+    }
+
+
     request.open(request_data.type,request_data.url,request_data.async);
+
     if (request_data.type == 'POST') {
         request.setRequestHeader("Content-Type",request_data.content ? request_data.content : "application/x-www-form-urlencoded");
         datablock = request_data.content ? request_data.data : make_params(request_data.data);
