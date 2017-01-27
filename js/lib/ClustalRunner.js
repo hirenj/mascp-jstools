@@ -389,7 +389,6 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
             var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
             lay.fullname = self.sequences[i].name || layname.toUpperCase();
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
-            text_array[0].setAttribute('dy','-1ex');
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
             if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
