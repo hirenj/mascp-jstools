@@ -799,24 +799,27 @@ var SVGCanvas = SVGCanvas || (function() {
             }
             var fill_color = (opts && opts.border) ? opts.border : 'rgb(0,0,0)';
             if ( ! opts.bare_element ) {
-                marker.push(this.circle(0,-0.5*r,r));
+                if ( opts.width ) {
+                    marker.push(this.roundRect(-0.5*opts.width-1,-0.5,opts.width+2,3,1.5));
+                    marker.lastChild.setAttribute('fill',fill_color);
+                } else {
+                    marker.push(this.circle(0,-0.5*r,r));
 
-                marker.lastChild.setAttribute('fill',fill_color);
-                marker.lastChild.setAttribute('border','true');
+                    marker.lastChild.setAttribute('fill',fill_color);
+                    marker.lastChild.setAttribute('border','true');
 
-                marker.push(this.circle(0,1.5*r,r));
+                    marker.push(this.circle(0,1.5*r,r));
 
-                marker.lastChild.setAttribute('fill',fill_color);
-                marker.lastChild.setAttribute('border','true');
+                    marker.lastChild.setAttribute('fill',fill_color);
+                    marker.lastChild.setAttribute('border','true');
+                    var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(0.9)*r*RS+','+(0*r*RS));
 
-                var arrow = this.poly((-0.9*r*RS)+','+(0*r*RS)+' 0,'+(-2.5*r*RS)+' '+(0.9)*r*RS+','+(0*r*RS));
+                    arrow.setAttribute('fill',fill_color);
+                    arrow.setAttribute('stroke-width','0');
 
-                arrow.setAttribute('fill',fill_color);
-                arrow.setAttribute('stroke-width','0');
-
-                marker.push(arrow);
-                marker.lastChild.setAttribute('border','true');
-
+                    marker.push(arrow);
+                    marker.lastChild.setAttribute('border','true');
+                }
             }
             marker.setAttribute('transform','translate('+((cx)*RS)+','+0.5*cy*RS+') scale(1)');
             marker.setHeight = setHeight;
