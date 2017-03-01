@@ -296,6 +296,10 @@ MASCP.GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignmen
   var accs = [];
   var ref_cigar = '';
   alignments.forEach(function(align) {
+    if ( ! align.cigar && align.cigar_line) {
+      align.cigar = align.cigar_line;
+      delete align.cigar_line;
+    }
     align.cigar = align.cigar.match(/\d*[MD]/g)
                        .map(function(bit) {
                           return new Array((parseInt(bit.slice(0,-1)) || 1)+1).join( bit.slice(-1) == 'M' ? '.' : '-' );
