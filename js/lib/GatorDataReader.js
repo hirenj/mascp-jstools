@@ -300,10 +300,14 @@ MASCP.GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignmen
       align.cigar = align.cigar_line;
       delete align.cigar_line;
     }
-    align.cigar = align.cigar.match(/\d*[MD]/g)
-                       .map(function(bit) {
-                          return new Array((parseInt(bit.slice(0,-1)) || 1)+1).join( bit.slice(-1) == 'M' ? '.' : '-' );
-                       }).join('');
+    // If the cigar line hasn't already been revivified
+    if (! align.cigar.match(/^[\-\.]*$/)) {
+      // Expand out the cigar line replacing M with . and D with -
+      align.cigar = align.cigar.match(/\d*[MD]/g)
+                         .map(function(bit) {
+                            return new Array((parseInt(bit.slice(0,-1)) || 1)+1).join( bit.slice(-1) == 'M' ? '.' : '-' );
+                         }).join('');
+    }
     if (align.uniprot !== ref_acc.toUpperCase()) {
       accs.push(align.uniprot);
       seqs.push(align.cigar)
