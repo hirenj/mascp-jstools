@@ -109,7 +109,11 @@ var anonymous_login = function() {
         if (err) {
           reject(err);
         } else {
-          MASCP.GatorDataReader.ID_TOKEN = JSON.parse(token);
+          var auth_token = JSON.parse(token);
+          if (typeof auth_token == 'string') {
+            auth_token = { id_token: auth_token };
+          }
+          MASCP.GatorDataReader.ID_TOKEN = auth_token.id_token;
           resolve(url_base);
         }
       },true);
@@ -202,7 +206,12 @@ var authenticate_gator = function() {
           reject(err);
         } else {
           console.log("Back from exchangetoken firing auth");
-          MASCP.GATOR_AUTH_TOKEN = JSON.parse(token);
+          var auth_token = JSON.parse(token);
+          if (typeof auth_token == 'string') {
+            auth_token = { id_token: auth_token };
+          }
+          MASCP.GATOR_AUTH_TOKEN = auth_token.id_token;
+          MASCP.GATOR_SESSION_TOKEN = auth_token.session_id;
           bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
           resolve(url_base);
         }
