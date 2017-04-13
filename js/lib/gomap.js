@@ -1320,6 +1320,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     // },false);
 
     targetElement.addEventListener('touchmove',function(e) {
+        if (self.drag_zoom) {
+            return;
+        }
         if (self.momentum) {
             window.clearTimeout(self.momentum);
             self.momentum = null;
@@ -1498,6 +1501,7 @@ GOMap.Diagram.Dragger.prototype.addTouchZoomControls = function(zoomElement,touc
     var drag_zoom_end = function(evt) {
         touchElement.removeEventListener('touchmove',drag_zoom_move);
         touchElement.removeEventListener('touchend',drag_zoom_end);
+        self.drag_zoom = false;
     };
 
     touchElement.addEventListener('touchstart',function(e) {
