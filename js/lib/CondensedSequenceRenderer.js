@@ -1276,6 +1276,7 @@ var addTextToElement = function(layerName,width,opts) {
     var text_scale = (4/3);
     var text = canvas.text(position,0,opts.txt || opts.content || "Text");
     text.setAttribute('font-size',text_scale*height);
+    text.cached_width = text.getComputedTextLength() / height;
     text.setAttribute('font-weight','bolder');
     text.setAttribute('fill', opts.fill || '#ffffff');
     text.setAttribute('stroke','#000000');
@@ -1319,9 +1320,15 @@ var addTextToElement = function(layerName,width,opts) {
                 this.setAttribute('font-size', text_scale*height);
                 if (mask) mask.setAttribute('height',height);
             }
-            if (mask && this.getComputedTextLength() > (width *50)) {
-                this.setAttribute('x',-0.5*width*50);
-                this.setAttribute('text-anchor','start');
+            // If we have a mask, we want to move the text to the left.
+            if ( mask ) {
+                if ((this.cached_width*height) > (width *50)) {
+                    this.setAttribute('x',(-0.5*width*50));
+                    this.setAttribute('text-anchor','start');
+                } else {
+                    this.setAttribute('x','0');
+                    this.setAttribute('text-anchor','middle');
+                }
             } else {
                 this.setAttribute('x','0');
                 this.setAttribute('text-anchor','middle');
