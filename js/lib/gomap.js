@@ -892,8 +892,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
     if (targetElement.nodeName == 'svg') {
         targetElement.getPosition = function() {
-            var dX = targetElement.currentTranslate.x;
-            var dY = targetElement.currentTranslate.y;
+            var translate = targetElement.currentTranslateCache || targetElement.currentTranslate;
+            var dX = translate.x;
+            var dY = translate.y;
 
             return [dX, dY];
         };
@@ -944,8 +945,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 */
                 targetElement._snapback = setTimeout(function() {
                     var evObj;
-                    if (Math.abs(targetElement.currentTranslate.x - (viewBoxScale * min_x)) > 35 ) {
-                        var new_pos = 0.95*(targetElement.currentTranslate.x - (viewBoxScale * min_x));
+                    var translate = targetElement.currentTranslateCache || targetElement.currentTranslate;
+                    if (Math.abs(translate.x - (viewBoxScale * min_x)) > 35 ) {
+                        var new_pos = 0.95*(translate.x - (viewBoxScale * min_x));
                         if (new_pos < (viewBoxScale * min_x)) {
                             new_pos = (viewBoxScale * min_x);
                         }
@@ -984,9 +986,9 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
                 */
                 targetElement._snapback = setTimeout(function() {
                     var evObj;
-                    
-                    if (Math.abs(targetElement.currentTranslate.x - (-1 * min_val)) > 35 ) {
-                        var new_pos = 0.95*(targetElement.currentTranslate.x);
+                    var translate = targetElement.currentTranslateCache || targetElement.currentTranslate;
+                    if (Math.abs(translate.x - (-1 * min_val)) > 35 ) {
+                        var new_pos = 0.95*(translate.x);
                         if (new_pos > (-1*min_val)) {
                             new_pos = -1*min_val;
                         }
@@ -1701,6 +1703,7 @@ GOMap.Diagram.addZoomControls = function(zoomElement,min,max,precision,value) {
 };
 
 GOMap.Diagram.addScrollBar = function(target,controlElement,scrollContainer) {
+    return;
     var scroller = document.createElement('div');
     while (scrollContainer.childNodes.length > 0) {
         scrollContainer.removeChild(scrollContainer.firstChild);
