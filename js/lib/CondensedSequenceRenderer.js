@@ -383,7 +383,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    axis_back.setAttribute('transform','translate(-5,'+(0.3*renderer._axis_height*RS)+')');
                    axis_back.setAttribute('height',0.25*renderer._axis_height*RS);
                    pattern.setAttribute('width',10*RS);
-                   pattern.firstChild.setAttribute('x','50%');
+                   pattern.firstChild.setAttribute('x',9.5*RS);
                    pattern.firstChild.setAttribute('width',RS / renderer.zoom);
 
                    minor_mark_labels.show();
@@ -406,7 +406,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
                    axis_back.setAttribute('height',0.3*renderer._axis_height*RS);
                    pattern.setAttribute('width',20*RS);
                    pattern.firstChild.setAttribute('width',RS / renderer.zoom );
-                   pattern.firstChild.setAttribute('x','0%');
+                   pattern.firstChild.setAttribute('x','0');
                    if (this.tracers) {
                        this.tracers.hide();
                    }
