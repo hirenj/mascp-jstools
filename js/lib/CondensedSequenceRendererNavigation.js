@@ -525,49 +525,62 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
         tracks_button.setAttribute('style',old_tracks_style+" transition: all 0.25s;");
         close_group.setAttribute('style',"transition: all 0.25s; "+transform_origin_statement);
-
         var visible = true;
 
         
         var toggler = function(vis,interactive) {
             visible = ( vis === false || vis === true ) ? vis : ! visible;
             var close_transform;
-            var needs_transition = interactive ? "transition: all ease-in-out 0.4s;" : "";
+            var needs_transition = interactive ? "all ease-in-out 0.4s" : "";
 
             if (visible) {
                 self.promote();
-                panel_back.setAttribute('visibility','visible');
-                panel_back.setAttribute('style',needs_transition+translate(0));
-                tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition);
-
+                panel_back.style.transform = 'translate(0,0)';
+                panel_back.style.transition = needs_transition;
 
                 close_group._button.removeAttribute('filter');
                 if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
-                    close_transform = close_group.getAttribute('transform') || ' ';
-                    close_transform = close_transform.replace(/translate\(.*\)/,'');
-                    close_transform = close_transform.replace(/rotate\(.*\)/,'');
-                    close_group.setAttribute('transform',close_transform);
+                    close_group.style.transform='';
                 }
-                close_group.setAttribute('style',needs_transition+translate(0)+transform_origin_statement);
+                close_group.style.transform = 'translate(0,0)';
+                close_group.style.transition = needs_transition;
+                close_group.style.transformOrigin = transform_origin;
+                close_group.style.webkitTransformOrigin = transform_origin;
                 self.refresh();
             } else {
                 self.demote();
                 // Chrome bug Jan 2015 with the drop shadow
                 //close_group._button.setAttribute('filter','url(#drop_shadow)');
-                close_group.setAttribute('style',needs_transition+transform_origin_statement+translate(-0.75*self.nav_width_base,"405deg"));
-                if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
-                    close_transform = close_group.getAttribute('transform') || ' ';
-                    close_transform = close_transform + ' translate('+-0.75*self.nav_width_base+',0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+','+(12*touch_scale)+') ';
-                    close_group.setAttribute('transform',close_transform);
-                    panel_back.setAttribute('visibility','hidden');
+                close_group.style.transition = needs_transition;
+                close_group.style.transition = needs_transition;
+                close_group.style.transformOrigin = transform_origin;
+                close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)';
+                if ("ontouchend" in window) {
+                    // No longer special casing IE
+                    close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)';
+                    panel_back.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
+                    panel_back.style.transition = needs_transition;
                 } else {
-                    panel_back.setAttribute('style',needs_transition+translate(-1*self.nav_width*self.zoom));
-                    tracks_button.setAttribute('style',old_tracks_style + " "+needs_transition+translate(-1*self.nav_width*self.zoom));
+                    panel_back.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
+                    panel_back.style.transition = needs_transition;
+                    tracks_button.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
+                    tracks_button.style.transition = needs_transition;
                 }
             }
             return true;
         };
-    
+
+        self.move_closer = function() {
+            if (visible) {
+                return;
+            }
+            close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)';
+            if ("ontouchend" in window) {
+                // No longer special casing IE
+                close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)';
+            }
+        };
+
         self.hide = function(interactive) {
             toggler.call(this,false,interactive);
         };

@@ -3086,6 +3086,7 @@ clazz.prototype.refresh = function(animated) {
     viewBox[0] = 0;
     if (this.navigation) {
         this.navigation.nav_width_base = outer_viewbox[3] < 200 ? outer_viewbox[3] : 200;
+        this.navigation.move_closer();
         if (this.navigation.visible()) {
             this._canvas.style.GomapScrollLeftMargin = 100 * RS / this.zoom;
         } else {
