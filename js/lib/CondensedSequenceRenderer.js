@@ -2849,12 +2849,8 @@ clazz.prototype.enablePrintResizing = function() {
         }
         if ( self.grow_container ) {
             if (matcher.matches) {
-                var left_pos = 10*parseInt(self.leftVisibleResidue() / 10)+10;
-                self._canvas.ownerSVGElement.getElementById(self.axis_pattern_id).setAttribute('x',(left_pos*self._RS));
                 delete self._container_canvas.parentNode.cached_width;
                 bean.fire(self._canvas,'panend');
-            } else {
-                self._canvas.ownerSVGElement.getElementById(self.axis_pattern_id).setAttribute('x','0');
             }
             return;
         }
