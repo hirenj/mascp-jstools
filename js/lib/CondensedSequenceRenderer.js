@@ -14,6 +14,10 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     MASCP.SequenceRenderer.apply(this,arguments);
     var self = this;
 
+    // Create a common layer for the primary sequence
+    MASCP.registerLayer('primarySequence', { 'fullname' : 'Primary Sequence' });
+
+
     MASCP.CondensedSequenceRenderer.Zoom(self);
     var resizeTimeout;
     var resize_callback = function() {
@@ -2702,7 +2706,7 @@ MASCP.CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             }
             start = p.x;
             end = p.x;
-            canvas.addEventListener('touchmove',moving_func,false);
+            canvas.addEventListener('touchmove',moving_func,{passive:true});
         }
     },{passive:true});
     //FIXME - PASSIVE
