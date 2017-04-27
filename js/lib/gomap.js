@@ -1062,6 +1062,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       var targ = self.targetElement ? self.targetElement : targetElement;
       var positions = mousePosition(evt);
       self.dragging = true;
+      self.moved = false;
       targ.setAttribute('dragging','true');
 
       if (self.targetElement) {
@@ -1139,6 +1140,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
     
     var mouseDown = function(evt) {
         self.dragging = true;
+        self.moved = false;
         var positions = mousePosition(evt);
         self.oX = positions[0];
         self.oY = positions[1];
@@ -1181,6 +1183,7 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
 
         if (self.targetElement) {
             self.targetElement.shiftPosition(positions[0],positions[1]);
+            self.moved = true;
             return;
         }
 
@@ -1198,7 +1201,13 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
         
         p = p.matrixTransform(self.matrix);
         targetElement.shiftPosition(p.x,p.y);
+        self.moved = true;
 //        momentum = p.x;        
+    };
+
+    var captureClick = function(evt) {
+       evt.stopPropagation();
+       this.removeEventListener('click', captureClick, true);
     };
 
     var mouseUp = function(evt) { 
@@ -1223,6 +1232,12 @@ GOMap.Diagram.Dragger.prototype.applyToElement = function(targetElement) {
       if (! targ._snapback) {
         bean.fire(targ,'panend',true);
       }
+
+      if (evt.type == 'mouseup' && self.moved) {
+        targ.addEventListener('click',captureClick,true);
+      }
+      self.moved = false;
+
     };
 
     var mouseOut = function(e) {
