@@ -563,8 +563,6 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 } else {
                     panel_back.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
                     panel_back.style.transition = needs_transition;
-                    tracks_button.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
-                    tracks_button.style.transition = needs_transition;
                 }
             }
             return true;
