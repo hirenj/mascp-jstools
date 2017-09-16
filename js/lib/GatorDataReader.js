@@ -191,31 +191,11 @@ var authenticate_gator = function() {
       return authenticating_promise;
     }
     authenticating_promise = new Promise(function(resolve,reject) {
-      MASCP.Service.request({'auth' : MASCP.GatorDataReader.ID_TOKEN,
-                             'url' : url_base + '/exchangetoken',
-                             'type' : 'POST',
-                             'content' : 'application/json'
-                            },function(err,token) {
-        if (err) {
-          if (err.status === 0 || err.status === 401) {
-            MASCP.GatorDataReader.ID_TOKEN = null;
-            console.log("Rejecting a promise");
-            reject(new Error('Unauthorized'));
-            return;
-          }
-          reject(err);
-        } else {
-          console.log("Back from exchangetoken firing auth");
-          var auth_token = JSON.parse(token);
-          if (typeof auth_token == 'string') {
-            auth_token = { id_token: auth_token };
-          }
-          MASCP.GATOR_AUTH_TOKEN = auth_token.id_token;
-          MASCP.GATOR_SESSION_TOKEN = auth_token.session_id;
-          bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
-          resolve(url_base);
-        }
-      },true);
+      setTimeout(function() {
+        MASCP.GATOR_AUTH_TOKEN = MASCP.GatorDataReader.ID_TOKEN;
+        bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
+        resolve(url_base);
+      },0);
     });
 
     return authenticating_promise;
