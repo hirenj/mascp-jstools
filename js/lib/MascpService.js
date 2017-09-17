@@ -718,6 +718,10 @@ var do_request = function(request_data) {
         request.setRequestHeader('Authorization','Bearer '+request_data.auth);
     }
 
+    if (request_data.api_key) {
+        request.setRequestHeader('x-api-key',request_data.api_key);
+    }
+
     var redirect_counts = 5;
 
     request.onreadystatechange = function(evt) {
