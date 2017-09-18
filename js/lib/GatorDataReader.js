@@ -186,11 +186,6 @@ var authenticate_gator = function() {
       return authenticating_promise;
     }
 
-    if (MASCP.GATOR_AUTH_TOKEN) {
-      console.log("We have existing auth token");
-      authenticating_promise = Promise.resolve(url_base);
-      return authenticating_promise;
-    }
     authenticating_promise = new Promise(function(resolve,reject) {
       setTimeout(function() {
         MASCP.GATOR_AUTH_TOKEN = MASCP.GatorDataReader.ID_TOKEN;
