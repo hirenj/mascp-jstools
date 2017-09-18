@@ -37,6 +37,7 @@ MASCP.ClustalRunner.prototype.requestData = function()
         return {
             type: "POST",
             dataType: "json",
+            api_key: MASCP.GATOR_CLIENT_ID,
             data : {
                 'sequences' : sequences.join(",")
             }
