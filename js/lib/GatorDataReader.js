@@ -97,6 +97,7 @@ Object.defineProperty(MASCP.GatorDataReader, 'ID_TOKEN', {
   set: function(token) {
     id_token = token;
     authenticating_promise = null;
+    bean.fire(MASCP.GatorDataReader,'idtoken');
   }
 });
 
@@ -135,14 +136,19 @@ var reauth_reader = function(reader_class) {
           self.tried_auth = true;
           if (reading_was_ok) {
             delete MASCP.GATOR_AUTH_TOKEN;
+            MASCP.GatorDataReader.ID_TOKEN = null;
             authenticating_promise = null;
+            bean.fire(MASCP.GatorDataReader,'unauthorized');
             reading_was_ok = false;
           }
           authenticate_gator().catch(function(err) {
+            console.log("Error after auth",err);
             throw err;
           }).then(function() {
             reading_was_ok = true;
             self.retrieve.apply(self,current_arguments);
+          }).catch(function(err) {
+            console.log("Died on doing the reauth",err);
           });
         }
       }
@@ -181,8 +187,21 @@ var authenticate_gator = function() {
     }
 
     if ( ! MASCP.GatorDataReader.ID_TOKEN && ! MASCP.GatorDataReader.anonymous ) {
-      console.log("We cannot log in");
-      authenticating_promise = Promise.reject(new Error('Unauthorized'));
+      console.log("We cannot log in without an ID TOKEN, waiting for token");
+
+      authenticating_promise = new Promise(function(resolve,reject) {
+        var resolver = function() {
+          console.log("Got a new ID token");
+          bean.remove(MASCP.GatorDataReader,'idtoken',resolver);
+          MASCP.GATOR_AUTH_TOKEN = MASCP.GatorDataReader.ID_TOKEN;
+          resolve(url_base);
+        };
+        bean.add(MASCP.GatorDataReader,'idtoken',resolver);
+        setTimeout(function() {
+          console.log("Timed out logging in");
+          reject();
+        },5000);
+      });
       return authenticating_promise;
     }
 

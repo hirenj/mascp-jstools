@@ -684,7 +684,7 @@ var do_request = function(request_data) {
             return;
         } else {
             var success_callback = request_data.success;
-            var error_callback = request_data.success;
+            var error_callback = request_data.error;
             cached_requests[request_data.url] = new Promise(function(resolve,reject) {
                 request_data.success = function(data){
                     resolve(data);
