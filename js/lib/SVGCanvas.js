@@ -826,7 +826,7 @@ var SVGCanvas = SVGCanvas || (function() {
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
                 if (symbol.match(/^(:?https?:)?\/?.*#/)) {
-                    marker.contentElement = this.use(symbol,-r,0,r,r);
+                    marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
                     marker.contentElement.setAttribute('content','true');
 
                 } else {
@@ -867,7 +867,7 @@ var SVGCanvas = SVGCanvas || (function() {
                         rotate_amount = 180 + rotate_amount;
                     }
                     if (symb.match(/^(:?https?:)?\/?.*#/)) {
-                        new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,r,r);
+                        new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
                         new_el.setAttribute('pointer-events','none');
                         new_el.setAttribute('content','true');
                     } else {
