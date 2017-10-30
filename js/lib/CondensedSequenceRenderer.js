@@ -934,7 +934,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
               /* are we going after children too, and does the node have any? */
               if (allChildren && node.childNodes && node.childNodes.length > 0)
                 for (var i = 0, il = node.childNodes.length; i < il;) {
-                  if (node.childNodes[i].nodeName !== 'USE' && node.childNodes[i].nodeName !== 'SCRIPT') {
+                  if (node.childNodes[i].nodeName !== 'USE' && node.childNodes[i].nodeName.toUpperCase() !== 'SCRIPT') {
                       newNode.appendChild(ownerdoc._importNode(node.childNodes[i++], allChildren));
                   }
                 }
@@ -947,6 +947,18 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
               break;
           }
         };
+    };
+
+    var fix_child_links = function(node,prefix) {
+      if (node.childNodes && node.childNodes.length > 0) {
+        for (var i = 0, il = node.childNodes.length; i < il;) {
+          if (node.childNodes[i].nodeName.toUpperCase() === 'USE') {
+            var linkval = node.childNodes[i].getAttribute('xlink:href');
+            node.childNodes[i].setAttribute('xlink:href',linkval.replace(/^#/,'#'+prefix+'_'));
+          }
+          i++;
+        }
+      }
     };
 
     MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc) {
@@ -972,12 +984,14 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             }
             to_append.forEach(function(el) {
                 el.setAttribute('id',namespace+'_'+el.getAttribute('id'));
+                fix_child_links(el,namespace);
                 defs_block.appendChild(el);
             });
         } else {
             var els = new_nodes.querySelectorAll('defs > *');
             for (var i = 0 ; i < els.length; i++ ) {
                 els[i].setAttribute('id',namespace+'_'+els[i].getAttribute('id'));
+                fix_child_links(el,namespace);
                 defs_block.appendChild(els[i]);
             }
         }
