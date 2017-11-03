@@ -2055,24 +2055,19 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
             }
             var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {
-                added[1].addEventListener('touch', function() {
-                    if (click_reveal.style.display === 'none') {
-                        click_reveal.parentNode.appendChild(click_reveal);
-                        click_reveal.style.display = 'block';
+
+                click_reveal.toggleReveal = function() {
+                    ev.stopPropagation();
+                    if (this.style.display === 'none') {
+                        this.parentNode.appendChild(this);
+                        this.style.display = 'block';
                     } else {
-                        click_reveal.style.display = 'none';
+                        this.style.display = 'none';
                     }
                     renderer.refresh();
-                },false);
-                added[1].addEventListener('click',function() {
-                    if (click_reveal.style.display === 'none') {
-                        click_reveal.parentNode.appendChild(click_reveal);
-                        click_reveal.style.display = 'block';
-                    } else {
-                        click_reveal.style.display = 'none';
-                    }
-                    renderer.refresh();
-                },false);
+                };
+                added[1].addEventListener('touchstart', click_reveal.toggleReveal.bind(click_reveal),true);
+                added[1].addEventListener('click',click_reveal.toggleReveal.bind(click_reveal),false);
             }
             rendered = added[1];
         }
