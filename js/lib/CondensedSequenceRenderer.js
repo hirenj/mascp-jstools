@@ -2056,7 +2056,7 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
             var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {
 
-                click_reveal.toggleReveal = function() {
+                click_reveal.toggleReveal = function(ev) {
                     ev.stopPropagation();
                     if (this.style.display === 'none') {
                         this.parentNode.appendChild(this);
