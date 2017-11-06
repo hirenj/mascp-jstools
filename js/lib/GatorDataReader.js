@@ -161,10 +161,12 @@ reauth_reader(MASCP.GatorDataReader);
 
 
 window.addEventListener("unhandledrejection", function(err, promise) {
-  if (err.reason.message == 'Unauthorized' && ! err.reason.handled) {
+  if (err.reason && err.reason.message == 'Unauthorized' && ! err.reason.handled) {
     err.reason.handled = true;
     bean.fire(MASCP.GatorDataReader,'unauthorized');
+    return;
   }
+  console.log(err);
 });
 
 var authenticate_gator = function() {
@@ -199,7 +201,7 @@ var authenticate_gator = function() {
         bean.add(MASCP.GatorDataReader,'idtoken',resolver);
         setTimeout(function() {
           console.log("Timed out logging in");
-          reject();
+          reject(new Error('Timed out'));
         },5000);
       });
       return authenticating_promise;
