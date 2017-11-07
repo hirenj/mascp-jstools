@@ -101,6 +101,19 @@ Object.defineProperty(MASCP.GatorDataReader, 'ID_TOKEN', {
   }
 });
 
+var is_anonymous;
+
+Object.defineProperty(MASCP.GatorDataReader, 'anonymous', {
+  get: function() {
+    return is_anonymous;
+  },
+  set: function(anon) {
+    is_anonymous = anon;
+    id_token = null;
+    authenticating_promise = null;
+  }
+});
+
 var authenticating_promise;
 
 var anonymous_login = function() {
