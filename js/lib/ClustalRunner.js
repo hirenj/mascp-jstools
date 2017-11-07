@@ -298,7 +298,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
 
     renderer.forceTrackAccs = true;
     var rendered_bits = [];
-    var controller_name = 'isoform_controller';
+    var controller_name = 'isoforms';
     var group_name = 'isoforms';
 
     var draw_discontinuity = function(canvas,size) {
