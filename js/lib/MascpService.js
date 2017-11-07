@@ -679,7 +679,7 @@ var do_request = function(request_data) {
             cached_requests[request_data.url].then( function(data) {
                 request_data.success.call(null,data);
             }).catch(function(error_args) {
-                request_data.error.apply(null,error_args);
+                request_data.error.apply(null,[null,request,error_args]);
             });
             return;
         } else {
