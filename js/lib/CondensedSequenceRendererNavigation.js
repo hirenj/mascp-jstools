@@ -443,6 +443,16 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
         return drag_func;
     };
 
+    var setElementTransform = function(el,transform) {
+        var ua = window.navigator.userAgent;
+        if (ua.indexOf('Edge/') >= 0) {
+            transform = transform.replace(/px/g,'');
+            el.setAttribute('transform',transform);
+        } else {
+            el.style.transform = transform;
+        }
+    };
+
     var buildNavPane = function(back_canvas) {
         var self = this;
         self.zoom = 1;
@@ -535,14 +545,14 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
 
             if (visible) {
                 self.promote();
-                panel_back.style.transform = 'translate(0,0)';
+                setElementTransform(panel_back,'translate(0,0)');
                 panel_back.style.transition = needs_transition;
 
                 close_group._button.removeAttribute('filter');
                 if ("ontouchend" in window || window.getComputedStyle(close_group).getPropertyValue("-ms-transform")) {
-                    close_group.style.transform='';
+                    setElementTransform(close_group,'');
                 }
-                close_group.style.transform = 'translate(0,0)';
+                setElementTransform(close_group, 'translate(0,0)');
                 close_group.style.transition = needs_transition;
                 close_group.style.transformOrigin = transform_origin;
                 close_group.style.webkitTransformOrigin = transform_origin;
@@ -554,14 +564,14 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
                 close_group.style.transition = needs_transition;
                 close_group.style.transition = needs_transition;
                 close_group.style.transformOrigin = transform_origin;
-                close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)';
+                setElementTransform(close_group, 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)');
                 if ("ontouchend" in window) {
                     // No longer special casing IE
-                    close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)';
-                    panel_back.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
+                    setElementTransform(close_group,'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)');
+                    setElementTransform(panel_back, 'translate('+(-1*self.nav_width*self.zoom)+'px,0)');
                     panel_back.style.transition = needs_transition;
                 } else {
-                    panel_back.style.transform = 'translate('+(-1*self.nav_width*self.zoom)+'px,0)';
+                    setElementTransform(panel_back,'translate('+(-1*self.nav_width*self.zoom)+'px,0)');
                     panel_back.style.transition = needs_transition;
                 }
             }
@@ -572,10 +582,10 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             if (visible) {
                 return;
             }
-            close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)';
+            setElementTransform(close_group,'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)');
             if ("ontouchend" in window) {
                 // No longer special casing IE
-                close_group.style.transform = 'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)';
+                setElementTransform(close_group,'translate('+-0.75*self.nav_width_base+'px,0) rotate(45,'+(self.nav_width_base-(10 + touch_scale*11))+'px,'+(12*touch_scale)+'px)');
             }
         };
 
