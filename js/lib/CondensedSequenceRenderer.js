@@ -961,7 +961,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
       }
     };
 
-    MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc) {
+    MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc,alt_url) {
         var new_owner = this._container_canvas.ownerDocument;
         if (this._container_canvas.getElementById('defs_'+namespace)){
             return;
@@ -973,6 +973,12 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         if ( ! new_owner._importNode ) {
             add_import(new_owner);
         }
+        var ua = window.navigator.userAgent;
+        if (ua.indexOf('Edge/') >= 0) {
+            this.icons_failed = this.icons_failed || {};
+            this.icons_failed[namespace] = alt_url;
+            return;
+        }
         var new_nodes = new_owner._importNode(doc,true);
         if (typeof XPathResult !== 'undefined') {
             var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return MASCP.svgns; } ,XPathResult.ANY_TYPE,null);
@@ -981,6 +987,10 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
             while (el) {
                 to_append.push(el);
                 el = iterator.iterateNext();
+            }
+            if (to_append.length === 0) {
+                this.icons_failed = this.icons_failed || {};
+                this.icons_failed[namespace] = alt_url;
             }
             to_append.forEach(function(el) {
                 el.setAttribute('id',namespace+'_'+el.getAttribute('id'));
@@ -1954,6 +1964,21 @@ var mark_groups = function(renderer,objects) {
     });
 };
 
+MASCP.CondensedSequenceRenderer.prototype.fix_icons = function(icon_ref) {
+    if ( ! this.icons_failed ) {
+        return icon_ref;
+    }
+    if (typeof(icon_ref) === 'string') {
+        var vals = icon_ref.split('_');
+        if (vals[0] && this.icons_failed[vals[0].replace('#','')]) {
+            vals[0] = this.icons_failed[vals[0].replace('#','')]+'#';
+            var start = vals.shift();
+            console.log(icon_ref,start+vals.join('_'));
+            return start+vals.join('_');
+        }
+    }
+    return icon_ref;
+}
 
 MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     var renderer = this;
@@ -2017,6 +2042,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                         cloned_options_array[key] = object.options[key];
                     }
                 }
+                if (object.options.content && Array.isArray(content_data)) {
+                    cloned_options_array.content = object.options.content.map(renderer.fix_icons.bind(renderer));
+                }
 
                 click_reveal = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options_array);
                 click_reveal = click_reveal[1];
@@ -2052,6 +2080,13 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
                 if (object.options.hasOwnProperty(key)) {
                     cloned_options[key] = object.options[key];
                 }
+            }
+            var content_data = (object.options || {}).content;
+            if (content_data && typeof content_data === 'string') {
+                cloned_options.content = renderer.fix_icons(content_data);
+            }
+            if (content_data && Array.isArray(content_data)) {
+                cloned_options.content = content_data.map(renderer.fix_icons.bind(renderer));
             }
             var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {
