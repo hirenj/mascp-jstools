@@ -32,11 +32,14 @@ MASCP.UniprotReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.UniprotReader.SERVICE_URL = 'http://gator.masc-proteomics.org/uniprot.pl?';
+MASCP.UniprotReader.SERVICE_URL = null;
 
 MASCP.UniprotReader.prototype.requestData = function()
 {
     var self = this;
+    if ( ! MASCP.UniprotReader.SERVICE_URL) {
+        throw new Error('No service URL for UniprotReader');
+    }
     return {
         type: "GET",
         dataType: "json",
