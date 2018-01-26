@@ -542,6 +542,7 @@ MASCP.CondensedSequenceRenderer.Navigation = (function() {
             visible = ( vis === false || vis === true ) ? vis : ! visible;
             var close_transform;
             var needs_transition = interactive ? "all ease-in-out 0.4s" : "";
+            var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px;";
 
             if (visible) {
                 self.promote();
