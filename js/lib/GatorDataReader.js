@@ -92,6 +92,15 @@ MASCP.GatorDataReader.prototype.requestData = function() {
 
 var id_token;
 
+Object.defineProperty(MASCP.GatorDataReader, 'server', {
+  get: function() {
+    return url_base.replace('/api','');
+  },
+  set: function(url) {
+    url_base = url.replace('/$','') + '/api';
+  }
+});
+
 Object.defineProperty(MASCP.GatorDataReader, 'ID_TOKEN', {
   get: function() {
     return id_token;
