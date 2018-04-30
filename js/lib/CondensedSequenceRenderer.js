@@ -1,7 +1,14 @@
 /**
  *  @fileOverview   Basic classes and definitions for an SVG-based sequence renderer
  */
-MASCP.svgns = 'http://www.w3.org/2000/svg';
+
+import MASCP from './MascpService';
+import SequenceRenderer from './SequenceRenderer';
+import Navigation from './CondensedSequenceRendererNavigation';
+import bean from '../bean';
+import SVGCanvas from './SVGCanvas';
+
+const svgns = 'http://www.w3.org/2000/svg';
 
 /** Default class constructor
  *  @class      Renders a sequence using a condensed track-based display
@@ -9,16 +16,16 @@ MASCP.svgns = 'http://www.w3.org/2000/svg';
  *              the container that data will be re-inserted into.
  *  @extends    MASCP.SequenceRenderer
  */
-MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
+const CondensedSequenceRenderer = function(sequenceContainer) {
     this._RS = 50;
-    MASCP.SequenceRenderer.apply(this,arguments);
+    SequenceRenderer.apply(this,arguments);
     var self = this;
 
     // Create a common layer for the primary sequence
     MASCP.registerLayer('primarySequence', { 'fullname' : 'Primary Sequence' });
 
 
-    MASCP.CondensedSequenceRenderer.Zoom(self);
+    CondensedSequenceRenderer.Zoom(self);
     var resizeTimeout;
     var resize_callback = function() {
         sequenceContainer.cached_width = sequenceContainer.getBoundingClientRect().width;
@@ -49,13 +56,13 @@ MASCP.CondensedSequenceRenderer = function(sequenceContainer) {
     return this;
 };
 
-MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
+CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
 (function() {
     var scripts = document.getElementsByTagName("script");
     var src = scripts[scripts.length-1].src;
     src = src.replace(/[^\/]+$/,'');
-    MASCP.CondensedSequenceRenderer._BASE_PATH = src;
+    CondensedSequenceRenderer._BASE_PATH = src;
 })();
 
 (function(clazz) {
@@ -73,7 +80,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         var canvas;
         if ( document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#BasicStructure", "1.1") ) {
-            var native_canvas = this.win().document.createElementNS(MASCP.svgns,'svg');
+            var native_canvas = this.win().document.createElementNS(svgns,'svg');
             native_canvas.setAttribute('width','100%');
             native_canvas.setAttribute('height','100%');
             this._container.appendChild(native_canvas);
@@ -281,7 +288,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     };
 
     var addNav = function(nav_canvas) {
-        this.navigation = new MASCP.CondensedSequenceRenderer.Navigation(nav_canvas,this);
+        this.navigation = new CondensedSequenceRenderer.Navigation(nav_canvas,this);
         var nav = this.navigation;
         var self = this;
     
@@ -325,7 +332,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         });
         return aas;
     };
-
+    var mainDrawAxis;
     var drawAxis = mainDrawAxis = function(canvas,lineLength) {
         var RS = this._RS;
         var self = this;
@@ -536,13 +543,14 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         var renderer = this;
         var curr = renderer.zoom;
         var delta = (zoom - curr)/50;
-        bean.add(renderer,'zoomChange',function() {
-            bean.remove(renderer,'zoomChange',arguments.callee);
+        let zoomchange = function() {
+            bean.remove(renderer,'zoomChange',zoomchange);
             delete renderer.zoomCenter;
             if (callback) {
                 callback.call(null);
             }
-        });
+        };
+        bean.add(renderer,'zoomChange',zoomchange);
         if (residue) {
             renderer.zoomCenter = (residue == 'center') ? residue : { 'x' : renderer._RS*residue };
         } else {
@@ -628,7 +636,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     clazz.prototype.getAminoAcidsByPosition = function(aas,layer,acc) {
         var self = this;
         var new_aas = aas.map(function(aa) { return Math.abs(self.scalePosition(aa,layer ? layer : acc)); });
-        var results = MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition.call(this,new_aas);
+        var results = SequenceRenderer.prototype.getAminoAcidsByPosition.call(this,new_aas);
 
         for (var i = 0; i < new_aas.length; i++) {
             if (results[i]) {
@@ -910,7 +918,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
     
     };
 
-})(MASCP.CondensedSequenceRenderer);
+})(CondensedSequenceRenderer);
 
 
 (function() {
@@ -972,7 +980,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
       }
     };
 
-    MASCP.CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc,alt_url) {
+    CondensedSequenceRenderer.prototype.importIcons = function(namespace,doc,alt_url) {
         var new_owner = this._container_canvas.ownerDocument;
         if (this._container_canvas.getElementById('defs_'+namespace)){
             return;
@@ -992,7 +1000,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
         }
         var new_nodes = new_owner._importNode(doc,true);
         if (typeof XPathResult !== 'undefined') {
-            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return MASCP.svgns; } ,XPathResult.ANY_TYPE,null);
+            var iterator = new_owner.evaluate('//svg:defs/*',new_nodes,function(ns) { return svgns; } ,XPathResult.ANY_TYPE,null);
             var el = iterator.iterateNext();
             var to_append = [];
             while (el) {
@@ -1021,7 +1029,7 @@ MASCP.CondensedSequenceRenderer.prototype = new MASCP.SequenceRenderer();
 })();
 
 
-MASCP.CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values,options) {
+CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values,options) {
     var RS = this._RS;
     
     var canvas = this._canvas;
@@ -1791,15 +1799,15 @@ var scaledAddToLayer = function(layername,opts) {
     return res;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
+CondensedSequenceRenderer.prototype.enableScaling = function() {
     bean.add(this,'readerRegistered',function(reader) {
         var old_result = reader.gotResult;
         var renderer = this;
         reader.gotResult = function() {
             var wanted_id = reader.acc || reader.agi || "";
 
-            var old_get_aas = MASCP.CondensedSequenceRenderer.prototype.getAminoAcidsByPosition;
-            var old_get_pep = MASCP.CondensedSequenceRenderer.prototype.getAminoAcidsByPeptide;
+            var old_get_aas = CondensedSequenceRenderer.prototype.getAminoAcidsByPosition;
+            var old_get_pep = CondensedSequenceRenderer.prototype.getAminoAcidsByPeptide;
             var old_sequence = renderer.sequence;
             if (renderer.sequences) {
                 renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
@@ -1833,7 +1841,7 @@ MASCP.CondensedSequenceRenderer.prototype.enableScaling = function() {
 };
 
 
-MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
+CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addToLayer = scaledAddToLayer;
     el.addBoxOverlay = scaledAddBoxOverlay;
     el.addShapeOverlay = scaledAddShapeOverlay;
@@ -1844,7 +1852,7 @@ MASCP.CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el['_renderer'] = this;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
+CondensedSequenceRenderer.prototype.remove = function(lay,el) {
     if ( ! el ) {
         return false;
     }
@@ -1867,7 +1875,7 @@ MASCP.CondensedSequenceRenderer.prototype.remove = function(lay,el) {
 
 var zoomFunctions = [];
 
-MASCP.CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
+CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
     if (zoomFunctions.length == 0) {
         bean.add(this,'zoomChange',function() {
             for (var i = zoomFunctions.length - 1; i >=0; i--) {
@@ -1975,7 +1983,7 @@ var mark_groups = function(renderer,objects) {
     });
 };
 
-MASCP.CondensedSequenceRenderer.prototype.fix_icons = function(icon_ref) {
+CondensedSequenceRenderer.prototype.fix_icons = function(icon_ref) {
     if ( ! this.icons_failed ) {
         return icon_ref;
     }
@@ -1991,7 +1999,7 @@ MASCP.CondensedSequenceRenderer.prototype.fix_icons = function(icon_ref) {
     return icon_ref;
 }
 
-MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
+CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     var renderer = this;
     if (objects.length > 0 && objects[0].coalesce ) {
         mark_groups(renderer,objects);
@@ -2142,9 +2150,9 @@ MASCP.CondensedSequenceRenderer.prototype.renderObjects = function(track,objects
     return results;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
+CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     var RS = this._RS;
-    var svgns = MASCP.svgns;
+    var svgns = svgns;
     var renderer = this;
     var max_length = 300;
     var canvas = renderer._canvas;
@@ -2255,7 +2263,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
                 container_width = docwidth;
             }
         }
-        max_size = Math.ceil(10*container_width * renderer.zoom / RS);
+        let max_size = Math.ceil(10*container_width * renderer.zoom / RS);
         if (max_size > seq.length) {
             max_size = seq.length;
         }
@@ -2316,7 +2324,7 @@ MASCP.CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container)
     return amino_acids;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
+CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
     var layerName = lay;
     if (typeof layerName !== 'string') {
         layerName = lay.name;
@@ -2331,11 +2339,11 @@ MASCP.CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text
     return result;
 };
 
-MASCP.CondensedSequenceRenderer.prototype.resetAnnotations = function() {
+CondensedSequenceRenderer.prototype.resetAnnotations = function() {
     all_annotations = {};
 };
 
-MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
+CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
     var layerName = lay;
     if (typeof layerName !== 'string') {
         layerName = lay.name;
@@ -2374,7 +2382,7 @@ MASCP.CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
 
 };
 
-MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
+CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
     var canvas = this._canvas, a_parent = null, blob_idx = 0;
     var susp_id = canvas.suspendRedraw(10000);
     
@@ -2479,7 +2487,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
   mpr.fillTemplate = function(str,data,callback) {
     callback.call(null,null,template_func(str,data));
   };
-})(MASCP.CondensedSequenceRenderer.prototype);
+})(CondensedSequenceRenderer.prototype);
 
 })();
 
@@ -2532,7 +2540,7 @@ MASCP.CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName
   * @param   {Object}    e
   */
 
-MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
+CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var renderer = this;
     var highlights = [];
     var createNewHighlight = function() {
@@ -2656,7 +2664,7 @@ MASCP.CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     }
   };
 
-MASCP.CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
+CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     var self = this;
 
     if ( ! self._canvas) {
@@ -2781,7 +2789,7 @@ MASCP.CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
 /*
  * Get a canvas set of the visible tracers on this renderer
  */
-MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
+CondensedSequenceRenderer.prototype._visibleTracers = function() {
     var tracers = null;
     for (var i in MASCP.layers) {
         if (this.isLayerActive(i) && this._layer_containers[i] && this._layer_containers[i].tracers) {
@@ -2795,7 +2803,7 @@ MASCP.CondensedSequenceRenderer.prototype._visibleTracers = function() {
     return tracers;
 };
 
-MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
+CondensedSequenceRenderer.prototype._resizeContainer = function() {
     var RS = this._RS;
     if (this._container && this._canvas) {
         
@@ -2821,8 +2829,6 @@ MASCP.CondensedSequenceRenderer.prototype._resizeContainer = function() {
 };
 
 (function(clazz) {
-
-var svgns = MASCP.svgns;
 
 var vis_change_event = function(renderer,visibility) {
     var self = this;
@@ -3242,19 +3248,19 @@ clazz.prototype.pngURL = function(pngReady,out_width) {
     svgImg.src = dataurl;
 };
 
-})(MASCP.CondensedSequenceRenderer);
+})(CondensedSequenceRenderer);
 
 /**
  * Zoom level has changed for this renderer
- * @name    MASCP.CondensedSequenceRenderer#zoomChange
+ * @name    CondensedSequenceRenderer#zoomChange
  * @event
  * @param   {Object}    e
  */
 
-MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
+CondensedSequenceRenderer.Zoom = function(renderer) {
 
 /**
- *  @lends MASCP.CondensedSequenceRenderer.prototype
+ *  @lends CondensedSequenceRenderer.prototype
  *  @property   {Number}    zoom        The zoom level for a renderer. Minimum zoom level is zero, and defaults to the default zoom value
  *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
  *  @property   {Number}    padding     Padding to apply to the right and top of plots (default 10).
@@ -3367,9 +3373,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
 
                 bean.fire(self._canvas,'panend');
                 bean.fire(self._canvas,'_anim_end');
-
-                bean.add(self._canvas,'zoomChange',function() {
-                    bean.remove(self._canvas,'zoomChange',arguments.callee);
+                let zoomchange = function() {
+                    bean.remove(self._canvas,'zoomChange',zoomchange);
                     self.refresh();
                     if (typeof center_residue != 'undefined') {
                         var delta = ((start_zoom - zoom_level)/(25))*center_residue;
@@ -3385,7 +3390,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
                     }
                     center_residue = null;
                     start_x = null;              
-                });
+                }
+                bean.add(self._canvas,'zoomChange',zoomchange);
             
                 if (self._canvas) {
                     self._canvas.zoom = parseFloat(zoom_level);
@@ -3478,4 +3484,8 @@ MASCP.CondensedSequenceRenderer.Zoom = function(renderer) {
         });
     }
     
-})(MASCP.CondensedSequenceRenderer);
+})(CondensedSequenceRenderer);
+
+CondensedSequenceRenderer.Navigation = Navigation;
+
+export default CondensedSequenceRenderer;

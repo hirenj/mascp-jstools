@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="dist/js/mascp-jstools.js"></script>
+	<title>Demo</title>
+</head>
+<body>
+	<div id="container"></div>
+<script>
+
+window.onload = function() {
+	(function(global) {
+
+let setup_renderer = function(renderer) {
+    renderer.zoom = 0.81;
+    renderer.padding = 10;
+    renderer.trackOrder = [];
+    renderer.reset();
+    renderer.trackGap = 6;
+    renderer.trackHeight = 5;
+    renderer.fixedFontScale = 1;
+    renderer.grow_container = true;
+    renderer.refresh();
+};
+
+let wire_renderer_sequence_change = function(renderer) {
+  var dragger = new Dragger();
+  var seq_change_func = function() {
+    MASCP.Service.request("https://glycodomain.glycomics.ku.dk/icons.svg",function(err,doc) {
+      if (doc) {
+        renderer.importIcons("ui",doc.documentElement,"https://glycodomain.glycomics.ku.dk/icons.svg");
+        console.log("Imported UI icons");
+      }
+    },"xml");
+
+     MASCP.Service.request("https://glycodomain.glycomics.ku.dk/sugars.svg",function(err,doc) {
+      if (doc) {
+        renderer.importIcons("sugar",doc.documentElement,"https://glycodomain.glycomics.ku.dk/sugars.svg");
+        console.log("Imported Sugar icons");
+      }
+    },"xml");
+    
+    var zoomFactor = 0.95 * renderer._container.parentNode.clientWidth / (2 * renderer.sequence.length);
+    renderer.zoom = zoomFactor;
+    dragger.applyToElement(renderer._canvas);
+    dragger.addTouchZoomControls(renderer, renderer._canvas);
+    console.log("Added touch zoom controls");
+    Dragger.addScrollZoomControls.call({'enabled': true},renderer, renderer._canvas,0.1);
+
+    renderer.getVisibleLength = function() {
+      return this.rightVisibleResidue() - this.leftVisibleResidue();
+    };
+    renderer.getTotalLength = function() {
+      return this.sequence.length;
+    };
+    renderer.getLeftPosition = function() {
+      return this.leftVisibleResidue();
+    };
+    renderer.setLeftPosition = function(pos) {
+      return this.setLeftVisibleResidue(pos);
+    };
+
+
+    renderer.navigation.show();
+  };
+  renderer.bind('sequenceChange', seq_change_func);
+};
+
+
+let create_renderer = function(container) {
+  let renderer = new MASCP.CondensedSequenceRenderer(container);
+  renderer.font_order = 'Helvetica, Arial, sans-serif';
+   setup_renderer(renderer);
+   wire_renderer_sequence_change(renderer);
+   renderer.createTrack = add_track.bind(null,renderer);
+   renderer.showUniprot = show_uniprot.bind(null,renderer);
+   return renderer;
+};
+  
+let add_track = function(renderer,track) {
+  MASCP.registerLayer(track,{'fullname' : track},[renderer]);
+  renderer.trackOrder = renderer.trackOrder.concat([track]);
+  renderer.showLayer(track);
+  renderer.refresh();
+};
+  
+let show_uniprot = function(renderer,uniprot) {
+  MASCP.GATOR_CLIENT_ID='fNED1UGvPaP0XlrcEvWsHXIODIKy6WVB';
+  MASCP.GatorDataReader.server = 'https://glycodomain.glycomics.ku.dk';
+  MASCP.GatorDataReader.anonymous = true;
+  return MASCP.GatorDataReader.authenticate().then(function(url_base) {
+    let a_reader = new MASCP.UniprotReader();
+    return new Promise((resolve,reject) => {
+    a_reader.retrieve(uniprot, function(err) {
+      renderer.setSequence(this.result._raw_data.data[0]);
+      resolve(uniprot);
+    });
+    });
+  });
+};
+  
+global.makeRenderer = create_renderer;
+  
+})(window);
+  
+renderer = makeRenderer(document.getElementById('container'));
+
+renderer.showUniprot('Q14112').then( () => {
+renderer.createTrack('sometrack');
+renderer.renderObjects('sometrack',[{aa: 200, type: 'marker', options: { bare_element:true,
+height: 18,
+offset: -1,
+content:"#sugar_man"} }]);
+});
+};
+</script>
+</body>
+</html>

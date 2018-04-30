@@ -1,5 +1,7 @@
 //"use strict";
 
+import bean from '../bean';
+
 /**
  *  @fileOverview   Basic classes and defitions for the MASCP services
  */
@@ -13,7 +15,7 @@
 /**
  *  @namespace MASCP namespace
  */
-var MASCP = MASCP || {};
+const MASCP = {};
 
 if (Object.defineProperty && ! MASCP.IE8 ) {
     (function() {
@@ -59,138 +61,34 @@ if (Object.defineProperty && ! MASCP.IE8 ) {
 MASCP.Service = function(agi,endpointURL) {};
 
 
-if (typeof module != 'undefined' && module.exports){
-    var events = require('events');
-    
-    // MASCP.Service.prototype = new events.EventEmitter();
+var ie = (function(){
 
-    singletonemitter = new events.EventEmitter();
+    var undef,
+        v = 3,
+        div = document.createElement('div'),
+        all = div.getElementsByTagName('i');
 
-    MASCP.Service.emit = function(targ,args) {
-        singletonemitter.emit(targ,args);
-    };
+        do {
+            div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->';
+        } while (all[0]);
 
-    MASCP.Service.removeAllListeners = function(ev,cback) {
-        if (cback) {
-            singletonemitter.removeListeners(ev,cback);
-        } else {
-            singletonemitter.removeAllListeners(ev);
-        }
-    };
+    return v > 4 ? v : undef;
 
-    MASCP.Service.removeListener = function(ev,cback) {
-        singletonemitter.removeListener(ev,cback);
-    };
-
-    MASCP.Service.addListener = function(ev,cback) {
-        singletonemitter.addListener(ev,cback);
-    };
-    
-    var bean = {
-        'add' : function(targ,ev,cback) {
-            if (ev == "error") {
-                ev = "MASCP.error";
-            }
-            if (targ.addListener) {
-                targ.addListener(ev,cback);
-            } else {
-                var callback_func = function() {
-                    var args = Array.prototype.slice.call(arguments);
-                    if (args[0] === targ) {
-                        args.shift();
-                        cback.apply(targ,args);
-                    }
-                };
-
-                targ._listeners = targ._listeners || {};
-                if ( ! targ._listeners[ev] ) {
-                    targ._listeners[ev] = {};
-                }
-                if ( ! targ._listener ) {
-                    targ._listener = new events.EventEmitter();
-                }
-                if (targ._listeners[ev][cback]) {
-                    callback_func = targ._listeners[ev][cback];
-                }
-                targ._listener.addListener(ev,callback_func);
-                targ._listeners[ev][cback] = callback_func;
-            }
-        },
-        'remove' : function(targ,ev,cback) {
-            var self = this;
-            if (ev == "error") {
-                ev = "MASCP.error";
-            }
-            if (cback && targ.removeListener) {
-                targ.removeListener(ev,cback);
-            } else if (cback) {
-                if (targ._listeners && targ._listeners[ev] && targ._listeners[ev][cback]) {
-                    targ._listener.removeListener(ev,targ._listeners[ev][cback]);
-                    delete targ._listeners[ev][cback];
-                }
-                if (targ._listener.listeners(ev).length == 0) {
-                    targ._listeners[ev] = {};
-                }
-            } else if (targ.removeAllListeners && typeof cback == 'undefined') {
-                targ.removeAllListeners(ev);
-            }
-        },
-        'fire' : function(targ,ev,args) {
-            if (ev == "error") {
-                ev = "MASCP.error";
-            }
-            if (targ.emit) {
-                targ.emit.apply(targ,[ev].concat(args));
-            } else {
-                if (targ._listener) {
-                    targ._listener.emit.apply(targ._listener,[ev,targ].concat(args));
-                }
-            }
-        }
-    };
-    
-    MASCP.events = new events.EventEmitter();
-    module.exports = MASCP;
-    var parser = require('jsdom').jsdom;
-    
-    var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-    Object.defineProperty(XMLHttpRequest.prototype,"responseXML", {
-        get: function() { return parser((this.responseText || '').replace(/&/g,'&amp;')); },
-        set: function() {}
-
-    });
-    XMLHttpRequest.prototype.customUA = 'MASCP Gator crawler (+http://gator.masc-proteomics.org/)';
-} else {
-    window.MASCP = MASCP;
-    var ie = (function(){
-
-        var undef,
-            v = 3,
-            div = document.createElement('div'),
-            all = div.getElementsByTagName('i');
-
-            do {
-                div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->';
-            } while (all[0]);
-
-        return v > 4 ? v : undef;
-
-    }());
-    if (ie) {
-        if (ie === 7) {
-            MASCP.IE = true;
-            MASCP.IE7 = true;
-        }
-        if (ie === 8) {
-            MASCP.IE = true;
-            MASCP.IE8 = true;
-        }
-        if (ie == 9) {
-            MASCP.IE = true;
-            MASCP.IE9 = true;
-        }
+}());
+if (ie) {
+    if (ie === 7) {
         MASCP.IE = true;
+        MASCP.IE7 = true;
     }
+    if (ie === 8) {
+        MASCP.IE = true;
+        MASCP.IE8 = true;
+    }
+    if (ie == 9) {
+        MASCP.IE = true;
+        MASCP.IE9 = true;
+    }
+    MASCP.IE = true;
 }
 
 /** Build a data retrieval class that uses the given function to extract result data.
@@ -1520,50 +1418,13 @@ base.retrieve = function(agi,callback)
                 version = 1.3;                
             }
         });
-        if (typeof module != 'undefined' && module.exports) {
-            var old_get_db_data = null;
 
-            begin_transaction = function(callback,trans) {
-                if (old_get_db_data !== null) {
-                    callback.call({ "transaction" : trans });
-                    return false;
-                }
-                db.exec("PRAGMA synchronous=OFF; PRAGMA journal_mode=OFF;",function(err) {
-                    if ( err ) {
-                        callback.call(null,err);
-                        return;
-                    }
-                    old_get_db_data = get_db_data;
-
-                    get_db_data = function(id,clazz,cback) {
-                         setTimeout(function() {
-                             cback.call(null,null);
-                         },0);
-                    };
-                    callback.call({ "transaction" : trans });
-                });
-                return true;
-            };
-
-            end_transaction = function(callback) {
-                if (old_get_db_data === null) {
-                    callback();
-                    return;
-                }
-                db.exec("PRAGMA synchronous=FULL; PRAGMA journal_mode=DELETE;",function(err) {
-                    get_db_data = old_get_db_data;
-                    old_get_db_data = null;
-                    callback(err);
-                });
-            };
-        } else {
-            begin_transaction = function(callback,trans) {
-                callback.call({ "transaction" : trans });
-            };
-            end_transaction = function(callback) {
-                callback();
-            };
-        }
+        begin_transaction = function(callback,trans) {
+            callback.call({ "transaction" : trans });
+        };
+        end_transaction = function(callback) {
+            callback();
+        };
 
         sweep_cache = function(timestamp) {
             db.all("DELETE from datacache where retrieved <= ? ",[timestamp],function() {});
@@ -1887,21 +1748,7 @@ base.retrieve = function(agi,callback)
 
     var db,idb;
 
-    if (typeof window != 'undefined') {
-        window.indexedDB = window.indexedDB || window.webkitIndexedDB || window.mozIndexedDB || window.msIndexedDB;
-        if ( ! window.indexedDB ) {
-            delete window.indexedDB;
-        }
-    }
-
-    if (typeof module != 'undefined' && module.exports) {
-        var sqlite = require('sqlite3');
-        db = new sqlite.Database("cached.db");
-        if ( ! process.env.SKIP_VACUUM) {
-            db.exec("VACUUM;");
-        }
-        //db.open("cached.db",function() {});
-    } else if ("openDatabase" in window || "indexedDB" in window) {
+    if ("openDatabase" in window || "indexedDB" in window) {
 
         if ("indexedDB" in window) {
 
@@ -2185,3 +2032,6 @@ MASCP.Service.Result.prototype = {
 
 MASCP.Service.Result.prototype.render = function() {
 };
+
+
+export default MASCP;

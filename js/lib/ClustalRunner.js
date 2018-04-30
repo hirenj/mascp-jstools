@@ -1,15 +1,15 @@
 /** @fileOverview   Classes for reading data from the Clustal tool
  */
-if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
-    throw "MASCP.Service is not defined, required class";
-}
+import MASCP from './MascpService';
+import bean from '../bean';
+
 
 /** Default class constructor
  *  @class      Service class that will retrieve data from Clustal for given sequences
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-MASCP.ClustalRunner = MASCP.buildService(function(data) {
+const ClustalRunner = MASCP.buildService(function(data) {
                         this._raw_data = data;
                         if (data && typeof data == 'string') {
                             this._raw_data = { 'data' : { 'sequences' : this.getSequences(), 'alignment' : this.getAlignment() } };
@@ -17,9 +17,9 @@ MASCP.ClustalRunner = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.ClustalRunner.SERVICE_URL = 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/run/';
+ClustalRunner.SERVICE_URL = 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/run/';
 
-MASCP.ClustalRunner.hash = function(str){
+ClustalRunner.hash = function(str){
     var hash = 0;
     for (i = 0; i < str.length; i++) {
         char = str.charCodeAt(i);
@@ -28,12 +28,12 @@ MASCP.ClustalRunner.hash = function(str){
     return hash;
 };
 
-MASCP.ClustalRunner.prototype.requestData = function()
+ClustalRunner.prototype.requestData = function()
 {   
     var sequences = [].concat(this.sequences || []);
     var self = this;
-    this.agi = MASCP.ClustalRunner.hash(this.sequences.join(','))+'';
-    if (! MASCP.ClustalRunner.SERVICE_URL.match(/ebi/)) {
+    this.agi = ClustalRunner.hash(this.sequences.join(','))+'';
+    if (! ClustalRunner.SERVICE_URL.match(/ebi/)) {
         return {
             type: "POST",
             dataType: "json",
@@ -117,7 +117,7 @@ MASCP.ClustalRunner.prototype.requestData = function()
         return defaultDataReceived.call(this,data,status);
     };
     
-})(MASCP.ClustalRunner);
+})(ClustalRunner);
 
 (function() {
 var normalise_insertions = function(inserts) {
@@ -179,7 +179,7 @@ var splice_char = function(seqs,index,insertions) {
     }
 }
 
-MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
+ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
     if ( ! this._orig_raw_data ) {
         this._orig_raw_data = JSON.stringify(this._raw_data);
     } else {
@@ -212,7 +212,7 @@ MASCP.ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
 Test suite for calculating positions
 
 var aligner = 0;
-foo = new MASCP.ClustalRunner.Result();
+foo = new ClustalRunner.Result();
 foo._raw_data = {"data" : { "alignment" : "****************" , "sequences" : [ "----12345678----", "XXXXXXXXXXXXXXXX", "ABCDABC---ABCDAB" ] }};
 foo.alignToSequence(aligner);
 console.log(foo.getSequences());
@@ -226,7 +226,7 @@ console.log(foo.calculatePositionForSequence(0,7));
 console.log(foo.calculatePositionForSequence(0,8));
 
 */
-MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx,pos) {
+ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx,pos) {
     var inserts = this._raw_data.data.sequences[idx].insertions || {};
     var result = pos;
     var actual_position = 0;
@@ -253,7 +253,7 @@ MASCP.ClustalRunner.Result.prototype.calculatePositionForSequence = function(idx
     return -1 * seq.length;
 };
 
-MASCP.ClustalRunner.Result.prototype.calculateSequencePositionFromPosition = function(idx,pos) {
+ClustalRunner.Result.prototype.calculateSequencePositionFromPosition = function(idx,pos) {
     var inserts = this._raw_data.data.sequences[idx].insertions || {};
     var result = pos;
     var actual_position = 0;
@@ -277,7 +277,7 @@ MASCP.ClustalRunner.Result.prototype.calculateSequencePositionFromPosition = fun
 })();
 //1265 (P)
 
-MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
+ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     var self = this;
 
     renderer.sequences = self.sequences;
@@ -463,7 +463,7 @@ MASCP.ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
 
 }
 
-MASCP.ClustalRunner.Result.prototype.getSequences = function() {
+ClustalRunner.Result.prototype.getSequences = function() {
     if (this._raw_data && this._raw_data.data && this._raw_data.data.sequences) {
         return [].concat(this._raw_data.data.sequences);
     }
@@ -479,7 +479,7 @@ MASCP.ClustalRunner.Result.prototype.getSequences = function() {
     return results;
 };
 
-MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
+ClustalRunner.Result.prototype.getAlignment = function() {
     if (this._raw_data && this._raw_data.data && this._raw_data.data.alignment) {
         return this._raw_data.data.alignment.toString();
     }
@@ -494,3 +494,5 @@ MASCP.ClustalRunner.Result.prototype.getAlignment = function() {
 
     return result;
 };
+
+export default ClustalRunner;

@@ -2,11 +2,11 @@
  * @fileOverview    Retrieve data from the Gator web service
  */
 
-if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
-    throw "MASCP.Service is not defined, required class";
-}
+import MASCP from './MascpService';
+import ClustalRunner from './ClustalRunner';
+import UniprotReader from './UniprotReader';
+import bean from '../bean';
 
-(function() {
 
 var localhosts = ['localhost','10.0.2.2'];
 var url_base = localhosts.indexOf(window.location.hostname) >= 0 ? 'https://test.glycocode.com/api' : '/api';
@@ -73,9 +73,9 @@ var data_parser =   function(data) {
 
 /** Default class constructor
  */
-MASCP.GatorDataReader = MASCP.buildService(data_parser);
+const GatorDataReader = MASCP.buildService(data_parser);
 
-MASCP.GatorDataReader.prototype.requestData = function() {
+GatorDataReader.prototype.requestData = function() {
   var reader_conf = {
           type: "GET",
           dataType: "json",
@@ -92,7 +92,7 @@ MASCP.GatorDataReader.prototype.requestData = function() {
 
 var id_token;
 
-Object.defineProperty(MASCP.GatorDataReader, 'server', {
+Object.defineProperty(GatorDataReader, 'server', {
   get: function() {
     return url_base.replace('/api','');
   },
@@ -101,20 +101,20 @@ Object.defineProperty(MASCP.GatorDataReader, 'server', {
   }
 });
 
-Object.defineProperty(MASCP.GatorDataReader, 'ID_TOKEN', {
+Object.defineProperty(GatorDataReader, 'ID_TOKEN', {
   get: function() {
     return id_token;
   },
   set: function(token) {
     id_token = token;
     authenticating_promise = null;
-    bean.fire(MASCP.GatorDataReader,'idtoken');
+    bean.fire(GatorDataReader,'idtoken');
   }
 });
 
 var is_anonymous;
 
-Object.defineProperty(MASCP.GatorDataReader, 'anonymous', {
+Object.defineProperty(GatorDataReader, 'anonymous', {
   get: function() {
     return is_anonymous;
   },
@@ -139,7 +139,7 @@ var anonymous_login = function() {
           if (typeof auth_token == 'string') {
             auth_token = { id_token: auth_token };
           }
-          MASCP.GatorDataReader.ID_TOKEN = auth_token.id_token;
+          GatorDataReader.ID_TOKEN = auth_token.id_token;
           resolve(url_base);
         }
       },true);
@@ -160,9 +160,9 @@ var reauth_reader = function(reader_class) {
           self.tried_auth = true;
           if (reading_was_ok) {
             delete MASCP.GATOR_AUTH_TOKEN;
-            MASCP.GatorDataReader.ID_TOKEN = null;
+            GatorDataReader.ID_TOKEN = null;
             authenticating_promise = null;
-            bean.fire(MASCP.GatorDataReader,'unauthorized');
+            bean.fire(GatorDataReader,'unauthorized');
             reading_was_ok = false;
           }
           authenticate_gator().catch(function(err) {
@@ -181,13 +181,13 @@ var reauth_reader = function(reader_class) {
   };
 };
 
-reauth_reader(MASCP.GatorDataReader);
+reauth_reader(GatorDataReader);
 
 
 window.addEventListener("unhandledrejection", function(err, promise) {
   if (err.reason && err.reason.message == 'Unauthorized' && ! err.reason.handled) {
     err.reason.handled = true;
-    bean.fire(MASCP.GatorDataReader,'unauthorized');
+    bean.fire(GatorDataReader,'unauthorized');
     return;
   }
   console.log(err);
@@ -199,30 +199,30 @@ var authenticate_gator = function() {
     }
     // Need to put this somewhere for the moment
     // Temporary code until we move to a single host
-    MASCP.ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
-    MASCP.UniprotReader.SERVICE_URL = url_base + '/data/latest/uniprot';
-    if ( ! MASCP.UniprotReader.reauthed ) {
-      reauth_reader(MASCP.UniprotReader);
+    ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
+    UniprotReader.SERVICE_URL = url_base + '/data/latest/uniprot';
+    if ( ! UniprotReader.reauthed ) {
+      reauth_reader(UniprotReader);
     }
-    MASCP.UniprotReader.reauthed = true;
+    UniprotReader.reauthed = true;
 
-    if ( ! MASCP.GatorDataReader.ID_TOKEN && MASCP.GatorDataReader.anonymous ) {
+    if ( ! GatorDataReader.ID_TOKEN && GatorDataReader.anonymous ) {
       console.log("Doing an anonymous login");
       authenticating_promise = anonymous_login().then(function() { authenticating_promise = null; }).then(authenticate_gator);
       return authenticating_promise;
     }
 
-    if ( ! MASCP.GatorDataReader.ID_TOKEN && ! MASCP.GatorDataReader.anonymous ) {
+    if ( ! GatorDataReader.ID_TOKEN && ! GatorDataReader.anonymous ) {
       console.log("We cannot log in without an ID TOKEN, waiting for token");
 
       authenticating_promise = new Promise(function(resolve,reject) {
         var resolver = function() {
           console.log("Got a new ID token");
-          bean.remove(MASCP.GatorDataReader,'idtoken',resolver);
-          MASCP.GATOR_AUTH_TOKEN = MASCP.GatorDataReader.ID_TOKEN;
+          bean.remove(GatorDataReader,'idtoken',resolver);
+          MASCP.GATOR_AUTH_TOKEN = GatorDataReader.ID_TOKEN;
           resolve(url_base);
         };
-        bean.add(MASCP.GatorDataReader,'idtoken',resolver);
+        bean.add(GatorDataReader,'idtoken',resolver);
         setTimeout(function() {
           console.log("Timed out logging in");
           reject(new Error('Timed out'));
@@ -233,8 +233,8 @@ var authenticate_gator = function() {
 
     authenticating_promise = new Promise(function(resolve,reject) {
       setTimeout(function() {
-        MASCP.GATOR_AUTH_TOKEN = MASCP.GatorDataReader.ID_TOKEN;
-        bean.fire(MASCP.GatorDataReader,'auth',[url_base]);
+        MASCP.GATOR_AUTH_TOKEN = GatorDataReader.ID_TOKEN;
+        bean.fire(GatorDataReader,'auth',[url_base]);
         resolve(url_base);
       },0);
     });
@@ -242,7 +242,7 @@ var authenticate_gator = function() {
     return authenticating_promise;
 };
 
-MASCP.GatorDataReader.prototype.setupSequenceRenderer = function(renderer) {
+GatorDataReader.prototype.setupSequenceRenderer = function(renderer) {
     var self = this;
     if (this.datasetname !== 'homology') {
       return;
@@ -320,7 +320,7 @@ var splice_char = function(seqs,index,insertions) {
     }
 };
 
-MASCP.GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignments) {
+GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignments) {
   var seqs = [];
   var insertions = [];
   var accs = [];
@@ -371,7 +371,7 @@ MASCP.GatorDataReader.Result.prototype.makeSequences = function(ref_acc,alignmen
 })();
 
 
-MASCP.GatorDataReader.Result.prototype.calculatePositionForSequence = function(ref_acc,idx,pos) {
+GatorDataReader.Result.prototype.calculatePositionForSequence = function(ref_acc,idx,pos) {
   if (ref_acc.toLowerCase() === idx.toLowerCase()) {
     return pos;
   }
@@ -405,7 +405,7 @@ MASCP.GatorDataReader.Result.prototype.calculatePositionForSequence = function(r
   return -1 * seq.length;
 };
 
-MASCP.GatorDataReader.Result.prototype.calculateSequencePositionFromPosition = function(ref_acc,idx,pos) {
+GatorDataReader.Result.prototype.calculateSequencePositionFromPosition = function(ref_acc,idx,pos) {
   if (ref_acc.toLowerCase() === idx.toLowerCase()) {
     return pos;
   }
@@ -434,9 +434,9 @@ MASCP.GatorDataReader.Result.prototype.calculateSequencePositionFromPosition = f
 
 
 
-var default_result_proto = MASCP.GatorDataReader.Result.prototype;
+var default_result_proto = GatorDataReader.Result.prototype;
 
-Object.defineProperty(MASCP.GatorDataReader.prototype, 'datasetname', {
+Object.defineProperty(GatorDataReader.prototype, 'datasetname', {
     get: function() {
       return this._datasetname;
     },
@@ -445,14 +445,14 @@ Object.defineProperty(MASCP.GatorDataReader.prototype, 'datasetname', {
       this._requestset = (value === 'homology') ? 'homology' : 'combined';
       var alt_result = function(data) {
         this.datasetname = value;
-        MASCP.GatorDataReader.Result.apply(this,[data]);
+        GatorDataReader.Result.apply(this,[data]);
         return this;
       };
       alt_result.prototype = default_result_proto;
       this.__result_class = alt_result;
     }
 });
-MASCP.GatorDataReader.authenticate = function() {
+GatorDataReader.authenticate = function() {
   return authenticate_gator();
 };
 
@@ -463,7 +463,7 @@ var new_retrieve = function(acc) {
   var orig_arguments = [].slice.call(arguments);
   if (running_promises[acc+'-'+this._requestset]) {
     running_promises[acc+'-'+this._requestset].then(function(result) {
-      MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
+      GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
     }).catch(function(err) {
       authenticate_gator().then(function(){
         new_retrieve.apply(self,orig_arguments);
@@ -480,13 +480,13 @@ var new_retrieve = function(acc) {
     authenticate_gator().then(function(){ running_promises[acc+'-'+self._requestset] = null });
   });
 
-  MASCP.GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
+  GatorDataReader.prototype.retrieve.apply(self,orig_arguments);
 };
 
-MASCP.GatorDataReader.createReader = function(doc) {
+GatorDataReader.createReader = function(doc) {
     // Do the auth dance here
 
-    var reader = new MASCP.GatorDataReader(null,url_base+'/data/latest/');
+    var reader = new GatorDataReader(null,url_base+'/data/latest/');
     console.log(doc);
     reader.datasetname = doc;
     // MASCP.Service.CacheService(reader);
@@ -499,4 +499,4 @@ MASCP.GatorDataReader.createReader = function(doc) {
     return reader;
 };
 
-})();
+export default GatorDataReader;

@@ -7,7 +7,7 @@
   * dperini: https://github.com/dperini/nwevents
   * the entire mootools team: github.com/mootools/mootools-core
   */
-!function (context) {
+const bean = (function (context) {
   var __uid = 1,
       registry = {},
       collected = {},
@@ -342,4 +342,8 @@
     (module.exports = bean) :
     (context['bean'] = bean);
 
-}(this);
+    return bean;
+
+})({});
+
+export default bean;

@@ -2,33 +2,8 @@
  * @fileOverview    Read in sequences to be re-rendered in a block that can be easily annotated.
  */
 
-if ( typeof MASCP == 'undefined' ) {
-    MASCP = {};
-    var ie = (function(){
-
-        var undef,
-            v = 3,
-            div = document.createElement('div'),
-            all = div.getElementsByTagName('i');
-
-            do {
-                div.innerHTML = '<!--[if gt IE ' + (++v) + ']><i></i><![endif]-->';
-            } while (all[0]);
-
-        return v > 4 ? v : undef;
-
-    }());
-    if (ie) {
-        if (ie === 7) {
-            MASCP.IE = true;
-            MASCP.IE7 = true;
-        }
-        if (ie === 8) {
-            MASCP.IE = true;
-            MASCP.IE8 = true;
-        }
-    }
-}
+import MASCP from './MascpService';
+import bean from '../bean';
 
 
 /**
@@ -237,10 +212,10 @@ MASCP.Layer = function() {
  * @param   {Element} sequenceContainer Container element that the sequence currently is found in, and also 
  *                                      the container that data will be re-inserted into.
  */
-MASCP.SequenceRenderer = (function() {
+const SequenceRenderer = (function() {
 
     /**
-     *  @lends MASCP.SequenceRenderer.prototype
+     *  @lends SequenceRenderer.prototype
      *  @property   {Array}     trackOrder  The order of tracks on the renderer, an array of layer/group names.
      */
     var setupTrackOrder = function(renderer) {
@@ -362,14 +337,14 @@ MASCP.SequenceRenderer = (function() {
 
 /**
  * Event fired when the sequence is changed in a sequence renderer
- * @name    MASCP.SequenceRenderer#sequenceChange
+ * @name    SequenceRenderer#sequenceChange
  * @event
  * @param   {Object}    e
  */
 
 /**
  * Event fired when a result is rendered on this renderer
- * @name    MASCP.SequenceRenderer#resultsRendered
+ * @name    SequenceRenderer#resultsRendered
  * @event
  * @param   {Object}    e
  * @param   {MASCP.Service} reader  Reader that rendered the result.
@@ -394,24 +369,24 @@ MASCP.SequenceRenderer = (function() {
 
 
 /**
- *  @lends MASCP.SequenceRenderer.prototype
+ *  @lends SequenceRenderer.prototype
  *  @property   {String}  sequence  Sequence to mark up.
  */
-MASCP.SequenceRenderer.prototype = {
+SequenceRenderer.prototype = {
     sequence: null 
 };
  
 if ( MASCP.IE ) {
-    MASCP.SequenceRenderer.prototype.prototype = document.createElement('div');
+    SequenceRenderer.prototype.prototype = document.createElement('div');
 }
 
 
 /**
  * Set the sequence for this renderer. Fires the sequenceChange event when the sequence is set.
  * @param {String} sequence Sequence to render
- * @see MASCP.SequenceRenderer#event:sequenceChange
+ * @see SequenceRenderer#event:sequenceChange
  */
-MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
+SequenceRenderer.prototype.setSequence = function(sequence)
 {
     this.sequence = this._cleanSequence(sequence);
     var sequence_els = [];
@@ -449,9 +424,9 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
         el.style.height = '1.1em';
         el.style.position = 'relative';
 
-        el.addToLayer = MASCP.SequenceRenderer.addElementToLayer;
-        el.addBoxOverlay = MASCP.SequenceRenderer.addBoxOverlayToElement;
-        el.addToLayerWithLink = MASCP.SequenceRenderer.addElementToLayerWithLink;
+        el.addToLayer = SequenceRenderer.addElementToLayer;
+        el.addBoxOverlay = SequenceRenderer.addBoxOverlayToElement;
+        el.addToLayerWithLink = SequenceRenderer.addElementToLayerWithLink;
         el._renderer = renderer;
     });
     this._sequence_els = sequence_els;   
@@ -465,7 +440,7 @@ MASCP.SequenceRenderer.prototype.setSequence = function(sequence)
  * @returns ID for the layer that is created
  * @type String
  */
-MASCP.SequenceRenderer.prototype.colorResidues = function(indexes, color) {
+SequenceRenderer.prototype.colorResidues = function(indexes, color) {
     var layer_id = Math.floor(Math.random()*1000).toString();
     MASCP.registerLayer(layer_id, { 'color' : (color || '#ff0000') });
     var aas = this.getAminoAcidsByPosition(indexes);
@@ -476,7 +451,7 @@ MASCP.SequenceRenderer.prototype.colorResidues = function(indexes, color) {
 };
 
 
-MASCP.SequenceRenderer.prototype._cleanSequence = function(sequence) {
+SequenceRenderer.prototype._cleanSequence = function(sequence) {
     if ( ! sequence ) {
         return sequence;
     }
@@ -493,7 +468,7 @@ MASCP.SequenceRenderer.prototype._cleanSequence = function(sequence) {
  * @returns Elements representing each amino acid at the given positions
  * @type Array
  */
-MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition = function(indexes) {
+SequenceRenderer.prototype.getAminoAcidsByPosition = function(indexes) {
     var sequence_els = this._sequence_els;
     return indexes.map(function(index) {
         if (index < 0) {
@@ -503,7 +478,7 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPosition = function(indexes) {
     });
 };
 
-MASCP.SequenceRenderer.prototype.getAA = function(index) {
+SequenceRenderer.prototype.getAA = function(index) {
     return this.getAminoAcidsByPosition([index]).shift();
 };
 
@@ -514,7 +489,7 @@ MASCP.SequenceRenderer.prototype.getAA = function(index) {
  * @returns Elements representing each amino acid at the given positions
  * @type Array
  */
-MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequence) {
+SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequence) {
     var start = this.sequence.indexOf(peptideSequence);
     var results = [];
 
@@ -539,7 +514,7 @@ MASCP.SequenceRenderer.prototype.getAminoAcidsByPeptide = function(peptideSequen
  * @param {String|Object} layer Layer name, or layer object
  * @see MASCP.Layer#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
+SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
     var layerName = layer;
     if (typeof layer != 'string') {
         layerName = layer.name;
@@ -559,7 +534,7 @@ MASCP.SequenceRenderer.prototype.toggleLayer = function(layer,consumeChange) {
  * @param {String|Object} layer Layer name, or layer object
  * @see MASCP.Layer#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
+SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
     var layer = MASCP.getLayer(lay);
 
     if (! layer || layer.disabled) {
@@ -579,7 +554,7 @@ MASCP.SequenceRenderer.prototype.showLayer = function(lay,consumeChange) {
  * @param {String|Object} layer Layer name, or layer object
  * @see MASCP.Layer#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
+SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
     var layer = MASCP.getLayer(lay);
 
     if (! layer || layer.disabled) {
@@ -599,7 +574,7 @@ MASCP.SequenceRenderer.prototype.hideLayer = function(lay,consumeChange) {
  * Register a layer with this renderer. Actually is a proxy on to the global registry method
  * @see MASCP#registerLayer
  */
-MASCP.SequenceRenderer.prototype.registerLayer = function(layer,options) {
+SequenceRenderer.prototype.registerLayer = function(layer,options) {
     return MASCP.registerLayer(layer,options);
 };
 
@@ -609,7 +584,7 @@ MASCP.SequenceRenderer.prototype.registerLayer = function(layer,options) {
  * @param {Boolean} visibility True for visible, false for hidden
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,consumeChange) {
+SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,consumeChange) {
     var group = MASCP.getGroup(grp);
     if ( ! group ) {
         return;
@@ -646,7 +621,7 @@ MASCP.SequenceRenderer.prototype.setGroupVisibility = function(grp,visibility,co
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.hideGroup = function(group,consumeChange) {
+SequenceRenderer.prototype.hideGroup = function(group,consumeChange) {
     this.setGroupVisibility(group,false,consumeChange);
 };
 
@@ -655,7 +630,7 @@ MASCP.SequenceRenderer.prototype.hideGroup = function(group,consumeChange) {
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.showGroup = function(group,consumeChange) {
+SequenceRenderer.prototype.showGroup = function(group,consumeChange) {
     this.setGroupVisibility(group,true,consumeChange);
 };
 
@@ -664,7 +639,7 @@ MASCP.SequenceRenderer.prototype.showGroup = function(group,consumeChange) {
  * @param {Object} grp Group to set the visibility for
  * @see MASCP.Group#event:visibilityChange
  */
-MASCP.SequenceRenderer.prototype.toggleGroup = function(group,consumeChange) {
+SequenceRenderer.prototype.toggleGroup = function(group,consumeChange) {
     this.setGroupVisibility(group,consumeChange);
 };
 
@@ -674,7 +649,7 @@ MASCP.SequenceRenderer.prototype.toggleGroup = function(group,consumeChange) {
  * @returns Whether this layer is active on this renderer
  * @type Boolean
  */
-MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
+SequenceRenderer.prototype.isLayerActive = function(layer) {
     var layerName = layer;
     if (typeof layer != 'string') {
         layerName = layer.name;
@@ -687,14 +662,14 @@ MASCP.SequenceRenderer.prototype.isLayerActive = function(layer) {
  * @private
  */
 
-MASCP.SequenceRenderer.prototype._setHighlight = function(layer,isHighlighted) {
+SequenceRenderer.prototype._setHighlight = function(layer,isHighlighted) {
     return;
 };
 
 /**
  * Create a layer controller for this sequence renderer. Attach the controller to the containing box, and shift the box across 20px.
  */
-MASCP.SequenceRenderer.prototype.createLayerController = function() {
+SequenceRenderer.prototype.createLayerController = function() {
     console.log("createLayerController is deprected");
     return;
 };
@@ -706,7 +681,7 @@ MASCP.SequenceRenderer.prototype.createLayerController = function() {
  * @returns Checkbox element that when checked will toggle on the layer, and toggle it off when unchecked
  * @type Object
  */
-MASCP.SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement,exclusive) {
+SequenceRenderer.prototype.createLayerCheckbox = function(layer,inputElement,exclusive) {
     console.log("createLayerCheckbox is deprecated");
     return;
 };
@@ -745,7 +720,7 @@ MASCP.getGroup = function(group) {
     return (group == MASCP.groups[group.name]) ? group : null;
 };
 
-MASCP.SequenceRenderer.prototype._removeOtherBindings = function(object,inputElement) {
+SequenceRenderer.prototype._removeOtherBindings = function(object,inputElement) {
     var renderer = this;
     
     for (var i = 0; i < inputElement._current_bindings.length; i++) {
@@ -769,24 +744,12 @@ MASCP.SequenceRenderer.prototype._removeOtherBindings = function(object,inputEle
 };
 
 /**
- * Create a checkbox that is used to control the given group
- * @param {String|Object} group Group name or group object that a controller should be generated for
- * @param {Object} inputElement Optional input element to bind events to. If no element is given, a new one is created.
- * @returns Checkbox element that when checked will toggle on the group, and toggle it off when unchecked
- * @type Object
- */
-MASCP.SequenceRenderer.prototype.createGroupCheckbox = function(group,inputElement,exclusive) {
-    console.log("createGroupCheckbox is deprecated");
-    return;
-};
-
-/**
  * Create a layer based controller for a group. This layer can act as a proxy for the other layers
  * @param {Object} lay Layer to turn into a group controller
  * @param {Object} grp Group to be controlled by this layer.
  */
 
-MASCP.SequenceRenderer.prototype.createGroupController = function(lay,grp) {
+SequenceRenderer.prototype.createGroupController = function(lay,grp) {
     var layer = MASCP.getLayer(lay);
     var group = MASCP.getGroup(grp);
 
@@ -806,7 +769,7 @@ MASCP.SequenceRenderer.prototype.createGroupController = function(lay,grp) {
  * @returns Itself
  * @type Element
  */
-MASCP.SequenceRenderer.addElementToLayer = function(layerName)
+SequenceRenderer.addElementToLayer = function(layerName)
 {
     this.addBoxOverlay(layerName,1);
     return this;
@@ -820,7 +783,7 @@ MASCP.SequenceRenderer.addElementToLayer = function(layerName)
  * @returns Itself
  * @type Element
  */
-MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, width)
+SequenceRenderer.addElementToLayerWithLink = function(layerName, url, width)
 {
     this.classList.add(layerName);
     var anchor = document.createElement('a');
@@ -846,7 +809,7 @@ MASCP.SequenceRenderer.addElementToLayerWithLink = function(layerName, url, widt
  * @returns Itself
  * @type Element
  */
-MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fraction)
+SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fraction)
 {
     if (typeof fraction == 'undefined') {
         fraction = 1;
@@ -877,7 +840,7 @@ MASCP.SequenceRenderer.addBoxOverlayToElement = function(layerName, width, fract
 /**
  * Reset this renderer. Hide all groups and layers, disabling them in the registry.
  */
-MASCP.SequenceRenderer.prototype.reset = function()
+SequenceRenderer.prototype.reset = function()
 {
     while(this._container.classList.length > 0) {
         this._container.classList.remove(this._container.classList.item(0));
@@ -906,7 +869,7 @@ MASCP.SequenceRenderer.prototype.reset = function()
  * Execute the given block of code (in the renderer context) moving the refresh method away so that it is not called
  * @param {Function} func Function that contains operations to run without refreshing the renderer
  */
-MASCP.SequenceRenderer.prototype.withoutRefresh = function(func)
+SequenceRenderer.prototype.withoutRefresh = function(func)
 {
     var curr_refresh = this.refresh;
     this.refresh = function() {};
@@ -918,7 +881,7 @@ MASCP.SequenceRenderer.prototype.withoutRefresh = function(func)
 /**
  * Refresh the display for this sequence renderer
  */
-MASCP.SequenceRenderer.prototype.refresh = function()
+SequenceRenderer.prototype.refresh = function()
 {
     var z_index = -2;
     if ( ! this._z_indexes) {
@@ -942,19 +905,20 @@ MASCP.SequenceRenderer.prototype.refresh = function()
  * @param {Function} func Function to execute
  */
 
-MASCP.SequenceRenderer.prototype.bind = function(ev,func)
+SequenceRenderer.prototype.bind = function(ev,func)
 {
     bean.add(this,ev,func);
 };
 
-MASCP.SequenceRenderer.prototype.unbind = function(ev,func)
+SequenceRenderer.prototype.unbind = function(ev,func)
 {
     bean.remove(this,ev,func);
 };
 
 
-MASCP.SequenceRenderer.prototype.trigger = function(ev,args)
+SequenceRenderer.prototype.trigger = function(ev,args)
 {
     bean.fire(this,ev,args);
 };
 
+export default SequenceRenderer;

@@ -4,7 +4,7 @@
  * Copyright (c) 2014 Jorik Tangelder <j.tangelder@gmail.com>;
  * Licensed under the MIT license */
 
-(function(window, undefined) {
+const Hammer = (function(window, undefined) {
   'use strict';
 
 /**
@@ -1378,4 +1378,7 @@ Hammer.gestures.Transform = {
     window.Hammer = Hammer;
   }
 
+  return Hammer;
 })(window);
+
+export default Hammer;

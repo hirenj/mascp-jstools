@@ -2,9 +2,9 @@
  * @fileOverview    Classes for getting arbitrary user data onto the GATOR
  */
 
-if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
-    throw "MASCP.Service is not defined, required class";
-}
+import MASCP from './MascpService';
+import bean from '../bean';
+
 
 /** Default class constructor
  *  @class      Service class that will retrieve sequence data for a given AGI from a given ecotype
@@ -12,7 +12,7 @@ if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-MASCP.UserdataReader = MASCP.buildService(function(data) {
+const UserdataReader = MASCP.buildService(function(data) {
                         if ( ! data ) {
                             return this;
                         }
@@ -20,11 +20,11 @@ MASCP.UserdataReader = MASCP.buildService(function(data) {
                         return this;
                     });
 
-MASCP.UserdataReader.prototype.toString = function() {
-    return 'MASCP.UserdataReader.'+this.datasetname;
+UserdataReader.prototype.toString = function() {
+    return 'UserdataReader.'+this.datasetname;
 };
 
-MASCP.UserdataReader.prototype.requestData = function()
+UserdataReader.prototype.requestData = function()
 {
     var agi = this.agi.toUpperCase();
     return {
@@ -37,12 +37,10 @@ MASCP.UserdataReader.prototype.requestData = function()
 };
 
 
-MASCP.UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
+UserdataReader.prototype.setupSequenceRenderer = function(renderer) {
 // We don't have any default rendering for the UserDataReader
 // since it's all going to be custom stuff anyway
 };
-
-(function() {
 
 var apply_map = function(data_block) {
     var map = this.map;
@@ -82,7 +80,7 @@ var apply_map = function(data_block) {
     return dataset;
 };
 
-MASCP.UserdataReader.prototype.setData = function(name,data) {
+UserdataReader.prototype.setData = function(name,data) {
     
     if ( ! data ) {
         return;
@@ -130,7 +128,7 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
     }
     this.data = dataset;
     
-    var inserter = new MASCP.UserdataReader();
+    var inserter = new UserdataReader();
 
     inserter.toString = function() {
         return self.toString();
@@ -208,11 +206,11 @@ MASCP.UserdataReader.prototype.setData = function(name,data) {
 
 };
 
-MASCP.UserdataReader.datasets = function(cback,done) {
+UserdataReader.datasets = function(cback,done) {
     MASCP.Service.FindCachedService(this,function(services) {
         var result = [];
         for (var i = 0, len = services.length; i < len; i++){
-            result.push(services[i].replace(/MASCP.UserdataReader./,''));
+            result.push(services[i].replace(/UserdataReader./,''));
         }
         if (result.forEach) {
             result.forEach(cback);
@@ -223,4 +221,4 @@ MASCP.UserdataReader.datasets = function(cback,done) {
     });
 };
 
-})();
+export default UserdataReader;

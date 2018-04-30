@@ -1,20 +1,21 @@
 /** @fileOverview   Classes for reading data from MyGene.info */
-if ( typeof MASCP == 'undefined' || typeof MASCP.Service == 'undefined' ) {
-    throw "MASCP.Service is not defined, required class";
-}
+
+import MASCP from './MascpService';
+import bean from '../bean';
+
 
 /** Default class constructor
  *  @class      Service class that will retrieve data from Mygene.info for given sequences
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-MASCP.GenomeReader = MASCP.buildService(function(data) {
+const GenomeReader = MASCP.buildService(function(data) {
                         this._raw_data = data;
                         return this;
                     });
 
-MASCP.GenomeReader.SERVICE_URL = 'http://mygene.info/v2/query';
-MASCP.GenomeReader.prototype.requestData = function()
+GenomeReader.SERVICE_URL = 'http://mygene.info/v2/query';
+GenomeReader.prototype.requestData = function()
 {
     this.acc = this.agi;
 
@@ -113,10 +114,10 @@ MASCP.GenomeReader.prototype.requestData = function()
         });
         return defaultDataReceived.call(this,{"data":mapped},status);
     };
-})(MASCP.GenomeReader);
+})(GenomeReader);
 
 
-MASCP.GenomeReader.Result.prototype.getSequences = function() {
+GenomeReader.Result.prototype.getSequences = function() {
     var results = [];
     var cds_data = this._raw_data.data;
     var uniprots = Object.keys(cds_data);
@@ -143,7 +144,7 @@ MASCP.GenomeReader.Result.prototype.getSequences = function() {
     return results;
 };
 
-MASCP.GenomeReader.Result.prototype.getIntrons = function(margin) {
+GenomeReader.Result.prototype.getIntrons = function(margin) {
     var self = this;
     var results = [];
     var uprots = Object.keys(self._raw_data.data);
@@ -178,7 +179,7 @@ MASCP.GenomeReader.Result.prototype.getIntrons = function(margin) {
     return results;
 };
 
-MASCP.GenomeReader.prototype.proteinLength = function(target_cds) {
+GenomeReader.prototype.proteinLength = function(target_cds) {
     var exons = target_cds.exons;
     var total = 0;
     for (var i = 0; i < exons.length; i++) {
@@ -196,7 +197,7 @@ MASCP.GenomeReader.prototype.proteinLength = function(target_cds) {
     return Math.floor(total/3)-1;
 };
 
-MASCP.GenomeReader.prototype.calculateSequencePositionFromProteinPosition = function(idx,pos) {
+GenomeReader.prototype.calculateSequencePositionFromProteinPosition = function(idx,pos) {
     var self = this;
     var wanted_identifier = idx;
     var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
@@ -266,7 +267,7 @@ MASCP.GenomeReader.prototype.calculateSequencePositionFromProteinPosition = func
     return target_position;
 };
 
-MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
+GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,pos) {
     var self = this;
     var wanted_identifier = idx;
     var cds = self.result._raw_data.data[wanted_identifier.toLowerCase()];
@@ -313,7 +314,7 @@ MASCP.GenomeReader.prototype.calculateProteinPositionForSequence = function(idx,
     return target_position;
 };
 
-MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
+GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     var self = this;
     var wanted_identifier = self.sequences[idx].agi;
     var empty_regions =  [];
@@ -579,7 +580,7 @@ MASCP.GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
     };
 
-})(MASCP.GenomeReader);
+})(GenomeReader);
 
-
+export default GenomeReader;
 

@@ -1,6 +1,6 @@
 {
   "name": "mascp-jstools",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "homepage": "http://hirenj.github.com/mascp-jstools/",
   "description": "MASCP tools for manipulation and mashup of data. Contains basic data retrieval and display classes.",
   "keywords": [
@@ -21,25 +21,19 @@
       "url": "http://www.example.org/licenses/gpl.html"
     }
   ],
+  "scripts": {
+    "build-web": "./node_modules/.bin/webpack -d",
+    "build-watch-web": "./node_modules/.bin/webpack -d --watch"
+  },
   "repository": [
     {
       "type": "git",
       "url": "https://hirenj@github.com/hirenj/mascp-jstools.git"
     }
   ],
-  "dependencies": {
-    "xmlhttprequest": "1.0.x",
-    "nconf": "0.6.x",
-    "optimist": "0.2.x",
-    "carrier": "0.1.x",
-    "sqlite3": "3.1.x"
-  },
+  "dependencies": {},
   "main": "dist/js/mascp-jstools.services.js",
-  "bin": {
-    "gator-cli": "bin/cli",
-    "gator-managedb": "bin/data-manager.js",
-    "gator-loadcsv": "bin/load-csv.js"
-  },
+  "bin": {},
   "implements": [
     "mascp-jstools",
     "cli"
@@ -51,9 +45,9 @@
   },
   "private": "true",
   "devDependencies": {
-    "grunt": "~0.4.5",
-    "grunt-contrib-concat": "^1.0.0",
-    "grunt-contrib-copy": "^0.7.0",
-    "grunt-contrib-uglify": "^0.7.0"
+    "webpack": "^4.5.0",
+    "webpack-cli": "^2.0.14",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.0"
   }
 }

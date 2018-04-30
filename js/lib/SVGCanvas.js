@@ -1,4 +1,6 @@
-var SVGCanvas = SVGCanvas || (function() {
+import bean from '../bean';
+
+const SVGCanvas = (function() {
     
     var extended_elements = [];
     var DEFAULT_RS = 1;
@@ -1185,3 +1187,6 @@ var SVGCanvas = SVGCanvas || (function() {
     });
 
 })();
+
+
+export default SVGCanvas;
