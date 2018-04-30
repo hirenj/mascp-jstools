@@ -2152,7 +2152,6 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
 
 CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     var RS = this._RS;
-    var svgns = svgns;
     var renderer = this;
     var max_length = 300;
     var canvas = renderer._canvas;
@@ -2189,7 +2188,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
      */
 
     var supports_dx = false;
-    if (typeof MASCP.supports_dx != 'undefined') {
+    if (typeof MASCP.supports_dx !== 'undefined') {
         supports_dx = MASCP.supports_dx;
     } else {
         (function(supports_textLength) {
