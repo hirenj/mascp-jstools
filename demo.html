@@ -17,9 +17,9 @@
 </head>
 <body>
   <x-protviewer interactive ></x-protviewer>
-  <x-protviewer id="fixed" interactive ></x-protviewer>
+<!--   <x-protviewer id="fixed" interactive ></x-protviewer>
   <x-protviewer id="static"></x-protviewer>
-
+ -->  <x-geneviewer geneid="2590" interactive></x-geneviewer>
 <script>
 
 
@@ -40,27 +40,47 @@ let show_uniprot = function(renderer,uniprot) {
     });
   });
 };
-  
+
+let show_data = function(uniprot) {
+  MASCP.GATOR_CLIENT_ID='fNED1UGvPaP0XlrcEvWsHXIODIKy6WVB';
+  MASCP.GatorDataReader.server = 'https://glycodomain.glycomics.ku.dk';
+  MASCP.GatorDataReader.anonymous = true;
+  return MASCP.GatorDataReader.authenticate().then(function(url_base) {
+    let a_reader = MASCP.GatorDataReader.createReader('glycodomain');
+    a_reader.datasetname = 'glycodomain';
+    return new Promise((resolve,reject) => {
+      a_reader.retrieve(uniprot, function(err) {
+        resolve(this.result);
+      });
+    });
+  });
+};
+
+global.showData = show_data;
+
 global.showUniprot = show_uniprot;
   
 })(window);
   
 
 Promise.all(
-  [ showUniprot(document.querySelectorAll('x-protviewer')[2].renderer,'Q14112'),
-    showUniprot(document.querySelectorAll('x-protviewer')[1].renderer,'Q14118'),
+  [ //showUniprot(document.querySelectorAll('x-protviewer')[2].renderer,'Q14112'),
+    //showUniprot(document.querySelectorAll('x-protviewer')[1].renderer,'Q14118'),
     showUniprot(document.querySelectorAll('x-protviewer')[0].renderer,'Q14112') ])
 .then( () => {
-  for (let el of document.querySelectorAll('x-protviewer')) {
+  for (let el of document.querySelectorAll('x-geneviewer')) {
     el.createTrack('sometrack');
+    MASCP.getLayer('sometrack').acc = 'Q10471';
     el.createTrack('someothertrack');
+    MASCP.getLayer('someothertrack').genomic = true;
+
     let renderer = el.renderer;
     renderer.renderObjects('sometrack',[{aa: 200, type: 'marker', options: { bare_element:true,
     height: 18,
     offset: -1,
     content:"#sugar_man"} }]);
 
-    renderer.renderObjects('someothertrack',[{aa: 210, type: 'marker', options: { bare_element:true,
+    renderer.renderObjects('someothertrack',[{aa: 230379000, type: 'marker', options: { bare_element:true,
     height: 18,
     offset: -1,
     content:"#sugar_gal"} }]);
@@ -68,6 +88,7 @@ Promise.all(
     renderer.refresh();
     renderer.zoom -= 0.01;
   }
+
 });
 };
 </script>

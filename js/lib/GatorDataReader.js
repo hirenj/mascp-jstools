@@ -14,7 +14,7 @@ var url_base = localhosts.indexOf(window.location.hostname) >= 0 ? 'https://test
 var cloudfront_host = '';
 
 var data_parser =   function(data) {
-  var doc = this.datasetname || 'combined';
+  var doc = this.datasetname || (data || {}).datasetname || 'combined';
   if ( ! data || ! data.data ) {
     return this;
   }
@@ -83,7 +83,7 @@ GatorDataReader.prototype.requestData = function() {
           data: { }
       };
   var acc = ( this._requestset || 'combined' ) + '/' + (this.agi || this.acc).toLowerCase();
-  var gatorURL = this._endpointURL.slice(-1) == '/' ? this._endpointURL+ acc : this._endpointURL+'/'+acc;
+  var gatorURL = (this._endpointURL || GatorDataReader.server).slice(-1) == '/' ? this._endpointURL+ acc : this._endpointURL+'/'+acc;
   reader_conf.auth = MASCP.GATOR_AUTH_TOKEN;
   reader_conf.api_key = MASCP.GATOR_CLIENT_ID;
   reader_conf.session_cache = true;
@@ -447,8 +447,8 @@ Object.defineProperty(GatorDataReader.prototype, 'datasetname', {
       this._requestset = (value === 'homology') ? 'homology' : 'combined';
       let alt_result = class extends default_result {
         constructor(data) {
+          data.datasetname = value;
           super(data);
-          this.datasetname = value;
           return this;
         }
       };

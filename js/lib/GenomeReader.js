@@ -122,7 +122,8 @@ GenomeReader.Result.prototype.getSequences = function() {
     var results = [];
     var cds_data = this._raw_data.data;
     var uniprots = Object.keys(cds_data);
-    var min = max = null;
+    let min, max;
+    min = max = null;
     uniprots.forEach(function(uniprot) {
         var ends = cds_data[uniprot].map(function(cd) {
             if ( Array.isArray(cd) ) {
@@ -340,14 +341,17 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 };
 
 (function(serv) {
-    var get_exon_boxes = function(result) {
+    var get_exon_boxes = function(result,uniprot) {
         var cds_data = result._raw_data.data;
+        if (uniprot) {
+            console.log('Filtering exons so we only show',uniprot);
+        }
         var uniprots = Object.keys(cds_data);
         var max = result.max;
         var min = result.min;
         var return_data = [];
         var base_offset = 0;
-        uniprots.forEach(function(uniprot) {
+        uniprots.filter( up => uniprot ? up === (uniprot || '').toLowerCase() : true ).forEach(function(uniprot) {
             var ends = cds_data[uniprot].map(function(cd,idx) {
                 if ( Array.isArray(cd) ) {
                     cd = cd.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
@@ -389,10 +393,9 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var end = vals[1];
             var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
             var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
-
-            results.push({"aa" : start - 3, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 4, "offset" : -5*total, "align" : "right" } });
-            results.push({"aa" : end + 3, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 4, "offset" : total*5, "align" : "left" } });
             results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : total*3, "offset" : -1*total } });
+            results.push({"aa" : start - 3, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 4, "offset" : -4, "align" : "right" } });
+            results.push({"aa" : end + 3, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 4, "offset" : 4, "align" : "left" } });
         });
         return results;
     };
@@ -527,9 +530,9 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 return pos;
             }
             if (inverse) {
-                return self.calculateSequencePositionFromProteinPosition(layer.name,pos);
+                return self.calculateSequencePositionFromProteinPosition(layer.acc || layer.name,pos);
             }
-            return self.calculateProteinPositionForSequence(layer.name,pos);
+            return self.calculateProteinPositionForSequence(layer.acc || layer.name,pos);
         });
         var controller_name = 'cds';
         var redraw_alignments = function(sequence_index) {
@@ -567,7 +570,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var proxy_reader = {
                 agi: controller_name,
                 gotResult: function() {
-                    renderer.renderObjects(controller_name,get_exon_boxes(result));
+                    renderer.renderObjects(controller_name,get_exon_boxes(result,self.uniprot));
                 }
             };
             Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);

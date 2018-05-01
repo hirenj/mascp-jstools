@@ -106,31 +106,31 @@ const SVGCanvas = (function() {
                 var anim_steps = 1 * (Math.abs(parseInt(((target_y - curr_y)/(50*RS)),10)/rate) + 1);
                 var diff = (target_y - curr_y) / anim_steps;
                 hash.y = curr_y || 0;
-                var orig_func = arguments.callee;
+                var orig_func = an_array.animate;
                 an_array.animating = true;
                 hash.y = curr_y + diff*1;
-                
-                anim_clock_funcs.push(
-                    function(step) {
-                        if (diff < 0 && (hash.y < target_y) ) {
-                            hash.y = target_y;
-                        }
-                        if (diff > 0 && (hash.y > target_y) ) {
-                            hash.y = target_y;
-                        }
-                        attr(hash);
-                        counter += (step || 1);
-                        if (hash.y != target_y) {
-                            hash.y = curr_y + diff*(counter+1);
-                            return;
-                        }
-                        an_array.animating = false;
-                        if (target_disp) {
-                            attr({'visibility' : target_disp});
-                        }
-                        anim_clock_funcs.splice(anim_clock_funcs.indexOf(arguments.callee),1);
+
+                let step_func = function(step) {
+                    if (diff < 0 && (hash.y < target_y) ) {
+                        hash.y = target_y;
                     }
-                );
+                    if (diff > 0 && (hash.y > target_y) ) {
+                        hash.y = target_y;
+                    }
+                    attr(hash);
+                    counter += (step || 1);
+                    if (hash.y != target_y) {
+                        hash.y = curr_y + diff*(counter+1);
+                        return;
+                    }
+                    an_array.animating = false;
+                    if (target_disp) {
+                        attr({'visibility' : target_disp});
+                    }
+                    anim_clock_funcs.splice(anim_clock_funcs.indexOf(step_func),1);
+                }
+
+                anim_clock_funcs.push(step_func);
                 anim_clock_funcs[anim_clock_funcs.length - 1].target_set = an_array;
             }
             return;

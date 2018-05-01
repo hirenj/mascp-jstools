@@ -21,4 +21,7 @@ MASCP.GatorDataReader = GatorDataReader;
 
 import GatorComponent from './lib/GatorComponent';
 
+import GeneComponent from './lib/GeneComponent';
+
 MASCP.GatorComponent = GatorComponent;
+MASCP.GeneComponent = GeneComponent;

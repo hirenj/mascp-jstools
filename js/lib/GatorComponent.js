@@ -113,8 +113,7 @@ let try_import_symbols = (renderer,namespace,url) => {
 };
 
 let zoom_to_fit = (renderer) => {
-  let zoomFactor = 0.95 * renderer._container.parentNode.clientWidth / (2 * renderer.sequence.length);
-  renderer.zoom = zoomFactor;
+  renderer.fitZoom();
 };
 
 let make_draggable = function(renderer,dragger) {
