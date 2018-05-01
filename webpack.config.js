@@ -1,4 +1,7 @@
+const CompressionPlugin = require("compression-webpack-plugin");
+
 module.exports = {
+  devtool: 'source-map',
   entry: {
     'mascp-jstools': [ './js/index.js' ],
   },
@@ -6,6 +9,9 @@ module.exports = {
     filename: '[name].js',
     path: __dirname + '/dist/js'
   },
+  plugins: [
+    new CompressionPlugin()
+  ],
   module: {
     rules: [{
       test: /\.js$/,

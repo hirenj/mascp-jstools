@@ -18,7 +18,7 @@ MASCP.UniprotReader = UniprotReader;
 MASCP.UserdataReader  = UserdataReader ;
 MASCP.GenomeReader = GenomeReader;
 MASCP.GatorDataReader = GatorDataReader;
-MASCP.CondensedSequenceRenderer = CondensedSequenceRenderer;
-MASCP.Service  = Service;
 
-window.Dragger = Dragger;
+import GatorComponent from './lib/GatorComponent';
+
+MASCP.GatorComponent = GatorComponent;

@@ -26,9 +26,11 @@ const Dragger = function() {
  * are used to move the viewport around. 
  * @param {Element} targetElement Element to enable panning upon.
  */
-Dragger.prototype.applyToElement = function(targetElement) {
+Dragger.prototype.applyToElement = function(targetElement,enabled) {
     var self = this;
-    self.enabled = true;
+    if (typeof enabled !== 'undefined') {
+        self.enabled = enabled;        
+    }
     
     var momentum = [];
 
