@@ -1,6 +1,7 @@
 /** @fileOverview   Classes for reading data from MyGene.info */
 
-import MASCP from './MascpService';
+import MASCP from './MASCP';
+import Service from './Service';
 import bean from '../bean';
 
 
@@ -9,7 +10,7 @@ import bean from '../bean';
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-const GenomeReader = MASCP.buildService(function(data) {
+const GenomeReader = Service.buildService(function(data) {
                         this._raw_data = data;
                         return this;
                     });
@@ -514,7 +515,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     zoomCheck();
                 }
             };
-            MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
+            Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
             proxy_reader.gotResult();
         };
     };
@@ -569,7 +570,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     renderer.renderObjects(controller_name,get_exon_boxes(result));
                 }
             };
-            MASCP.Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
+            Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
             proxy_reader.gotResult();
 
             self.redrawIntrons = redrawIntrons(renderer,controller_name,scaler_function);

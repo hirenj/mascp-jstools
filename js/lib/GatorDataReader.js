@@ -2,7 +2,8 @@
  * @fileOverview    Retrieve data from the Gator web service
  */
 
-import MASCP from './MascpService';
+import Service from './Service';
+import MASCP from './MASCP';
 import ClustalRunner from './ClustalRunner';
 import UniprotReader from './UniprotReader';
 import bean from '../bean';
@@ -73,7 +74,7 @@ var data_parser =   function(data) {
 
 /** Default class constructor
  */
-const GatorDataReader = MASCP.buildService(data_parser);
+const GatorDataReader = Service.buildService(data_parser);
 
 GatorDataReader.prototype.requestData = function() {
   var reader_conf = {
@@ -129,7 +130,7 @@ var authenticating_promise;
 
 var anonymous_login = function() {
   return new Promise(function(resolve,reject) {
-      MASCP.Service.request({'url' : url_base + '/login?cachebuster='+(new Date()).getTime(),
+      Service.request({'url' : url_base + '/login?cachebuster='+(new Date()).getTime(),
                              'type' : 'GET'
                             },function(err,token) {
         if (err) {
@@ -151,6 +152,7 @@ var reading_was_ok = true;
 var reauth_reader = function(reader_class) {
   var current_retrieve = reader_class.prototype.retrieve;
   reader_class.prototype.retrieve = function() {
+    console.log('Retrieve with auth retry');
     var current_arguments = [].slice.call(arguments);
     var self = this;
     this.bind('error',function(err) {
@@ -434,7 +436,7 @@ GatorDataReader.Result.prototype.calculateSequencePositionFromPosition = functio
 
 
 
-var default_result_proto = GatorDataReader.Result.prototype;
+var default_result = GatorDataReader.Result;
 
 Object.defineProperty(GatorDataReader.prototype, 'datasetname', {
     get: function() {
@@ -443,13 +445,14 @@ Object.defineProperty(GatorDataReader.prototype, 'datasetname', {
     set: function(value) {
       this._datasetname = value;
       this._requestset = (value === 'homology') ? 'homology' : 'combined';
-      var alt_result = function(data) {
-        this.datasetname = value;
-        GatorDataReader.Result.apply(this,[data]);
-        return this;
+      let alt_result = class extends default_result {
+        constructor(data) {
+          super(data);
+          this.datasetname = value;
+          return this;
+        }
       };
-      alt_result.prototype = default_result_proto;
-      this.__result_class = alt_result;
+      GatorDataReader.Result = alt_result;
     }
 });
 GatorDataReader.authenticate = function() {

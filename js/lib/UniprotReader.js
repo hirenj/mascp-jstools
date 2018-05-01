@@ -2,7 +2,7 @@
  * @fileOverview    Classes for reading data from Uniprot database
  */
 
-import MASCP from './MascpService';
+import Service from './Service';
 import UserdataReader from './UserdataReader';
 import bean from '../bean';
 
@@ -13,7 +13,7 @@ import bean from '../bean';
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-const UniprotReader = MASCP.buildService(function(data) {
+const UniprotReader = Service.buildService(function(data) {
                         if ( data && typeof(data) === 'string' ) {
                             var dats = UniprotReader.parseFasta(data);
                             var key;

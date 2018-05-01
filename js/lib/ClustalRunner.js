@@ -1,6 +1,6 @@
 /** @fileOverview   Classes for reading data from the Clustal tool
  */
-import MASCP from './MascpService';
+import Service from './Service';
 import bean from '../bean';
 
 
@@ -9,7 +9,7 @@ import bean from '../bean';
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-const ClustalRunner = MASCP.buildService(function(data) {
+const ClustalRunner = Service.buildService(function(data) {
                         this._raw_data = data;
                         if (data && typeof data == 'string') {
                             this._raw_data = { 'data' : { 'sequences' : this.getSequences(), 'alignment' : this.getAlignment() } };

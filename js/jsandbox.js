@@ -270,3 +270,5 @@ var JSandbox = (function (self) {
 	return Sandbox;
 }(self)),
 Sandbox = JSandbox;
+
+export default JSandbox;

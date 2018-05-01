@@ -2,7 +2,9 @@
  * @fileOverview    Classes for getting arbitrary user data onto the GATOR
  */
 
-import MASCP from './MascpService';
+import Service from './Service';
+import CachingService from './ServiceCaching';
+import MASCP from './MASCP';
 import bean from '../bean';
 
 
@@ -12,7 +14,7 @@ import bean from '../bean';
  *  @param      {String} endpointURL    Endpoint URL for this service
  *  @extends    MASCP.Service
  */
-const UserdataReader = MASCP.buildService(function(data) {
+const UserdataReader = Service.buildService(function(data) {
                         if ( ! data ) {
                             return this;
                         }
@@ -92,7 +94,7 @@ UserdataReader.prototype.setData = function(name,data) {
     // just to make sure that it has access
     // to the cache retrieval mechanisms
 
-    MASCP.Service.CacheService(this);
+    CachingService.CacheService(this);
     
     this.datasetname = name;
 
@@ -142,7 +144,7 @@ UserdataReader.prototype.setData = function(name,data) {
         cback.call(this);
     };
     
-    MASCP.Service.CacheService(inserter);
+    CachingService.CacheService(inserter);
 
     var accs = [];
     var acc;
@@ -175,7 +177,7 @@ UserdataReader.prototype.setData = function(name,data) {
         },0);
         return;
     }
-    MASCP.Service.BulkOperation(function(err) {
+    CachingService.BulkOperation(function(err) {
         if (err) {
             bean.fire(self,'error',[err]);
             return;
@@ -207,7 +209,7 @@ UserdataReader.prototype.setData = function(name,data) {
 };
 
 UserdataReader.datasets = function(cback,done) {
-    MASCP.Service.FindCachedService(this,function(services) {
+    CachingService.FindCachedService(this,function(services) {
         var result = [];
         for (var i = 0, len = services.length; i < len; i++){
             result.push(services[i].replace(/UserdataReader./,''));

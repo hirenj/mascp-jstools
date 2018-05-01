@@ -2,7 +2,7 @@
  *  @fileOverview   Basic classes and definitions for an SVG-based sequence renderer
  */
 
-import MASCP from './MascpService';
+import MASCP from './MASCP';
 import SequenceRenderer from './SequenceRenderer';
 import Navigation from './CondensedSequenceRendererNavigation';
 import bean from '../bean';
@@ -57,13 +57,6 @@ const CondensedSequenceRenderer = function(sequenceContainer) {
 };
 
 CondensedSequenceRenderer.prototype = new SequenceRenderer();
-
-(function() {
-    var scripts = document.getElementsByTagName("script");
-    var src = scripts[scripts.length-1].src;
-    src = src.replace(/[^\/]+$/,'');
-    CondensedSequenceRenderer._BASE_PATH = src;
-})();
 
 (function(clazz) {
     var createCanvasObject = function() {
@@ -1598,151 +1591,6 @@ var addCalloutToLayer = function(layerName,element,opts) {
     return callout;
 };
 
-var all_annotations = {};
-var default_annotation_height = 8;
-
-var addAnnotationToLayer = function(layerName,width,opts) {
-    var canvas = this._renderer._canvas;
-    
-    var renderer = this._renderer;
-    
-    if ( ! canvas ) {
-        var orig_func = arguments.callee;
-        var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);            
-            orig_func.call(self,layerName,width,opts);
-        });
-        log("Delaying rendering, waiting for sequence change");
-        return;
-    }
-
-    if (typeof opts == 'undefined') {
-        opts = { 'angle' : 0,
-                'border' : 'rgb(255,0,0)',
-                'content': 'A'
-         };
-    } else {
-        if ( typeof opts.angle == 'undefined' ) {
-            opts.angle = 0;
-        }
-    }
-    
-    if ( ! all_annotations[layerName]) {
-        all_annotations[layerName] = {};
-    }
-    
-    var blob_id = this._index+'_'+opts.angle;
-
-    if (opts.angle == 'auto') {
-        if ( ! all_annotations[layerName][blob_id] ) {
-            all_annotations[layerName][blob_id] = {};
-        }
-    }
-
-    var blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
-
-    var height = opts.height || this._renderer._layer_containers[layerName].track_height;
-
-    var offset = height / 2; //this._renderer._RS * height / 2;
-    var blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,0,opts.content,opts);
-
-    if (opts.angle == 'auto') {
-        if ( ! blob.contents ) {
-            blob.contents = [opts.content];
-        } else {
-            if (blob.contents.indexOf(opts.content) < 0) {
-                blob.contents.push(opts.content);
-            }
-        }
-
-        opts.angle = blob.contents.length == 1 ? 0 : (-45 + 90*((blob.contents.indexOf(opts.content))/(blob.contents.length-1)));
-        blob_id = this._index+'_'+opts.content;
-        blob_exists = (typeof all_annotations[layerName][blob_id]) !== 'undefined';
-        blob = all_annotations[layerName][blob_id] ? all_annotations[layerName][blob_id] : canvas.growingMarker(0,offset,opts.content,opts);
-    }
-    
-    blob.setAttribute('transform','translate('+((this._index + 0.5) * this._renderer._RS) +',0.01) scale(1)');
-    blob.setAttribute('height','250');
-    blob.firstChild.setAttribute('transform', 'translate(-100,0) rotate('+opts.angle+',100,0.001)');
-
-    blob.angle = opts.angle;
-    all_annotations[layerName][blob_id] = blob;
-    if ( ! blob_exists ) {
-        blob._value = 0;
-        this._renderer._layer_containers[layerName].push(blob);
-        if (typeof opts.offset == 'undefined' || opts.offset === null) {
-            blob.offset = 0*height;
-        } else {
-            blob.offset = opts.offset;
-            if (opts.height) {
-                blob.offset = opts.offset / opts.height;
-            }
-        }
-
-        blob.height = height;
-        if ( ! opts.height ) {
-            this._renderer._layer_containers[layerName].fixed_track_height = height;
-        } else {
-            var old_set_height = blob.setHeight;
-            blob.setHeight = function(hght) {
-                if (arguments.callee.caller != renderer.redrawAnnotations) {
-                    return;
-                }
-                return old_set_height.call(this,hght);
-            };
-        }
-    }
-    
-    blob._value += width;
-    if ( ! blob_exists ) {
-        var bobble = canvas.circle(this._index+0.5,10+height,0.25);
-        bobble.setAttribute('visibility','hidden');
-        bobble.style.opacity = '0.4';
-
-        var tracer = canvas.rect(this._index+0.5,10+height,0.05,0);
-        tracer._index = this._index;
-        tracer.style.strokeWidth = '0px';
-        tracer.style.fill = '#777777';
-        tracer.setAttribute('visibility','hidden');
-        var theight = this._renderer._layer_containers[layerName].track_height;
-        tracer.setHeight = function(hght) {
-            if (this.getAttribute('visibility') == 'hidden') {
-                return;
-            }
-            var transform_attr = blob.getAttribute('transform');
-            var matches = /translate\(.*[,\s](.*)\) scale\((.*)\)/.exec(transform_attr);
-            if (matches[1] && matches[2]) {
-                var scale = parseFloat(matches[2]);
-                var y = parseFloat(matches[1]);
-                var new_height = y + scale*(((blob.offset || 0) * 50)) - parseInt(this.getAttribute('y'));
-                this.setAttribute('height',new_height);
-            } else {
-                this.setAttribute('height',height);
-            }
-
-        }
-        canvas.insertBefore(tracer,canvas.firstChild.nextSibling);
-    
-        if ( ! this._renderer._layer_containers[layerName].tracers) {
-            this._renderer._layer_containers[layerName].tracers = canvas.set();
-        }
-        if ( ! canvas.tracers ) {
-            canvas.tracers = canvas.set();
-            canvas._visibleTracers = function() {
-                return renderer._visibleTracers();
-            };
-        }
-
-        this._renderer._layer_containers[layerName].tracers.push(tracer);
-        this._renderer._layer_containers[layerName].tracers.push(bobble);
-        canvas.tracers.push(tracer);
-    }
-    
-    this._renderer.redrawAnnotations(layerName,height);
-    return blob;
-};
-
 var scaledAddShapeOverlay = function(layername,width,opts) {
     var start = this._index;
     var end = Math.abs(this._renderer.scalePosition(this.original_index+width,this.accession ? this.accession : layername)) - 1;
@@ -1847,7 +1695,6 @@ CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addShapeOverlay = scaledAddShapeOverlay;
     el.addTextOverlay = scaledAddTextOverlay;
     el.addToLayerWithLink = scaledAddToLayerWithLink;
-    el.addAnnotation = addAnnotationToLayer;
     el.callout = addCalloutToLayer;
     el['_renderer'] = this;
 };
@@ -1886,44 +1733,6 @@ CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc)
     zoomFunctions.push(underlayFunc);
 };
 
-/*
-          var group = [];
-          for (i = 0; i < sites.length; i++) {
-              var current = sites[i], next = null;
-              if ( ! current ) {
-                continue;
-              }
-              if (sites[i+1]) {
-                next = sites[i+1];
-              }
-              if ( ! do_grouping || (! next || ((next - current) > 10) || renderer.sequence.substring(current,next-1).match(/[ST]/)) ) {
-                if (group.length < 3) {
-                  group.push(current);
-                  group.forEach(function(site){
-                    renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true });
-                  });
-                } else {
-                  group.push(current);
-                  group.forEach(function(site){
-                    renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true })[1].zoom_level = 'text';
-                  });
-                  var rect = renderer.getAA(group[0]).addShapeOverlay(layer,current-group[0]+1,{ "shape" : "roundrect", "offset" : offset - 4.875, "height" : 9.75 });
-                  var a_galnac = (offset < 1) ? renderer.galnac() : renderer.light_galnac();
-                  rect.setAttribute('fill',a_galnac.getAttribute('fill'));
-                  rect.setAttribute('stroke',a_galnac.getAttribute('stroke'));
-                  rect.setAttribute('stroke-width',70);
-                  a_galnac.parentNode.removeChild(a_galnac);
-                  rect.removeAttribute('style');
-                  rect.setAttribute('rx','120');
-                  rect.setAttribute('ry','120');
-                  rect.zoom_level = 'summary';
-                }
-                group = [];
-              } else {
-                group.push(current);
-              }
-          }
-*/
 
 var mark_groups = function(renderer,objects) {
     var group = [];
@@ -1939,10 +1748,6 @@ var mark_groups = function(renderer,objects) {
       if ( (! next || (parseInt(next.aa) - parseInt(current.aa) > 10) || renderer.sequence.substring(current,next-1).match(/[ST]/)) ) {
         if (group.length < 3) {
           group.push(current);
-          group.forEach(function(site){
-            // We don't want to do anything to these guys, render as usual.
-//            renderer.getAA(site).addToLayer(layer,{"content" : (offset < 1) ? renderer.galnac() : renderer.light_galnac(), "offset" : offset, "height" : 9,  "bare_element" : true });
-          });
         } else {
           group.push(current);
           group.forEach(function(site){
@@ -1962,16 +1767,6 @@ var mark_groups = function(renderer,objects) {
                             'offset' : group[0].options.offset
                         }
             });
-          // var rect = renderer.getAA(group[0]).addShapeOverlay(layer,current-group[0]+1,{ "shape" : "roundrect", "offset" : offset - 4.875, "height" : 9.75 });
-          // var a_galnac = (offset < 1) ? renderer.galnac() : renderer.light_galnac();
-          // rect.setAttribute('fill',a_galnac.getAttribute('fill'));
-          // rect.setAttribute('stroke',a_galnac.getAttribute('stroke'));
-          // rect.setAttribute('stroke-width',70);
-          // a_galnac.parentNode.removeChild(a_galnac);
-          // rect.removeAttribute('style');
-          // rect.setAttribute('rx','120');
-          // rect.setAttribute('ry','120');
-          // rect.zoom_level = 'summary';
         }
         group = [];
       } else {
@@ -2337,156 +2132,6 @@ CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
     var result = this.addTextTrack(in_text,container);
     return result;
 };
-
-CondensedSequenceRenderer.prototype.resetAnnotations = function() {
-    all_annotations = {};
-};
-
-CondensedSequenceRenderer.prototype.removeAnnotations = function(lay) {
-    var layerName = lay;
-    if (typeof layerName !== 'string') {
-        layerName = lay.name;
-    }
-    var canvas = this._canvas;
-    if ( ! canvas || typeof layerName == 'undefined') {
-        return;
-    }
-
-    for (var blob_idx in all_annotations[layerName]) {
-        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
-            var blob = all_annotations[layerName][blob_idx];
-            var container = this._layer_containers[layerName];
-            if (container.indexOf(blob) >= 0) {
-                container.splice(container.indexOf(blob),1);
-            }
-            if (canvas.tracers && container.tracers) {
-                for (var i = 0; i < container.tracers.length; i++ ) {
-                    var tracer = container.tracers[i];
-                    tracer.parentNode.removeChild(tracer);
-                    if (canvas.tracers.indexOf(tracer) >= 0) {                    
-                        canvas.tracers.splice(canvas.tracers.indexOf(tracer),1);
-                    }
-                }
-                container.tracers = canvas.set();
-            }
-            if (blob.parentNode) {
-                blob.parentNode.removeChild(blob);
-            }
-            all_annotations[layerName][blob_idx] = null;
-        }
-    }
-    all_annotations[layerName] = null;
-    delete all_annotations[layerName];
-    delete this._layer_containers[layerName].fixed_track_height;
-
-};
-
-CondensedSequenceRenderer.prototype.redrawAnnotations = function(layerName) {
-    var canvas = this._canvas, a_parent = null, blob_idx = 0;
-    var susp_id = canvas.suspendRedraw(10000);
-    
-    var max_value = 0;
-    // var height = this._layer_containers[layerName].fixed_track_height || this._layer_containers[layerName].track_height;
-    for (blob_idx in all_annotations[layerName]) {
-        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
-            if ( all_annotations[layerName][blob_idx]._value > max_value ) {
-                max_value = all_annotations[layerName][blob_idx]._value;
-            }
-            a_parent = all_annotations[layerName][blob_idx].parentNode;
-            if ( ! a_parent ) {
-                continue;
-            }
-            a_parent.removeChild(all_annotations[layerName][blob_idx]);
-            all_annotations[layerName][blob_idx]._parent = a_parent;
-        }
-    }
-    for (blob_idx in all_annotations[layerName]) {
-        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
-            var a_blob = all_annotations[layerName][blob_idx];
-
-            var height = a_blob.height;
-            var track_height = this._layer_containers[layerName].fixed_track_height || this._layer_containers[layerName].track_height;
-
-            if ( ! a_blob.setHeight ) {
-                continue;
-            }
-            var size_val = (0.4 + ((0.6 * a_blob._value) / max_value))*(this._RS * height * 1);
-            a_blob.setHeight(size_val);
-        }
-    }
-    
-    for (blob_idx in all_annotations[layerName]) {
-        if (all_annotations[layerName].hasOwnProperty(blob_idx)) {
-            a_parent = all_annotations[layerName][blob_idx]._parent;
-            if ( ! a_parent ) {
-                continue;
-            }
-            a_parent.appendChild(all_annotations[layerName][blob_idx]);
-        }
-    }
-    canvas.unsuspendRedraw(susp_id);
-};
-
-// Simple JavaScript Templating
-// John Resig - http://ejohn.org/ - MIT Licensed
-(function(mpr){
-    var cache = {};
-    var needs_sandbox = false;
-
-    var template_func = function tmpl(str, data){
-        // Figure out if we're getting a template, or if we need to
-        // load the template - and be sure to cache the result.
-        var fn = !/\W/.test(str) ?
-          cache[str] = cache[str] ||
-            tmpl(document.getElementById(str).innerHTML) :
-
-          // Generate a reusable function that will serve as a template
-          // generator (and which will be cached).
-          new Function("obj",
-            "var p=[],print=function(){p.push.apply(p,arguments);};" +
-
-            // Introduce the data as local variables using with(){}
-            "with(obj){p.push('" +
-
-            // Convert the template into pure JavaScript
-            str
-              .replace(/[\r\t\n]/g, " ")
-              .split(/\x3c\%/g).join("\t")
-              .replace(/((^|%>)[^\t]*)'/g, "$1\r")
-              .replace(/\t=(.*?)%>/g, "',$1,'")
-              .split("\t").join("');")
-              .split("%>").join("p.push('")
-              .split("\r").join("\\'")
-          + "');}return p.join('');");
-        
-        // Provide some basic currying to the user
-        return data ? fn( data ) : fn;
-    };
-
-    try {
-        var foo = new Function("return;");
-    } catch (exception) {
-        needs_sandbox = true;
-    }
-    if (needs_sandbox) {
-        mpr.fillTemplate = function tmpl(str,data,callback) {
-            MASCP.SANDBOX.contentWindow.postMessage({ "template" : document.getElementById(str).innerHTML, "data" : data },"*");
-            var return_func = function(event) {
-                bean.remove(window,'message',return_func);
-                if (event.data.html) {
-                    callback.call(null,null,event.data.html);
-                }
-            };
-            bean.add(window,'message',return_func);
-
-        }
-        return;
-    }
-
-  mpr.fillTemplate = function(str,data,callback) {
-    callback.call(null,null,template_func(str,data));
-  };
-})(CondensedSequenceRenderer.prototype);
 
 })();
 
@@ -2896,7 +2541,6 @@ clazz.prototype.removeTrack = function(layer) {
     }
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {
-        this.removeAnnotations(layer);
         this._layer_containers[layer.name] = null;
         layer.disabled = true;
     }

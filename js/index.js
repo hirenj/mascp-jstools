@@ -3,8 +3,10 @@ import UniprotReader from './lib/UniprotReader';
 import UserdataReader from './lib/UserdataReader';
 import GenomeReader from './lib/GenomeReader';
 import GatorDataReader from './lib/GatorDataReader';
+import Service from './lib/Service';
 
-import MASCP from './lib/MascpService';
+
+import MASCP from './lib/MASCP';
 import CondensedSequenceRenderer from './lib/CondensedSequenceRenderer';
 
 
@@ -17,5 +19,6 @@ MASCP.UserdataReader  = UserdataReader ;
 MASCP.GenomeReader = GenomeReader;
 MASCP.GatorDataReader = GatorDataReader;
 MASCP.CondensedSequenceRenderer = CondensedSequenceRenderer;
+MASCP.Service  = Service;
 
 window.Dragger = Dragger;
