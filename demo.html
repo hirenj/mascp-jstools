@@ -3,11 +3,23 @@
 <head>
 	<script src="dist/js/mascp-jstools.js"></script>
 	<title>Demo</title>
+  <style type="text/css">
+    #fixed {
+      --fill-viewer: 'yes';
+      width: 30%;
+      height: 100px;
+    }
+    #static {
+      width: 400px;
+      height: 200px;
+    }
+  </style>
 </head>
 <body>
-	<div id="container"></div>
   <x-protviewer interactive ></x-protviewer>
-  <x-protviewer style="width: 75%; height: 50px; border: solid black 1px;"></x-protviewer>
+  <x-protviewer id="fixed" interactive resizeable ></x-protviewer>
+  <x-protviewer id="static"></x-protviewer>
+
 <script>
 
 
@@ -35,7 +47,8 @@ global.showUniprot = show_uniprot;
   
 
 Promise.all(
-  [ showUniprot(document.querySelectorAll('x-protviewer')[1].renderer,'Q14118'),
+  [ showUniprot(document.querySelectorAll('x-protviewer')[2].renderer,'Q14112'),
+    showUniprot(document.querySelectorAll('x-protviewer')[1].renderer,'Q14118'),
     showUniprot(document.querySelectorAll('x-protviewer')[0].renderer,'Q14112') ])
 .then( () => {
   for (let el of document.querySelectorAll('x-protviewer')) {
@@ -51,6 +64,9 @@ Promise.all(
     height: 18,
     offset: -1,
     content:"#sugar_gal"} }]);
+    el.fitToZoom();
+    renderer.refresh();
+    renderer.zoom -= 0.01;
   }
 });
 };

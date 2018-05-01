@@ -175,11 +175,35 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
            canv.setScale = function(scale) {
                 var curr_transform = (group._cached_transform || '' ).replace(/scale\([^\)]+\)/,'');
                 if (scale !== null) {
-                    curr_transform = (curr_transform + ' scale('+scale+') ').replace(/\s+/g,' ');
+                    curr_transform = (' scale('+scale+') ' + curr_transform ).replace(/\s+/g,' ');
                 }
                 group._cached_transform = curr_transform;
                 group.style.transform = curr_transform;
             };
+
+           nav_canvas.setScale = function(scale) {
+                var curr_transform = (nav_group._cached_transform || '' ).replace(/scale\([^\)]+\)/,'');
+                if (scale !== null) {
+                    curr_transform = (curr_transform + ' scale('+scale+') ').replace(/\s+/g,' ');
+                }
+                nav_group._cached_transform = curr_transform;
+                nav_group.style.transform = curr_transform;
+            };
+            bean.add(canv,'zoomChange', () => {
+                if ( ! renderer.fixed_size ) {
+                    return;
+                }
+                canv.setScale(1);
+                nav_canvas.setScale(1);
+                requestAnimationFrame(() => {
+                    let container_height = container_canv.getBoundingClientRect().height;
+                    let canv_height = canv.getBoundingClientRect().height;
+                    let current_scale = (group._cached_transform || 'scale(1)').match(/scale\(([\d\.]+)\)/) || '1';
+                    canv.setScale((1*container_height / canv_height).toFixed(2));
+                    nav_canvas.setScale((1*container_height / canv_height).toFixed(2));
+                });
+            });
+
 
             var ua = window.navigator.userAgent;
             var is_explorer = false;
@@ -2370,6 +2394,7 @@ CondensedSequenceRenderer.prototype._resizeContainer = function() {
         } else {
             this._container_canvas.setAttribute('height','100%');
             this._container_canvas.setAttribute('width','100%');
+
             // this._container.style.height = 'auto';
             this.navigation.setZoom(this.zoom);
         }        
@@ -2779,9 +2804,9 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
                 return;
             }
             var min_zoom_level = container_width / (2 * renderer.sequence.length);
-            if  (! renderer.grow_container ) {
-                min_zoom_level = 0.3 / 2 * min_zoom_level;
-            }
+            // if  (! renderer.grow_container ) {
+            //     min_zoom_level = 0.3 / 2 * min_zoom_level;
+            // }
 
             // var min_zoom_level = renderer.sequence ? (0.3 / 2) * container_width / renderer.sequence.length : 0.5;
             if (zoomLevel < min_zoom_level) {

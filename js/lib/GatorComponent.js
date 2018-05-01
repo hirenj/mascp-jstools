@@ -32,9 +32,17 @@ tmpl.innerHTML = `
     display: block;
     position: relative;
   }
+  :host([resizeable]) {
+    resize: both;
+    overflow: auto;
+    padding-right: 5px;
+    padding-bottom: 5px;
+  }
   #container, .widget_contents {
     width: 100%;
     height: 100%;
+  }
+  #container {
   }
 </style>
 <div class="widget_contents" >
@@ -155,11 +163,12 @@ class GatorComponent extends WrapHTML {
     shadowRoot.appendChild(tmpl.content.cloneNode(true));
     this[interactive_symb] = new InteractiveState(this);
     this.renderer = create_renderer.call(this,shadowRoot.getElementById('container'));
-
     this.renderer.grow_container = true;
-
-    if ( ! this.hasAttribute('interactive')) {
+    if ( window.getComputedStyle(this).height && window.getComputedStyle(this).height != '0px' ) {
       this.renderer.grow_container = false;
+      if (window.getComputedStyle(this).getPropertyValue('--fill-viewer')) {
+        this.renderer.fixed_size = true;
+      }
     }
   }
   fitToZoom() {
@@ -184,8 +193,6 @@ class GatorComponent extends WrapHTML {
     }
   }
 }
-
-console.log(GatorComponent);
 
 customElements.define('x-protviewer',GatorComponent);
 

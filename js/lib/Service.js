@@ -327,7 +327,6 @@ var do_request = function(request_data) {
             });
         }
     }
-    console.log(request_data);
 
     request.open(request_data.type,request_data.url,request_data.async);
 

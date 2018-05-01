@@ -526,8 +526,7 @@ var buildNavPane = function(back_canvas) {
     panel_back.setAttribute('style','transition: all 0.25s;');
 
     var old_tracks_style = tracks_button.getAttribute('style');
-    var transform_origin = ""+(nav_width-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px;";
-    var transform_origin_statement = " -webkit-transform-origin: "+transform_origin+" -ms-transform-origin: "+transform_origin+" -moz-transform-origin: "+transform_origin+" transform-origin: "+transform_origin;
+    var transform_origin = ""+(nav_width-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px";
     var translate = function(amount,rotate) {
         var trans = " translate3d("+amount+"px,0px,0px)";
         if (rotate) {
@@ -538,7 +537,8 @@ var buildNavPane = function(back_canvas) {
 
 
     tracks_button.setAttribute('style',old_tracks_style+" transition: all 0.25s;");
-    close_group.setAttribute('style',"transition: all 0.25s; "+transform_origin_statement);
+    close_group.style.transition = 'all 0.25s';
+    close_group.style.transformOrigin = transform_origin;
     var visible = true;
 
     
@@ -546,7 +546,13 @@ var buildNavPane = function(back_canvas) {
         visible = ( vis === false || vis === true ) ? vis : ! visible;
         var close_transform;
         var needs_transition = interactive ? "all ease-in-out 0.4s" : "";
-        var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px;";
+        let parent_transform = back_canvas.parentNode.style.transform;
+        let scaleval;
+        let yscale = touch_scale;
+        if (scaleval = parent_transform.match(/scale\(([\d\.]+)\)/)) {
+            yscale = 6.6;
+        }
+        var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*yscale)+"px";
 
         if (visible) {
             self.promote();
@@ -560,7 +566,6 @@ var buildNavPane = function(back_canvas) {
             setElementTransform(close_group, 'translate(0,0)');
             close_group.style.transition = needs_transition;
             close_group.style.transformOrigin = transform_origin;
-            close_group.style.webkitTransformOrigin = transform_origin;
             self.refresh();
         } else {
             self.demote();
@@ -608,9 +613,16 @@ var buildNavPane = function(back_canvas) {
     self.setZoom = function(zoom) {
         self.nav_width = self.nav_width_base / zoom;
         close_group.setAttribute('transform','scale('+zoom+','+zoom+') ');
+        let parent_transform = back_canvas.parentNode.style.transform;
+        let scaleval;
+        let yscale = touch_scale;
+        if (scaleval = parent_transform.match(/scale\(([\d\.]+)\)/)) {
+            yscale = 6.6;
+        }
+        var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11)).toFixed(2)+"px "+(12*yscale)+"px";
 
-        var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*touch_scale)+"px;";
-        transform_origin_statement = " -webkit-transform-origin: "+transform_origin+" -ms-transform-origin: "+transform_origin+" -moz-transform-origin: "+transform_origin+" transform-origin: "+transform_origin;
+        close_group.style.transformOrigin = transform_origin;
+
         close_group.move(self.nav_width_base-(10 + touch_scale*11),12*touch_scale);
         rect.setAttribute('transform','scale('+zoom+',1) ');
         rect.setAttribute('ry', (base_rounded_corner[1]).toString());
