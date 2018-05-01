@@ -111,39 +111,6 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 supports_events = false;
             }
 
-            if (false && supports_events) {
-                var oldAddEventListener = canv.addEventListener;
-        
-                // We need to track all the mousemove functions that are bound to this event
-                // so that we can switch off all the mousemove bindings during an animation event
-        
-                var mouse_moves = [];
-
-                canv.addEventListener = function(ev,func,bubbling) {
-                    if (ev == 'mousemove') {
-                        if (mouse_moves.indexOf(func) < 0) {
-                            mouse_moves.push(func);
-                        } else {
-                            return;
-                        }
-                    }
-                    return oldAddEventListener.apply(canv,[ev,func,bubbling]);
-                };
-
-                bean.add(canv,'_anim_begin',function() {
-                    for (var i = 0; i < mouse_moves.length; i++ ) {
-                        canv.removeEventListener('mousemove', mouse_moves[i], false );
-                    }
-                    bean.add(canv,'_anim_end',function() {
-                        for (var j = 0; j < mouse_moves.length; j++ ) {
-                            oldAddEventListener.apply(canv,['mousemove', mouse_moves[j], false] );
-                        }                        
-                        bean.remove(canv,'_anim_end',arguments.callee);
-                    });
-                });
-            }
-        
-        
             var canvas_rect = canv.makeEl('rect', {  'x':'-10%',
                                                     'y':'-10%',
                                                     'width':'120%',
@@ -1720,20 +1687,6 @@ CondensedSequenceRenderer.prototype.remove = function(lay,el) {
     return false;
 };
 
-var zoomFunctions = [];
-
-CondensedSequenceRenderer.prototype.addUnderlayRenderer = function(underlayFunc) {
-    if (zoomFunctions.length == 0) {
-        bean.add(this,'zoomChange',function() {
-            for (var i = zoomFunctions.length - 1; i >=0; i--) {
-                zoomFunctions[i].call(this, this.zoom, this._canvas);
-            }
-        });
-    }
-    zoomFunctions.push(underlayFunc);
-};
-
-
 var mark_groups = function(renderer,objects) {
     var group = [];
     var new_objects = [];
@@ -2134,55 +2087,6 @@ CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
 };
 
 })();
-
-/**
- * Mouseover event for a layer
- * @name    MASCP.Layer#mouseover
- * @event
- * @param   {Object}    e
- */
- 
-/**
- * Mouseout event for a layer
- * @name    MASCP.Layer#mouseout
- * @event
- * @param   {Object}    e
- */
-  
-/**
- * Mousemove event for a layer
- * @name    MASCP.Layer#mousemove
- * @event
- * @param   {Object}    e
- */
-
-/**
- * Mousedown event for a layer
- * @name    MASCP.Layer#mousedown
- * @event
- * @param   {Object}    e
- */
- 
-/**
- * Mouseup event for a layer
- * @name    MASCP.Layer#mouseup
- * @event
- * @param   {Object}    e
- */
-
-/**
- * Click event for a layer
- * @name    MASCP.Layer#click
- * @event
- * @param   {Object}    e
- */
-
- /**
-  * Long click event for a layer
-  * @name    MASCP.Layer#longclick
-  * @event
-  * @param   {Object}    e
-  */
 
 CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var renderer = this;
@@ -2621,57 +2525,6 @@ clazz.prototype.enablePrintResizing = function() {
     rend._bound_media = true;
 };
 
-clazz.prototype.wireframe = function() {
-    var order = this.trackOrder || [];
-    var y_val = 0;
-    var track_heights = 0;
-    if ( ! this.wireframes ) {
-        return;
-    }
-    while (this.wireframes.length > 0) {
-        this._canvas.removeChild(this.wireframes.shift());
-    }
-    for (var i = 0; i < order.length; i++ ) {
-        
-        var name = order[i];
-        var container = this._layer_containers[name];
-        if (! this.isLayerActive(name)) {
-            continue;
-        }
-        if (container.fixed_track_height) {
-
-            var track_height = container.fixed_track_height;
-
-            y_val = this._axis_height + (track_heights  - track_height*0.3) / this.zoom;
-            var a_rect = this._canvas.rect(0,y_val,10000,0.5*track_height);
-            a_rect.setAttribute('stroke','#ff0000');
-            a_rect.setAttribute('fill','none');
-            this.wireframes.push(a_rect);
-            var a_rect = this._canvas.rect(0,y_val,10000,track_height);
-            a_rect.setAttribute('stroke','#ff0000');
-            a_rect.setAttribute('fill','none');
-            this.wireframes.push(a_rect);
-
-            track_heights += (this.zoom * track_height) + this.trackGap;
-        } else {
-            y_val = this._axis_height + track_heights / this.zoom;
-            var a_rect = this._canvas.rect(0,y_val,10000,0.5*container.track_height / this.zoom );
-            a_rect.setAttribute('stroke','#ff0000');
-            a_rect.setAttribute('fill','none');
-            this.wireframes.push(a_rect);
-            a_rect = this._canvas.rect(0,y_val,10000,container.track_height / this.zoom);
-            a_rect.setAttribute('stroke','#ff0000');
-            a_rect.setAttribute('fill','none');
-            this.wireframes.push(a_rect);
-            if (this.navigation) {
-                track_heights += container.track_height;
-            }
-            track_heights += container.track_height + this.trackGap;
-        }
-
-    }    
-};
-
 /**
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
@@ -2773,7 +2626,6 @@ clazz.prototype.refresh = function(animated) {
 
 
     }
-    this.wireframe();
     
     var viewBox = [-1,0,0,0];
     viewBox[0] = -2*RS;
