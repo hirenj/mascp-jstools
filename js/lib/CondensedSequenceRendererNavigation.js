@@ -565,7 +565,7 @@ var buildNavPane = function(back_canvas) {
             }
             setElementTransform(close_group, 'translate(0,0)');
             close_group.style.transition = needs_transition;
-            close_group.style.transformOrigin = transform_origin;
+            close_group.style.transformOrigin = close_group.getBoundingClientRect().left+'px ' +close_group.getBoundingClientRect().top+' px';
             self.refresh();
         } else {
             self.demote();
@@ -573,7 +573,9 @@ var buildNavPane = function(back_canvas) {
             //close_group._button.setAttribute('filter','url(#drop_shadow)');
             close_group.style.transition = needs_transition;
             close_group.style.transition = needs_transition;
-            close_group.style.transformOrigin = transform_origin;
+            // close_group.style.transformOrigin = transform_origin;
+            close_group.style.transformOrigin = close_group.getBoundingClientRect().left+'px ' +close_group.getBoundingClientRect().top+' px';
+
             setElementTransform(close_group, 'translate('+-0.75*self.nav_width_base+'px,0) rotate(405deg)');
             if ("ontouchend" in window) {
                 // No longer special casing IE
