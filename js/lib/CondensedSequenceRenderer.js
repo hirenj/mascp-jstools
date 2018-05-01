@@ -2924,10 +2924,11 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
         
             if (("ontouchend" in document) && self.zoomCenter && ! no_touch_center ) {
                 bean.remove(self,'gestureend');
-                bean.add(self,'gestureend',function(){
-                    bean.remove(self,'gestureend',arguments.callee);
+                let ender = function(){
+                    bean.remove(self,'gestureend',ender);
                     end_function();
-                });
+                };
+                bean.add(self,'gestureend',ender);
                 timeout = 1;
             } else {
                 if (! this.refresh.suspended) {

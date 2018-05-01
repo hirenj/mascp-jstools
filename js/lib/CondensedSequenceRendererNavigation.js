@@ -550,7 +550,7 @@ var buildNavPane = function(back_canvas) {
         let scaleval;
         let yscale = touch_scale;
         if (scaleval = parent_transform.match(/scale\(([\d\.]+)\)/)) {
-            yscale = 6.6;
+            yscale = 1;
         }
         var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11))+"px "+(12*yscale)+"px";
 
@@ -619,7 +619,7 @@ var buildNavPane = function(back_canvas) {
         let scaleval;
         let yscale = touch_scale;
         if (scaleval = parent_transform.match(/scale\(([\d\.]+)\)/)) {
-            yscale = 6.6;
+            yscale = 1;
         }
         var transform_origin = ""+(self.nav_width_base-(10 + touch_scale*11)).toFixed(2)+"px "+(12*yscale)+"px";
 
