@@ -3,6 +3,7 @@ const svgns = 'http://www.w3.org/2000/svg';
 
 import SVGCanvas from './SVGCanvas';
 import bean from '../bean';
+import MASCP from './MASCP';
 
 var touch_scale = 1, touch_enabled = false;
 if ("ontouchend" in document) {
