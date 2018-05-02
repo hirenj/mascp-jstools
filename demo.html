@@ -17,6 +17,7 @@
 </head>
 <body>
   <x-protviewer interactive ></x-protviewer>
+  <x-protviewer interactive ></x-protviewer>
 <!--   <x-protviewer id="fixed" interactive ></x-protviewer>
   <x-protviewer id="static"></x-protviewer>
  -->  <x-geneviewer geneid="2590" interactive></x-geneviewer>
@@ -25,8 +26,8 @@
 
 window.onload = function() {
 	(function(global) {
-    
-let show_uniprot = function(renderer,uniprot) {
+
+let retrieve_uniprot = function(uniprot) {
   MASCP.GATOR_CLIENT_ID='fNED1UGvPaP0XlrcEvWsHXIODIKy6WVB';
   MASCP.GatorDataReader.server = 'https://glycodomain.glycomics.ku.dk';
   MASCP.GatorDataReader.anonymous = true;
@@ -34,10 +35,16 @@ let show_uniprot = function(renderer,uniprot) {
     let a_reader = new MASCP.UniprotReader();
     return new Promise((resolve,reject) => {
     a_reader.retrieve(uniprot, function(err) {
-      renderer.setSequence(this.result._raw_data.data[0]);
-      resolve(uniprot);
+      resolve(this.result._raw_data.data[0]);
     });
     });
+  });
+};
+
+
+let show_uniprot = function(renderer,uniprot) {
+  return retrieve_uniprot(uniprot).then( seq => {
+    renderer.setSequence(seq);
   });
 };
 
@@ -59,37 +66,115 @@ let show_data = function(uniprot) {
 global.showData = show_data;
 
 global.showUniprot = show_uniprot;
+global.retrieveUniprot = retrieve_uniprot;
   
 })(window);
   
 
-Promise.all(
-  [ //showUniprot(document.querySelectorAll('x-protviewer')[2].renderer,'Q14112'),
-    //showUniprot(document.querySelectorAll('x-protviewer')[1].renderer,'Q14118'),
-    showUniprot(document.querySelectorAll('x-protviewer')[0].renderer,'Q14112') ])
-.then( () => {
-  for (let el of document.querySelectorAll('x-geneviewer')) {
-    el.createTrack('sometrack');
-    MASCP.getLayer('sometrack').acc = 'Q10471';
-    el.createTrack('someothertrack');
-    MASCP.getLayer('someothertrack').genomic = true;
+let guid = () => {
+  let s4 = () => {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  };
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+};
+
+let show_sequence = function(el,uniprot,base_pos,genomic_base) {
+  let start_promise = genomic_base ? el.ready : showUniprot(el.renderer,uniprot);
+  start_promise.then( () => {
+    let first_lay_id = guid();
+    el.createTrack(first_lay_id);
+    MASCP.getLayer(first_lay_id).scales.add(uniprot);
+    MASCP.getLayer(first_lay_id).fullname = 'Proteintrack';
+
+    let second_lay_id = guid();
+    el.createTrack(second_lay_id);
+    MASCP.getLayer(second_lay_id).scales.add(genomic_base ? 'genomic' : uniprot);
+    MASCP.getLayer(second_lay_id).fullname = 'AnotherDataset'
 
     let renderer = el.renderer;
-    renderer.renderObjects('sometrack',[{aa: 200, type: 'marker', options: { bare_element:true,
+    renderer.renderObjects(first_lay_id,[{aa: base_pos, type: 'marker', options: { bare_element:true,
     height: 18,
     offset: -1,
     content:"#sugar_man"} }]);
 
-    renderer.renderObjects('someothertrack',[{aa: 230379000, type: 'marker', options: { bare_element:true,
+    renderer.renderObjects(second_lay_id,[{aa: genomic_base ? genomic_base : base_pos+10, type: 'marker', options: { bare_element:true,
     height: 18,
     offset: -1,
     content:"#sugar_gal"} }]);
+
     el.fitToZoom();
     renderer.refresh();
     renderer.zoom -= 0.01;
-  }
+  });
+};
 
-});
+let do_clustal = function(el,uniprota,uniprotb,base_pos) {
+  let runner = MASCP.ClustalRunner.EmulatedClustalRunner(el.renderer);
+  Promise.all( [ retrieveUniprot(uniprota), retrieveUniprot(uniprotb) ]).then( seqs => {
+    let renderer = el.renderer;
+
+    seqs[1] = (seqs[1].slice(0,10) + '----------' + seqs[1].slice(20)).slice(0,100)+'MMMMMMMMMM';
+    seqs[0] = seqs[0].slice(0,100)+'----------';
+
+    runner.sequences = seqs;
+
+    runner.bind('requestComplete', () => {
+
+      runner.result.alignToSequence(0);
+
+      let first_lay_id = guid();
+      el.createTrack(first_lay_id);
+      MASCP.getLayer(first_lay_id).scales.add('seq0');
+      MASCP.getLayer(first_lay_id).fullname = 'Seq0dat';
+
+      let second_lay_id = guid();
+      el.createTrack(second_lay_id);
+      MASCP.getLayer(second_lay_id).scales.add('seq1');
+      MASCP.getLayer(second_lay_id).fullname = 'Seq1dat'
+
+      renderer.renderObjects(first_lay_id,[{aa: base_pos, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_man"} },{aa: base_pos+1, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_man"} },{aa: base_pos+15, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_man"} }]);
+
+
+      renderer.renderObjects(second_lay_id,[{aa: base_pos+1, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_gal"} },{aa: base_pos+2, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_gal"} },{aa: base_pos+5, type: 'marker', options: { bare_element:true,
+      height: 18,
+      offset: -1,
+      content:"#sugar_gal"} }]);
+
+      el.fitToZoom();
+      renderer.refresh();
+
+    });
+
+    runner.retrieve();
+
+
+  });
+};
+
+show_sequence(document.querySelectorAll('x-protviewer')[0],'Q14112',200);
+do_clustal(document.querySelectorAll('x-protviewer')[1],'Q14112','Q14112',11);
+show_sequence(document.querySelectorAll('x-geneviewer')[0],'Q10471',200,230382000);
+
+
+//230379000
+
 };
 </script>
 </body>

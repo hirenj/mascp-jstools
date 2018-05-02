@@ -36,26 +36,35 @@ class GeneComponent extends GatorComponent {
 let reader_has_data = function() {
   var reader = new GenomeReader();
   reader.geneid = this.geneid;
-  reader.uniprot = 'Q10472';
+  // reader.uniprot = 'Q10472';
   reader.exon_margin = 300;//..this.exonmargin || 300;
   if (this.nt_mapping) {
     reader.nt_mapping = this.nt_mapping;
   }
-  reader.registerSequenceRenderer(this.renderer);
-  reader.bind('requestComplete',() => {
-    this.renderer.hideAxis();
-    this.renderer.fitZoom();
-  });
+  if ( ! this.ready ) {
+    reader.registerSequenceRenderer(this.renderer);
+    reader.bind('requestComplete',() => {
+      this.renderer.hideAxis();
+      this.renderer.fitZoom();
+    });
+    this.ready = new Promise( (resolve) => {
+      reader.bind('requestComplete',() => {
+        resolve();
+      });
+    });
+  }
+
   reader.retrieve(this.accession || ""+this.geneid);
+
 };
 
 let setup_renderer = function() {
   this.renderer.trackOrder = [];
   this.renderer.reset();
-  this.renderer.bind('sequenceChange', reader_has_data.bind(this) );
 };
 
 let retrieve_data = function() {
+  this.renderer.bind('sequenceChange',reader_has_data.bind(this));
   this.renderer.setSequence('M');
 };
 

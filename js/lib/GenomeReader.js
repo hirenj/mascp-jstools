@@ -526,13 +526,20 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
         renderer.addAxisScale('genome',function(pos,layer,inverse) {
-            if (layer && layer.genomic) {
+            if (layer && layer.scales.has('genomic')) {
                 return pos;
             }
-            if (inverse) {
-                return self.calculateSequencePositionFromProteinPosition(layer.acc || layer.name,pos);
+            let all_scales = Object.keys(self.result._raw_data.data);
+            let identifier = layer.name;
+            for (let scale of all_scales) {
+                if (layer.scales.has(scale.toUpperCase()) || layer.scales.has(scale.toLowerCase())) {
+                    identifier = scale;
+                }
             }
-            return self.calculateProteinPositionForSequence(layer.acc || layer.name,pos);
+            if (inverse) {
+                return self.calculateSequencePositionFromProteinPosition(identifier,pos);
+            }
+            return self.calculateProteinPositionForSequence(identifier,pos);
         });
         var controller_name = 'cds';
         var redraw_alignments = function(sequence_index) {
@@ -540,7 +547,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 sequence_index = 0;
             }
             MASCP.registerLayer(controller_name, { 'fullname' : 'Exons', 'color' : '#000000' });
-            MASCP.getLayer(controller_name).genomic = true;
+            MASCP.getLayer(controller_name).scales.add('genomic');
 
             if (renderer.trackOrder.indexOf(controller_name) < 0) {
                 renderer.trackOrder.push(controller_name);

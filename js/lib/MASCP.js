@@ -239,6 +239,7 @@ MASCP.Group.prototype.eachLayer = function(func) {
  * Metadata for a single layer to be rendered
  */
 MASCP.Layer = function() {
+    this.scales = new Set();
     return;
 };
 
@@ -253,7 +254,7 @@ MASCP.getLayer = function(layer) {
     if ( ! MASCP.layers ) {
         return;
     }
-    return (typeof layer == 'string') ? MASCP.layers[layer] : layer;    
+    return (typeof layer == 'string') ? MASCP.layers[layer] : layer;
 };
 
 /**

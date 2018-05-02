@@ -213,8 +213,13 @@ var DragAndDrop = function(spliceFunction) {
     
     var nav_reset_set = null;
 
+    let spliceBefore;
+    let spliceAfter;
+
+
     var drag_func = function(handle,element,track,canvas) {
         var nav = this;
+
 
         var old_reset = nav.reset;
         if (nav_reset_set === null) {
@@ -260,8 +265,8 @@ var DragAndDrop = function(spliceFunction) {
             }
             lbl_grp.setAttribute('dragging','true');
 
-            let spliceBefore = null;
-            let spliceAfter = null;
+            spliceBefore = null;
+            spliceAfter = null;
 
             var p_orig = lbl_grp.nearestViewportElement.createSVGPoint();
 

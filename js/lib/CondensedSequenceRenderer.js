@@ -592,9 +592,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         lays.forEach(function(lay) {
             self._layer_containers[lay].forEach(function(el) {
                 if (el.move && el.aa) {
-                    var wanted = (self.forceTrackAccs && el.acc) ? el.acc : lay;
-                    var aa = self.scalePosition(el.aa,wanted);
-                    var aa_width = self.scalePosition(el.aa+el.aa_width,wanted) ;
+                    var aa = self.scalePosition(el.aa,lay);
+                    var aa_width = self.scalePosition(el.aa+el.aa_width,lay) ;
                     if (aa < 0) {
                         aa *= -1;
                     }
@@ -609,33 +608,39 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
     clazz.prototype.scalePosition = function(aa,layer,inverse) {
         var layer_obj = MASCP.getLayer(layer);
-        var new_aa = (inverse ? (this._scalers || []).concat([]).reverse() : (this._scalers || [])).reduce(function(val,fn) {  return fn(val,layer_obj || { 'name' : layer },inverse); },aa);
+        if ( ! layer_obj ) {
+            console.log('Missing layer object for layer identifier',layer,'making dummy layer scaled with identifier',layer);
+            layer_obj = { 'name' : layer, 'scales' : new Set() };
+            layer_obj.scales.add(layer);
+        }
+        let scaler_funcs = (this._scalers || []).concat([]);
+        var new_aa = (inverse ? scaler_funcs.reverse() : scaler_funcs).reduce((val,fn) => {  return fn(val,layer_obj,inverse); },aa);
         return new_aa;
     };
 
-    clazz.prototype.getAA = function(aa,layer,acc) {
-        return this.getAminoAcidsByPosition([aa],layer,acc).shift();
+    clazz.prototype.getAA = function(aa,layer,scale_name) {
+        return this.getAminoAcidsByPosition([aa],layer,scale_name).shift();
     };
 
-    clazz.prototype.getAminoAcidsByPosition = function(aas,layer,acc) {
+    clazz.prototype.getAminoAcidsByPosition = function(aas,layer) {
         var self = this;
-        var new_aas = aas.map(function(aa) { return Math.abs(self.scalePosition(aa,layer ? layer : acc)); });
+        var new_aas = aas.map(function(aa) { return Math.abs(self.scalePosition(aa,layer)); });
         var results = SequenceRenderer.prototype.getAminoAcidsByPosition.call(this,new_aas);
 
         for (var i = 0; i < new_aas.length; i++) {
             if (results[i]) {
                 results[i].original_index = aas[i];
-                results[i].accession = layer ? layer : acc;
             }
         }
         return results;
     };
 
-    clazz.prototype.getAminoAcidsByPeptide = function(peptide,layer,acc) {
+    clazz.prototype.getAminoAcidsByPeptide = function(peptide,layer) {
+        layer = MASCP.getLayer(layer);
         var self = this;
         var positions = [];
         var self_seq;
-        var identifier = acc ? acc : layer;
+        var identifier = layer.accession;
         if (self.sequences) {
             self_seq = self.sequences [ ( self.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(identifier.toLowerCase()) ].toString();
         } else {
@@ -645,7 +650,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         for (var i = 0; i < peptide.length; i++ ) {
             positions.push(start+i);
         }
-        var results = self.getAminoAcidsByPosition(positions,layer,acc);
+        var results = self.getAminoAcidsByPosition(positions,layer);
         if (results.length) {
             results.addToLayer = function(layername, fraction, options) {
                 return results[0].addBoxOverlay(layername,results.length,fraction,options);
@@ -1584,17 +1589,16 @@ var addCalloutToLayer = function(layerName,element,opts) {
 
 var scaledAddShapeOverlay = function(layername,width,opts) {
     var start = this._index;
-    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,this.accession ? this.accession : layername)) - 1;
+    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,layername)) - 1;
     var res = addShapeToElement.call(start < end ? this : this._renderer._sequence_els[end],layername, Math.abs(end - start),opts);
     res.aa = this.original_index;
     res.aa_width = width;
-    res.acc = this.acc;
     return res;
 };
 
 var scaledAddBoxOverlay = function(layername,width,fraction,opts) {
     var start = this._index;
-    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,this.accession ? this.accession : layername)) - 1;
+    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,layername)) - 1;
 
     var res = addBoxOverlayToElement.call(start < end ? this : this._renderer._sequence_els[end],layername,Math.abs(end - start),fraction,opts);
 
@@ -1607,39 +1611,36 @@ var scaledAddBoxOverlay = function(layername,width,fraction,opts) {
             res.aa = this.original_index;
         }
     }
-    res.acc = this.accession;
     return res;
 };
 
 var scaledAddTextOverlay = function(layername,width,opts) {
     var start = this._index;
-    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,this.accession ? this.accession : layername)) - 1;
+    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,layername)) - 1;
     var res = addTextToElement.call(start < end ? this : this._renderer._sequence_els[end],layername,Math.abs(end - start),opts);
     res.aa = this.original_index;
     res.aa_width = width;
-    res.acc = this.accession;
     return res;
 };
 
 var scaledAddToLayerWithLink = function(layername,url,width) {
     var start = this._index;
-    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,this.accession ? this.accession : layername)) - 1;
+    var end = Math.abs(this._renderer.scalePosition(this.original_index+width,layername)) - 1;
     var res = addElementToLayerWithLink.call(start < end ? this : this._renderer._sequence_els[end],layername,url,Math.abs(end - start));
     res.aa = this.original_index;
-    res.acc = this.accession;
     return res;
 };
 
 var scaledAddToLayer = function(layername,opts) {
     var res = addElementToLayer.call(this,layername,opts);
     res.aa = this.original_index;
-    res.acc = this.accession;
     res.aa_width = 1;
     return res;
 };
 
 CondensedSequenceRenderer.prototype.enableScaling = function() {
     bean.add(this,'readerRegistered',function(reader) {
+        console.log('Enabling scaling for legacy readers');
         var old_result = reader.gotResult;
         var renderer = this;
         reader.gotResult = function() {
@@ -1654,18 +1655,16 @@ CondensedSequenceRenderer.prototype.enableScaling = function() {
                 old_sequence = null;
             }
             renderer.getAminoAcidsByPosition = function(aas,lay,accession) {
-                if (renderer.forceTrackAccs) {
-                    return old_get_aas.call(this,aas,wanted_id,wanted_id);
-                } else {
-                    return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
+                if ( ! lay && ! accession ) {
+                    console.log('Guessing scaling identifier as',wanted_id);
                 }
+                return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
             };
             renderer.getAminoAcidsByPeptide = function(peptide,lay,accession) {
-                if (renderer.forceTrackAccs) {
-                    return old_get_pep.call(this,peptide,wanted_id,wanted_id);
-                } else {
-                    return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
+                if ( ! lay && ! accession ) {
+                    console.log('Guessing scaling identifier as',wanted_id);
                 }
+                return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
             };
             old_result.call(reader);
 

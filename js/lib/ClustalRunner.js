@@ -29,7 +29,7 @@ ClustalRunner.hash = function(str){
 };
 
 ClustalRunner.prototype.requestData = function()
-{   
+{
     var sequences = [].concat(this.sequences || []);
     var self = this;
     this.agi = ClustalRunner.hash(this.sequences.join(','))+'';
@@ -56,9 +56,9 @@ ClustalRunner.prototype.requestData = function()
             type: "GET",
             dataType: "txt",
             url: 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/result/'+this.result_id+'/aln-clustalw'
-        };        
+        };
     }
-    
+
     for (var i = 0; i < sequences.length; i++ ) {
         sequences[i] = ">seq"+i+"\n"+sequences[i];
     }
@@ -91,7 +91,7 @@ ClustalRunner.prototype.requestData = function()
             }
             return defaultDataReceived.call(this,data,status);
         }
-        
+
         if (typeof data == "string" && data.match(/^clustalw/)) {
             this.job_id = data;
             this.retrieve(this.agi);
@@ -113,10 +113,10 @@ ClustalRunner.prototype.requestData = function()
             },500);
             return;
         }
-        
+
         return defaultDataReceived.call(this,data,status);
     };
-    
+
 })(ClustalRunner);
 
 (function() {
@@ -132,8 +132,8 @@ var normalise_insertions = function(inserts) {
     positions = positions.sort(function sortfunction(a, b){
         return (a - b);
     });
-    
-    // From highest to lowest position, loop through and 
+
+    // From highest to lowest position, loop through and
     // subtract the lengths of previous subtratctions from
     // the final position value.
 
@@ -281,22 +281,33 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     var self = this;
 
     renderer.sequences = self.sequences;
-
     renderer.addAxisScale('clustal',function(pos,layer,inverse) {
-        var idx = self.sequences.map(function(seq) { return seq.agi; }).indexOf(layer.name.toLowerCase());
+        let idx = null;
+        let seq_identifiers = self.sequences.map(function(seq) { return seq.agi; });
+        while (seq_identifiers.length > 0) {
+            idx = idx || 0;
+            let acc = seq_identifiers.shift();
+            if (layer.scales.has(acc)) {
+                break;
+            }
+            idx++;
+            if ( seq_identifiers.length === 0) {
+                idx = null;
+            }
+        }
         if (layer.name === 'primarySequence') {
             idx = self.result.aligned_idx;
         }
-        if (idx < 0) {
+        if (idx === null) {
             return pos;
         }
         if ( inverse ) {
             return self.result.calculateSequencePositionFromPosition(idx,pos);
         }
+
         return self.result.calculatePositionForSequence(idx,pos);
     });
 
-    renderer.forceTrackAccs = true;
     var rendered_bits = [];
     var controller_name = 'isoforms';
     var group_name = 'isoforms';
@@ -390,13 +401,15 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         }
         for (var i = 0 ; i < aligned.length; i++) {
             var layname = self.sequences[i].agi.toUpperCase() || "missing"+i;
-            var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000'});
+            var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000', 'accession' : self.sequences[i].agi });
+            lay.scales.clear();
+            lay.scales.add(self.sequences[i].agi);
+
             lay.fullname = self.sequences[i].name || layname.toUpperCase();
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;
             if (renderer.trackOrder.indexOf(layname.toUpperCase()) < 0) {
-              console.log("Adding ",layname," to renderer");
               renderer.trackOrder = renderer.trackOrder.concat([group_name]);
             }
             var name = "Isoform "+(i+1);
@@ -493,6 +506,32 @@ ClustalRunner.Result.prototype.getAlignment = function() {
     }
 
     return result;
+};
+
+let onlyUnique = (val,idx,arr) => arr.indexOf(val) === idx;
+
+let clustal_emulator = (sequences) => {
+    if (sequences.length == 0) {
+        return { data: { sequences: [], alignment: "" } };
+    }
+    let all_aas = sequences.map( seq => seq.split('') );
+    let alignment = all_aas[0].map( (aa,pos) =>  all_aas.map( aas => aas[pos] ).filter(onlyUnique).length == 1 ? '*' : ':' ).join('');
+    return { data: { sequences: sequences, alignment: alignment }};
+};
+
+ClustalRunner.EmulatedClustalRunner = function(renderer) {
+    let runner = new ClustalRunner();
+    runner.retrieve = function() {
+        let datablock = clustal_emulator(this.sequences || []);
+        this._dataReceived(datablock);
+        this.sequences = this.sequences.map((seq,idx) => { return {  agi: 'seq'+idx, toString: () => seq } });
+        this.gotResult();
+        this.requestComplete();
+    };
+    if (renderer) {
+        runner.registerSequenceRenderer(renderer);
+    }
+    return runner;
 };
 
 export default ClustalRunner;

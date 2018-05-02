@@ -35,7 +35,6 @@ const SequenceRenderer = (function() {
                 if ( ! order instanceof Array ) {
                     order = [ in_order ];
                 }
-
                 for (var i = 0; i < order.length; i++) {
                     var a_track = order[i];
                     if (MASCP.getLayer(a_track)) {
@@ -45,11 +44,13 @@ const SequenceRenderer = (function() {
                         track_order.push(a_track);
                     }
                     if (MASCP.getGroup(a_track)) {
+                        let insert_idx= i+1;
                         MASCP.getGroup(order[i]).eachLayer(function(grp_lay) {
                             while (track_order.indexOf(grp_lay.name) >= 0) {
                                 track_order.splice(track_order.indexOf(grp_lay.name),1);
                             }
-                            order.splice(i+1,0,grp_lay.name);
+                            order.splice(insert_idx,0,grp_lay.name);
+                            insert_idx += 1;
                         });
                     }
                 }
@@ -625,8 +626,6 @@ SequenceRenderer.prototype.reset = function()
             MASCP.layers[layer].disabled = true;
         }
     }
-    delete this._scalers;
-    delete this.forceTrackAccs;
 
     if (this.resetAnnotations) {
         this.resetAnnotations();
