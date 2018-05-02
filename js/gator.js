@@ -12,6 +12,7 @@ import CondensedSequenceRenderer from './lib/CondensedSequenceRenderer';
 
 import Dragger from './lib/Dragger';
 
+window.MASCP = MASCP;
 MASCP.ClustalRunner = ClustalRunner;
 MASCP.UniprotReader = UniprotReader;
 MASCP.UserdataReader  = UserdataReader ;
@@ -24,5 +25,3 @@ import GeneComponent from './lib/GeneComponent';
 
 MASCP.GatorComponent = GatorComponent;
 MASCP.GeneComponent = GeneComponent;
-
-export default MASCP;

@@ -32,7 +32,7 @@
     }
   ],
   "dependencies": {},
-  "main": "dist/js/mascp-jstools.services.js",
+  "main": "js/index.js",
   "bin": {},
   "implements": [
     "mascp-jstools",

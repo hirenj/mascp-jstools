@@ -3,7 +3,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 module.exports = {
   devtool: 'source-map',
   entry: {
-    'mascp-jstools': [ './js/index.js' ],
+    'mascp-jstools': [ './js/gator.js' ],
   },
   output: {
     filename: '[name].js',
