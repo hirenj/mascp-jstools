@@ -452,7 +452,7 @@ Object.defineProperty(GatorDataReader.prototype, 'datasetname', {
           return this;
         }
       };
-      GatorDataReader.Result = alt_result;
+      this.Result = alt_result;
     }
 });
 GatorDataReader.authenticate = function() {

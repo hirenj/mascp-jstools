@@ -581,7 +581,9 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         if ( ! this._scalers ) {
             this._scalers = [];
         }
-        this._scalers.push(scaler);
+        let scalers = this._scalers.filter( scale => scale.identifier !== identifier );
+        scalers.push(scaler);
+        this._scalers = scalers;
         scaler.identifier = identifier;
         return scaler;
     };

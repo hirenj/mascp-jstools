@@ -21,6 +21,9 @@ const Service = function(agi,endpointURL) {};
  *                                      bound to a hash to populate data in to. When no data is passed to the
  *                                      function, the hash should be populated with default values.
  */
+
+let resultsymb = Symbol('resultclass');
+
 Service.buildService = function(dataExtractor)
 {
 
@@ -33,7 +36,7 @@ Service.buildService = function(dataExtractor)
                 this._endpointURL = clazz.SERVICE_URL;
             }
             this.agi = agi;
-            return this;            
+            return this;
         }
 
         toString() {
@@ -44,17 +47,24 @@ Service.buildService = function(dataExtractor)
             }
         }
 
+        get Result() {
+            return this[resultsymb] || this.constructor.Result;
+        }
+
+        set Result(resultclass) {
+            this[resultsymb] = resultclass;
+        }
     };
 
     clazz.Result = class {
         constructor(data) {
             dataExtractor.apply(this,[data]);
-            return this;            
+            return this;
         }
     };
-    
+
     Object.assign(dataExtractor.apply({},[]),clazz.Result.prototype);
-        
+
     return clazz;
 };
 
@@ -91,7 +101,7 @@ Service.prototype._dataReceived = function(data,status)
     if (! data ) {
         return false;
     }
-    var clazz = this.constructor.Result;
+    var clazz = this.Result;
     if (data && data.error && data.error != '' && data.error !== null ) {
         bean.fire(this,'error',[data.error]);
         return false;

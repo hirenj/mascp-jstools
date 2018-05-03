@@ -871,6 +871,7 @@ const SVGCanvas = (function() {
                     if (rotate_amount > 90 && rotate_amount < 270) {
                         rotate_amount = 180 + rotate_amount;
                     }
+                    let new_el = null;
                     if (symb.match(/^(:?https?:)?\/?.*#/)) {
                         new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
                         new_el.setAttribute('pointer-events','none');

@@ -622,8 +622,10 @@ SequenceRenderer.prototype.reset = function()
     }    
     for ( var layer in MASCP.layers) {
         if (MASCP.layers.hasOwnProperty(layer)) {
-            this.hideLayer(layer,true);
-            MASCP.layers[layer].disabled = true;
+            if ( ! this.keeptracks ) {
+                this.hideLayer(layer,true);
+                MASCP.layers[layer].disabled = true;
+            }
         }
     }
 

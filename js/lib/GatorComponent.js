@@ -1,6 +1,4 @@
 
-console.log('Here');
-
 import Dragger from './Dragger';
 import CondensedSequenceRenderer from './CondensedSequenceRenderer';
 import Service from './Service';
@@ -49,6 +47,7 @@ tmpl.innerHTML = `
   <div id="container">
   </div>
 </div>
+<slot></slot>
 `;
 
 const interactive_symb = Symbol('interactive');
@@ -128,17 +127,20 @@ let wire_renderer_sequence_change = function(renderer) {
     try_import_symbols(renderer, "ui", "https://glycodomain.glycomics.ku.dk/icons.svg");
     try_import_symbols(renderer, "sugar", "https://glycodomain.glycomics.ku.dk/sugars.svg");
     zoom_to_fit(renderer);
-    
     make_draggable.call(this,renderer,dragger);
+    populate_tracks.call(this);
     setup_renderer(renderer);
     renderer.navigation.show();
     renderer.refresh();
   };
-
   renderer.bind('sequenceChange', seq_change_func);
-
 };
 
+let populate_tracks = function() {
+  for (let track of this.querySelectorAll('x-gatortrack')) {
+    this.createTrack(track);
+  }
+}
 
 class GatorComponent extends WrapHTML {
 
@@ -163,7 +165,7 @@ class GatorComponent extends WrapHTML {
     this[interactive_symb] = new InteractiveState(this);
     this.renderer = create_renderer.call(this,shadowRoot.getElementById('container'));
     this.renderer.grow_container = true;
-    if ( window.getComputedStyle(this).height && window.getComputedStyle(this).height != '0px' ) {
+    if ( window.getComputedStyle(this).height && window.getComputedStyle(this).height !== '0px' && window.getComputedStyle(this).height !== 'auto' ) {
       this.renderer.grow_container = false;
       if (window.getComputedStyle(this).getPropertyValue('--fill-viewer')) {
         this.renderer.fixed_size = true;
@@ -174,10 +176,14 @@ class GatorComponent extends WrapHTML {
     zoom_to_fit(this.renderer);
   }
   createTrack(track) {
-    MASCP.registerLayer(track,{'fullname' : track},[this.renderer]);
-    this.renderer.trackOrder = this.renderer.trackOrder.concat([track]);
-    this.renderer.showLayer(track);
+    MASCP.registerLayer(track.name,{},[this.renderer]);
+    this.renderer.trackOrder = this.renderer.trackOrder.concat([track.name]);
+    this.renderer.showLayer(track.name);
     this.renderer.refresh();
+  }
+
+  refreshTracks() {
+    populate_tracks.call(this);
   }
 
   get interactive() {
@@ -185,7 +191,6 @@ class GatorComponent extends WrapHTML {
   }
   set interactive(toggle) {
     if (toggle) {
-      debugger;
       this.setAttribute('interactive','');
     } else {
       this.removeAttribute('interactive');

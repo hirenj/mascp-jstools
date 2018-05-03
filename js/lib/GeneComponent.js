@@ -34,8 +34,15 @@ class GeneComponent extends GatorComponent {
 }
 
 let reader_has_data = function() {
+  if ( ! this.geneid ) {
+    return;
+  }
+  console.log('Getting data for ',this.geneid);
   var reader = new GenomeReader();
   reader.geneid = this.geneid;
+  if (this.hasAttribute('reviewed')) {
+    reader.reviewed = true;
+  }
   // reader.uniprot = 'Q10472';
   reader.exon_margin = 300;//..this.exonmargin || 300;
   if (this.nt_mapping) {
@@ -49,7 +56,15 @@ let reader_has_data = function() {
     });
     this.ready = new Promise( (resolve) => {
       reader.bind('requestComplete',() => {
+        this.uniprots = Object.keys(reader.result._raw_data.data).map( up => up.toUpperCase() );
+        if (reader.reviewed) {
+          this.uniprots = this.uniprots.filter( up => up === reader.swissprot.toUpperCase() );
+        }
+        this.refreshTracks();
         resolve();
+        delete this.ready;
+        var event = new Event('ready',{bubbles: true});
+        this.dispatchEvent(event);
       });
     });
   }

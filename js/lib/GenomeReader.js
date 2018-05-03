@@ -37,10 +37,10 @@ GenomeReader.prototype.requestData = function()
     if (! this.exons ) {
         return {
             type: "GET",
-            url : 'http://mygene.info/v2/gene/'+this.geneid,
+            url : 'http://mygene.info/v3/gene/'+this.geneid,
             dataType: "json",
             data: {
-                'fields' : 'exons_hg19'
+                'fields' : 'exons_hg19,uniprot.Swiss-Prot'
             }
         };
     }
@@ -48,7 +48,7 @@ GenomeReader.prototype.requestData = function()
     return {
         type: "GET",
         dataType: "txt",
-        url: "http://www.uniprot.org/mapping/",
+        url: "https://www.uniprot.org/mapping/",
         data : {
             "from" : "REFSEQ_NT_ID",
             "to" : "ACC",
@@ -56,6 +56,16 @@ GenomeReader.prototype.requestData = function()
             "query" : Object.keys(this.exons).join(' ')
         }
     };
+};
+
+let update_structure = (data) => {
+    let result = {};
+    for (let transcript of data) {
+        result[transcript.transcript] = transcript;
+        transcript.exons = transcript.position;
+        delete transcript.position;
+    }
+    return result;
 };
 
 (function(serv) {
@@ -81,7 +91,8 @@ GenomeReader.prototype.requestData = function()
             return;
         }
         if ( ! this.exons ) {
-            this.exons = data.exons_hg19 || data.exons;
+            this.exons = update_structure(data.exons_hg19 || data.exons);
+            this.swissprot = (data.uniprot || {})['Swiss-Prot'].toLowerCase();
             if ( ! this.nt_mapping ) {
                 this.retrieve(this.acc || this.agi);
                 return;
@@ -577,7 +588,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var proxy_reader = {
                 agi: controller_name,
                 gotResult: function() {
-                    renderer.renderObjects(controller_name,get_exon_boxes(result,self.uniprot));
+                    renderer.renderObjects(controller_name,get_exon_boxes(result, self.reviewed ? self.swissprot : self.uniprot));
                 }
             };
             Service.prototype.registerSequenceRenderer.call(proxy_reader,renderer);
