@@ -5,6 +5,7 @@
 import Service from './Service';
 import UserdataReader from './UserdataReader';
 import bean from '../bean';
+import MASCP from './MASCP';
 
 
 /** Default class constructor

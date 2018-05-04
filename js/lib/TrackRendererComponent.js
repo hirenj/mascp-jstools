@@ -163,6 +163,14 @@ class TrackComponent extends WrapHTML  {
     return this.setAttribute('name',name);
   }
 
+  get fullname() {
+    return this.getAttribute('fullname');
+  }
+
+  set fullname(name) {
+    return this.setAttribute('fullname',name);
+  }
+
   get scale() {
     return (this.getAttribute('scale') || '').split(',');
   }
