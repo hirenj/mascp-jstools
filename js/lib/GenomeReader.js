@@ -24,7 +24,7 @@ GenomeReader.prototype.requestData = function()
         return {
             type: "GET",
             dataType: "json",
-            url : 'http://mygene.info/v2/query',
+            url : 'https://mygene.info/v2/query',
             data: { 'q' : 'uniprot:'+this.acc.toUpperCase(),
                     'fields'   : 'entrezgene',
                     'email'    : 'joshi%40sund.ku.dk'
@@ -37,7 +37,7 @@ GenomeReader.prototype.requestData = function()
     if (! this.exons ) {
         return {
             type: "GET",
-            url : 'http://mygene.info/v3/gene/'+this.geneid,
+            url : 'https://mygene.info/v3/gene/'+this.geneid,
             dataType: "json",
             data: {
                 'fields' : 'exons_hg19,uniprot.Swiss-Prot'
