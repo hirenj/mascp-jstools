@@ -163,6 +163,10 @@ class TrackComponent extends WrapHTML  {
     return this.setAttribute('name',name);
   }
 
+  get layer() {
+    return MASCP.getLayer(this.name);
+  }
+
   get fullname() {
     return this.getAttribute('fullname');
   }

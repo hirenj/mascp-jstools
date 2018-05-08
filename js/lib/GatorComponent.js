@@ -4,9 +4,12 @@ import CondensedSequenceRenderer from './CondensedSequenceRenderer';
 import Service from './Service';
 import MASCP from './MASCP';
 
+const component_symbol = Symbol('component');
+
 class DraggableRenderer extends CondensedSequenceRenderer {
-  constructor(container) {
+  constructor(container,component) {
     super(container);
+    this[component_symbol] = component;
   }
   getVisibleLength() {
     return this.rightVisibleResidue() - this.leftVisibleResidue();
@@ -19,6 +22,10 @@ class DraggableRenderer extends CondensedSequenceRenderer {
   }
   setLeftPosition(pos) {
     return this.setLeftVisibleResidue(pos);
+  }
+
+  get selecting() {
+    return this[component_symbol].selecting;
   }
 }
 
@@ -57,7 +64,7 @@ class InteractiveState {
     this.component = component;
   }
   get enabled() {
-    return this.component.interactive;
+    return this.component.interactive && ! this.component.selecting;
   }
   set enabled(toggle) {
     this.component.interactive = toggle;
@@ -70,7 +77,7 @@ class ComponentDragger extends Dragger {
     this.component = component;
   }
   get enabled() {
-    return this.component.interactive;
+    return this.component.interactive && ! this.component.selecting;
   }
   set enabled(toggle) {
     this.component.interactive = toggle;
@@ -97,7 +104,7 @@ let setup_renderer = function(renderer) {
 };
 
 let create_renderer = function(container){
-  let renderer = new DraggableRenderer(container);
+  let renderer = new DraggableRenderer(container,this);
   setup_renderer(renderer);
   wire_renderer_sequence_change.call(this,renderer);
   return renderer;
@@ -142,6 +149,26 @@ let populate_tracks = function() {
   }
 }
 
+let wire_selection_change = function(renderer) {
+  renderer.bind('selection', (selections) => {
+    let positions = selections.get(renderer);
+    if ( ! positions[0] && ! positions[1] ) {
+      this.removeAttribute('selected')
+    } else {
+      this.setAttribute('selected',`${positions[0]}:${positions[1]}`);
+    }
+    for (let track of this.querySelectorAll('x-gatortrack')) {
+      let positions = selections.get(track.layer);
+      if ( ! positions[0] && ! positions[1] ) {
+        track.removeAttribute('selected')
+      } else {
+        track.setAttribute('selected',`${positions[0]}:${positions[1]}`);
+      }
+    }
+  });
+}
+
+
 class GatorComponent extends WrapHTML {
 
   static get observedAttributes() {
@@ -171,10 +198,13 @@ class GatorComponent extends WrapHTML {
         this.renderer.fixed_size = true;
       }
     }
+    wire_selection_change.call(this,this.renderer);
   }
+
   fitToZoom() {
     zoom_to_fit(this.renderer);
   }
+
   createTrack(track) {
     MASCP.registerLayer(track.name,{},[this.renderer]);
     this.renderer.trackOrder = this.renderer.trackOrder.concat([track.name]);
@@ -186,9 +216,23 @@ class GatorComponent extends WrapHTML {
     populate_tracks.call(this);
   }
 
+  get selecting() {
+    return this.hasAttribute('selecting');
+  }
+
+  set selecting(toggle) {
+    if (toggle) {
+      this.setAttribute('selecting','');
+    } else {
+      this.removeAttribute('selecting');
+    }
+  }
+
+
   get interactive() {
     return this.hasAttribute('interactive');
   }
+
   set interactive(toggle) {
     if (toggle) {
       this.setAttribute('interactive','');

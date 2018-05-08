@@ -2297,10 +2297,7 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     //
     bindClick(canvas,function(evt) {
         if (! self.selecting) {
-            self.select();
-            notifySelectionToLayers(null,null,self);
-            local_start = null;
-            local_end = null;
+            return;
         }
     });
 
