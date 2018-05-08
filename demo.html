@@ -141,10 +141,6 @@ let do_clustal = function(el,uniprota,uniprotb,base_pos) {
 
     runner.sequences = seqs;
 
-    renderer.bind('selection', (dat) => {
-      console.log(dat);
-    });
-
     runner.bind('requestComplete', () => {
 
       el.refreshTracks();
