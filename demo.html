@@ -17,7 +17,7 @@
 </head>
 <body>
   <x-protviewer interactive ></x-protviewer>
-  <x-protviewer interactive ></x-protviewer>
+  <x-protviewer ></x-protviewer>
 <!--   <x-protviewer id="fixed" interactive ></x-protviewer>
   <x-protviewer id="static"></x-protviewer>
  -->
@@ -141,11 +141,15 @@ let do_clustal = function(el,uniprota,uniprotb,base_pos) {
 
     runner.sequences = seqs;
 
+    renderer.bind('selection', (dat) => {
+      console.log(dat);
+    });
 
     runner.bind('requestComplete', () => {
 
       el.refreshTracks();
 
+      renderer.selecting =true;
 
       runner.result.alignToSequence(0);
 
@@ -184,7 +188,7 @@ let do_clustal = function(el,uniprota,uniprotb,base_pos) {
   });
 };
 
-// show_sequence(document.querySelectorAll('x-protviewer')[0],'Q14112',200);
+show_sequence(document.querySelectorAll('x-protviewer')[0],'Q14112',200);
 do_clustal(document.querySelectorAll('x-protviewer')[1],'Q14112','Q14112',11);
 // show_sequence(document.querySelectorAll('x-geneviewer')[0],'Q10471',200,230382000);
 

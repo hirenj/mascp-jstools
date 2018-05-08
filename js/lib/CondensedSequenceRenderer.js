@@ -2118,6 +2118,20 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var highlights = [];
     var createNewHighlight = function() {
         var highlight = renderer._canvas.rect(0,0,0,'100%');
+        highlight.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            return false;
+        });
+        highlight.addEventListener('mousedown', (ev) => {
+            ev.stopPropagation();
+            return false;
+        });
+
+        highlight.addEventListener('touchstart', (ev) => {
+            ev.stopPropagation();
+            return false;
+        });
+
         highlight.setAttribute('fill','#ffdddd');
         highlight.removeAttribute('stroke');
         var pnode = highlight.parentNode;
@@ -2227,14 +2241,18 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
   };
 
   var notifySelectionToLayers = function(start,end,renderer) {
-    for (var layname in MASCP.layers) {
+    let selections = new WeakMap();
+    selections.set(renderer,[start,end]);
+    for (let layname of Object.keys(renderer._layer_containers || {})) {
         var lay = MASCP.getLayer(layname);
+        let values = [ null, null ];
         if (start && end) {
-            bean.fire(lay,'selection', [ renderer.scalePosition(start,layname,true), renderer.scalePosition(end,layname,true) ]);
-        } else {
-            bean.fire(lay,'selection', [ null,null ]);
+            values = [ renderer.scalePosition(start,layname,true), renderer.scalePosition(end,layname,true) ];
         }
+        bean.fire(lay,'selection',values);
+        selections.set(lay,values);
     }
+    bean.fire(renderer,'selection', selections);
   };
 
 CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
@@ -2253,6 +2271,8 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     var end_func;
     var local_start;
     var local_end;
+
+    let in_drag = false;
 
 
     var moving_func = function(evt) {
@@ -2288,6 +2308,8 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         if (! self.selecting ) {
             return;
         }
+        in_drag = true;
+        self.select();
         var positions = mousePosition(evt);
         var p = {};
         if (canvas.nodeName == 'svg') {
@@ -2309,21 +2331,23 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     },false);
 
     canvas.addEventListener('mouseup',function(evt) {
-        if (self.selecting) {
-            notifySelectionToLayers(local_start+1,local_end,self);
+        if (in_drag) {
+            notifySelectionToLayers(local_start === null ? null : local_start+1,local_end,self);
             local_start = null;
             local_end = null;
+            in_drag = false;
         }
         canvas.removeEventListener('mousemove',moving_func);
         evt.preventDefault();
     });
 
     canvas.addEventListener('touchend',function() {
-        if (self.selecting) {
+        if (in_drag) {
             setTimeout(function() {
-                notifySelectionToLayers(local_start+1,local_end,self);
+                notifySelectionToLayers(local_start === null ? null : local_start+1,local_end,self);
                 local_start = null;
                 local_end = null;
+                in_drag = false;
             },500);
         }
         canvas.removeEventListener('touchmove',moving_func);
@@ -2334,6 +2358,7 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             return;
         }
         if (evt.changedTouches.length == 1) {
+            in_drag = true;
             evt.preventDefault();
             var positions = mousePosition(evt.changedTouches[0]);
             var p = {};
