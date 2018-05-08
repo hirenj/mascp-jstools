@@ -23,5 +23,8 @@ import GatorComponent from './lib/GatorComponent';
 
 import GeneComponent from './lib/GeneComponent';
 
+import TrackComponent from './lib/TrackRendererComponent';
+
 MASCP.GatorComponent = GatorComponent;
 MASCP.GeneComponent = GeneComponent;
+MASCP.TrackComponent = TrackComponent;

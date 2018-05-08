@@ -2276,6 +2276,7 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     // Need alternative method to clear selection
     //
     bindClick(canvas,function(evt) {
+        console.log('End of click event');
         if (! self.selecting) {
             self.select();
             notifySelectionToLayers(null,null,self);
@@ -2285,9 +2286,11 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     });
 
     canvas.addEventListener('mousedown',function(evt) {
+        console.log(self.selecting);
         if (! self.selecting ) {
             return;
         }
+        self.select();
         var positions = mousePosition(evt);
         var p = {};
         if (canvas.nodeName == 'svg') {
@@ -2471,7 +2474,7 @@ clazz.prototype.removeTrack = function(layer) {
     }
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {
-        this._layer_containers[layer.name] = null;
+        delete this._layer_containers[layer.name];
         layer.disabled = true;
     }
 

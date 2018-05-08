@@ -20,7 +20,8 @@
   <x-protviewer interactive ></x-protviewer>
 <!--   <x-protviewer id="fixed" interactive ></x-protviewer>
   <x-protviewer id="static"></x-protviewer>
- -->  <x-geneviewer geneid="2590" interactive></x-geneviewer>
+ -->
+ <!-- <x-geneviewer geneid="2590" interactive></x-geneviewer> -->
 <script>
 
 
@@ -80,20 +81,33 @@ let guid = () => {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 };
 
+let make_track = (id,fullname,scale) => {
+  let a_track = document.createElement('x-gatortrack');
+  a_track.setAttribute('name',id);
+  a_track.setAttribute('fullname',fullname);
+  if (scale) {
+    a_track.setAttribute('scale',scale);
+  }
+  return a_track;
+};
+
+
 let show_sequence = function(el,uniprot,base_pos,genomic_base) {
   let start_promise = genomic_base ? el.ready : showUniprot(el.renderer,uniprot);
+
+  let first_lay_id = guid();
+
+  el.appendChild(make_track( first_lay_id, 'Proteintrack', uniprot ));
+
+  let second_lay_id = guid();
+
+  el.appendChild(make_track( second_lay_id, 'AnotherDataset', genomic_base ? 'genomic' : uniprot ));
+
+
   start_promise.then( () => {
-    let first_lay_id = guid();
-    el.createTrack(first_lay_id);
-    MASCP.getLayer(first_lay_id).scales.add(uniprot);
-    MASCP.getLayer(first_lay_id).fullname = 'Proteintrack';
-
-    let second_lay_id = guid();
-    el.createTrack(second_lay_id);
-    MASCP.getLayer(second_lay_id).scales.add(genomic_base ? 'genomic' : uniprot);
-    MASCP.getLayer(second_lay_id).fullname = 'AnotherDataset'
-
     let renderer = el.renderer;
+    el.refreshTracks();
+
     renderer.renderObjects(first_lay_id,[{aa: base_pos, type: 'marker', options: { bare_element:true,
     height: 18,
     offset: -1,
@@ -112,27 +126,29 @@ let show_sequence = function(el,uniprot,base_pos,genomic_base) {
 
 let do_clustal = function(el,uniprota,uniprotb,base_pos) {
   let runner = MASCP.ClustalRunner.EmulatedClustalRunner(el.renderer);
+
+  let first_lay_id = guid();
+  el.appendChild(make_track( first_lay_id, 'Seq0dat', 'seq0' ));
+
+  let second_lay_id = guid();
+  el.appendChild(make_track( second_lay_id, 'Seq1dat', 'seq1' ));
+
+
   Promise.all( [ retrieveUniprot(uniprota), retrieveUniprot(uniprotb) ]).then( seqs => {
     let renderer = el.renderer;
-
     seqs[1] = (seqs[1].slice(0,10) + '----------' + seqs[1].slice(20)).slice(0,100)+'MMMMMMMMMM';
     seqs[0] = seqs[0].slice(0,100)+'----------';
 
     runner.sequences = seqs;
 
+
     runner.bind('requestComplete', () => {
+
+      el.refreshTracks();
+
 
       runner.result.alignToSequence(0);
 
-      let first_lay_id = guid();
-      el.createTrack(first_lay_id);
-      MASCP.getLayer(first_lay_id).scales.add('seq0');
-      MASCP.getLayer(first_lay_id).fullname = 'Seq0dat';
-
-      let second_lay_id = guid();
-      el.createTrack(second_lay_id);
-      MASCP.getLayer(second_lay_id).scales.add('seq1');
-      MASCP.getLayer(second_lay_id).fullname = 'Seq1dat'
 
       renderer.renderObjects(first_lay_id,[{aa: base_pos, type: 'marker', options: { bare_element:true,
       height: 18,
@@ -168,9 +184,9 @@ let do_clustal = function(el,uniprota,uniprotb,base_pos) {
   });
 };
 
-show_sequence(document.querySelectorAll('x-protviewer')[0],'Q14112',200);
+// show_sequence(document.querySelectorAll('x-protviewer')[0],'Q14112',200);
 do_clustal(document.querySelectorAll('x-protviewer')[1],'Q14112','Q14112',11);
-show_sequence(document.querySelectorAll('x-geneviewer')[0],'Q10471',200,230382000);
+// show_sequence(document.querySelectorAll('x-geneviewer')[0],'Q10471',200,230382000);
 
 
 //230379000
