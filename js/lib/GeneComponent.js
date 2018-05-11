@@ -2,6 +2,7 @@
 import GenomeReader from './GenomeReader';
 import GatorComponent from './GatorComponent';
 
+const last_retrieved_gene = Symbol('last_retrieved_gene');
 
 class GeneComponent extends GatorComponent {
   static get observedAttributes() {
@@ -15,10 +16,12 @@ class GeneComponent extends GatorComponent {
   connectedCallback() {
     super.connectedCallback();
     setup_renderer.call(this);
-    retrieve_data.call(this);
+    if (this.geneid) {
+      retrieve_data.call(this);
+    }
   }
 
-  attributeChangedCallback(name) {
+  attributeChangedCallback(name,old,newval) {
     if (name === 'geneid' && this.renderer) {
       retrieve_data.call(this);
       return;
@@ -37,6 +40,11 @@ let reader_has_data = function() {
   if ( ! this.geneid ) {
     return;
   }
+  if ( this[last_retrieved_gene] === this.geneid ) {
+    return;
+  }
+  this[last_retrieved_gene] = this.geneid;
+
   console.log('Getting data for ',this.geneid);
   var reader = new GenomeReader();
   reader.geneid = this.geneid;
