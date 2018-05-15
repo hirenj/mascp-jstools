@@ -538,6 +538,67 @@ var do_request_ie = function(dataHash)
     }
 };
 
+let handle_request_success = function(data,status,xhr) {
+    Service._current_reqs -= 1;
+    if ( xhr && xhr.status !== null && xhr.status === 0 ) {
+        bean.fire(this,"error",[{"error": "Zero return status from request "}]);
+        this.requestComplete();
+        return;
+    }
+    var received_flag = this._dataReceived(data,status);
+
+    if (received_flag) {
+        this.gotResult();
+    }
+
+    if (received_flag !== null && typeof received_flag !== 'undefined') {
+        this.requestComplete();
+    } else {
+        this.requestIncomplete();
+    }
+};
+
+let handle_request_error = function(response,req,status) {
+    Service._current_reqs -= 1;
+    if (typeof status == 'string') {
+        status = { 'error' : status , 'request' : req };
+    }
+    if (! isNaN(status) ) {
+        status = { "error" : "Reqeust error", "status" : status, 'request' : req };
+    }
+    bean.fire(this,"error",[status]);
+    bean.fire(Service,'requestComplete');
+    this.requestComplete();
+};
+
+let perform_request = function(request_data) {
+
+    if (request_data === false) {
+        return;
+    }
+
+    if (! request_data ) {
+        bean.fire(this,"error",["No request data"]);
+        bean.fire(Service,"requestComplete",[this]);
+        this.requestComplete();
+        return this;
+    }
+
+    var default_params = {
+        async:      this.async,
+        url:        request_data.url || this._endpointURL,
+        timeout:    5000,
+        error:      handle_request_error.bind(this),
+        success:    handle_request_success.bind(this)
+    };
+    default_params = Object.assign(request_data,default_params);
+
+    do_request(default_params);
+
+    Service._current_reqs += 1;
+};
+
+
 base.retrieve = function(agi,callback)
 {
     var self = this;
@@ -587,64 +648,7 @@ base.retrieve = function(agi,callback)
         bean.add(self,"requestComplete",done_func);
     }
     var request_data = this.requestData();
-
-    if (request_data === false) {
-        return;
-    }
-
-    if (! request_data ) {
-        bean.fire(self,"error",["No request data"]);
-        bean.fire(Service,"requestComplete",[self]);
-        this.requestComplete();
-        return this;
-    }
-        
-    var default_params = {
-    async:      this.async,
-    url:        request_data.url || this._endpointURL,
-    timeout:    5000,
-    error:      function(response,req,status) {
-                    Service._current_reqs -= 1;
-                    if (typeof status == 'string') {
-                        status = { 'error' : status , 'request' : req };
-                    }
-                    if (! isNaN(status) ) {
-                        status = { "error" : "Reqeust error", "status" : status, 'request' : req };
-                    }
-                    bean.fire(self,"error",[status]);
-                    bean.fire(Service,'requestComplete');
-                    self.requestComplete();
-                    //throw "Error occurred retrieving data for service "+self._endpointURL;
-                },
-    success:    function(data,status,xhr) {
-                    Service._current_reqs -= 1;
-                    if ( xhr && xhr.status !== null && xhr.status === 0 ) {
-                        bean.fire(self,"error",[{"error": "Zero return status from request "}]);
-                        self.requestComplete();
-                        return;
-                    }
-                    var received_flag = self._dataReceived(data,status);
-
-                    if (received_flag) {
-                        self.gotResult();
-                    }
-
-                    if (received_flag !== null && typeof received_flag !== 'undefined') {
-                        self.requestComplete();
-                    } else {
-                        self.requestIncomplete();
-                    }
-                }
-    };
-    default_params = Object.assign(request_data,default_params);
-    if (MASCP.IE) {
-        do_request_ie(default_params);
-    } else {
-        do_request(default_params);
-    }
-    
-    Service._current_reqs += 1;
-
+    Promise.resolve(request_data).then( perform_request.bind(this) );
     return this;
 };
 

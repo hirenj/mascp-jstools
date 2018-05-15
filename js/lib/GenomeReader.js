@@ -45,6 +45,16 @@ GenomeReader.prototype.requestData = function()
         };
     }
 
+    return MASCP.GatorDataReader.authenticate().then((url_base) => {
+        return {
+            type: "GET",
+            dataType: "json",
+            auth: MASCP.GATOR_AUTH_TOKEN,
+            api_key: MASCP.GATOR_CLIENT_ID,
+            url: url_base+'/data/latest/combined/'+(this.swissprot).toUpperCase()+'-1'
+        };
+    });
+
     return {
         type: "GET",
         dataType: "txt",
@@ -99,6 +109,13 @@ let update_structure = (data) => {
             }
             data = this.nt_mapping.map(function(map) { return map.join('\t'); } ).join('\n');
         }
+        data = data.data.filter( dat => dat.dataset == 'uniprot_refseqnt' );
+        if (data.length > 0) {
+            data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
+        } else {
+            data = "";
+        }
+
         var mapped = {};
         self.sequences = [{ "agi" : "genome" }];
         (data || "").split('\n').forEach(function(row) {
@@ -106,7 +123,7 @@ let update_structure = (data) => {
             if ( ! bits[1]) {
                 return;
             }
-            var uniprot = bits[1].toLowerCase();
+            var uniprot = bits[1].toLowerCase().replace(/-\d+/,'');
             var nuc = bits[0];
             nuc = nuc.replace(/\..*$/,'');
             if (! self.exons[nuc]) {
