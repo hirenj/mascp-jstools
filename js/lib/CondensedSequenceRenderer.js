@@ -2373,9 +2373,9 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             }
             start = p.x;
             end = p.x;
-            canvas.addEventListener('touchmove',moving_func,{passive:true});
+            canvas.addEventListener('touchmove',moving_func,{passive:false});
         }
-    },{passive:true});
+    },{passive:false});
     //FIXME - PASSIVE
 };
 
