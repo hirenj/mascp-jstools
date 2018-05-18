@@ -1,4 +1,5 @@
 const CompressionPlugin = require("compression-webpack-plugin");
+const path = require('path');
 
 module.exports = {
   devtool: 'source-map',
@@ -12,6 +13,11 @@ module.exports = {
   plugins: [
     new CompressionPlugin()
   ],
+  devServer: {
+   contentBase: path.join(__dirname, "/"),
+   compress: true,
+   port: 3000,
+ },
   module: {
     rules: [{
       test: /\.js$/,
