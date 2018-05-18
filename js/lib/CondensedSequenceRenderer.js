@@ -2493,6 +2493,10 @@ clazz.prototype.removeTrack = function(layer) {
     }
     var layer_containers = this._layer_containers || [];
     if ( layer_containers[layer.name] ) {
+        let elements = [].concat(layer_containers[layer.name]);
+        for(let el of elements) {
+            this.remove(layer.name,el);
+        }
         delete this._layer_containers[layer.name];
         layer.disabled = true;
     }
