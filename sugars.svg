@@ -1,69 +1,259 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-	<defs>
-        <g id="galnac">
-			<rect x="1" y="1" fill="#ff0" width="98" height="98" stroke-width="3" stroke="#000"/>
-        </g>
-        <g id="glcnac">
-			<rect x="1" y="1" fill="#00f" width="98" height="98" stroke-width="0" stroke="#000"/>
-        </g>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="50 50 500 850">
+<!--
+RGB settings for SNFG
+White  #fff
+Blue  #0090bc
+Green  #00a651
+Yellow  #ffd400
+Light blue  #8fcce9
+Pink  #f69ea1
+Purple  #a54399
+Brown  #a17a4d
+Orange  #f47920
+Red  #ed1c24
+-->
+  <defs>
+    <symbol id="hexnac_base" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" />
+    </symbol>
+    <symbol id="hexnac" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="#fff" stroke-width="3" stroke="#000"/>
+    </symbol>
+    <symbol id="galnac" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="#ffd400" stroke-width="1" stroke="#000"/>
+    </symbol>
+    <symbol id="glcnac" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="#0090bc" stroke-width="1" stroke="#000"/>
+    </symbol>
+    <symbol id="light_galnac" viewBox="0 0 100 100">
+      <rect x="10" y="10" width="80" height="80" fill="#ffffB3" stroke-width="10" stroke="#a6a635"/>
+    </symbol>
+    <symbol id="man" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+    </symbol>
+    <symbol id="man6p" viewBox="0 0 100 100">
+      <circle cx="50" cy="75" fill="#00a651" r="20" stroke-width="1" stroke="#000"/>
+      <text x="50" y="25" text-anchor="middle" stroke="#000" stroke-width="2" dy=".35em" dx="0.05em" font-size="25">P</text>
+    </symbol>
+    <symbol id="glc" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#0090bc" r="40" stroke-width="1" stroke="#000"/>
+    </symbol>
+    <symbol id="gal" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#ffd400" r="40" stroke-width="1" stroke="#000"/>
+    </symbol>
+    <symbol id="hex" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#fff" r="40" stroke-width="3" stroke="#000"/>
+    </symbol>
+    <symbol id="neu" viewBox="0 0 100 100">
+      <rect x="17" y="17" transform="rotate(45,50,50)" fill="#ed1c24" stroke="#000" stroke-width="1" width="66" height="66"/>
+    </symbol>
+    <symbol id="neuac" viewBox="0 0 100 100">
+      <rect x="17" y="17" transform="rotate(45,50,50)" fill="#a54399" stroke="#000" stroke-width="1" width="66" height="66"/>
+    </symbol>
+    <symbol id="neugc" viewBox="0 0 100 100">
+      <rect x="17" y="17" transform="rotate(45,50,50)" fill="#8fcce9" stroke="#000" stroke-width="1" width="66" height="66"/>
+    </symbol>
+    <symbol id="fuc" viewBox="0 0 100 100">
+      <path d="M50,15 90,90 10,90 z" fill="#ed1c24" stroke="#000" stroke-width="1"/>
+    </symbol>
+    <symbol id="fucnac" viewBox="0 0 100 100">
+      <path d="M50,15 90,90 50,90 z" fill="#ed1c24" stroke="#000" stroke-width="1"/>
+      <path d="M50,15 50,90 10,90 z" fill="#fff" stroke="#000" stroke-width="1"/>
+    </symbol>
+    <symbol id="rha" viewBox="0 0 100 100">
+      <path d="M50,15 90,90 10,90 z" fill="#00a651" stroke="#000" stroke-width="1"/>
+    </symbol>
+    <symbol id="ara" viewBox="0 0 100 100">
+<polyline fill="#00a651" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+  67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
+    </symbol>
+    <symbol id="araf" viewBox="0 0 100 100">
+<polyline fill="#00a651" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+  67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
+      <text x="50" y="50" text-anchor="middle" stroke="#fff" fill="#fff" stroke-width="0" dy=".4em" dx="-0.1em" font-size="50" font-family="sans-serif" font-style="italic">f</text>
+    </symbol>
+    <symbol id="xyl" viewBox="0 0 100 100">
+<polyline fill="#f47920" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+  67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
+    </symbol>
+    <symbol id="rib" viewBox="0 0 100 100">
+<polyline fill="#f69ea1" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+  67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
+    </symbol>
+    <symbol id="rbo" viewBox="0 0 100 100">
+<polyline fill="#f69ea1" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
+  67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
+    <text x="50" y="50" text-anchor="middle" stroke="#fff" fill="#fff" stroke-width="0" dy=".4em" dx="-0.1em" font-size="25" font-family="sans-serif" font-style="italic">ol</text>
+    </symbol>
+    <symbol id="hexa" viewBox="0 0 100 100">
+      <polyline fill="#fff" stroke="#000" stroke-width="1" points="50,5 95,50 5,50 50,5"/>
+      <polyline fill="#fff" stroke="#000" stroke-width="1" points="50,95 95,50 5,50 50,95"/>
+    </symbol>
+    <symbol id="glca" viewBox="0 0 100 100">
+      <polyline fill="#0090bc" stroke="#000" stroke-width="1" points="50,5 95,50 5,50 50,5"/>
+      <polyline fill="#fff" stroke="#000" stroke-width="1" points="50,95 95,50 5,50 50,95"/>
+    </symbol>
+    <symbol id="idoa" viewBox="0 0 100 100">
+      <polyline fill="#fff" stroke="#000" stroke-width="1" points="50,5 95,50 5,50 50,5"/>
+      <polyline fill="#a17a4d" stroke="#000" stroke-width="1" points="50,95 95,50 5,50 50,95"/>
+    </symbol>
+    <symbol id="man(a1-2)man" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="0" y="0" width="100" height="50">
+        <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="50" width="100" height="50">
+        <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="neuac(a2-3)gal(b1-3)galnac" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="0" y="0" width="100" height="33">
+        <rect x="17" y="17" transform="rotate(45,50,50)" fill="#a54399" stroke="#000" stroke-width="1" width="66" height="66"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="33" width="100" height="33">
+        <circle cx="50" cy="50" fill="#ffd400" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="66" width="100" height="33">
+        <rect x="10" y="10" width="80" height="80" fill="#ffd400" stroke-width="1" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="gal(b1-3)galnac" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="0" y="0" width="100" height="50">
+        <circle cx="50" cy="50" fill="#ffd400" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="50" width="100" height="50">
+        <rect x="10" y="10" width="80" height="80" fill="#ffd400" stroke-width="1" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="glcnac(b1-4)glcnac" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="0" y="0" width="100" height="50">
+        <rect x="10" y="10" width="80" height="80" fill="#0090bc" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="50" width="100" height="50">
+        <rect x="10" y="10" width="80" height="80" fill="#0090bc" stroke-width="1" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="man(a1-3)[man(a1-6)]man(b1-4)glcnac(b1-4)glcnac" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="50" y="0" width="25" height="25">
+        <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="25" y="0" width="25" height="25">
+        <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="37.5" y="25" width="25" height="25">
+        <circle cx="50" cy="50" fill="#00a651" r="40" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="37.5" y="50" width="25" height="25">
+        <rect x="10" y="10" width="80" height="80" fill="#0090bc" stroke-width="1" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="37.5" y="75" width="25" height="25">
+        <rect x="10" y="10" width="80" height="80" fill="#0090bc" stroke-width="1" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="glcnac(b1-4)glcnac.potential" viewBox="0 0 100 100">
+      <svg viewBox="0 0 100 100" x="0" y="0" width="100" height="50">
+        <rect x="10" y="10" width="80" height="80" fill="#67a2fc" stroke-width="0" stroke="#000"/>
+      </svg>
+      <svg viewBox="0 0 100 100" x="0" y="50" width="100" height="50">
+        <rect x="10" y="10" width="80" height="80" fill="#67a2fc" stroke-width="0" stroke="#000"/>
+      </svg>
+    </symbol>
+    <symbol id="phospho" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#fff" r="48" stroke-width="3" stroke="#000"/>
+      <text x="50" y="50" text-anchor="middle" stroke="#000" stroke-width="2" dy=".35em" dx="0.05em" font-size="50">P</text>
+    </symbol>
+    <symbol id="p" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" fill="#bbe5fa" r="35" stroke-width="4" stroke="#2f5fac"/>
+      <text x="50" y="50" text-anchor="middle" fill="#2f5fac" stroke="none" stroke-width="2" dy=".35em" dx="0.05em" font-size="50">P</text>
+    </symbol>
+    <symbol id="ser" viewBox="0 0 100 100">
+      <path d="M20,50 a1,1 0 0,0 30,0 a1,1 0 0,1 30,0" fill="none" stroke="#000" stroke-width="1"/>
+      <text x="50" y="98" text-anchor="middle" fill="#000" stroke="#000" stroke-width="0" font-size="40">Ser</text>
+    </symbol>
+    <symbol id="thr" viewBox="0 0 100 100">
+      <path d="M20,50 a1,1 0 0,0 30,0 a1,1 0 0,1 30,0" fill="none" stroke="#000" stroke-width="1"/>
+      <text x="50" y="98" text-anchor="middle" fill="#000" stroke="#000" stroke-width="0" font-size="40">Thr</text>
+    </symbol>
+    <symbol id="asn" viewBox="0 0 100 100">
+      <path d="M20,50 a1,1 0 0,0 30,0 a1,1 0 0,1 30,0" fill="none" stroke="#000" stroke-width="1"/>
+      <text x="50" y="98" text-anchor="middle" fill="#000" stroke="#000" stroke-width="0" font-size="40">Asn</text>
+    </symbol>
+    <symbol id="hyl" viewBox="0 0 100 100">
+      <path d="M20,50 a1,1 0 0,0 30,0 a1,1 0 0,1 30,0" fill="none" stroke="#000" stroke-width="1"/>
+      <text x="50" y="98" text-anchor="middle" fill="#000" stroke="#000" stroke-width="0" font-size="40">Hyl</text>
+    </symbol>
+  </defs>
+  <!--
+  <g>
+    <rect x="0" y="0" width="100" height="100" stroke-width="0.1" stroke="#000" fill="none"/>
+    <text x="20" y="50" font-family="helvetica">100 x 100</text>
+    <text x="0" y="15"  font-family="helvetica">0</text>
+    <text x="70" y="100"  font-family="helvetica">100</text>
+  </g>
+  -->
+  <use xlink:href="#galnac" x="100" y="100" width="100" height="100"/>
+  <use xlink:href="#glcnac" x="200" y="100" width="100" height="100"/>
+  <use xlink:href="#man" x="300" y="100" width="100" height="100"/>
+  <use xlink:href="#glc" x="400" y="100" width="100" height="100"/>
+  <text x="150" text-anchor="middle" y="210">GalNAc</text>
+  <text x="250" text-anchor="middle" y="210">GlcNAc</text>
+  <text x="350" text-anchor="middle" y="210">Mannose</text>
+  <text x="450" text-anchor="middle" y="210">Glucose</text>
+  <use xlink:href="#fuc" x="100" y="250" width="100" height="100"/>
+  <use xlink:href="#neu" x="200" y="250" width="100" height="100"/>
+  <use xlink:href="#neuac" x="300" y="250" width="100" height="100"/>
+  <use xlink:href="#neugc" x="400" y="250" width="100" height="100"/>
+  <text x="150" text-anchor="middle" y="370">Fucose</text>
+  <text x="250" text-anchor="middle" y="370">Sialic acid</text>
+  <text x="350" text-anchor="middle" y="370">NeuAc</text>
+  <text x="450" text-anchor="middle" y="370">NeuGc</text>
 
-        <g id="light_galnac">
-			<rect x="0" y="0" fill="#ffffB3" width="100" height="100" stroke-width="10" stroke="#a6a635"/>
-        </g>
-        <g id="gal(b1-3)galnac">
-			<circle cx="50" cy="22" fill="#ff0" r="20" stroke-width="3" stroke="#000"/>
-			<rect x="26" y="50" fill="#ff0" width="48" height="48" stroke-width="3" stroke="#000"/>
-        </g>
-        <g id="glcnac(b1-4)glcnac">
-			<rect x="27" y="0" fill="#00f" width="46" height="46" stroke-width="0" stroke="#000"/>
-			<rect x="27" y="54" fill="#00f" width="46" height="46" stroke-width="0" stroke="#000"/>
-        </g>
-        <g id="man">
-			<circle cx="50" cy="50" fill="#0f0" r="48" stroke-width="3" stroke="#000"/>
-        </g>
-        <g id="glc">
-			<circle cx="50" cy="50" fill="#00f" r="50" stroke-width="0" stroke="#000"/>
-        </g>
-        <g id="gal">
-			<circle cx="50" cy="50" fill="#ff0" r="48" stroke-width="3" stroke="#000"/>
-        </g>
-        <g id="hex">
-			<circle cx="50" cy="50" fill="#fff" r="48" stroke-width="3" stroke="#000"/>
-        </g>
-        <g id="hexnac">
-			<rect x="1" y="1" fill="#fff" width="98" height="98" stroke-width="3" stroke="#000"/>
-        </g>
+  <use xlink:href="#ara" x="100" y="400" width="100" height="100"/>
+  <use xlink:href="#xyl" x="200" y="400" width="100" height="100"/>
+  <use xlink:href="#glca" x="300" y="400" width="100" height="100"/>
+  <use xlink:href="#idoa" x="400" y="400" width="100" height="100"/>
 
-        <g id="fuc">
-        	<path d="M50,15 90,90 10,90 z" fill="#f00" stroke="#000" stroke-width="3"/>
-        </g>
-        <g id="xyl">
-<polyline fill="#FBEAD6" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="
-	67.802,60.462 78.803,94.32 50.001,69.823 21.196,94.322 32.199,60.462 3.386,39.531 38.999,39.534 50,5.678 61.002,39.536 96.615,39.539 67.804,60.462 "/>
-        </g>
-        <g id="glcnac(b1-4)glcnac.potential">
-			<rect x="27" y="0" fill="#67a2fc" width="46" height="46" stroke-width="0" stroke="#000"/>
-			<rect x="27" y="54" fill="#67a2fc" width="46" height="46" stroke-width="0" stroke="#000"/>
-        </g>
-	</defs>
-	<g>
-		<rect x="0" y="0" width="100" height="100" stroke-width="0.1" stroke="#000" fill="none"/>
-		<text x="20" y="50" font-family="helvetica">100 x 100</text>
-		<text x="0" y="15"  font-family="helvetica">0</text>
-		<text x="70" y="100"  font-family="helvetica">100</text>
-	</g>
-	<use xlink:href="#galnac" x="100" y="100" width="100" height="100"/>
+  <text x="150" text-anchor="middle" y="510">Arabinose</text>
+  <text x="250" text-anchor="middle" y="510">Xylose</text>
+  <text x="350" text-anchor="middle" y="510">GlcA</text>
+  <text x="450" text-anchor="middle" y="510">IdoA</text>
 
-	<use xlink:href="#man" x="200" y="100" width="100" height="100"/>
-	<use xlink:href="#gal(b1-3)galnac" x="300" y="100" width="100" height="100"/>
-	<use xlink:href="#glcnac(b1-4)glcnac" x="400" y="100" width="100" height="100"/>
-	<use xlink:href="#glcnac" x="500" y="100" width="100" height="100"/>
-	<use xlink:href="#fuc" x="600" y="100" width="100" height="100"/>
-	<use xlink:href="#glc" x="700" y="100" width="100" height="100"/>
-	<use xlink:href="#gal" x="800" y="100" width="100" height="100"/>
-	<use xlink:href="#hex" x="900" y="100" width="100" height="100"/>
-	<use xlink:href="#hexnac" x="1000" y="100" width="100" height="100"/>
-	<use xlink:href="#xyl" x="1100" y="100" width="100" height="100"/>
-	<use xlink:href="#glcnac(b1-4)glcnac.potential" x="1200" y="100" width="100" height="100"/>
+  <use xlink:href="#hexa" x="100" y="550" width="100" height="100"/>
+  <use xlink:href="#hex" x="200" y="550" width="100" height="100"/>
+  <use xlink:href="#hexnac" x="300" y="550" width="100" height="100"/>
+  <use xlink:href="#phospho" x="400" y="550" width="100" height="100"/>
+
+  <text x="150" text-anchor="middle" y="660">HexA</text>
+  <text x="250" text-anchor="middle" y="660">Hexose</text>
+  <text x="350" text-anchor="middle" y="660">HexNAc</text>
+  <text x="450" text-anchor="middle" y="660">Phospho</text>
+
+  <use xlink:href="#ser" x="100" y="700" width="100" height="100"/>
+  <use xlink:href="#thr" x="200" y="700" width="100" height="100"/>
+  <use xlink:href="#asn" x="300" y="700" width="100" height="100"/>
+  <use xlink:href="#hyl" x="400" y="700" width="100" height="100"/>
+
+  <text x="150" text-anchor="middle" y="810">Ser</text>
+  <text x="250" text-anchor="middle" y="810">Thr</text>
+  <text x="350" text-anchor="middle" y="810">Asn</text>
+  <text x="450" text-anchor="middle" y="810">HyL</text>
+
+
+<!--
+  <use xlink:href="#fucnac" x="1400" y="100" width="100" height="100"/>
+  <use xlink:href="#araf" x="600" y="200" width="100" height="100"/>
+  <use xlink:href="#rha" x="700" y="200" width="100" height="100"/>
+  <use xlink:href="#gal(b1-3)galnac" x="200" y="200" width="100" height="100"/>
+  <use xlink:href="#glcnac(b1-4)glcnac" x="300" y="200" width="100" height="100"/>
+  <use xlink:href="#man(a1-2)man" x="400" y="200" width="100" height="100"/>
+  <use xlink:href="#glcnac(b1-4)glcnac.potential" x="500" y="200" width="100" height="100"/>
+  <use xlink:href="#neuac(a2-3)gal(b1-3)galnac" x="800" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="900" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1000" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1100" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1200" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1300" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1400" y="200" width="100" height="100"/>
+  <use xlink:href="#hex" x="1500" y="200" width="100" height="100"/>
+-->
 </svg>
