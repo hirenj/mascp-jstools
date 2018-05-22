@@ -56,9 +56,6 @@ let apply_rendering = (renderer,default_track,objects) => {
       return ! item.track;
     }));
 
-    console.log(MASCP.getLayer(default_track));
-
-
     var items_by_track = {};
     r.filter( function(item) {
       return item.track;
