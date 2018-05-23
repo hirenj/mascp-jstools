@@ -541,13 +541,39 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             renderer.zoom = zoom;
             return;
         }
-        requestAnimationFrame(function() {
+        let zoomer = () => {
             renderer.zoom = curr;
             curr += delta;
             if (Math.abs(curr - zoom) > 0.01) {
-                requestAnimationFrame(arguments.callee);
+                requestAnimationFrame(zoomer);
             }
-        });
+        };
+        requestAnimationFrame(zoomer);
+    };
+
+    clazz.prototype.showResidues = function(start,end) {
+        let residues_per_zoom_unit = this._container.clientWidth / this._RS;
+        let container_width = this._container.clientWidth;
+        let min_zoom_level = container_width / (2 * this.sequence.length);
+
+        if ( ! this.sequence ) {
+            return;
+        }
+
+        let delta = end - start;
+        let target_zoom_level = min_zoom_level / ( delta / this.sequence.length ) ;
+        if (target_zoom_level === this.zoom) {
+            this.setLeftVisibleResidue(start);
+            return;
+        }
+        this.zoomCenter = { x: Math.floor(0.5*(end + start)) };
+        let zoomchange = () => {
+            bean.remove(this,'zoomChange',zoomchange);
+            delete this.zoomCenter;
+            this.setLeftVisibleResidue(start);
+        };
+        bean.add(this,'zoomChange',zoomchange);
+        this.zoom = target_zoom_level;
     };
 
     clazz.prototype.setLeftVisibleResidue = function(val) {
