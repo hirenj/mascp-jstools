@@ -2975,20 +2975,10 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
                 bean.fire(self,'zoomChange');
             };
         
-            if (("ontouchend" in document) && self.zoomCenter && ! no_touch_center ) {
-                bean.remove(self,'gestureend');
-                let ender = function(){
-                    bean.remove(self,'gestureend',ender);
-                    end_function();
-                };
-                bean.add(self,'gestureend',ender);
-                timeout = 1;
+            if (! this.refresh.suspended) {
+                timeout = setTimeout(end_function,100);
             } else {
-                if (! this.refresh.suspended) {
-                    timeout = setTimeout(end_function,100);
-                } else {
-                    end_function();
-                }
+                end_function();
             }
         },
         fitZoom: function() {
