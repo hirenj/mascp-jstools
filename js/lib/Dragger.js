@@ -82,7 +82,7 @@ Dragger.prototype.applyToElement = function(targetElement,enabled) {
                 targetElement._snapback = null;
             }
             
-            if (p.x > viewBoxScale * min_x) {
+            if (p.x > viewBoxScale * min_x && self.enabled) {
                 /* Element has shifted too far to the right
                    Induce some gravity towards the left side
                    of the screen
@@ -126,7 +126,7 @@ Dragger.prototype.applyToElement = function(targetElement,enabled) {
             if (min_x === 0) {
                 min_val *= 0.90;
             }
-            if (p.x < 0 && Math.abs(p.x) > min_val) {
+            if (p.x < 0 && Math.abs(p.x) > min_val && self.enabled) {
                 /* Element has shifted too far to the left
                    Induce some gravity to the right side of the screen
                 */
