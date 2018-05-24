@@ -45,7 +45,21 @@ GenomeReader.prototype.requestData = function()
         };
     }
 
+    if (this.trying_isoform) {
+        return MASCP.GatorDataReader.authenticate().then((url_base) => {
+            this.trying_isoform = true;
+            return {
+                type: "GET",
+                dataType: "json",
+                auth: MASCP.GATOR_AUTH_TOKEN,
+                api_key: MASCP.GATOR_CLIENT_ID,
+                url: url_base+'/data/latest/combined/'+(this.swissprot).toUpperCase()
+            };
+        });
+    }
+
     return MASCP.GatorDataReader.authenticate().then((url_base) => {
+        this.trying_isoform = true;
         return {
             type: "GET",
             dataType: "json",
@@ -110,9 +124,14 @@ let update_structure = (data) => {
             data = this.nt_mapping.map(function(map) { return map.join('\t'); } ).join('\n');
         }
         data = data.data.filter( dat => dat.dataset == 'uniprot_refseqnt' );
+
         if (data.length > 0) {
             data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
         } else {
+            if ( this.trying_isoform ) {
+                this.retrieve(this.acc || this.agi);
+                return;
+            }
             data = "";
         }
 
