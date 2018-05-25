@@ -45,9 +45,9 @@ GenomeReader.prototype.requestData = function()
         };
     }
 
-    if (this.trying_isoform) {
+    if (this.tried_isoform) {
         return MASCP.GatorDataReader.authenticate().then((url_base) => {
-            this.trying_isoform = true;
+            this.tried_bare = true;
             return {
                 type: "GET",
                 dataType: "json",
@@ -59,7 +59,7 @@ GenomeReader.prototype.requestData = function()
     }
 
     return MASCP.GatorDataReader.authenticate().then((url_base) => {
-        this.trying_isoform = true;
+        this.tried_isoform = true;
         return {
             type: "GET",
             dataType: "json",
@@ -128,7 +128,7 @@ let update_structure = (data) => {
         if (data.length > 0) {
             data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
         } else {
-            if ( this.trying_isoform ) {
+            if ( this.tried_isoform && ! this.tried_bare ) {
                 this.retrieve(this.acc || this.agi);
                 return;
             }
