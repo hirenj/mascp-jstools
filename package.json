@@ -32,8 +32,11 @@
       "url": "https://hirenj@github.com/hirenj/mascp-jstools.git"
     }
   ],
-  "dependencies": {},
-  "main": "js/index.js",
+  "dependencies": {
+    "esm": "^3.0.43"
+  },
+  "module": "js/index.js",
+  "main": "js/index-esm.js",
   "bin": {},
   "implements": [
     "mascp-jstools",
