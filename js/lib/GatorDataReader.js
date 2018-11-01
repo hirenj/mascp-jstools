@@ -13,6 +13,26 @@ var localhosts = ['localhost','10.0.2.2'];
 var url_base = localhosts.indexOf(window.location.hostname) >= 0 ? 'https://test.glycocode.com/api' : '/api';
 var cloudfront_host = '';
 
+const set_reducer = (data_by_mime,set) => {
+  var mimetype = set.metadata.mimetype;
+  if ( ! mimetype ) {
+    return;
+  }
+  if ( ! data_by_mime['samples'] ) {
+    data_by_mime['samples'] = {};
+  }
+  set.data.forEach(dat => {
+      dat.dataset = set.dataset;
+      dat.acc = set.acc;
+      if (set.metadata.sample) {
+        dat.species = set.metadata.sample.species;
+      }
+  });
+  data_by_mime['samples'][set.dataset] = set.metadata.sample;
+
+  data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
+};
+
 var data_parser =   function(data) {
   var doc = this.datasetname || (data || {}).datasetname || 'combined';
   if ( ! data || ! data.data ) {
@@ -25,19 +45,9 @@ var data_parser =   function(data) {
   if (doc.split(',').length > 1) {
     doc = doc.split(',');
     var data_by_mime = {};
-    data.data.filter(function(set) {
-      return doc.indexOf(set.dataset) >= 0;
-    }).forEach(function(set) {
-        var mimetype = set.metadata.mimetype;
-        set.data.forEach(function(dat) {
-            dat.dataset = set.dataset;
-            dat.acc = set.acc;
-            if (set.metadata.sample) {
-              dat.species = set.metadata.sample.species;
-            }
-        })
-        data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
-    });
+    data.data
+        .filter(set => doc.indexOf(set.dataset) >= 0)
+        .forEach(set_reducer.bind(null,data_by_mime));
     actual_data = { 'data' : data_by_mime };
   }
 
@@ -49,20 +59,7 @@ var data_parser =   function(data) {
   }
   if (doc == 'combined' || doc == 'homology' || doc == 'predictions') {
       var data_by_mime = {};
-      data.data.forEach(function(set) {
-          var mimetype = set.metadata.mimetype;
-          if ( ! mimetype ) {
-            return;
-          }
-          set.data.forEach(function(dat) {
-              dat.dataset = set.dataset;
-              dat.acc = set.acc;
-              if (set.metadata.sample) {
-                dat.species = set.metadata.sample.species;
-              }
-          });
-          data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
-      });
+      data.data.forEach(set_reducer.bind(null,data_by_mime));
       actual_data = { 'data' : data_by_mime };
   }
   if (doc == 'homology') {
