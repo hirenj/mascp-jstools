@@ -2109,6 +2109,10 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     if ( ! container.panevents ) {
         canvas.addEventListener('panstart', panstart,false);
         bean.add(canvas,'panend', panend);
+        bean.add(canvas,'panend', () => {
+            let evObj = new Event('pan', {bubbles: true, cancelable: true});
+            canvas.dispatchEvent(evObj);
+        });
         container.panevents = true;
     }
        
