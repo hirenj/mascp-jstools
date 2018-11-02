@@ -203,6 +203,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     nav_canvas.setScale((1*container_height / canv_height).toFixed(2));
                 });
             });
+            bean.add(canv,'panend', () => {
+                let evObj = new Event('panned', {bubbles: true, cancelable: true});
+                canv.dispatchEvent(evObj);
+            });
+
 
 
             var ua = window.navigator.userAgent;
@@ -2109,10 +2114,6 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     if ( ! container.panevents ) {
         canvas.addEventListener('panstart', panstart,false);
         bean.add(canvas,'panend', panend);
-        bean.add(canvas,'panend', () => {
-            let evObj = new Event('pan', {bubbles: true, cancelable: true});
-            canvas.dispatchEvent(evObj);
-        });
         container.panevents = true;
     }
        

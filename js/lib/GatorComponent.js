@@ -125,8 +125,8 @@ let zoom_to_fit = (renderer) => {
 let make_draggable = function(renderer,dragger) {
   dragger.applyToElement(renderer._canvas);
   dragger.addTouchZoomControls(renderer, renderer._canvas,this[interactive_symb]);
-  renderer._canvas.addEventListener('pan', () => {
-    let evObj = new Event('pan', {bubbles: true, cancelable: true});
+  renderer._canvas.addEventListener('panned', () => {
+    let evObj = new Event('pandone', {bubbles: true, cancelable: true});
     this.dispatchEvent(evObj);
   });
   Dragger.addScrollZoomControls.call(this[interactive_symb],renderer, renderer._canvas,0.1);
