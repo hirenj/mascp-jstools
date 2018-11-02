@@ -569,16 +569,21 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         let target_zoom_level = min_zoom_level / ( delta / this.sequence.length ) ;
         if (target_zoom_level === this.zoom) {
             this.setLeftVisibleResidue(start);
-            return;
+            return Promise.resolve();
         }
         this.zoomCenter = { x: Math.floor(0.5*(end + start)) };
-        let zoomchange = () => {
-            bean.remove(this,'zoomChange',zoomchange);
-            delete this.zoomCenter;
-            this.setLeftVisibleResidue(start);
-        };
-        bean.add(this,'zoomChange',zoomchange);
+        let zoomed = new Promise((resolve) => {
+            let zoomchange = () => {
+                bean.remove(this,'zoomChange',zoomchange);
+                delete this.zoomCenter;
+                this.setLeftVisibleResidue(start);
+                resolve();
+            };
+            bean.add(this,'zoomChange',zoomchange);
+        });
         this.zoom = target_zoom_level;
+
+        return zoomed;
     };
 
     clazz.prototype.setLeftVisibleResidue = function(val) {
