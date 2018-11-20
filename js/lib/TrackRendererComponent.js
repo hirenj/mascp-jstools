@@ -94,7 +94,7 @@ let do_rendering = (renderer,script,data,default_track) => {
 
 class TrackRendererComponent extends WrapHTML  {
   static get observedAttributes() {
-    return ['track'];
+    return ['track','src'];
   }
 
   constructor() {
@@ -122,8 +122,11 @@ class TrackRendererComponent extends WrapHTML  {
   }
 
   attributeChangedCallback(name) {
-    if (this.hasAttribute('renderer') && this.data) {
+    if (this.hasAttribute('renderer') && this.data && name === 'track') {
       this.render(document.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
+    }
+    if (name === 'src') {
+      this.script = retrieve_renderer.call(this);
     }
   }
 }
