@@ -1281,7 +1281,7 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     }
 
     if ( typeof(fraction) === 'undefined' || fraction === null ) {
-        fraction = typeof(opts.opacity) !== 'undefined' ? opts.opacity || 1;
+        fraction = typeof(opts.opacity) !== 'undefined' ? opts.opacity : 1;
     }
 
     if ( ! canvas ) {
