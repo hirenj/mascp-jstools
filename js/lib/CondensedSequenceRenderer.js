@@ -1279,6 +1279,11 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     if ( ! opts ) {
         opts = { };
     }
+
+    if ( typeof(fraction) === 'undefined' || fraction === null ) {
+        fraction = typeof(opts.opacity) !== 'undefined' ? opts.opacity || 1;
+    }
+
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
@@ -1844,9 +1849,9 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
         }
         if (object.type === "box") {
             if (object.aa) {
-                rendered = renderer.getAA(parseInt(object.aa),track).addBoxOverlay(track,parseInt(object.width),1,object.options);
+                rendered = renderer.getAA(parseInt(object.aa),track).addBoxOverlay(track,parseInt(object.width),null,object.options);
             } else if (object.peptide) {
-                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addToLayer(track,1,object.options);
+                rendered = renderer.getAminoAcidsByPeptide(object.peptide,track).addToLayer(track,null,object.options);
             }
         }
         if (object.type == "shape") {
