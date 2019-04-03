@@ -25,9 +25,10 @@ module.exports = {
         loader: 'babel-loader',
         options: {
           presets: [
-            ['env', {
+            ['@babel/preset-env', {
               modules: false,
-              useBuiltIns: true,
+              corejs: "core-js@2",
+              useBuiltIns: 'entry',
               targets: {
                 browsers: [
                   'Chrome >= 60',
