@@ -580,8 +580,12 @@ const SVGCanvas = (function() {
             var a_use = document.createElementNS(svgns,'use');
             a_use.setAttribute('x', typeof x == 'string' ? x : x * RS);
             a_use.setAttribute('y', typeof y == 'string' ? y : y * RS);
-            a_use.setAttribute('width', typeof width == 'string' ? width : width * RS);
-            a_use.setAttribute('height', typeof height == 'string' ? height : height * RS);
+            if (width) {
+                a_use.setAttribute('width', typeof width == 'string' ? width : width * RS);
+            }
+            if (height) {
+                a_use.setAttribute('height', typeof height == 'string' ? height : height * RS);
+            }
             a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',ref);
             this.appendChild(a_use);
 
@@ -828,7 +832,12 @@ const SVGCanvas = (function() {
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
                 if (symbol.match(/^(:?https?:)?\/?.*#/)) {
-                    marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
+                    let use_def = [...this.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symbol )[0];
+                    if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
+                        marker.contentElement = this.use(symbol,-2*r,-2*r,null,4*r);
+                    } else {
+                        marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
+                    }
                     marker.contentElement.setAttribute('content','true');
 
                 } else {
@@ -873,7 +882,13 @@ const SVGCanvas = (function() {
                     }
                     let new_el = null;
                     if (symb.match(/^(:?https?:)?\/?.*#/)) {
-                        new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
+                        let use_def = [...canvas.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symb )[0];
+                        if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
+                            new_el = canvas.use(symbol,-2*r,-2*r,null,3*r);
+                        } else {
+                            new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
+                        }
+
                         new_el.setAttribute('pointer-events','none');
                         new_el.setAttribute('content','true');
                     } else {

@@ -34,7 +34,7 @@
   ],
   "dependencies": {
     "esm": "^3.2.20",
-    "glycan.js" : "hirenj/glycan.js"
+    "glycan.js": "hirenj/glycan.js"
   },
   "module": "js/index.js",
   "main": "js/index-esm.js",

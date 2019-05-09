@@ -3,6 +3,13 @@ import GatorComponent from './GatorComponent';
 import JSandbox from '../jsandbox';
 import MASCP from './MASCP';
 
+import {CondensedIupac, Sugar, Monosaccharide, SugarAwareLayoutFishEye, SVGRenderer} from 'glycan.js';
+
+const Iupac = CondensedIupac.IO;
+
+const IupacSugar = Iupac(Sugar);
+
+
 const SANDBOXES = new Map();
 
 let retrieve_renderer = function() {
@@ -27,6 +34,58 @@ let get_renderer_sequence = (renderer,accession) => {
   });
 };
 
+const max_sizes_map = new WeakMap();
+const rendered_sugars_map = new WeakMap();
+
+let ensure_sugar_icon = (renderer,sequence) => {
+  if ( renderer._container_canvas.getElementById('sugar_'+sequence.toLowerCase()) ) {
+    return;
+  }
+  let defs_block = renderer._container_canvas.getElementById('defs_sugar');
+  SugarAwareLayoutFishEye.LINKS = false;
+  let sugar_renderer = new SVGRenderer(defs_block,SugarAwareLayoutFishEye);
+  let sug = new IupacSugar();
+  sug.sequence = sequence;
+  sugar_renderer.element.canvas.setAttribute('id','sugar_'+sequence.toLowerCase());
+  sugar_renderer.addSugar(sug);
+  sugar_renderer.icon_prefix = 'sugar';
+  sugar_renderer.refresh().then( () => {
+    let a_use = document.createElementNS('http://www.w3.org/2000/svg','use');
+    a_use.setAttributeNS('http://www.w3.org/1999/xlink','href','#sugar_'+sequence.toLowerCase());
+    a_use.style.visibility = 'hidden';
+    renderer._container_canvas.appendChild(a_use);
+    sugar_renderer.element.canvas.getBBox = () => {
+      return a_use.getBBox();
+    };
+    sugar_renderer.scaleToFit({ side: 1, top: 0 });
+    a_use.parentNode.removeChild(a_use);
+    sugar_renderer.element.canvas.setAttribute('preserveAspectRatio','xMidYMax meet');
+    let rendered_sugars = rendered_sugars_map.get(renderer) || [];
+
+    rendered_sugars.push(sugar_renderer.element.canvas);
+    console.log(rendered_sugars);
+    rendered_sugars_map.set(renderer, rendered_sugars);
+
+    let [minx,miny,width,height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map( dim => parseInt(dim) );
+    let max_size = max_sizes_map.get(renderer) || {width: 0, height: 0};
+    if (width < max_size.width) {
+      minx -= (max_size.width - width)/2;
+      width = max_size.width;
+    }
+    if (height < max_size.height) {
+      miny -= (max_size.height - height);
+      height = max_size.height;
+    }
+    for (let svgbox of rendered_sugars) {
+      svgbox.setAttribute('viewBox',`${minx} ${miny} ${width} ${height}`);
+    }
+    max_size.width = width;
+    max_size.height = height;
+    max_sizes_map.set(renderer,max_size);
+  });
+};
+
+
 let set_basic_offset = (objects,basic_offset) => {
   objects.forEach(function(obj) {
     if (obj.options) {
@@ -42,6 +101,9 @@ let set_basic_offset = (objects,basic_offset) => {
 };
 
 let apply_rendering = (renderer,default_track,objects) => {
+  ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
+  ensure_sugar_icon(renderer,'Gal(b1-3)GalNAc');
+  ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   if ( Array.isArray(objects) ) {
     var temp_objects = {}
     console.log('No accession provided');
