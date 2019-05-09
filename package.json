@@ -33,7 +33,8 @@
     }
   ],
   "dependencies": {
-    "esm": "^3.2.20"
+    "esm": "^3.2.20",
+    "glycan.js" : "hirenj/glycan.js"
   },
   "module": "js/index.js",
   "main": "js/index-esm.js",
@@ -53,6 +54,7 @@
     "babel-loader": "^8.0.5",
     "@babel/preset-env": "^7.0.0",
     "compression-webpack-plugin": "^2.0.0",
+    "raw-loader": "^2.0.0",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1"

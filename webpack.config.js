@@ -19,7 +19,8 @@ module.exports = {
    port: 3000,
  },
   module: {
-    rules: [{
+    rules: [
+    {
       test: /\.js$/,
       use: {
         loader: 'babel-loader',
@@ -42,6 +43,11 @@ module.exports = {
           ],
         },
       },
-    }],
+    },
+    {
+      test: /(sugars|icons)\.svg$/,
+      use: 'raw-loader'
+    }
+    ],
   },
 };

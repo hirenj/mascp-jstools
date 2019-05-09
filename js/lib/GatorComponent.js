@@ -4,6 +4,14 @@ import CondensedSequenceRenderer from './CondensedSequenceRenderer';
 import Service from './Service';
 import MASCP from './MASCP';
 
+import {SVGRenderer} from 'glycan.js';
+
+const isNodejs = () => { return typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node !== 'undefined'; };
+
+const ICONS_DEF = ( ! isNodejs() ) ? require('../../icons.svg').default : '';
+
+const SYMBOLS_DEF = SVGRenderer.SYMBOLS;
+
 const component_symbol = Symbol('component');
 
 class DraggableRenderer extends CondensedSequenceRenderer {
@@ -111,11 +119,12 @@ let create_renderer = function(container){
 };
 
 let try_import_symbols = (renderer,namespace,url) => {
-  Service.request(url,function(err,doc) {
-    if (doc) {
-      renderer.importIcons(namespace,doc.documentElement,url);
-    }
-  },"xml");
+  if (namespace === 'ui') {
+    renderer.importIcons(namespace,(new DOMParser()).parseFromString(ICONS_DEF, "image/svg+xml").documentElement,url );
+  }
+  if (namespace === 'sugar') {
+    renderer.importIcons(namespace,(new DOMParser()).parseFromString(SYMBOLS_DEF, "image/svg+xml").documentElement,url );
+  }
 };
 
 let zoom_to_fit = (renderer) => {
