@@ -834,7 +834,7 @@ const SVGCanvas = (function() {
                 if (symbol.match(/^(:?https?:)?\/?.*#/)) {
                     let use_def = [...this.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symbol )[0];
                     if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
-                        marker.contentElement = this.use(symbol,-2*r,-2*r,null,4*r);
+                        marker.contentElement = this.use(symbol,-2*r,-1.25*r,null,3*r);
                     } else {
                         marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
                     }
