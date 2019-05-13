@@ -1756,7 +1756,7 @@ CondensedSequenceRenderer.prototype.remove = function(lay,el) {
 var mark_groups = function(renderer,objects) {
     var group = [];
     var new_objects = [];
-    for (i = 0; i < objects.length; i++) {
+    for (let i = 0; i < objects.length; i++) {
       var current = objects[i], next = null;
       if ( ! current ) {
         continue;
@@ -1782,7 +1782,7 @@ var mark_groups = function(renderer,objects) {
                             'fill' : coalesce_options.fill,
                             'stroke' : coalesce_options.stroke,
                             'stroke_width' : coalesce_options.stroke_width,
-                            'height' : group[0].options.height,
+                            'height' : group[0].options.height - 2,
                             'offset' : group[0].options.offset
                         }
             });

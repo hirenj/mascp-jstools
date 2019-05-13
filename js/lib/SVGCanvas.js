@@ -839,7 +839,9 @@ const SVGCanvas = (function() {
                         marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
                     }
                     marker.contentElement.setAttribute('content','true');
-
+                    marker.contentElement.style.setProperty('--fill-colour', opts.fill);
+                    marker.contentElement.style.setProperty('--stroke-colour', opts.stroke);
+                    marker.contentElement.style.setProperty('--stroke-width', opts.stroke_width);
                 } else {
                     marker.contentElement = this.text_circle(0,0,2*r,symbol,opts);
                     marker.contentElement.firstChild.setAttribute('content','true');
