@@ -45,7 +45,7 @@ GenomeReader.prototype.requestData = function()
         };
     }
 
-    if (this.tried_isoform) {
+    if (this.tried_isoform_count == 1 && ! this.tried_bare) {
         return MASCP.GatorDataReader.authenticate().then((url_base) => {
             this.tried_bare = true;
             return {
@@ -58,14 +58,28 @@ GenomeReader.prototype.requestData = function()
         });
     }
 
+    if (this.tried_bare) {
+        this.tried_isoform_count = (this.tried_isoform_count || 0) + 1;
+        return MASCP.GatorDataReader.authenticate().then((url_base) => {
+            return {
+                type: "GET",
+                dataType: "json",
+                auth: MASCP.GATOR_AUTH_TOKEN,
+                api_key: MASCP.GATOR_CLIENT_ID,
+                url: url_base+'/data/latest/combined/'+(this.swissprot).toUpperCase()+'-'+this.tried_isoform_count
+            };
+        });
+    }
+
+
     return MASCP.GatorDataReader.authenticate().then((url_base) => {
-        this.tried_isoform = true;
+        this.tried_isoform_count = (this.tried_isoform_count || 0) + 1;
         return {
             type: "GET",
             dataType: "json",
             auth: MASCP.GATOR_AUTH_TOKEN,
             api_key: MASCP.GATOR_CLIENT_ID,
-            url: url_base+'/data/latest/combined/'+(this.swissprot).toUpperCase()+'-1'
+            url: url_base+'/data/latest/combined/'+(this.swissprot).toUpperCase()+'-'+this.tried_isoform_count
         };
     });
 
@@ -128,7 +142,7 @@ let update_structure = (data) => {
         if (data.length > 0) {
             data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
         } else {
-            if ( this.tried_isoform && ! this.tried_bare ) {
+            if ( ! this.tried_isoform_count || ! this.tried_bare || this.tried_isoform_count < 2 ) {
                 this.retrieve(this.acc || this.agi);
                 return;
             }
