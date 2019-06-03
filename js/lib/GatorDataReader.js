@@ -47,6 +47,7 @@ var data_parser =   function(data) {
     var data_by_mime = {};
     data.data
         .filter(set => doc.indexOf(set.dataset) >= 0)
+        .filter(set => set.metadata )
         .forEach(set_reducer.bind(null,data_by_mime));
     actual_data = { 'data' : data_by_mime };
   }
@@ -56,7 +57,7 @@ var data_parser =   function(data) {
   }
   if (doc == 'combined' || doc == 'homology' || doc == 'predictions') {
       var data_by_mime = {};
-      data.data.forEach(set_reducer.bind(null,data_by_mime));
+      data.data.filter( set => set.metadata ).forEach(set_reducer.bind(null,data_by_mime));
       actual_data = { 'data' : data_by_mime };
   }
   if (doc == 'homology') {
