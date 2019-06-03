@@ -52,10 +52,7 @@ var data_parser =   function(data) {
   }
 
   if (doc == 'glycodomain') {
-      actual_data = data.data.filter(function(set) {
-          return set.metadata.mimetype == 'application/json+glycodomain';
-      })[0] || {'data' : [] };
-      console.log(actual_data);
+      actual_data = data.data.filter( set => set.metadata && (set.metadata.mimetype === 'application/json+glycodomain') )[0] || {'data' : [] };
   }
   if (doc == 'combined' || doc == 'homology' || doc == 'predictions') {
       var data_by_mime = {};
@@ -63,7 +60,7 @@ var data_parser =   function(data) {
       actual_data = { 'data' : data_by_mime };
   }
   if (doc == 'homology') {
-    actual_data.alignments = data.data.filter(function(set) { return set.dataset == 'homology_alignment'; })[0].data;
+    actual_data.alignments = data.data.filter(function(set) { return set.dataset === 'homology_alignment'; })[0].data;
   }
   this._raw_data = actual_data;
   return this;
