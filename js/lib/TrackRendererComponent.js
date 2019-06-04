@@ -180,6 +180,9 @@ class TrackRendererComponent extends WrapHTML  {
 
   set data(data) {
     this._data = data;
+    if ( ! data ) {
+      this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer.removeTrack(MASCP.getLayer(this.getAttribute('track')));
+    }
     this.render(this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
   }
 
