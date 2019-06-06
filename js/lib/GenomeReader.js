@@ -40,7 +40,7 @@ GenomeReader.prototype.requestData = function()
             url : 'https://mygene.info/v3/gene/'+this.geneid,
             dataType: "json",
             data: {
-                'fields' : 'exons_hg19,uniprot.Swiss-Prot'
+                'fields' : 'exons,uniprot.Swiss-Prot'
             }
         };
     }
@@ -202,17 +202,16 @@ GenomeReader.Result.prototype.getSequences = function() {
         });
     });
     results = [ Array( Math.floor( (max - min) / 3 ) ).join('.') ];
-    this.min = min;
-    this.max = max;
+    this.min = min - 500000;
+    this.max = max + 500000;
     return results;
 };
 
-GenomeReader.Result.prototype.getIntrons = function(margin) {
-    var self = this;
+GenomeReader.Result.prototype.getExons = function() {
     var results = [];
-    var uprots = Object.keys(self._raw_data.data);
-    uprots.forEach(function(up) {
-        var cds = self._raw_data.data[up];
+    var uprots = Object.keys(this._raw_data.data);
+    uprots.forEach(up => {
+        var cds = this._raw_data.data[up];
         cds.forEach(function(target_cds) {
             if ( Array.isArray(target_cds) ) {
                 target_cds = target_cds.filter(function(c) { return c.chr.match(/^[\dXx]+$/ ); })[0];
@@ -222,23 +221,29 @@ GenomeReader.Result.prototype.getIntrons = function(margin) {
             }
 
             var exons = target_cds.exons;
-            var target_position;
 
-            for (var i = 0; i < exons.length; i++) {
-                if (i == 0) {
-                    results.push([ self.min, exons[i][0] - margin ]);
-                } else {
-                    results.push([ exons[i-1][1] + margin, exons[i][0] - margin]);
-                }
-                if (i == (exons.length - 1)) {
-                    results.push([ exons[i][1] + margin, self.max ]);
-                }
-                if (results.slice(-1)[0][0] > results.slice(-1)[0][1]) {
-                    results.splice(results.length - 1,1);
-                }
-            }
+            results = results.concat(exons);
         });
     });
+    return results;
+};
+
+GenomeReader.Result.prototype.getIntrons = function(margin,dataregions) {
+    let results = [];
+    dataregions = dataregions.sort( (a,b) => a[0] - b[0] );
+    for (let i = 0; i < dataregions.length; i++) {
+        if (i == 0) {
+            results.push([ this.min, dataregions[i][0] - margin ]);
+        } else {
+            results.push([ dataregions[i-1][1] + margin, dataregions[i][0] - margin]);
+        }
+        if (i == (dataregions.length - 1)) {
+            results.push([ dataregions[i][1] + margin, this.max ]);
+        }
+        if (results.slice(-1)[0][0] > results.slice(-1)[0][1]) {
+            results.splice(results.length - 1,1);
+        }
+    }
     return results;
 };
 
@@ -461,8 +466,11 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         return results;
     };
 
-    var calculate_removed_regions = function(result,margin) {
-        var introns =  result.getIntrons(margin);
+    var calculate_removed_regions = function(margin) {
+        let result = this.result;
+        let datapoints = (this.dataRegions || []).filter( region => region[0] < result.max && region[0] >= result.min && region[1] < result.max && region[1] >= result.min );
+        var exons =  [[result.min, result.min + 1], [result.max - 1,result.max ]].concat(result.getExons()).concat(datapoints);
+        var introns =  result.getIntrons(margin,exons);
 
         var intervals = [{ "index" : result.min - 2, "start" : true, "idx" : -1 } , {"index" : result.min, "start" : false, "idx" : -1 }];
         introns.forEach(function(intron,idx) {
@@ -494,7 +502,6 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     var generate_scaler_function = function(reader) {
         return function(in_pos,layer,inverse) {
             var pos = in_pos;
-
             if ( ! reader.result ) {
                 return inverse ? (pos * 3) : Math.floor(pos / 3);
             }
@@ -534,7 +541,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         set: function(val) {
             this._exon_margin = val;
             if (this.result) {
-                calculate_removed_regions(this.result,val);
+                calculate_removed_regions.call(this,val);
                 this.redrawIntrons();
             }
         },
@@ -587,6 +594,9 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
     serv.prototype.setupSequenceRenderer = function(renderer) {
         var self = this;
         renderer.addAxisScale('genome',function(pos,layer,inverse) {
+            if (layer && layer.scales.has('') && ! layer.scales.has('genomic')) {
+                console.log(`Warning - no scale has been set for ${layer.name}, consider adding "genomic" for genomic data`);
+            }
             if (layer && layer.scales.has('genomic')) {
                 return pos;
             }
@@ -622,7 +632,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
             renderer.addAxisScale('removeIntrons',scaler_function);
 
-            calculate_removed_regions(self.result,self.exon_margin || 300);
+            calculate_removed_regions.call(self,self.exon_margin || 300);
 
             if ( ! renderer.sequence ) {
                 // Not sure what to do with this bit here

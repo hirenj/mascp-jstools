@@ -3,6 +3,7 @@ import GenomeReader from './GenomeReader';
 import GatorComponent from './GatorComponent';
 
 const last_retrieved_gene = Symbol('last_retrieved_gene');
+const datapoints_symbol = Symbol('datapoints');
 
 class GeneComponent extends GatorComponent {
   static get observedAttributes() {
@@ -34,6 +35,12 @@ class GeneComponent extends GatorComponent {
   set geneid(id) {
     this.setAttribute('geneid',id);
   }
+  set datapoints(positions) {
+    this[datapoints_symbol] = positions.map( pos => [pos,pos+1]);
+  }
+  get datapoints() {
+    return this[datapoints_symbol] || [];
+  }
 }
 
 let reader_has_data = function() {
@@ -47,12 +54,13 @@ let reader_has_data = function() {
 
   console.log('Getting data for ',this.geneid);
   var reader = new GenomeReader();
+  reader.dataRegions = this.datapoints;
   reader.geneid = this.geneid;
   if (this.hasAttribute('reviewed')) {
     reader.reviewed = true;
   }
   // reader.uniprot = 'Q10472';
-  reader.exon_margin = 300;//..this.exonmargin || 300;
+  reader.exon_margin = 1000;//..this.exonmargin || 300;
   if (this.nt_mapping) {
     reader.nt_mapping = this.nt_mapping;
   }
