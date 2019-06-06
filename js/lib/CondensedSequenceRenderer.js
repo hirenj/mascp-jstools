@@ -1470,6 +1470,9 @@ var addShapeToElement = function(layerName,width,opts) {
         "pentagon" : canvas.pentagon,
         "hexagon"  : canvas.hexagon,
         "rectangle": canvas.rect,
+        "nagon"    : (x,y,width,height) => {
+            return canvas.nagon(x,y,width,opts.n,height);
+        },
         "ellipse"  : canvas.ellipticalRect,
         "roundrect": function(x,y,width,height) {
             return canvas.roundRect(x,y,width,height,0.25*height);
@@ -1900,7 +1903,9 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
                 if (content.type == "right_triangle") {
                     content_el = renderer._canvas.poly('0,100 100,0 0,-100');
                 }
-
+                if (content.type === "nagon") {
+                    content_el = renderer._canvas.nagon(-0.5,-0.5,1,1,content.n || 3,0);
+                }
                 ["fill","stroke","stroke-width","fill-opacity","stroke-opacity","opacity"].forEach(function(prop) {
                     if (content[prop]) {
                         content_el.setAttribute(prop,content[prop]);
