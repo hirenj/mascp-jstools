@@ -137,7 +137,8 @@ let update_structure = (data) => {
             }
             data = this.nt_mapping.map(function(map) { return map.join('\t'); } ).join('\n');
         }
-        data = data.data.filter( dat => dat.dataset == 'uniprot_refseqnt' );
+
+        data = data.data.filter( dat => dat.dataset == 'uniprot_refseqnt' ).filter( set => set.data.map( map => map.refseqnt ).filter( nt => nt.indexOf('NM') === 0 ).length > 0 );
 
         if (data.length > 0) {
             data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
