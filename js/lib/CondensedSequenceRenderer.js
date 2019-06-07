@@ -2271,14 +2271,12 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
   var svgPosition = function(ev,svgel) {
       var positions = mousePosition(ev.changedTouches ? ev.changedTouches[0] : ev);
       var p = {};
-      if (svgel.nodeName == 'svg') {
+      if (svgel.nodeName === 'svg') {
           p = svgel.createSVGPoint();
-          var rootCTM = svgel.getScreenCTM();
+
           p.x = positions[0];
           p.y = positions[1];
-
-          self.matrix = rootCTM.inverse();
-          p = p.matrixTransform(self.matrix);
+          p = p.matrixTransform(svgel.matrix ? svgel.matrix : svgel.getScreenCTM().inverse());
       } else {
           p.x = positions[0];
           p.y = positions[1];
@@ -2355,17 +2353,19 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         self.select();
         var positions = mousePosition(evt);
         var p = {};
-        if (canvas.nodeName == 'svg') {
-                p = canvas.createSVGPoint();
-                var rootCTM = this.getScreenCTM();
-                p.x = positions[0];
-                p.y = positions[1];
-
-                self.matrix = rootCTM.inverse();
-                p = p.matrixTransform(self.matrix);
+        if (canvas.nodeName === 'svg') {
+            p = canvas.createSVGPoint();
+            p.x = positions[0];
+            p.y = positions[1];
+            var rootCTM = canvas.getScreenCTM().inverse();
+            if ( canvas.getTransformToElement ) {
+                let rootParentXform = canvas.getTransformToElement(evt.target);
+                canvas.matrix = rootParentXform.multiply(rootCTM);
+            }
+            p = p.matrixTransform(canvas.matrix ? canvas.matrix : rootCTM );
         } else {
-                p.x = positions[0];
-                p.y = positions[1];
+            p.x = positions[0];
+            p.y = positions[1];
         }
         start = p.x;
         end = p.x;
