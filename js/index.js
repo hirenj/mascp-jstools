@@ -10,7 +10,7 @@ import MASCP from './lib/MASCP';
 import CondensedSequenceRenderer from './lib/CondensedSequenceRenderer';
 
 
-import Dragger from './lib/Dragger';
+import Dragger from './lib/dragger/Dragger';
 
 MASCP.ClustalRunner = ClustalRunner;
 MASCP.UniprotReader = UniprotReader;
