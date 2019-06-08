@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="/mascp-jstools.js"></script>
+	<title>Demo</title>
+  <style type="text/css">
+    #fixed {
+      --fill-viewer: 'yes';
+      width: 685px;
+      height: 400px;
+    }
+    #static {
+      width: 400px;
+      height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Basic glycodomain example</h1>
+  <x-protviewer id="protview" interactive >
+      <x-gatortrack name="domains" fullname="Domains" scale="uniprot" ></x-gatortrack>
+  </x-protviewer>
+  <x-trackrenderer track="domains" renderer="protview" src="glycodomain.packed.renderer.js">
+  </x-trackrenderer>
+<script>
+
+
+window.onload = function() {
+	(function(global) {
+
+let retrieve_uniprot = function(uniprot) {
+  MASCP.GATOR_CLIENT_ID='fNED1UGvPaP0XlrcEvWsHXIODIKy6WVB';
+  MASCP.GatorDataReader.server = 'https://glycodomain.glycomics.ku.dk';
+  MASCP.GatorDataReader.anonymous = true;
+  return MASCP.GatorDataReader.authenticate().then(function(url_base) {
+    let a_reader = new MASCP.UniprotReader();
+    return new Promise((resolve,reject) => {
+    a_reader.retrieve(uniprot, function(err) {
+      resolve(this.result._raw_data.data[0]);
+    });
+    });
+  });
+};
+
+
+let show_uniprot = function(renderer,uniprot) {
+  return retrieve_uniprot(uniprot).then( seq => {
+    renderer.setSequence(seq);
+  });
+};
+
+let show_data = function(uniprot) {
+  MASCP.GATOR_CLIENT_ID='fNED1UGvPaP0XlrcEvWsHXIODIKy6WVB';
+  MASCP.GatorDataReader.server = 'https://glycodomain.glycomics.ku.dk';
+  MASCP.GatorDataReader.anonymous = true;
+  return MASCP.GatorDataReader.authenticate().then(function(url_base) {
+    let a_reader = MASCP.GatorDataReader.createReader('glycodomain');
+    a_reader.datasetname = 'glycodomain';
+    return new Promise((resolve,reject) => {
+      a_reader.retrieve(uniprot, function(err) {
+        resolve(this.result);
+      });
+    });
+  });
+};
+
+global.showData = show_data;
+
+global.showUniprot = show_uniprot;
+global.retrieveUniprot = retrieve_uniprot;
+  
+})(window);
+  
+
+let guid = () => {
+  let s4 = () => {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  };
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+};
+
+let make_track = (id,fullname,scale) => {
+  let a_track = document.createElement('x-gatortrack');
+  a_track.setAttribute('name',id);
+  a_track.setAttribute('fullname',fullname);
+  if (scale) {
+    a_track.setAttribute('scale',scale);
+  }
+  return a_track;
+};
+
+
+let show_sequence = function(el,uniprot,base_pos,) {
+  let start_promise = showUniprot(el.renderer,uniprot);
+
+  el.refreshTracks();
+
+  document.querySelector('x-gatortrack[name="domains"]').setAttribute('scale',uniprot);
+
+  let first_lay_id = guid();
+
+  el.appendChild(make_track( first_lay_id, 'Proteintrack', uniprot ));
+
+  let second_lay_id = guid();
+
+  el.appendChild(make_track( second_lay_id, 'AnotherDataset', uniprot ));
+
+
+  start_promise.then( () => {
+    let renderer = el.renderer;
+    el.refreshTracks();
+
+    renderer.renderObjects(first_lay_id,[{aa: base_pos, type: 'marker', options: { bare_element:true,
+    height: 18,
+    offset: -1,
+    content:"#sugar_man"} }]);
+
+    renderer.renderObjects(second_lay_id,[{aa: base_pos+10, type: 'marker', options: { bare_element:true,
+    height: 18,
+    offset: -1,
+    content:"#sugar_gal"} }]);
+
+    el.fitToZoom();
+    renderer.refresh();
+    renderer.zoom -= 0.01;
+  });
+
+  start_promise.then( () => showData(uniprot) ).then( dat => {
+    document.querySelector('x-trackrenderer[track="domains"]').data = dat._raw_data.data;
+  });
+};
+
+show_sequence(document.querySelector('x-protviewer'),'Q14112',200);
+
+};
+</script>
+</body>
+</html>
