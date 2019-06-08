@@ -178,7 +178,15 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     curr_transform = (' scale('+scale+') ' + curr_transform ).replace(/\s+/g,' ');
                 }
                 group._cached_transform = curr_transform;
-                group.style.transform = curr_transform;
+                // Firefox doesnt like using a style attribute for
+                // transforms, and then calculating transforms
+                // so we have a toggle to use the transform attribute
+                if (group.use_transform_attribute) {
+                    group.setAttribute('transform',curr_transform.replace(/px/g,''));
+                } else {
+                    group.style.transform = curr_transform;
+                }
+
             };
 
            nav_canvas.setScale = function(scale) {
@@ -209,22 +217,26 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             });
 
 
-
-            var ua = window.navigator.userAgent;
-            var is_explorer = false;
-            if (ua.indexOf('Edge/') >= 0) {
-                is_explorer = true;
+            // Firefox doesnt like using a style attribute for
+            // transforms, and then calculating transforms
+            // so we have a toggle to use the transform attribute
+            // Only Firefox still has getTransformToElement
+            if (group.getTransformToElement) {
+                group.use_transform_attribute = true;
             }
 
-
-           canv.setCurrentTranslateXY = function(x,y) {
+            canv.setCurrentTranslateXY = function(x,y) {
                 var curr_transform = group._cached_transform || '';
                 curr_transform = (curr_transform.replace(/translate\([^\)]+\)/,'') + ' translate('+x+'px, '+y+'px) ').replace(/\s+/g,' ');
                 group._cached_transform = curr_transform;
-                if ( ! is_explorer ) {
-                    group.style.transform = curr_transform;
-                } else {
+
+                // Firefox doesnt like using a style attribute for
+                // transforms, and then calculating transforms
+                // so we have a toggle to use the transform attribute
+                if ( group.use_transform_attribute ) {
                     group.setAttribute('transform',curr_transform.replace(/px/g,''));
+                } else {
+                    group.style.transform = curr_transform;
                 }
 
                 this.currentTranslateCache.x = x;
@@ -2915,7 +2927,7 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
                 no_touch_center = true;
                 self.zoomCenter = {'x' : self._RS*0.5*(self.leftVisibleResidue()+self.rightVisibleResidue()) };
             }
-            
+
             if ( self.zoomCenter && ! center_residue ) {
                 start_x = self._canvas.currentTranslateCache.x || 0;
                 center_residue = self.zoomCenter ? self.zoomCenter.x : 0;

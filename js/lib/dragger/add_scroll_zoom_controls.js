@@ -54,10 +54,7 @@ const addScrollZoomControls = function(target,controlElement,precision) {
               /* Fix for mouse position in firefox - http://jsfiddle.net/JNKgR/6/ */
               let canvas = controlElement.firstElementChild;
               let rootCTM = canvas.getScreenCTM().inverse();
-              if ( canvas.getTransformToElement ) {
-                  let rootParentXform = canvas.getTransformToElement(evt.target);
-                  rootCTM = rootParentXform.multiply(rootCTM);
-              }
+
               self.matrix = rootCTM;
               p = p.matrixTransform(self.matrix);
           } else {
