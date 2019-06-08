@@ -52,8 +52,13 @@ const addScrollZoomControls = function(target,controlElement,precision) {
               p.x = posx;
               p.y = posy;
               /* Fix for mouse position in firefox - http://jsfiddle.net/JNKgR/6/ */
-              var rootCTM = controlElement.firstElementChild.getScreenCTM();
-              self.matrix = rootCTM.inverse();
+              let canvas = controlElement.firstElementChild;
+              let rootCTM = canvas.getScreenCTM().inverse();
+              if ( canvas.getTransformToElement ) {
+                  let rootParentXform = canvas.getTransformToElement(evt.target);
+                  rootCTM = rootParentXform.multiply(rootCTM);
+              }
+              self.matrix = rootCTM;
               p = p.matrixTransform(self.matrix);
           } else {
               p.x = posx;
@@ -67,10 +72,9 @@ const addScrollZoomControls = function(target,controlElement,precision) {
         return;
       }
       e = e ? e : window.event;
-      var wheelData = e.detail ? e.detail * -1 : e.wheelDelta;
-      if ( ! wheelData ) {
-        wheelData = e.deltaY;
-      }
+
+      var wheelData = e.deltaY * -1 || e.wheelDelta || e.detail * -1;
+
       target.zoomCenter = mousePosition(e);
 
       if (wheelData > 0) {
