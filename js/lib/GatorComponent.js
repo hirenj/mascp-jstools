@@ -1,5 +1,5 @@
 
-import Dragger from './Dragger';
+import Dragger from './dragger/Dragger';
 import CondensedSequenceRenderer from './CondensedSequenceRenderer';
 import Service from './Service';
 import MASCP from './MASCP';
