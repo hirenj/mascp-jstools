@@ -4,6 +4,10 @@ import GatorComponent from './GatorComponent';
 
 const last_retrieved_gene = Symbol('last_retrieved_gene');
 const datapoints_symbol = Symbol('datapoints');
+const chromosome_symbol = Symbol('chromosome');
+const cdsstart_symbol = Symbol('cdsstart');
+const cdsend_symbol = Symbol('cdsend');
+const uniprots_symbol = Symbol('uniprots');
 
 class GeneComponent extends GatorComponent {
   static get observedAttributes() {
@@ -45,6 +49,18 @@ class GeneComponent extends GatorComponent {
   get datapoints() {
     return this[datapoints_symbol] || [];
   }
+  set uniprots(uniprots) {
+    this[uniprots_symbol] = uniprots;
+  }
+  get uniprots() {
+    return this[uniprots_symbol];
+  }
+  get coordinates() {
+    let chr = this[chromosome_symbol];
+    let start = this[cdsstart_symbol];
+    let end = this[cdsend_symbol];
+    return `chr${chr}:${start}-${end}`;
+  }
 }
 
 let reader_has_data = function() {
@@ -63,7 +79,6 @@ let reader_has_data = function() {
   if (this.hasAttribute('reviewed')) {
     reader.reviewed = true;
   }
-  // reader.uniprot = 'Q10472';
   reader.exon_margin = 1000;//..this.exonmargin || 300;
   if (this.nt_mapping) {
     reader.nt_mapping = this.nt_mapping;
@@ -80,6 +95,13 @@ let reader_has_data = function() {
         if (reader.reviewed) {
           this.uniprots = this.uniprots.filter( up => up === reader.swissprot.toUpperCase() );
         }
+        let coordinate_data = reader.result._raw_data.data[(this.uniprots[0] || '').toLowerCase()];
+        if (coordinate_data) {
+          this[chromosome_symbol] = coordinate_data[0].chr;
+          this[cdsstart_symbol] = coordinate_data[0].cdsstart;
+          this[cdsend_symbol] = coordinate_data[0].cdsend;
+        }
+
         this.refreshTracks();
         resolve();
         delete this.ready;
