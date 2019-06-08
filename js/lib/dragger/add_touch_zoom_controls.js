@@ -1,7 +1,7 @@
 import bean from '../../bean';
 import '../../hammer.js';
 
-const addTouchZoomControls = function(zoomElement,touchElement) {
+const addTouchZoomControls = function(zoomElement,touchElement,precision) {
     var self = this;
     var last_touch_start = null;
     var xform = null;
@@ -42,7 +42,7 @@ const addTouchZoomControls = function(zoomElement,touchElement) {
                 p.y = positions[1];
                 p = p.matrixTransform(xform);
             }
-            zoomElement.zoom = self.zoom_start * Math.pow(10, (p.y - zoomElement.zoomCenter.y)/max_y );
+            zoomElement.zoom = self.zoom_start * 10 * precision * Math.pow(10, (p.y - zoomElement.zoomCenter.y)/max_y );
         }
     };
 

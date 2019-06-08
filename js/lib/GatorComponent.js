@@ -133,12 +133,12 @@ let zoom_to_fit = (renderer) => {
 
 let make_draggable = function(renderer,dragger) {
   dragger.applyToElement(renderer._canvas);
-  dragger.addTouchZoomControls(renderer, renderer._canvas,this[interactive_symb]);
+  dragger.addTouchZoomControls(renderer, renderer._canvas,this[interactive_symb],this.scrollPrecision);
   renderer._canvas.addEventListener('panned', () => {
     let evObj = new Event('pandone', {bubbles: true, cancelable: true});
     this.dispatchEvent(evObj);
   });
-  Dragger.addScrollZoomControls.call(this[interactive_symb],renderer, renderer._canvas,0.1);
+  Dragger.addScrollZoomControls.call(this[interactive_symb],renderer, renderer._canvas,this.scrollPrecision);
 };
 
 let wire_renderer_sequence_change = function(renderer) {
@@ -241,6 +241,9 @@ class GatorComponent extends WrapHTML {
     }
   }
 
+  get scrollPrecision() {
+    return 0.1;
+  }
 
   get interactive() {
     return this.hasAttribute('interactive');

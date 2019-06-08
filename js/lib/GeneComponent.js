@@ -29,6 +29,10 @@ class GeneComponent extends GatorComponent {
     }
   }
 
+  get scrollPrecision() {
+    return 1E-3;
+  }
+
   get geneid() {
     return this.getAttribute('geneid');
   }
