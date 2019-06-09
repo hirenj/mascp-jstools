@@ -30,6 +30,10 @@ const set_reducer = (data_by_mime,set) => {
   });
   data_by_mime['samples'][set.dataset] = set.metadata.sample;
 
+  if (set.metadata.quantitation) {
+    data_by_mime['samples'][set.dataset].quantitation = set.metadata.quantitation;
+  }
+
   data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
 };
 
