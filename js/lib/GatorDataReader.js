@@ -33,6 +33,10 @@ const set_reducer = (data_by_mime,set) => {
   if (set.metadata.quantitation) {
     data_by_mime['samples'][set.dataset].quantitation = set.metadata.quantitation;
   }
+  if (set.metadata.channel_samples) {
+    data_by_mime['samples'][set.dataset].channel_samples = set.metadata.channel_samples;
+  }
+
 
   data_by_mime[mimetype] = (data_by_mime[mimetype] || []).concat(set.data);
 };
@@ -193,6 +197,10 @@ window.addEventListener("unhandledrejection", function(err, promise) {
   }
   console.log(err);
 });
+
+GatorDataReader.addUnauthorizedListener = function(fn) {
+  bean.add(GatorDataReader,'unauthorized',fn);
+};
 
 var authenticate_gator = function() {
     if (authenticating_promise) {

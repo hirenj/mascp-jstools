@@ -180,10 +180,10 @@ Service.prototype.gotResult = function()
     bean.fire(Service,"resultReceived");
 };
 
-Service.prototype.requestComplete = function()
+Service.prototype.requestComplete = function(err)
 {
-    bean.fire(this,'requestComplete');
-    bean.fire(Service,'requestComplete',[this]);
+    bean.fire(this,'requestComplete',[err]);
+    bean.fire(Service,'requestComplete',[this,err]);
 };
 
 Service.prototype.requestIncomplete = function()
@@ -568,7 +568,7 @@ let handle_request_error = function(response,req,status) {
     }
     bean.fire(this,"error",[status]);
     bean.fire(Service,'requestComplete');
-    this.requestComplete();
+    this.requestComplete(status);
 };
 
 let perform_request = function(request_data) {
