@@ -41,7 +41,7 @@ Service.buildService = function(dataExtractor)
 
         toString() {
             for (var serv in MASCP) {
-                if (this === MASCP[serv]) {
+                if (this.constructor === MASCP[serv]) {
                     return "MASCP."+serv;
                 }
             }
@@ -564,7 +564,7 @@ let handle_request_error = function(response,req,status) {
         status = { 'error' : status , 'request' : req };
     }
     if (! isNaN(status) ) {
-        status = { "error" : "Reqeust error", "status" : status, 'request' : req };
+        status = { "error" : "Request error", "status" : status, 'request' : req };
     }
     bean.fire(this,"error",[status]);
     bean.fire(Service,'requestComplete');

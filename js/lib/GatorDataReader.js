@@ -150,44 +150,50 @@ var anonymous_login = function() {
     });
 };
 
-var reading_was_ok = true;
+var reading_was_ok = new WeakMap();
 
 var reauth_reader = function(reader_class) {
   var current_retrieve = reader_class.prototype.retrieve;
+  reading_was_ok.set(reader_class,true);
   reader_class.prototype.retrieve = function() {
-    console.log('Retrieve with auth retry');
+    const classname = (new reader_class()).toString();
+    console.log('Retrieve with auth retry',classname);
     var current_arguments = [].slice.call(arguments);
     var self = this;
-    this.bind('error',function(err) {
+    let error_handler = function(err) {
       if (err.status == 401 || err.status == 403) {
+        console.log(classname,'reader got an auth error');
         if ( ! self.tried_auth ) {
-          self.unbind('error');
+          self.unbind('error',error_handler);
           self.tried_auth = true;
-          if (reading_was_ok) {
+          if (reading_was_ok.get(reader_class)) {
             delete MASCP.GATOR_AUTH_TOKEN;
             GatorDataReader.ID_TOKEN = null;
             authenticating_promise = null;
+            self.unbind('error');
+            self.unbind('requestComplete');
             bean.fire(GatorDataReader,'unauthorized');
-            reading_was_ok = false;
+            reading_was_ok.set(reader_class,false);
           }
           authenticate_gator().catch(function(err) {
-            console.log("Error after auth",err);
             throw err;
           }).then(function() {
-            reading_was_ok = true;
+            reading_was_ok.set(reader_class,true);
             self.retrieve.apply(self,current_arguments);
           }).catch(function(err) {
-            console.log("Died on doing the reauth",err);
+            console.log("Died on doing last chance reauth",err);
           });
         }
       }
-    });
+    };
+    this.bind('error',error_handler);
     current_retrieve.apply(self,current_arguments);
   };
 };
 
 reauth_reader(GatorDataReader);
 
+GatorDataReader.wrapAuthRetrieve = reauth_reader;
 
 window.addEventListener("unhandledrejection", function(err, promise) {
   if (err.reason && err.reason.message == 'Unauthorized' && ! err.reason.handled) {
