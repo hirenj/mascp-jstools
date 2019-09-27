@@ -56,7 +56,7 @@ const applyToElement = function(targetElement,enabled) {
                 targetElement._snapback = null;
             }
             
-            if (p.x > viewBoxScale * min_x && self.enabled) {
+            if (p.x > (viewBoxScale * min_x) && self.enabled) {
                 /* Element has shifted too far to the right
                    Induce some gravity towards the left side
                    of the screen
@@ -92,7 +92,7 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement._snapback = null;
                     }
                 };
-                targetElement._snapback = setTimeout(do_snapback,300);
+                // targetElement._snapback = setTimeout(do_snapback,300);
             }
             
             var min_val = viewBoxScale * ( width - 2 * min_x );
@@ -133,7 +133,7 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement._snapback = null;
                     }
                 };
-                targetElement._snapback = setTimeout(do_snapback,300);
+                // targetElement._snapback = setTimeout(do_snapback,300);
             }
 
             if (p.y > viewBoxScale * min_y) {
