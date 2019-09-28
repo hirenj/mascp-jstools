@@ -39,7 +39,7 @@ const applyToElement = function(targetElement,enabled) {
             }
 
             if (targetElement.style.GomapScrollLeftMargin) {
-                min_x += targetElement.style.GomapScrollLeftMargin;
+                // min_x += targetElement.style.GomapScrollLeftMargin;
             }
             
             if ( self.dragging ) {
@@ -92,15 +92,14 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement._snapback = null;
                     }
                 };
-                // targetElement._snapback = setTimeout(do_snapback,300);
+                targetElement._snapback = setTimeout(do_snapback,300);
             }
             
-            var min_val = viewBoxScale * ( width - 2 * min_x );
+            var min_val = viewBoxScale * ( width );
             
-            if (min_x === 0) {
-                min_val *= 0.90;
-            }
+
             if (p.x < 0 && Math.abs(p.x) > min_val && self.enabled) {
+                console.log('Snapping back to the right');
                 /* Element has shifted too far to the left
                    Induce some gravity to the right side of the screen
                 */
@@ -133,7 +132,7 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement._snapback = null;
                     }
                 };
-                // targetElement._snapback = setTimeout(do_snapback,300);
+                targetElement._snapback = setTimeout(do_snapback,300);
             }
 
             if (p.y > viewBoxScale * min_y) {

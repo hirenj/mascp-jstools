@@ -583,7 +583,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             this.setLeftVisibleResidue(start);
             return Promise.resolve();
         }
-        this.zoomCenter = { x: Math.floor(0.5*(end + start)) };
+        delete this.zoomCenter;
+        //this.zoomCenter = { x: Math.floor(0.5*(end + start)) };
         let zoomed = new Promise((resolve) => {
             let zoomchange = () => {
                 bean.remove(this,'zoomChange',zoomchange);
