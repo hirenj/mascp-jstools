@@ -96,7 +96,15 @@ const applyToElement = function(targetElement,enabled) {
             }
             
             var min_val = viewBoxScale * ( width );
-            
+
+            // The minimum margin is 3 * 50 (50 being the left fade width)
+            // plus some extra for the 600 units that get added on for
+            // some reason at the right side of the sequence
+            // The width of the entire viewport is in the units
+            // of the containing element
+            var min_margin = (50*3) + min_val*(600/width);
+
+            min_val -= min_margin;            
 
             if (p.x < 0 && Math.abs(p.x) > min_val && self.enabled) {
                 console.log('Snapping back to the right');
