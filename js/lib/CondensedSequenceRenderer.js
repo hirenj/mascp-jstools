@@ -2819,7 +2819,9 @@ clazz.prototype.pngURL = function(pngReady,out_width) {
     svg.setAttribute('preserveAspectRatio','xMinYMin meet');
 
     var transform_group = document.createElementNS(svgns,'g');
-    transform_group.setAttribute('transform',this._canvas.parentNode.getAttribute('transform'));
+    if (this._canvas.parentNode.getAttribute('transform')) {
+        transform_group.setAttribute('transform',this._canvas.parentNode.getAttribute('transform'));
+    }
     svg.appendChild(transform_group);
     transform_group.appendChild(svg_data);
 
