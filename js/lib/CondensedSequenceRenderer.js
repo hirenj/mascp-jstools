@@ -10,6 +10,8 @@ import SVGCanvas from './SVGCanvas';
 
 const svgns = 'http://www.w3.org/2000/svg';
 
+const ZOOM_MAX = 10;
+
 /** Default class constructor
  *  @class      Renders a sequence using a condensed track-based display
  *  @param      {Element} sequenceContainer Container element that the sequence currently is found in, and also 
@@ -578,7 +580,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         }
 
         let delta = end - start;
-        let target_zoom_level = min_zoom_level / ( delta / this.sequence.length ) ;
+
+        let target_zoom_level = Math.min( ZOOM_MAX, min_zoom_level / ( delta / this.sequence.length ) ) ;
         if (target_zoom_level === this.zoom) {
             this.setLeftVisibleResidue(start);
             return Promise.resolve();
@@ -2902,7 +2905,7 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
             if (zoomLevel < min_zoom_level) {
                 zoomLevel = min_zoom_level;
             }
-            if (zoomLevel > 10) {
+            if (zoomLevel > ZOOM_MAX) {
                 zoomLevel = 10;
             }
 
