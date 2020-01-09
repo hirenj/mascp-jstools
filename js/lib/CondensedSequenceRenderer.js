@@ -532,7 +532,6 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         let state = { pos };
         let tween = new Tween(state);
         return new Promise( resolve => {
-            console.log('Causing tween to move to ', { pos: end });
             tween.to({ pos: end },PAN_TIMING)
             .easing(Easing.Quadratic.InOut)
             .on('update', ({pos}) => {
