@@ -33,6 +33,7 @@
     }
   ],
   "dependencies": {
+    "es6-tween": "^5.4.1",
     "esm": "^3.2.20",
     "glycan.js": "hirenj/glycan.js"
   },

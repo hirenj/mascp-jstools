@@ -8,6 +8,8 @@ import Navigation from './CondensedSequenceRendererNavigation';
 import bean from '../bean';
 import SVGCanvas from './SVGCanvas';
 
+import { Tween, autoPlay, onTick, Easing } from 'es6-tween';
+
 const svgns = 'http://www.w3.org/2000/svg';
 
 const ZOOM_MAX = 10;
@@ -26,6 +28,8 @@ const CondensedSequenceRenderer = function(sequenceContainer) {
     // Create a common layer for the primary sequence
     MASCP.registerLayer('primarySequence', { 'fullname' : 'Primary Sequence' });
 
+    autoPlay(true);
+    onTick( () => {});
 
     CondensedSequenceRenderer.Zoom(self);
     var resizeTimeout;
@@ -516,61 +520,76 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
     };
 
     clazz.prototype.panTo = function(end,callback) {
-        var renderer = this;
-        var pos = renderer.leftVisibleResidue();
-        var delta = 1;
+        const PAN_TIMING=500;
+        let renderer = this;
+        let pos = renderer.leftVisibleResidue();
         if (pos == end) {
             if (callback) {
                 callback.call(null);
             }
-            return;
+            return Promise.resolve();
         }
-        if (pos > end) {
-            delta = -1;
-        }
-        requestAnimationFrame(function() {
-            renderer.setLeftVisibleResidue(pos);
-            pos += delta;
-            bean.fire(renderer._canvas,'panend');
-            if (pos !== end) {
-                requestAnimationFrame(arguments.callee);
-            } else {
+        let state = { pos };
+        let tween = new Tween(state);
+        return new Promise( resolve => {
+            console.log('Causing tween to move to ', { pos: end });
+            tween.to({ pos: end },PAN_TIMING)
+            .easing(Easing.Quadratic.InOut)
+            .on('update', ({pos}) => {
+                renderer.setLeftVisibleResidue(pos);
+                bean.fire(renderer._canvas,'panend');
+            })
+            .on('complete', () => {
                 if (callback) {
                     callback.call(null);
                 }
-            }
+                resolve();
+            })
+            .start();
         });
     };
 
     clazz.prototype.zoomTo = function(zoom,residue,callback) {
-        var renderer = this;
-        var curr = renderer.zoom;
-        var delta = (zoom - curr)/50;
-        let zoomchange = function() {
-            bean.remove(renderer,'zoomChange',zoomchange);
-            delete renderer.zoomCenter;
-            if (callback) {
-                callback.call(null);
-            }
-        };
-        bean.add(renderer,'zoomChange',zoomchange);
+        const ZOOM_TIMING = 500;
+        let renderer = this;
+        let curr = renderer.zoom;
+        if (Math.abs(zoom - curr) < 1) {
+            return this.panTo(residue,callback);
+        }
+        let result = new Promise( resolve => {
+            let zoomchange = (resolve) => {
+                bean.remove(renderer,'zoomChange',zoomchange);
+                delete renderer.zoomCenter;
+
+                if (callback) {
+                    callback.call(null);
+                }
+                resolve();
+            };
+            bean.add(renderer,'zoomChange',zoomchange.bind(null,resolve));
+        });
         if (residue) {
             renderer.zoomCenter = (residue == 'center') ? residue : { 'x' : renderer._RS*residue };
-        } else {
-            renderer.zoom = zoom;
-            return;
         }
-        let zoomer = () => {
-            renderer.zoom = curr;
-            curr += delta;
-            if (Math.abs(curr - zoom) > 0.01) {
-                requestAnimationFrame(zoomer);
+        let last_time = Date.now();
+        let state = { zoom: curr };
+        let tween = new Tween(state);
+        tween.to({ zoom },ZOOM_TIMING)
+        .easing(Easing.Quadratic.InOut)
+        .on('update', ({zoom}) => {
+            if ((Date.now() - last_time) > 50) {
+                renderer.zoom = zoom;
+                last_time = Date.now();
             }
-        };
-        requestAnimationFrame(zoomer);
+        })
+        .on('complete', () => {
+            renderer.zoom = zoom;
+        })
+        .start();
+        return result;
     };
 
-    clazz.prototype.showResidues = function(start,end) {
+    clazz.prototype.showResidues = function(start,end,pan=false) {
         let residues_per_zoom_unit = this._container.clientWidth / this._RS;
         let container_width = this._container.clientWidth;
         let min_zoom_level = container_width / (2 * this.sequence.length);
@@ -582,26 +601,43 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         let delta = end - start;
 
         let target_zoom_level = Math.min( ZOOM_MAX, min_zoom_level / ( delta / this.sequence.length ) ) ;
-        if (target_zoom_level === this.zoom) {
-            this.setLeftVisibleResidue(start);
-            bean.fire(this._canvas,'panend');
-            return Promise.resolve();
+        const end_visible_residue_count =  Math.floor( ( container_width / (2 * this.sequence.length) * 1 / target_zoom_level ) * this.sequence.length );
+        if (delta < end_visible_residue_count) {
+            start = Math.max( 1, Math.floor(start - (end_visible_residue_count - delta)/2));
+            end = Math.min( this.sequence.length-1, Math.floor(end + (end_visible_residue_count - delta)/2));
+            delta = end - start;
+            target_zoom_level = Math.min( ZOOM_MAX, min_zoom_level / ( delta / this.sequence.length ) ) ;
         }
-        delete this.zoomCenter;
-        //this.zoomCenter = { x: Math.floor(0.5*(end + start)) };
-        let zoomed = new Promise((resolve) => {
-            let zoomchange = () => {
-                bean.remove(this,'zoomChange',zoomchange);
-                delete this.zoomCenter;
+        if (target_zoom_level === this.zoom) {
+
+            if (! pan ) {
                 this.setLeftVisibleResidue(start);
                 bean.fire(this._canvas,'panend');
-                resolve();
-            };
-            bean.add(this,'zoomChange',zoomchange);
-        });
-        this.zoom = target_zoom_level;
+                return Promise.resolve();
+            } else {
+                return this.panTo(start);
+            }
+        }
+        if ( ! pan ) {
+            delete this.zoomCenter;
+            let zoomed = new Promise((resolve) => {
+                let zoomchange = () => {
+                    bean.remove(this,'zoomChange',zoomchange);
+                    delete this.zoomCenter;
+                    this.setLeftVisibleResidue(start);
+                    bean.fire(this._canvas,'panend');
+                    resolve();
+                };
+                bean.add(this,'zoomChange',zoomchange);
+            });
+            this.zoom = target_zoom_level;
 
-        return zoomed;
+            return zoomed;
+        } else {
+            return this.zoomTo(target_zoom_level,Math.floor( 0.5*(start+end))).then( () => {
+                return this.panTo(start);
+            });
+        }
     };
 
     clazz.prototype.setLeftVisibleResidue = function(val) {
