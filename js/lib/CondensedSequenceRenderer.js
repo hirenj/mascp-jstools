@@ -2357,7 +2357,7 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
   };
 
 CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
-    var self = this;
+    let self = this;
 
     if ( ! self._canvas) {
       bean.add(self,'sequenceChange',function() {
@@ -2366,22 +2366,21 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
       return;
     }
 
-    var canvas = self._canvas;
-    var start;
-    var end;
-    var end_func;
-    var local_start;
-    var local_end;
+    let canvas = self._canvas;
+    let start;
+    let end;
+    let end_func;
+    let local_start = null;
+    let local_end = null;
 
     let in_drag = false;
 
 
-    var moving_func = function(evt) {
+    const moving_func = function(evt) {
         evt.preventDefault();
 
-        var p = svgPosition(evt,canvas);
+        let p = svgPosition(evt,canvas);
         end = p.x;
-
         if (start > end) {
             local_end = parseInt(start / 50);
             local_start = parseInt(end / 50);
@@ -2408,13 +2407,13 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         }
         in_drag = true;
         self.select();
-        var positions = mousePosition(evt);
-        var p = {};
+        let positions = mousePosition(evt);
+        let p = {};
         if (canvas.nodeName === 'svg') {
             p = canvas.createSVGPoint();
             p.x = positions[0];
             p.y = positions[1];
-            var rootCTM = canvas.getScreenCTM().inverse();
+            let rootCTM = canvas.getScreenCTM().inverse();
             if ( canvas.getTransformToElement ) {
                 let rootParentXform = canvas.getTransformToElement(evt.target);
                 canvas.matrix = rootParentXform.multiply(rootCTM);
@@ -2460,11 +2459,11 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         if (evt.changedTouches.length == 1) {
             in_drag = true;
             evt.preventDefault();
-            var positions = mousePosition(evt.changedTouches[0]);
-            var p = {};
+            let positions = mousePosition(evt.changedTouches[0]);
+            let p = {};
             if (canvas.nodeName == 'svg') {
                     p = canvas.createSVGPoint();
-                    var rootCTM = this.getScreenCTM();
+                    let rootCTM = this.getScreenCTM();
                     p.x = positions[0];
                     p.y = positions[1];
 
