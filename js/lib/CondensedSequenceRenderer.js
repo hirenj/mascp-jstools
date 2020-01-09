@@ -633,7 +633,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
             return zoomed;
         } else {
-            return this.zoomTo(target_zoom_level,Math.floor( 0.5*(start+end))).then( () => {
+            let center = Math.floor( 0.5*(start+end));
+            if (center < this.leftVisibleResidue() || center > this.rightVisibleResidue() ) {
+                center = null;
+            }
+            return this.zoomTo(target_zoom_level,center).then( () => {
                 return this.panTo(start);
             });
         }
