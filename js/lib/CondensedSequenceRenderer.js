@@ -584,6 +584,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         let target_zoom_level = Math.min( ZOOM_MAX, min_zoom_level / ( delta / this.sequence.length ) ) ;
         if (target_zoom_level === this.zoom) {
             this.setLeftVisibleResidue(start);
+            bean.fire(this._canvas,'panend');
             return Promise.resolve();
         }
         delete this.zoomCenter;
@@ -593,6 +594,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 bean.remove(this,'zoomChange',zoomchange);
                 delete this.zoomCenter;
                 this.setLeftVisibleResidue(start);
+                bean.fire(this._canvas,'panend');
                 resolve();
             };
             bean.add(this,'zoomChange',zoomchange);
