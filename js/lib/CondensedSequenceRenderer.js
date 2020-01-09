@@ -1690,12 +1690,53 @@ var addCalloutToLayer = function(layerName,element,opts) {
     return callout;
 };
 
+var addMovableBox = function(layerName,opts={}) {
+    let canvas = this._renderer._canvas;
+
+    if ( ! canvas.movablepanevents ) {
+        bean.add(canvas,'panend', () => {
+            let renderer = this._renderer;
+            let layer_containers = Object.values(renderer._layer_containers || {}).filter( x => x);
+            for (let container of layer_containers) {
+                arrangeMovableBoxes(container,Math.floor(0.5*(renderer.leftVisibleResidue() + renderer.rightVisibleResidue())));
+            }
+        },false);
+        canvas.movablepanevents = true;
+    }
+
+
+    if ( ! canvas ) {
+        let seqchangecallback = () => {
+            bean.remove(this._renderer,'sequencechange',seqchangecallback);            
+            addMovableBox.call(this,layerName,opts);            
+        }
+        bean.add(this._renderer,'sequencechange',seqchangecallback);
+        log("Delaying rendering, waiting for sequence change");
+        return;
+    }
+
+    var rect =  canvas.rect(-4+this._index,0,opts.width,0);
+    rect.wanted_position = this._index;
+    rect.wanted_width = opts.width;
+    this._renderer._layer_containers[layerName].push(rect);
+    rect.style.strokeWidth = '0px';    
+    rect.setAttribute('fill',opts.color);
+    return rect;
+};
+
 var scaledAddShapeOverlay = function(layername,width,opts) {
     var start = this._index;
     var end = Math.abs(this._renderer.scalePosition(this.original_index+width,layername)) - 1;
     var res = addShapeToElement.call(start < end ? this : this._renderer._sequence_els[end],layername, Math.abs(end - start),opts);
     res.aa = this.original_index;
     res.aa_width = width;
+    return res;
+};
+
+var scaledAddMovableBox = function(layername,opts) {
+    var start = this._index;
+    var res = addMovableBox.call(this,layername,opts);
+    res.aa = this.original_index;
     return res;
 };
 
@@ -1789,6 +1830,7 @@ CondensedSequenceRenderer.prototype._extendElement = function(el) {
     el.addTextOverlay = scaledAddTextOverlay;
     el.addToLayerWithLink = scaledAddToLayerWithLink;
     el.callout = addCalloutToLayer;
+    el.addMovableBox = scaledAddMovableBox;
     el['_renderer'] = this;
 };
 
@@ -2525,6 +2567,35 @@ CondensedSequenceRenderer.prototype._resizeContainer = function() {
         }        
     }
 };
+const arrangeMovableBoxes = function(elements,center) {
+    const movable_elements = elements.filter( el => el.wanted_position );
+    if (movable_elements.length > 0) {
+        const positions = movable_elements.map( el => { return { x: el.wanted_position, width: el.wanted_width, el } }).sort( (a,b) => a.x - b.x );
+        const to_left = positions.filter( pos => pos.x <= center ).reverse();
+        const to_right = positions.filter( pos => pos.x > center );
+        let center_el = to_left.shift() || to_right.shift();
+        let left_pos = Math.floor(center_el.x);
+        let right_pos = Math.ceil(center_el.x + center_el.width);
+        for (let pos of to_left) {
+            if ((pos.x + pos.width) >= left_pos) {
+                let delta = (pos.x + pos.width) - left_pos; 
+                pos.x -= delta;
+                left_pos = Math.floor(pos.x);
+            }
+        }
+        for (let pos of to_right) {
+            if (pos.x <= right_pos) {
+                let delta = right_pos - pos.x; 
+                pos.x += delta;
+                right_pos = Math.ceil(pos.x + pos.width);
+            }
+        }
+        for (let pos of positions) {
+            pos.el.setAttribute('x',50*pos.x);
+        }
+    }
+};
+
 
 (function(clazz) {
 
@@ -2705,6 +2776,9 @@ clazz.prototype.refresh = function(animated) {
         if ( ! container ) {
             continue;
         }
+
+        arrangeMovableBoxes(container,Math.floor(0.5*(this.leftVisibleResidue() + this.rightVisibleResidue())));
+
         var y_val;
         if (! this.isLayerActive(name)) {
             var attrs = { 'y' : -1*(this._axis_height)*RS, 'height' :  RS * container.track_height / this.zoom ,'visibility' : 'hidden' };

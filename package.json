@@ -22,7 +22,7 @@
     }
   ],
   "scripts": {
-    "start": "webpack-dev-server --host 0.0.0.0 --public $PROJECT_DOMAIN.glitch.me --port 3000",
+    "start": "webpack-dev-server --host 0.0.0.0 --port 3000",
     "build-web": "./node_modules/.bin/webpack -d",
     "build-watch-web": "./node_modules/.bin/webpack -d --watch"
   },
@@ -33,6 +33,7 @@
     }
   ],
   "dependencies": {
+    "debug-any-level": "^0.3.0",
     "es6-tween": "^5.4.1",
     "esm": "^3.2.20",
     "glycan.js": "hirenj/glycan.js"

@@ -118,6 +118,10 @@ let show_sequence = function(el,uniprot,base_pos,genomic_base) {
     offset: -1,
     content:"#sugar_gal"} }]);
 
+    renderer.getAA(609,second_lay_id).addMovableBox(second_lay_id, {width: 10, color: 'red'});
+    renderer.getAA(605,second_lay_id).addMovableBox(second_lay_id, {width: 10, color: 'black'});
+
+
     el.fitToZoom();
     renderer.refresh();
     renderer.zoom -= 0.01;
