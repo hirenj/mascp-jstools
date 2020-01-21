@@ -1,5 +1,5 @@
 import bean from '../../bean';
-import '../../hammer.js';
+import Hammer from 'hammerjs';
 
 const addTouchZoomControls = function(zoomElement,touchElement,precision) {
     var self = this;
@@ -107,8 +107,11 @@ const addTouchZoomControls = function(zoomElement,touchElement,precision) {
     },false);
 
 
+    const hammerel = Hammer(touchElement);
+    hammerel.get('pinch').set({ enable: true });
+
     // touchElement.addEventListener('gesturestart',function(e) {
-    Hammer(touchElement).on("touch",function(e) {
+    hammerel.on('pinchstart',function(e) {
         if ( ! self.enabled ) {
             return;
         }
@@ -117,19 +120,19 @@ const addTouchZoomControls = function(zoomElement,touchElement,precision) {
 
         var zoomscale = function(ev) {
             if ( zoomElement.zoomCenter ) {
-                zoomElement.zoom = zoomStart * ev.gesture.scale;
+                zoomElement.zoom = zoomStart * ev.scale;
             }
             ev.preventDefault();
         };
-        Hammer(touchElement).on('pinch',zoomscale,false);
+        hammerel.on('pinch',zoomscale,false);
         let hammer_release = function(ev) {
-            Hammer(touchElement).off('pinch',zoomscale);
-            Hammer(touchElement).off('release',hammer_release);
+            hammerel.off('pinch',zoomscale);
+            hammerel.off('pinchend',hammer_release);
             zoomElement.zoomCenter = null;
             zoomElement.zoomLeft = null;
             bean.fire(zoomElement,'gestureend')
         };
-        Hammer(touchElement).on('release',hammer_release,false);
+        hammerel.on('pinchend',hammer_release,false);
         e.preventDefault();
     },false);
 

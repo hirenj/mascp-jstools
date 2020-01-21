@@ -33,9 +33,10 @@
     }
   ],
   "dependencies": {
-    "es6-tween": "^5.4.1",
+    "es6-tween": "^5.5.10",
     "esm": "^3.2.20",
-    "glycan.js": "hirenj/glycan.js"
+    "glycan.js": "hirenj/glycan.js",
+    "hammerjs": "^2.0.8"
   },
   "module": "js/index.js",
   "main": "js/index-esm.js",
@@ -52,8 +53,8 @@
   "private": "true",
   "devDependencies": {
     "@babel/core": "^7.4.3",
-    "babel-loader": "^8.0.5",
     "@babel/preset-env": "^7.0.0",
+    "babel-loader": "^8.0.5",
     "compression-webpack-plugin": "^2.0.0",
     "raw-loader": "^2.0.0",
     "webpack": "^4.29.6",
