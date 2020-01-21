@@ -44,6 +44,7 @@ tmpl.innerHTML = `
   :host {
     display: block;
     position: relative;
+    touch-action: none;
   }
   :host([resizeable]) {
     resize: both;
