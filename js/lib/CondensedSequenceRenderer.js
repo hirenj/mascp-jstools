@@ -2356,6 +2356,43 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     bean.fire(renderer,'selection', selections);
   };
 
+const webkit_test_transform_support_test_result = Symbol('webkit_test_transform_support_test_result');
+
+const webkit_test_transform_support = (document) => {
+    if (typeof document[webkit_test_transform_support_test_result] == 'boolean') {
+        return
+    }
+    let parent_canvas = document.createElementNS(svgns,'svg');
+    let child_g = document.createElementNS(svgns,'g');
+    let canvas = document.createElementNS(svgns,'svg');
+    let target = document.createElementNS(svgns,'rect');
+    target.setAttribute('x','0');
+    target.setAttribute('y','0');
+    target.setAttribute('width','10');
+    target.setAttribute('height','10');
+    child_g.setAttribute('transform','translate(-10,0)');
+    canvas.appendChild(target);
+    child_g.appendChild(canvas);
+    parent_canvas.appendChild(child_g);
+    document.body.appendChild(parent_canvas);
+
+    let rootCTM = canvas.getScreenCTM().inverse();
+    if ( canvas.getTransformToElement ) {
+        let rootParentXform = canvas.getTransformToElement(target);
+      canvas.matrix = rootParentXform.multiply(rootCTM);
+    }
+    let bbox = target.getBoundingClientRect();
+    let xpos = bbox.x + 0.5*bbox.width;
+    let ypos = bbox.y + 0.5*bbox.height;
+    let point = canvas.createSVGPoint();
+    point.x = xpos;
+    point.y = ypos;
+    let newpoint = point.matrixTransform(canvas.matrix);
+    document[webkit_test_transform_support_test_result] = newpoint.x == 5;
+    document.body.removeChild(parent_canvas);
+};
+
+
 CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     let self = this;
 
@@ -2375,6 +2412,7 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
 
     let in_drag = false;
 
+    webkit_test_transform_support(document);
 
     const moving_func = function(evt) {
         evt.preventDefault();
@@ -2388,6 +2426,11 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             local_end = parseInt(end/50);
             local_start = parseInt(start/50);
         }
+        if (document[webkit_test_transform_support_test_result] === false) {
+            local_start = local_start + self.leftVisibleResidue()+2;
+            local_end = local_end + self.leftVisibleResidue()+2;
+        }
+
         self.select(local_start+1,local_end);
     };
 
