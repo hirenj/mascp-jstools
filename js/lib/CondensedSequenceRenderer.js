@@ -2325,6 +2325,8 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
       return [ posx, posy ];
   };
 
+  const svg_position_matrix_adjust = Symbol('svg_position_matrix_adjust');
+
   var svgPosition = function(ev,svgel) {
       var positions = mousePosition(ev.changedTouches ? ev.changedTouches[0] : ev);
       var p = {};
@@ -2333,7 +2335,7 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
 
           p.x = positions[0];
           p.y = positions[1];
-          p = p.matrixTransform(svgel.matrix ? svgel.matrix : svgel.getScreenCTM().inverse());
+          p = p.matrixTransform(svgel[svg_position_matrix_adjust] ? svgel[svg_position_matrix_adjust] : svgel.getScreenCTM().inverse());
       } else {
           p.x = positions[0];
           p.y = positions[1];
@@ -2356,10 +2358,10 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     bean.fire(renderer,'selection', selections);
   };
 
-const webkit_test_transform_support_test_result = Symbol('webkit_test_transform_support_test_result');
+const gecko_test_transform_support_test_result = Symbol('gecko_test_transform_support_test_result');
 
-const webkit_test_transform_support = (document) => {
-    if (typeof document[webkit_test_transform_support_test_result] == 'boolean') {
+const gecko_test_transform_support = (document) => {
+    if (typeof document[gecko_test_transform_support_test_result] == 'boolean') {
         return
     }
     let parent_canvas = document.createElementNS(svgns,'svg');
@@ -2370,7 +2372,7 @@ const webkit_test_transform_support = (document) => {
     target.setAttribute('y','0');
     target.setAttribute('width','10');
     target.setAttribute('height','10');
-    child_g.setAttribute('transform','translate(-10,0)');
+    child_g.setAttribute('transform','translate(-1000,0)');
     canvas.appendChild(target);
     child_g.appendChild(canvas);
     parent_canvas.appendChild(child_g);
@@ -2378,8 +2380,8 @@ const webkit_test_transform_support = (document) => {
 
     let rootCTM = canvas.getScreenCTM().inverse();
     if ( canvas.getTransformToElement ) {
-        let rootParentXform = canvas.getTransformToElement(target);
-      canvas.matrix = rootParentXform.multiply(rootCTM);
+      let rootParentXform = canvas.getTransformToElement(target);
+      canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
     }
     let bbox = target.getBoundingClientRect();
     let xpos = bbox.x + 0.5*bbox.width;
@@ -2387,8 +2389,12 @@ const webkit_test_transform_support = (document) => {
     let point = canvas.createSVGPoint();
     point.x = xpos;
     point.y = ypos;
-    let newpoint = point.matrixTransform(canvas.matrix);
-    document[webkit_test_transform_support_test_result] = newpoint.x == 5;
+    var adjusted;
+    if (canvas[svg_position_matrix_adjust]) {
+        adjusted = point.matrixTransform(canvas[svg_position_matrix_adjust]).x;
+    }
+    let base = point.matrixTransform(rootCTM).x;
+    document[gecko_test_transform_support_test_result] = adjusted && (adjusted == base);
     document.body.removeChild(parent_canvas);
 };
 
@@ -2412,7 +2418,7 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
 
     let in_drag = false;
 
-    webkit_test_transform_support(document);
+    gecko_test_transform_support(document);
 
     const moving_func = function(evt) {
         evt.preventDefault();
@@ -2425,10 +2431,6 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         } else {
             local_end = parseInt(end/50);
             local_start = parseInt(start/50);
-        }
-        if (document[webkit_test_transform_support_test_result] === false) {
-            local_start = local_start + self.leftVisibleResidue()+2;
-            local_end = local_end + self.leftVisibleResidue()+2;
         }
 
         self.select(local_start+1,local_end);
@@ -2456,12 +2458,12 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             p = canvas.createSVGPoint();
             p.x = positions[0];
             p.y = positions[1];
-            let rootCTM = canvas.getScreenCTM().inverse();
-            if ( canvas.getTransformToElement ) {
+            var rootCTM = canvas.getScreenCTM().inverse();
+            if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
                 let rootParentXform = canvas.getTransformToElement(evt.target);
-                canvas.matrix = rootParentXform.multiply(rootCTM);
+                canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
             }
-            p = p.matrixTransform(canvas.matrix ? canvas.matrix : rootCTM );
+            p = p.matrixTransform(canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM );
         } else {
             p.x = positions[0];
             p.y = positions[1];
