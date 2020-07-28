@@ -519,6 +519,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         return axis;
     };
 
+    const PAN_TWEEN_SYMBOL = Symbol('PAN_TWEEN');
+
     clazz.prototype.panTo = function(end,callback) {
         const PAN_TIMING=500;
         let renderer = this;
@@ -531,41 +533,77 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         }
         let state = { pos };
         let tween = new Tween(state);
+        renderer[PAN_TWEEN_SYMBOL] = tween;
         return new Promise( resolve => {
             tween.to({ pos: end },PAN_TIMING)
             .easing(Easing.Quadratic.InOut)
             .on('update', ({pos}) => {
+                if (renderer[PAN_TWEEN_SYMBOL] !== tween) {
+                    if ( ! tween.stopped ) {
+                        tween.stopped = true;
+                        if (callback) {
+                            callback.call(null,false);
+                        }
+                        resolve(false);
+                        tween.stop();
+                    }
+                    return;
+                }
                 renderer.setLeftVisibleResidue(pos);
                 bean.fire(renderer._canvas,'panend');
             })
-            .on('complete', () => {
-                if (callback) {
-                    callback.call(null);
+            .on('complete', (newstate) => {
+                if (tween.stopped) {
+                    return;
                 }
-                resolve();
+
+                let still_active_tween = renderer[PAN_TWEEN_SYMBOL] === tween;
+
+                if (callback) {
+                    callback.call(null,still_active_tween);
+                }
+                resolve(still_active_tween);
             })
             .start();
         });
     };
 
+    clazz.prototype.shouldPanInsteadForZoom = function(zoom) {
+        let renderer = this;
+        let curr = renderer.zoom;
+        return (Math.abs(zoom - curr) < 0.1);
+    }
+
+    const ZOOM_CALL_SYMBOL = Symbol('ZOOM_CALL');
+
     clazz.prototype.zoomTo = function(zoom,residue,callback) {
         const ZOOM_TIMING = 500;
         let renderer = this;
         let curr = renderer.zoom;
-        if (Math.abs(zoom - curr) < 1) {
+        if (this.shouldPanInsteadForZoom(zoom)) {
             return this.panTo(residue,callback);
         }
+        let self_call_symbol = Symbol(''+new Date().getTime());
+
+        renderer[ZOOM_CALL_SYMBOL] = self_call_symbol;
+
         let result = new Promise( resolve => {
             let zoomchange = (resolve) => {
+                let completed = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
                 bean.remove(renderer,'zoomChange',zoomchange);
-                delete renderer.zoomCenter;
+                bean.remove(renderer,'zoomCancelled',zoomchange);
+                if (completed) {
+                    delete renderer.zoomCenter;
+                }
 
                 if (callback) {
-                    callback.call(null);
+                    callback.call(null,completed);
                 }
-                resolve();
+                resolve(completed);
             };
             bean.add(renderer,'zoomChange',zoomchange.bind(null,resolve));
+            bean.add(renderer,'zoomCancelled',zoomchange.bind(null,resolve));
+
         });
         if (residue) {
             renderer.zoomCenter = (residue == 'center') ? residue : { 'x' : renderer._RS*residue };
@@ -576,13 +614,21 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         tween.to({ zoom },ZOOM_TIMING)
         .easing(Easing.Quadratic.InOut)
         .on('update', ({zoom}) => {
-            if ((Date.now() - last_time) > 50) {
-                renderer.zoom = zoom;
-                last_time = Date.now();
+            let active = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
+            if (active) {
+                if ((Date.now() - last_time) > 25) {
+                    renderer.zoom = zoom;
+                    last_time = Date.now();
+                }
             }
         })
         .on('complete', () => {
-            renderer.zoom = zoom;
+            let active = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
+            if (active) {
+                renderer.zoom = zoom;
+            } else {
+                bean.fire(renderer,'zoomCancelled');
+            }
         })
         .start();
         return result;
@@ -594,7 +640,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         let min_zoom_level = container_width / (2 * this.sequence.length);
 
         if ( ! this.sequence ) {
-            return;
+            return Promise.resolve();
         }
 
         let delta = end - start;
@@ -630,15 +676,24 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 bean.add(this,'zoomChange',zoomchange);
             });
             this.zoom = target_zoom_level;
-
             return zoomed;
         } else {
             let center = Math.floor( 0.5*(start+end));
             if (center < this.leftVisibleResidue() || center > this.rightVisibleResidue() ) {
                 center = null;
             }
-            return this.zoomTo(target_zoom_level,center).then( () => {
+
+            let will_pan = this.shouldPanInsteadForZoom(target_zoom_level);
+
+            if (will_pan) {
                 return this.panTo(start);
+            }
+            return this.zoomTo(target_zoom_level,center).then( (completed) => {
+                if (completed) {
+                    return this.panTo(start);
+                } else {
+                    return completed;
+                }
             });
         }
     };
