@@ -381,7 +381,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             } else if (( x % minor_mark ) === 0 && x !== 0) {
                 minor_mark_labels.push(a_text);
             }
-            if ( (x % (250*parseInt(this.sequence.length / 500))) === 0 && x !== 0) {
+            if ( (x % (250*Math.floor(this.sequence.length / 1000))) === 0 && x !== 0) {
                 thousand_mark_labels.push(a_text);
             }
             x += 5;
