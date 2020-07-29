@@ -21,6 +21,7 @@ class GeneComponent extends GatorComponent {
   connectedCallback() {
     super.connectedCallback();
     setup_renderer.call(this);
+    this.renderer.bind('sequenceChange',reader_has_data.bind(this));
     if (this.geneid) {
       retrieve_data.call(this);
     }
@@ -68,6 +69,9 @@ let reader_has_data = function() {
     return;
   }
   if ( this[last_retrieved_gene] === this.geneid ) {
+    console.log('SENDING READY SAME GENE',this[last_retrieved_gene],this.geneid);
+    var event = new Event('ready',{bubbles: true});
+    this.dispatchEvent(event);
     return;
   }
   this[last_retrieved_gene] = this.geneid;
@@ -83,12 +87,22 @@ let reader_has_data = function() {
   if (this.nt_mapping) {
     reader.nt_mapping = this.nt_mapping;
   }
+
   if ( ! this.ready ) {
     reader.registerSequenceRenderer(this.renderer);
     reader.bind('requestComplete',() => {
       this.renderer.hideAxis();
       this.renderer.fitZoom();
     });
+
+    reader.bind('requestAborted', () => {
+      delete this.ready;
+      this[last_retrieved_gene] = null;
+      console.log('ABORTING',this[last_retrieved_gene],this.geneid);
+      var event = new Event('error',{bubbles: true});
+      this.dispatchEvent(event);
+    });
+
     this.ready = new Promise( (resolve) => {
       reader.bind('requestComplete',() => {
         this.uniprots = Object.keys(reader.result._raw_data.data).map( up => up.toUpperCase() );
@@ -121,7 +135,6 @@ let setup_renderer = function() {
 };
 
 let retrieve_data = function() {
-  this.renderer.bind('sequenceChange',reader_has_data.bind(this));
   this.renderer.setSequence('M');
 };
 

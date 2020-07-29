@@ -574,6 +574,8 @@ let handle_request_error = function(response,req,status) {
 let perform_request = function(request_data) {
 
     if (request_data === false) {
+        bean.fire(this,"requestAborted");
+        bean.fire(Service,"requestAborted",[this]);
         return;
     }
 

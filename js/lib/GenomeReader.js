@@ -45,7 +45,11 @@ GenomeReader.prototype.requestData = function()
         };
     }
 
-    if (this.tried_isoform_count == 1 && ! this.tried_bare) {
+    if ( ! this.swissprot ) {
+        return false;
+    }
+
+    if (this.swissprot && this.tried_isoform_count == 1 && ! this.tried_bare) {
         return MASCP.GatorDataReader.authenticate().then((url_base) => {
             this.tried_bare = true;
             return {
@@ -58,7 +62,7 @@ GenomeReader.prototype.requestData = function()
         });
     }
 
-    if (this.tried_bare) {
+    if (this.swissprot && this.tried_bare) {
         this.tried_isoform_count = (this.tried_isoform_count || 0) + 1;
         return MASCP.GatorDataReader.authenticate().then((url_base) => {
             return {
@@ -130,7 +134,10 @@ let update_structure = (data) => {
         }
         if ( ! this.exons ) {
             this.exons = update_structure(data.exons_hg19 || data.exons);
-            this.swissprot = (data.uniprot || {})['Swiss-Prot'].toLowerCase();
+            let uniprot_data = data.uniprot;
+            if (uniprot_data) {
+                this.swissprot = uniprot_data['Swiss-Prot'].toLowerCase();
+            }
             if ( ! this.nt_mapping ) {
                 this.retrieve(this.acc || this.agi);
                 return;
@@ -143,7 +150,7 @@ let update_structure = (data) => {
         if (data.length > 0) {
             data = data[0].data.map( mapping => [mapping.refseqnt.replace(/\..*/,''),mapping.uniprot].join('\t') ).join('\n');
         } else {
-            if ( ! this.tried_isoform_count || ! this.tried_bare || this.tried_isoform_count < 2 ) {
+            if ( this.swissprot && (! this.tried_isoform_count || ! this.tried_bare || this.tried_isoform_count < 2) ) {
                 this.retrieve(this.acc || this.agi);
                 return;
             }
@@ -599,6 +606,9 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                 console.log(`Warning - no scale has been set for ${layer.name}, consider adding "genomic" for genomic data`);
             }
             if (layer && layer.scales.has('genomic')) {
+                return pos;
+            }
+            if ( ! self.result ) {
                 return pos;
             }
             let all_scales = Object.keys(self.result._raw_data.data);

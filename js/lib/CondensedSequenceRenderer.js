@@ -1834,6 +1834,7 @@ CondensedSequenceRenderer.prototype.enableScaling = function() {
             renderer.getAminoAcidsByPeptide = old_get_pep;
         };
     });
+    this.enableScaling = () => {}
 };
 
 
