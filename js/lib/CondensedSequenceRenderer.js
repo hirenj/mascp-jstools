@@ -772,7 +772,10 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             layer_obj.scales.add(layer);
         }
         let scaler_funcs = (this._scalers || []).concat([]);
-        var new_aa = (inverse ? scaler_funcs.reverse() : scaler_funcs).reduce((val,fn) => {  return fn(val,layer_obj,inverse); },aa);
+        var new_aa = (inverse ? scaler_funcs.reverse() : scaler_funcs).reduce((val,fn) => {
+            let res = fn(val,layer_obj,inverse);
+            return res;
+        },aa);
         return new_aa;
     };
 

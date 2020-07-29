@@ -508,7 +508,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
         result.removed_regions = results;
     };
     var generate_scaler_function = function(reader) {
-        return function(in_pos,layer,inverse) {
+        let scaler = function(in_pos,layer,inverse) {
             var pos = in_pos;
             if ( ! reader.result ) {
                 return inverse ? (pos * 3) : Math.floor(pos / 3);
@@ -536,7 +536,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
                     calculated_pos -= (introns[i][1] - introns[i][0]);
                 }
                 if (pos < introns[i][1] && pos > introns[i][0]) {
-                    calculated_pos = (introns[i][1] - reader.result.min);
+                    return scaler(introns[i][0] - 1,layer);
                 }
             }
             if (calculated_pos < 3) {
@@ -544,6 +544,7 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             }
             return (Math.floor(calculated_pos / 3));
         };
+        return scaler;
     };
     Object.defineProperty(serv.prototype, 'exon_margin', {
         set: function(val) {
