@@ -665,8 +665,12 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         }
         if ( ! pan ) {
             delete this.zoomCenter;
+            if (this.zoom == target_zoom_level) {
+                return Promise.resolve();
+            }
+            let zoomchange;
             let zoomed = new Promise((resolve) => {
-                let zoomchange = () => {
+                zoomchange = () => {
                     bean.remove(this,'zoomChange',zoomchange);
                     delete this.zoomCenter;
                     this.setLeftVisibleResidue(start);
@@ -676,6 +680,10 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 bean.add(this,'zoomChange',zoomchange);
             });
             this.zoom = target_zoom_level;
+            if (this.zoom !== target_zoom_level) {
+                bean.remove(this,'zoomChange',zoomchange);
+                return Promise.resolve();
+            }
             return zoomed;
         } else {
             let center = Math.floor( 0.5*(start+end));
