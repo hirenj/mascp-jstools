@@ -242,6 +242,16 @@ class GatorComponent extends WrapHTML {
     }
   }
 
+  screenPositionFor(aa) {
+    let canvas = this.renderer._canvas;
+    let box = this.getBoundingClientRect();
+    let result = canvas.positionToClient(aa*50);
+    if (result < box.left || result > box.right) {
+      return;
+    }
+    return result - box.left;
+  }
+
   get scrollPrecision() {
     return 0.1;
   }

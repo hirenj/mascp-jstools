@@ -2514,6 +2514,21 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         }
     });
 
+    canvas.positionToClient = function(x) {
+        let p = canvas.createSVGPoint();
+        p.x = x;
+        p.y = 0;
+
+        let rootCTM = canvas.getScreenCTM().inverse();
+        if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
+            let rootParentXform = canvas.getTransformToElement(canvas.firstChild);
+            canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
+        }
+        let matrix = canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM;
+        p = p.matrixTransform( matrix.inverse() );
+        return p.x;
+    };
+
     canvas.addEventListener('mousedown',function(evt) {
         if (! self.selecting ) {
             return;
