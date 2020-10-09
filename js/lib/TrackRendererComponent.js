@@ -63,7 +63,6 @@ let ensure_sugar_icon = (renderer,sequence) => {
     let rendered_sugars = rendered_sugars_map.get(renderer) || [];
 
     rendered_sugars.push(sugar_renderer.element.canvas);
-    console.log(rendered_sugars);
     rendered_sugars_map.set(renderer, rendered_sugars);
 
     let [minx,miny,width,height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map( dim => parseInt(dim) );

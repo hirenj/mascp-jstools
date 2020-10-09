@@ -1946,7 +1946,8 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
         mark_groups(renderer,objects);
     }
     var results = [];
-    objects.forEach(function(object) {
+    objects.forEach(function(input_object) {
+        let object = JSON.parse(JSON.stringify(input_object));
         var potential_height = object.options ? (object.options.height || renderer._layer_containers[track].track_height) + (object.options.offset + object.options.height || 0) : 0;
         if (object.options && (potential_height > renderer._layer_containers[track].track_height) ) {
             var new_height = renderer._layer_containers[track].track_height + object.options.offset + (object.options.height || renderer._layer_containers[track].track_height);
