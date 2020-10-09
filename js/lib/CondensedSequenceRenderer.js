@@ -2519,13 +2519,12 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         p.x = x;
         p.y = 0;
 
-        let rootCTM = canvas.getScreenCTM().inverse();
+        let rootCTM = canvas.getScreenCTM();
         if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
-            let rootParentXform = canvas.getTransformToElement(canvas.firstChild);
-            canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
+            let rootParentXform = canvas.getTransformToElement(canvas.children[0]);
+            return p.matrixTransform(rootParentXform.multiply(canvas.getScreenCTM().inverse()).inverse()).x;
         }
-        let matrix = canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM;
-        p = p.matrixTransform( matrix.inverse() );
+        p = p.matrixTransform( rootCTM );
         return p.x;
     };
 

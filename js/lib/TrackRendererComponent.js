@@ -114,7 +114,7 @@ let apply_rendering = function(renderer,default_track,objects) {
     set_basic_offset(r,0);
 
     if ( ! this.visible_items ) {
-      this.visibile_items = {};
+      this.visible_items = {};
     }
     
     let on_default_track = r.filter( item => ! item.track );
@@ -122,26 +122,23 @@ let apply_rendering = function(renderer,default_track,objects) {
 
     renderer.renderObjects(default_track,on_default_track);
 
-    if ( ! this.visibile_items[default_track]) {
-      this.visibile_items[default_track] = {};
+    if ( ! this.visible_items[default_track]) {
+      this.visible_items[default_track] = {};
     }
-
     r.filter( r => r.type === 'marker' ).forEach(item => {
       let target_track = item.track ? item.track : default_track;
-      this.visibile_items[target_track][item.aa] = this.visibile_items[target_track][item.aa] || [];
+      this.visible_items[target_track][item.aa] = this.visible_items[target_track][item.aa] || [];
       if (item.is_stack && Array.isArray(item.options.content)) {
         item.options.content.forEach( stack_item => {
-          this.visibile_items[target_track][item.aa].push(stack_item);
+          this.visible_items[target_track][item.aa].push(stack_item);
         });
       } else if (item.options.start && item.options.end) {
         let {start,end,content,count} = item.options;
-        this.visibile_items[target_track][item.aa].push({ start,end, content, count });
+        this.visible_items[target_track][item.aa].push({ start,end, content, count });
       } else {
-        this.visibile_items[target_track][item.aa].push(item.options.content);
+        this.visible_items[target_track][item.aa].push(item.options.content);
       }
     });
-
-    console.log(this.visibile_items);
 
     let items_by_track = {};
 
