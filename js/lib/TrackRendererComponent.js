@@ -99,7 +99,7 @@ let set_basic_offset = (objects,basic_offset) => {
   });
 };
 
-let apply_rendering = (renderer,default_track,objects) => {
+let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
@@ -113,14 +113,39 @@ let apply_rendering = (renderer,default_track,objects) => {
     let r = objects[acc];
     set_basic_offset(r,0);
 
-    renderer.renderObjects(default_track,r.filter( function(item) {
-      return ! item.track;
-    }));
+    if ( ! this.visible_items ) {
+      this.visibile_items = {};
+    }
+    
+    let on_default_track = r.filter( item => ! item.track );
+    let on_specific_track = r.filter( item => item.track );
 
-    var items_by_track = {};
-    r.filter( function(item) {
-      return item.track;
-    }).forEach(function(item) {
+    renderer.renderObjects(default_track,on_default_track);
+
+    if ( ! this.visibile_items[default_track]) {
+      this.visibile_items[default_track] = {};
+    }
+
+    r.filter( r => r.type === 'marker' ).forEach(item => {
+      let target_track = item.track ? item.track : default_track;
+      this.visibile_items[target_track][item.aa] = this.visibile_items[target_track][item.aa] || [];
+      if (item.is_stack && Array.isArray(item.options.content)) {
+        item.options.content.forEach( stack_item => {
+          this.visibile_items[target_track][item.aa].push(stack_item);
+        });
+      } else if (item.options.start && item.options.end) {
+        let {start,end,content,count} = item.options;
+        this.visibile_items[target_track][item.aa].push({ start,end, content, count });
+      } else {
+        this.visibile_items[target_track][item.aa].push(item.options.content);
+      }
+    });
+
+    console.log(this.visibile_items);
+
+    let items_by_track = {};
+
+    on_specific_track.forEach( item => {
       items_by_track[item.track] = items_by_track[item.track] || [];
       items_by_track[item.track].push(item);
     });
@@ -138,7 +163,7 @@ let apply_rendering = (renderer,default_track,objects) => {
   }
 };
 
-let do_rendering = (renderer,script,data,default_track) => {
+let do_rendering = function(renderer,script,data,default_track) {
   const SANDBOX = SANDBOXES.get(script) || new JSandbox();
   SANDBOXES.set(script,SANDBOX);
   get_renderer_sequence(renderer)
@@ -147,7 +172,7 @@ let do_rendering = (renderer,script,data,default_track) => {
       SANDBOX.eval({ 'data' : 'renderData(input.sequence,input.data,input.acc,input.track)',
                   'input' : { 'sequence' : sequence, 'data' : data, 'track' : default_track },
                   'onerror': message => { throw new Error(message) },
-                  'callback' : apply_rendering.bind(null,renderer,default_track)
+                  'callback' : apply_rendering.bind(this,renderer,default_track)
                  });
     });
   });
@@ -169,7 +194,7 @@ class TrackRendererComponent extends WrapHTML  {
   render(renderer,data,track) {
     this.script
     .then (script => {
-      do_rendering(renderer,script,data,track);
+      do_rendering.call(this,renderer,script,data,track);
     });
   }
 
