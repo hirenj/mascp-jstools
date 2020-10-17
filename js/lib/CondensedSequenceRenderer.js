@@ -3149,6 +3149,7 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
                 timeout = null;
                 var scale_value = Math.abs(parseFloat(zoom_level)/start_zoom);
 
+                window.cancelAnimationFrame(transformer);
                 self._canvas.setScale(null);
 
                 bean.fire(self._canvas,'panend');
