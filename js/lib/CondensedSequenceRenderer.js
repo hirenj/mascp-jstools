@@ -389,7 +389,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
     
         for ( i = 0; i < all_labels.length; i++ ) {
             all_labels[i].style.textAnchor = 'middle';
-            all_labels[i].firstChild.setAttribute('dy','1.5ex');
+            all_labels[i].firstChild.setAttribute('dy','0.75em');
         }
     
         all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
@@ -2204,7 +2204,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('text-anchor', 'start');
         a_text.setAttribute('dx',5);
-        a_text.setAttribute('dy','1.5ex');
+        a_text.setAttribute('dy','0.75em');
         a_text.setAttribute('font-size', RS);
         a_text.setAttribute('fill', '#000000');
         amino_acids.push(a_text);
@@ -2212,7 +2212,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     } else {    
         for (var i = 0; i < seq_chars.length; i++) {
             a_text = canvas.text(x,12,seq_chars[i]);
-            a_text.firstChild.setAttribute('dy','1.5ex');
+            a_text.firstChild.setAttribute('dy','0.75em');
             amino_acids.push(a_text);
             container.push(a_text);
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
