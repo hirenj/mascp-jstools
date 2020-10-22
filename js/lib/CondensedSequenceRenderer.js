@@ -2742,6 +2742,19 @@ clazz.prototype.addTrack = function(layer) {
     
 };
 
+clazz.prototype.clearTrack = function(layer) {
+    if (! this._layer_containers ) {
+        return;
+    }
+    var layer_containers = this._layer_containers || [];
+    if ( layer_containers[layer.name] ) {
+        let elements = [].concat(layer_containers[layer.name]);
+        for(let el of elements) {
+            this.remove(layer.name,el);
+        }
+    }
+};
+
 clazz.prototype.removeTrack = function(layer) {
     if (! this._layer_containers ) {
         return;

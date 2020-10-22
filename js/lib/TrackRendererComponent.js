@@ -109,6 +109,9 @@ let apply_rendering = function(renderer,default_track,objects) {
     temp_objects['DEFAULTACC'] = objects;
     objects = temp_objects;
   }
+
+  this.visible_items = {};
+
   for (let acc of Object.keys(objects)) {
     let r = objects[acc];
     set_basic_offset(r,0);
@@ -160,7 +163,15 @@ let apply_rendering = function(renderer,default_track,objects) {
   }
 };
 
+let do_native_rendering = async function(renderer,func,data,default_track) {
+  let sequence = await get_renderer_sequence(renderer);
+  return apply_rendering.bind(this,renderer,default_track)( func(sequence,data,default_track) );
+};
+
 let do_rendering = function(renderer,script,data,default_track) {
+  if (typeof script === 'function') {
+    return do_native_rendering.call(this,renderer,script,data,default_track);
+  }
   const SANDBOX = SANDBOXES.get(script) || new JSandbox();
   SANDBOXES.set(script,SANDBOX);
   get_renderer_sequence(renderer)
@@ -175,24 +186,26 @@ let do_rendering = function(renderer,script,data,default_track) {
   });
 };
 
-class TrackRendererComponent extends WrapHTML  {
+class TrackRendererComponent extends WrapHTML {
   static get observedAttributes() {
-    return ['track','src'];
+    return ['track'];
   }
 
   constructor() {
     super();
   }
 
-  connectedCallback() {
-    this.script = retrieve_renderer.call(this);
+  get script() {
+    return new Promise(resolve => {
+      resolve(this._script);
+    })
   }
 
-  render(renderer,data,track) {
-    this.script
-    .then (script => {
-      do_rendering.call(this,renderer,script,data,track);
-    });
+  set script(script) {
+    if (script.name !== 'renderData') {
+      throw new Error('Function name should be renderData for script in TrackRendererComponent');
+    }
+    this._script = script;
   }
 
   get data() {
@@ -207,17 +220,51 @@ class TrackRendererComponent extends WrapHTML  {
     this.render(this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
   }
 
+  async render(renderer,data,track) {
+    let script = await this.script;
+    do_rendering.call(this,renderer,script,data,track);
+  }
+
   attributeChangedCallback(name) {
     if (this.hasAttribute('renderer') && this.data && name === 'track') {
       this.render(document.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
     }
+  }
+
+}
+
+class TrackRendererScriptComponent extends TrackRendererComponent  {
+  static get observedAttributes() {
+    let super_attributes = super.observedAttributes;
+    return super_attributes.concat(['src']);
+  }
+
+  connectedCallback() {
+    this.retrieved_script = retrieve_renderer.call(this);
+  }
+
+  get script() {
+    return this.retrieved_script;
+  }
+
+  set script(script) {
+    console.log('Seting script not supported');
+    return;
+  }
+
+  attributeChangedCallback(name) {
+    super.attributeChangedCallback(name);
+
     if (name === 'src') {
-      this.script = retrieve_renderer.call(this);
+      this.retrieved_script = retrieve_renderer.call(this);
     }
   }
 }
 
-customElements.define('x-trackrenderer',TrackRendererComponent);
+customElements.define('x-trackrenderer',TrackRendererScriptComponent);
+
+customElements.define('x-js-trackrenderer',TrackRendererComponent);
+
 
 let create_track = function() {
   MASCP.registerLayer(this.name,{});
@@ -277,4 +324,6 @@ class TrackComponent extends WrapHTML  {
 
 customElements.define('x-gatortrack',TrackComponent);
 
-export default TrackRendererComponent;
+export {TrackRendererComponent, TrackComponent};
+
+export default TrackRendererScriptComponent;
