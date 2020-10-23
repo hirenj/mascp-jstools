@@ -38,7 +38,8 @@ const max_sizes_map = new WeakMap();
 const rendered_sugars_map = new WeakMap();
 
 let ensure_sugar_icon = (renderer,sequence) => {
-  if ( renderer._container_canvas.getElementById('sugar_'+sequence.toLowerCase()) ) {
+  const icon_prefix = 'sugarrendered';
+  if ( renderer._container_canvas.getElementById(`${icon_prefix}_`+sequence.toLowerCase()) ) {
     return;
   }
   let defs_block = renderer._container_canvas.getElementById('defs_sugar');
@@ -46,18 +47,18 @@ let ensure_sugar_icon = (renderer,sequence) => {
   let sugar_renderer = new SVGRenderer(defs_block,SugarAwareLayoutFishEye);
   let sug = new IupacSugar();
   sug.sequence = sequence;
-  sugar_renderer.element.canvas.setAttribute('id','sugar_'+sequence.toLowerCase());
+  sugar_renderer.element.canvas.setAttribute('id',`${icon_prefix}_`+sequence.toLowerCase());
   sugar_renderer.addSugar(sug);
   sugar_renderer.icon_prefix = 'sugar';
   sugar_renderer.refresh().then( () => {
     let a_use = document.createElementNS('http://www.w3.org/2000/svg','use');
-    a_use.setAttributeNS('http://www.w3.org/1999/xlink','href','#sugar_'+sequence.toLowerCase());
+    a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',`#${icon_prefix}_`+sequence.toLowerCase());
     a_use.style.visibility = 'hidden';
     renderer._container_canvas.appendChild(a_use);
     sugar_renderer.element.canvas.getBBox = () => {
       return a_use.getBBox();
     };
-    sugar_renderer.scaleToFit({ side: 1, top: 0 });
+    sugar_renderer.scaleToFit({ side: 0, top: 0 });
     a_use.parentNode.removeChild(a_use);
     sugar_renderer.element.canvas.setAttribute('preserveAspectRatio','xMidYMax meet');
     let rendered_sugars = rendered_sugars_map.get(renderer) || [];
@@ -66,6 +67,7 @@ let ensure_sugar_icon = (renderer,sequence) => {
     rendered_sugars_map.set(renderer, rendered_sugars);
 
     let [minx,miny,width,height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map( dim => parseInt(dim) );
+
     let max_size = max_sizes_map.get(renderer) || {width: 0, height: 0};
     if (width < max_size.width) {
       minx -= (max_size.width - width)/2;
