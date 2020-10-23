@@ -103,6 +103,9 @@ let set_basic_offset = (objects,basic_offset) => {
 
 let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
+  ensure_sugar_icon(renderer,'GalNAc');
+  ensure_sugar_icon(renderer,'Man');
+  ensure_sugar_icon(renderer,'Xyl');
   ensure_sugar_icon(renderer,'Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   if ( Array.isArray(objects) ) {
