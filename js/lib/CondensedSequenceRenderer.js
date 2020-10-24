@@ -217,6 +217,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     nav_canvas.setScale((1*container_height / canv_height).toFixed(2));
                 });
             });
+            bean.add(canv,'zoomChange', () => {
+                let evObj = new Event('zoomchange', {bubbles: true, cancelable: true});
+                canv.dispatchEvent(evObj);
+            });
+
             bean.add(canv,'panend', () => {
                 let evObj = new Event('panned', {bubbles: true, cancelable: true});
                 canv.dispatchEvent(evObj);
@@ -389,7 +394,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
     
         for ( i = 0; i < all_labels.length; i++ ) {
             all_labels[i].style.textAnchor = 'middle';
-            all_labels[i].firstChild.setAttribute('dy','1.5ex');
+            all_labels[i].firstChild.setAttribute('dy','0.75em');
         }
     
         all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
@@ -524,6 +529,12 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
     clazz.prototype.panTo = function(end,callback) {
         const PAN_TIMING=500;
         let renderer = this;
+
+        if (end === null || (typeof end == 'undefined')) {
+            delete renderer[PAN_TWEEN_SYMBOL];
+            return;
+        }
+
         let pos = renderer.leftVisibleResidue();
         if (pos == end) {
             if (callback) {
@@ -550,12 +561,12 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     return;
                 }
                 renderer.setLeftVisibleResidue(pos);
-                bean.fire(renderer._canvas,'panend');
             })
             .on('complete', (newstate) => {
                 if (tween.stopped) {
                     return;
                 }
+                bean.fire(renderer._canvas,'panend');
 
                 let still_active_tween = renderer[PAN_TWEEN_SYMBOL] === tween;
 
@@ -577,21 +588,33 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
     const ZOOM_CALL_SYMBOL = Symbol('ZOOM_CALL');
 
     clazz.prototype.zoomTo = function(zoom,residue,callback) {
-        const ZOOM_TIMING = 500;
         let renderer = this;
+
+        if (zoom === null || (typeof zoom == 'undefined')) {
+            delete renderer[ZOOM_CALL_SYMBOL];
+            return;
+        }
+
+        const input_zoom = zoom;
+
+        const ZOOM_TIMING = 10;
         let curr = renderer.zoom;
         if (this.shouldPanInsteadForZoom(zoom)) {
             return this.panTo(residue,callback);
         }
         let self_call_symbol = Symbol(''+new Date().getTime());
 
+        const zoomCompleteEv = 'zoomComplete'+new Date().getTime();
+        const zoomCancelledEv = 'zoomCancelled'+new Date().getTime();
+
+
         renderer[ZOOM_CALL_SYMBOL] = self_call_symbol;
 
-        let result = new Promise( resolve => {
-            let zoomchange = (resolve) => {
+        let result = new Promise( promise_resolve => {
+            let zoomchange = (resolve,ev) => {
                 let completed = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
-                bean.remove(renderer,'zoomChange',zoomchange);
-                bean.remove(renderer,'zoomCancelled',zoomchange);
+                bean.remove(renderer,zoomCompleteEv,zoomchange);
+                bean.remove(renderer,zoomCancelledEv,zoomchange);
                 if (completed) {
                     delete renderer.zoomCenter;
                 }
@@ -601,8 +624,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 }
                 resolve(completed);
             };
-            bean.add(renderer,'zoomChange',zoomchange.bind(null,resolve));
-            bean.add(renderer,'zoomCancelled',zoomchange.bind(null,resolve));
+            bean.add(renderer,zoomCompleteEv,zoomchange.bind(null,promise_resolve,'zoomComplete'));
+            bean.add(renderer,zoomCancelledEv,zoomchange.bind(null,promise_resolve,'zoomCancelled'));
 
         });
         if (residue) {
@@ -614,7 +637,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         tween.to({ zoom },ZOOM_TIMING)
         .easing(Easing.Quadratic.InOut)
         .on('update', ({zoom}) => {
-            let active = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
+            let active = (renderer[ZOOM_CALL_SYMBOL] === self_call_symbol);
             if (active) {
                 if ((Date.now() - last_time) > 25) {
                     renderer.zoom = zoom;
@@ -625,9 +648,14 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         .on('complete', () => {
             let active = renderer[ZOOM_CALL_SYMBOL] === self_call_symbol;
             if (active) {
+                let zc = () => {
+                    bean.remove(renderer,'zoomChange',zc);
+                    bean.fire(renderer,zoomCompleteEv);
+                }
+                bean.add(renderer,'zoomChange',zc);
                 renderer.zoom = zoom;
             } else {
-                bean.fire(renderer,'zoomCancelled');
+                bean.fire(renderer,zoomCancelledEv,input_zoom);
             }
         })
         .start();
@@ -660,6 +688,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 bean.fire(this._canvas,'panend');
                 return Promise.resolve();
             } else {
+                this.zoomTo();
                 return this.panTo(start);
             }
         }
@@ -694,10 +723,12 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             let will_pan = this.shouldPanInsteadForZoom(target_zoom_level);
 
             if (will_pan) {
+                this.zoomTo();
                 return this.panTo(start);
             }
             return this.zoomTo(target_zoom_level,center).then( (completed) => {
                 if (completed) {
+                    this.zoomTo();
                     return this.panTo(start);
                 } else {
                     return completed;
@@ -2178,7 +2209,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
         a_text.setAttribute('lengthAdjust','spacing');
         a_text.setAttribute('text-anchor', 'start');
         a_text.setAttribute('dx',5);
-        a_text.setAttribute('dy','1.5ex');
+        a_text.setAttribute('dy','0.75em');
         a_text.setAttribute('font-size', RS);
         a_text.setAttribute('fill', '#000000');
         amino_acids.push(a_text);
@@ -2186,7 +2217,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
     } else {    
         for (var i = 0; i < seq_chars.length; i++) {
             a_text = canvas.text(x,12,seq_chars[i]);
-            a_text.firstChild.setAttribute('dy','1.5ex');
+            a_text.firstChild.setAttribute('dy','0.75em');
             amino_acids.push(a_text);
             container.push(a_text);
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
@@ -2519,13 +2550,12 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         p.x = x;
         p.y = 0;
 
-        let rootCTM = canvas.getScreenCTM().inverse();
+        let rootCTM = canvas.getScreenCTM();
         if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
-            let rootParentXform = canvas.getTransformToElement(canvas.firstChild);
-            canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
+            let rootParentXform = canvas.getTransformToElement(canvas.children[0]);
+            return p.matrixTransform(rootParentXform.multiply(canvas.getScreenCTM().inverse()).inverse()).x;
         }
-        let matrix = canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM;
-        p = p.matrixTransform( matrix.inverse() );
+        p = p.matrixTransform( rootCTM );
         return p.x;
     };
 
@@ -2715,6 +2745,19 @@ clazz.prototype.addTrack = function(layer) {
     
     this._layer_containers = layer_containers;
     
+};
+
+clazz.prototype.clearTrack = function(layer) {
+    if (! this._layer_containers ) {
+        return;
+    }
+    var layer_containers = this._layer_containers || [];
+    if ( layer_containers[layer.name] ) {
+        let elements = [].concat(layer_containers[layer.name]);
+        for(let el of elements) {
+            this.remove(layer.name,el);
+        }
+    }
 };
 
 clazz.prototype.removeTrack = function(layer) {
@@ -3150,6 +3193,7 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
                 timeout = null;
                 var scale_value = Math.abs(parseFloat(zoom_level)/start_zoom);
 
+                window.cancelAnimationFrame(transformer);
                 self._canvas.setScale(null);
 
                 bean.fire(self._canvas,'panend');

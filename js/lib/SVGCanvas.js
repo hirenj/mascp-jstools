@@ -834,7 +834,7 @@ const SVGCanvas = (function() {
                 if (symbol.match(/^(:?https?:)?\/?.*#/)) {
                     let use_def = [...this.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symbol )[0];
                     if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
-                        marker.contentElement = this.use(symbol,-2*r,-1.25*r,null,3*r);
+                        marker.contentElement = this.use(symbol,-1*r,-1.25*r,2*r,3*r);
                     } else {
                         marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
                     }
@@ -853,7 +853,7 @@ const SVGCanvas = (function() {
                 // phase -= (Math.PI / 2);
                 var needs_stretch = opts.stretch;
                 var nrow = 2;
-                symbol.forEach(function(symb,i) {
+                symbol.reverse().forEach(function(symb,i) {
                     var x_pos = i % nrow;
                     var y_pos = 2+Math.floor(i / nrow);
                     x_pos *= 2*r;
@@ -886,7 +886,8 @@ const SVGCanvas = (function() {
                     if (symb.match(/^(:?https?:)?\/?.*#/)) {
                         let use_def = [...canvas.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symb )[0];
                         if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
-                            new_el = canvas.use(symbol,-2*r,-2*r,null,3*r);
+                            let [,,width,height] = use_def.getAttribute('viewBox').split(' ').map(parseFloat);
+                            new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 2)*r,2*r,(height/width)*2*r);//canvas.use(symb,-2*r,-2*r,null,3*r);
                         } else {
                             new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
                         }

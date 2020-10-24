@@ -38,7 +38,8 @@ const max_sizes_map = new WeakMap();
 const rendered_sugars_map = new WeakMap();
 
 let ensure_sugar_icon = (renderer,sequence) => {
-  if ( renderer._container_canvas.getElementById('sugar_'+sequence.toLowerCase()) ) {
+  const icon_prefix = 'sugarrendered';
+  if ( renderer._container_canvas.getElementById(`${icon_prefix}_`+sequence.toLowerCase()) ) {
     return;
   }
   let defs_block = renderer._container_canvas.getElementById('defs_sugar');
@@ -46,18 +47,18 @@ let ensure_sugar_icon = (renderer,sequence) => {
   let sugar_renderer = new SVGRenderer(defs_block,SugarAwareLayoutFishEye);
   let sug = new IupacSugar();
   sug.sequence = sequence;
-  sugar_renderer.element.canvas.setAttribute('id','sugar_'+sequence.toLowerCase());
+  sugar_renderer.element.canvas.setAttribute('id',`${icon_prefix}_`+sequence.toLowerCase());
   sugar_renderer.addSugar(sug);
   sugar_renderer.icon_prefix = 'sugar';
   sugar_renderer.refresh().then( () => {
     let a_use = document.createElementNS('http://www.w3.org/2000/svg','use');
-    a_use.setAttributeNS('http://www.w3.org/1999/xlink','href','#sugar_'+sequence.toLowerCase());
+    a_use.setAttributeNS('http://www.w3.org/1999/xlink','href',`#${icon_prefix}_`+sequence.toLowerCase());
     a_use.style.visibility = 'hidden';
     renderer._container_canvas.appendChild(a_use);
     sugar_renderer.element.canvas.getBBox = () => {
       return a_use.getBBox();
     };
-    sugar_renderer.scaleToFit({ side: 1, top: 0 });
+    sugar_renderer.scaleToFit({ side: 0, top: 0 });
     a_use.parentNode.removeChild(a_use);
     sugar_renderer.element.canvas.setAttribute('preserveAspectRatio','xMidYMax meet');
     let rendered_sugars = rendered_sugars_map.get(renderer) || [];
@@ -66,6 +67,7 @@ let ensure_sugar_icon = (renderer,sequence) => {
     rendered_sugars_map.set(renderer, rendered_sugars);
 
     let [minx,miny,width,height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map( dim => parseInt(dim) );
+
     let max_size = max_sizes_map.get(renderer) || {width: 0, height: 0};
     if (width < max_size.width) {
       minx -= (max_size.width - width)/2;
@@ -99,8 +101,13 @@ let set_basic_offset = (objects,basic_offset) => {
   });
 };
 
-let apply_rendering = (renderer,default_track,objects) => {
+let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
+  ensure_sugar_icon(renderer,'GalNAc');
+  ensure_sugar_icon(renderer,'GlcNAc');
+  ensure_sugar_icon(renderer,'Fuc');
+  ensure_sugar_icon(renderer,'Man');
+  ensure_sugar_icon(renderer,'Xyl');
   ensure_sugar_icon(renderer,'Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   if ( Array.isArray(objects) ) {
@@ -109,18 +116,43 @@ let apply_rendering = (renderer,default_track,objects) => {
     temp_objects['DEFAULTACC'] = objects;
     objects = temp_objects;
   }
+
+  this.visible_items = {};
+
   for (let acc of Object.keys(objects)) {
     let r = objects[acc];
     set_basic_offset(r,0);
 
-    renderer.renderObjects(default_track,r.filter( function(item) {
-      return ! item.track;
-    }));
+    if ( ! this.visible_items ) {
+      this.visible_items = {};
+    }
+    
+    let on_default_track = r.filter( item => ! item.track );
+    let on_specific_track = r.filter( item => item.track );
 
-    var items_by_track = {};
-    r.filter( function(item) {
-      return item.track;
-    }).forEach(function(item) {
+    renderer.renderObjects(default_track,on_default_track);
+
+    if ( ! this.visible_items[default_track]) {
+      this.visible_items[default_track] = {};
+    }
+    r.filter( r => r.type === 'marker' ).forEach(item => {
+      let target_track = item.track ? item.track : default_track;
+      this.visible_items[target_track][item.aa] = this.visible_items[target_track][item.aa] || [];
+      if (item.is_stack && Array.isArray(item.options.content)) {
+        item.options.content.forEach( stack_item => {
+          this.visible_items[target_track][item.aa].push(stack_item);
+        });
+      } else if (item.options.start && item.options.end) {
+        let {start,end,content,count} = item.options;
+        this.visible_items[target_track][item.aa].push({ start,end, content, count });
+      } else {
+        this.visible_items[target_track][item.aa].push(item.options.content);
+      }
+    });
+
+    let items_by_track = {};
+
+    on_specific_track.forEach( item => {
       items_by_track[item.track] = items_by_track[item.track] || [];
       items_by_track[item.track].push(item);
     });
@@ -135,10 +167,20 @@ let apply_rendering = (renderer,default_track,objects) => {
     });
     renderer.trigger('resultsRendered',[this]);
     renderer.refresh();
+    let evObj = new Event('rendered', {bubbles: true, cancelable: true});
+    this.dispatchEvent(evObj);
   }
 };
 
-let do_rendering = (renderer,script,data,default_track) => {
+let do_native_rendering = async function(renderer,func,data,default_track) {
+  let sequence = await get_renderer_sequence(renderer);
+  return apply_rendering.bind(this,renderer,default_track)( func(sequence,data,default_track) );
+};
+
+let do_rendering = function(renderer,script,data,default_track) {
+  if (typeof script === 'function') {
+    return do_native_rendering.call(this,renderer,script,data,default_track);
+  }
   const SANDBOX = SANDBOXES.get(script) || new JSandbox();
   SANDBOXES.set(script,SANDBOX);
   get_renderer_sequence(renderer)
@@ -147,30 +189,32 @@ let do_rendering = (renderer,script,data,default_track) => {
       SANDBOX.eval({ 'data' : 'renderData(input.sequence,input.data,input.acc,input.track)',
                   'input' : { 'sequence' : sequence, 'data' : data, 'track' : default_track },
                   'onerror': message => { throw new Error(message) },
-                  'callback' : apply_rendering.bind(null,renderer,default_track)
+                  'callback' : apply_rendering.bind(this,renderer,default_track)
                  });
     });
   });
 };
 
-class TrackRendererComponent extends WrapHTML  {
+class TrackRendererComponent extends WrapHTML {
   static get observedAttributes() {
-    return ['track','src'];
+    return ['track'];
   }
 
   constructor() {
     super();
   }
 
-  connectedCallback() {
-    this.script = retrieve_renderer.call(this);
+  get script() {
+    return new Promise(resolve => {
+      resolve(this._script);
+    })
   }
 
-  render(renderer,data,track) {
-    this.script
-    .then (script => {
-      do_rendering(renderer,script,data,track);
-    });
+  set script(script) {
+    if (script.name !== 'renderData') {
+      throw new Error('Function name should be renderData for script in TrackRendererComponent');
+    }
+    this._script = script;
   }
 
   get data() {
@@ -185,17 +229,51 @@ class TrackRendererComponent extends WrapHTML  {
     this.render(this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
   }
 
+  async render(renderer,data,track) {
+    let script = await this.script;
+    do_rendering.call(this,renderer,script,data,track);
+  }
+
   attributeChangedCallback(name) {
     if (this.hasAttribute('renderer') && this.data && name === 'track') {
       this.render(document.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
     }
+  }
+
+}
+
+class TrackRendererScriptComponent extends TrackRendererComponent  {
+  static get observedAttributes() {
+    let super_attributes = super.observedAttributes;
+    return super_attributes.concat(['src']);
+  }
+
+  connectedCallback() {
+    this.retrieved_script = retrieve_renderer.call(this);
+  }
+
+  get script() {
+    return this.retrieved_script;
+  }
+
+  set script(script) {
+    console.log('Seting script not supported');
+    return;
+  }
+
+  attributeChangedCallback(name) {
+    super.attributeChangedCallback(name);
+
     if (name === 'src') {
-      this.script = retrieve_renderer.call(this);
+      this.retrieved_script = retrieve_renderer.call(this);
     }
   }
 }
 
-customElements.define('x-trackrenderer',TrackRendererComponent);
+customElements.define('x-trackrenderer',TrackRendererScriptComponent);
+
+customElements.define('x-js-trackrenderer',TrackRendererComponent);
+
 
 let create_track = function() {
   MASCP.registerLayer(this.name,{});
@@ -255,4 +333,6 @@ class TrackComponent extends WrapHTML  {
 
 customElements.define('x-gatortrack',TrackComponent);
 
-export default TrackRendererComponent;
+export {TrackRendererComponent, TrackComponent};
+
+export default TrackRendererScriptComponent;
