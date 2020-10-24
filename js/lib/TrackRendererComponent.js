@@ -104,6 +104,8 @@ let set_basic_offset = (objects,basic_offset) => {
 let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'GalNAc');
+  ensure_sugar_icon(renderer,'GlcNAc');
+  ensure_sugar_icon(renderer,'Fuc');
   ensure_sugar_icon(renderer,'Man');
   ensure_sugar_icon(renderer,'Xyl');
   ensure_sugar_icon(renderer,'Gal(b1-3)GalNAc');
@@ -165,6 +167,8 @@ let apply_rendering = function(renderer,default_track,objects) {
     });
     renderer.trigger('resultsRendered',[this]);
     renderer.refresh();
+    let evObj = new Event('rendered', {bubbles: true, cancelable: true});
+    this.dispatchEvent(evObj);
   }
 };
 

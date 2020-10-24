@@ -217,6 +217,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     nav_canvas.setScale((1*container_height / canv_height).toFixed(2));
                 });
             });
+            bean.add(canv,'zoomChange', () => {
+                let evObj = new Event('zoomchange', {bubbles: true, cancelable: true});
+                canv.dispatchEvent(evObj);
+            });
+
             bean.add(canv,'panend', () => {
                 let evObj = new Event('panned', {bubbles: true, cancelable: true});
                 canv.dispatchEvent(evObj);
