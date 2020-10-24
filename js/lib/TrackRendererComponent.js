@@ -212,7 +212,7 @@ class TrackRendererComponent extends WrapHTML {
 
   set script(script) {
     if (script.name !== 'renderData') {
-      throw new Error('Function name should be renderData for script in TrackRendererComponent');
+      console.log('Function name should be renderData for script in TrackRendererComponent');
     }
     this._script = script;
   }
