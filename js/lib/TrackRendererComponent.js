@@ -121,7 +121,7 @@ let apply_rendering = function(renderer,default_track,objects) {
 
   for (let acc of Object.keys(objects)) {
     let r = objects[acc];
-    set_basic_offset(r,0);
+    set_basic_offset(r,this.offset);
 
     if ( ! this.visible_items ) {
       this.visible_items = {};
@@ -173,7 +173,7 @@ let apply_rendering = function(renderer,default_track,objects) {
 };
 
 let do_native_rendering = async function(renderer,func,data,default_track) {
-  let sequence = await get_renderer_sequence(renderer);
+  let sequence = await this.getSequence(renderer);
   return apply_rendering.bind(this,renderer,default_track)( func(sequence,data,default_track) );
 };
 
@@ -183,7 +183,7 @@ let do_rendering = function(renderer,script,data,default_track) {
   }
   const SANDBOX = SANDBOXES.get(script) || new JSandbox();
   SANDBOXES.set(script,SANDBOX);
-  get_renderer_sequence(renderer)
+  this.getSequence(renderer)
   .then( sequence => {
     SANDBOX.eval(script, () => {
       SANDBOX.eval({ 'data' : 'renderData(input.sequence,input.data,input.acc,input.track)',
@@ -217,6 +217,14 @@ class TrackRendererComponent extends WrapHTML {
     this._script = script;
   }
 
+  get offset() {
+    return parseInt(this.getAttribute('offset') || 0);
+  }
+
+  set offset(offset) {
+    this.setAttribute('offset',offset);
+  }
+
   get data() {
     return this._data;
   }
@@ -227,6 +235,13 @@ class TrackRendererComponent extends WrapHTML {
       this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer.removeTrack(MASCP.getLayer(this.getAttribute('track')));
     }
     this.render(this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
+  }
+
+  async getSequence(renderer) {
+    if (this.hasAttribute('accession')) {
+      return get_renderer_sequence(renderer,this.getAttribute('accession'));
+    }
+    return get_renderer_sequence(renderer);
   }
 
   async render(renderer,data,track) {
