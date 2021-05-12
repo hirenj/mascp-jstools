@@ -18,8 +18,9 @@ const addScrollZoomControls = function(target,controlElement,precision) {
 
       if (element.addEventListener) {
         if (eventName == 'mousewheel') {
-          element.addEventListener('DOMMouseScroll', callback, false);  
+          element.addEventListener('DOMMouseScroll', callback, false);
           element.addEventListener('wheel', callback, false);
+          element.ownerDocument.addEventListener('wheel', () => {});
         }
         element.addEventListener(eventName, callback, false);
       } else if (element.attachEvent) {

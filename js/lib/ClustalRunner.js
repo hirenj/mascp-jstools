@@ -2,6 +2,7 @@
  */
 import Service from './Service';
 import bean from '../bean';
+import MASCP from './MASCP';
 
 
 /** Default class constructor

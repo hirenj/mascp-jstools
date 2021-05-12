@@ -22,6 +22,8 @@ import GatorComponent from './lib/GatorComponent';
 
 import GeneComponent from './lib/GeneComponent';
 
+import AlignmentComponent from './lib/AlignmentComponent';
+
 import {default as TrackComponentScript, TrackRendererComponent, TrackComponent} from './lib/TrackRendererComponent';
 
 MASCP.GatorComponent = GatorComponent;
