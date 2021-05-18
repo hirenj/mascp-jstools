@@ -56,6 +56,10 @@ const setup_tracks = function() {
       renderer.setAttribute('track', id);
       renderer.setAttribute('accession',id);
     }
+    for (let jsrenderer of new_tracks.querySelectorAll('x-js-trackrenderer')) {
+      jsrenderer.setAttribute('track', id);
+      jsrenderer.setAttribute('accession',id);
+    }
     for (let track of new_tracks.querySelectorAll('x-gatortrack')) {
       track.setAttribute('scale', id);
       track.setAttribute('name', id);
