@@ -190,7 +190,7 @@ ClustalRunner.Result.prototype.alignToSequence = function(seq_index) {
     var insertions = [];
     var aligning_seq = seqs[seq_index], i = aligning_seq.length - 1;
     for (i; i >= 0; i--) {
-        if (aligning_seq.charAt(i) == '-') {
+        if (!this.DISABLED_INSERTIONS && aligning_seq.charAt(i) == '-') {
             splice_char(seqs,i,insertions);
         }
     }
@@ -272,6 +272,10 @@ ClustalRunner.Result.prototype.calculateSequencePositionFromPosition = function(
         actual_position += 1;
     }
     return actual_position;
+};
+
+ClustalRunner.Result.prototype.disableDiscontinuities = function(){
+    this.DISABLED_INSERTIONS = true;
 };
 
 

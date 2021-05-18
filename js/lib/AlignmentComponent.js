@@ -35,6 +35,9 @@ const setup_alignments = function(alignments) {
   });
   runner.retrieve();
   retval.then( () => {
+    if ( !this.hasAttribute('discontinuities') ) {
+      runner.result.disableDiscontinuities();
+    }
     let evObj = new Event('ready', {bubbles: true, cancelable: true});
     this.dispatchEvent(evObj);
   });
