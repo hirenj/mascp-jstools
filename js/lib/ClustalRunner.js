@@ -406,11 +406,12 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         }
         for (var i = 0 ; i < aligned.length; i++) {
             var layname = self.sequences[i].agi.toUpperCase() || "missing"+i;
-            var lay = MASCP.registerLayer(layname,{'fullname': self.sequences[i].name || layname.toUpperCase(), 'group' : group_name, 'color' : '#ff0000', 'accession' : self.sequences[i].agi });
+            var fullname = (MASCP.getLayer(layname) ? MASCP.getLayer(layname).fullname : null)  ||  self.sequences[i].name || layname.toUpperCase();
+            var lay = MASCP.registerLayer(layname,{'fullname': fullname, 'group' : group_name, 'color' : '#ff0000', 'accession' : self.sequences[i].agi });
             lay.scales.clear();
             lay.scales.add(self.sequences[i].agi);
 
-            lay.fullname = self.sequences[i].name || layname.toUpperCase();
+            lay.fullname = fullname;
             var text_array = renderer.renderTextTrack(layname,aligned[i].toString());
             rendered_bits = rendered_bits.concat(text_array);
             rendered_bits.slice(-1)[0].layer = layname;

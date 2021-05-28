@@ -64,8 +64,13 @@ const setup_tracks = function() {
       jsrenderer.setAttribute('accession',id);
     }
     for (let track of new_tracks.querySelectorAll('x-gatortrack')) {
+      let trackname = id;
+      if ( this._alignments.data.names ) {
+        trackname = this._alignments.data.names[ this._alignments.data.ids.indexOf(id) ];
+      }
       track.setAttribute('scale', id);
       track.setAttribute('name', id);
+      track.setAttribute('fullname',trackname);
     }
 
     this.parentNode.append(new_tracks);
