@@ -102,6 +102,9 @@ let set_basic_offset = (objects,basic_offset) => {
 };
 
 let apply_rendering = function(renderer,default_track,objects) {
+  if ( ! renderer._container_canvas) {
+    return;
+  }
   ensure_sugar_icon(renderer,'NeuAc(a2-3)Gal(b1-3)GalNAc');
   ensure_sugar_icon(renderer,'GalNAc');
   ensure_sugar_icon(renderer,'GlcNAc');
