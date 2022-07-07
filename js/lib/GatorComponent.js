@@ -156,7 +156,14 @@ let wire_renderer_sequence_change = function(renderer) {
     make_draggable.call(this,renderer,dragger);
     populate_tracks.call(this);
     setup_renderer(renderer);
-    renderer.navigation.show();
+    this.renderer.navigation.bind('toggle', () => {
+      this.setAttribute('navigationVisible',this.renderer.navigation.visible());
+    });
+    if ( ! this.getAttribute('navigationVisible') || this.getAttribute('navigationVisible') == 'true') {
+      renderer.navigation.show();
+    } else {
+      renderer.navigation.hide();      
+    }
     renderer.refresh();
   };
   renderer.bind('sequenceChange', seq_change_func);

@@ -55,6 +55,10 @@ var Navigation = function(parent_canvas,renderer) {
         }
     };
     
+    this.bind = function(ev,func) {
+        bean.add(this,ev,func);
+    };
+
     this.setDimensions = function(width,height) {
         parent_canvas.setAttribute('width',width);
         parent_canvas.setAttribute('height',height);
@@ -593,6 +597,7 @@ var buildNavPane = function(back_canvas) {
                 panel_back.style.transition = needs_transition;
             }
         }
+        bean.fire(self,'toggle');
         return true;
     };
 
