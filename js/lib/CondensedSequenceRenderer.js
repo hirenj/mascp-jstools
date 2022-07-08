@@ -2761,7 +2761,7 @@ clazz.prototype.clearTrack = function(layer) {
 };
 
 clazz.prototype.removeTrack = function(layer) {
-    if (! this._layer_containers ) {
+    if (! this._layer_containers || ! layer ) {
         return;
     }
     var layer_containers = this._layer_containers || [];
