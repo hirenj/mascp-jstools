@@ -181,6 +181,9 @@ let do_native_rendering = async function(renderer,func,data,default_track) {
 };
 
 let do_rendering = function(renderer,script,data,default_track) {
+  if ( ! script ) {
+    return;
+  }
   if (typeof script === 'function') {
     return do_native_rendering.call(this,renderer,script,data,default_track);
   }
@@ -200,11 +203,14 @@ let do_rendering = function(renderer,script,data,default_track) {
 
 class TrackRendererComponent extends WrapHTML {
   static get observedAttributes() {
-    return ['track'];
+    return ['track','renderer'];
   }
 
   constructor() {
     super();
+    this._sequenceChangeCallback = () => {
+      this.visible_items = {};
+    }
   }
 
   get script() {
@@ -232,12 +238,21 @@ class TrackRendererComponent extends WrapHTML {
     return this._data;
   }
 
+  get renderer() {
+    if ( this._renderer ) {
+      let component = this.ownerDocument.getElementById(this._renderer);
+      if (component) {
+        return component.renderer;
+      }
+    }
+  }
+
   set data(data) {
     this._data = data;
     if ( ! data ) {
-      this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer.removeTrack(MASCP.getLayer(this.getAttribute('track')));
+      this.renderer.removeTrack(MASCP.getLayer(this.getAttribute('track')));
     }
-    this.render(this.ownerDocument.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
+    this.render(this.renderer,this._data,this.getAttribute('track'));
   }
 
   async getSequence(renderer) {
@@ -249,12 +264,22 @@ class TrackRendererComponent extends WrapHTML {
 
   async render(renderer,data,track) {
     let script = await this.script;
+    if (renderer) {
+      renderer.bind('sequenceChange',this._sequenceChangeCallback);
+    }
     do_rendering.call(this,renderer,script,data,track);
   }
 
   attributeChangedCallback(name) {
-    if (this.hasAttribute('renderer') && this.data && name === 'track') {
-      this.render(document.getElementById(this.getAttribute('renderer')).renderer,this._data,this.getAttribute('track'));
+    if (name === 'renderer') {
+      let last_renderer = this.renderer;
+      if ( last_renderer ) {
+        last_renderer.unbind('sequenceChange', this._sequenceChangeCallback );
+      }
+      this._renderer =  this.getAttribute('renderer');
+    }
+    if (this.renderer && this.data && name === 'track') {
+      this.render(this.renderer,this._data,this.getAttribute('track'));
     }
   }
 

@@ -81,6 +81,9 @@ var connectRenderer = function(renderer) {
     var old_remove_track = renderer.removeTrack;
 
     renderer.removeTrack = function(layer) {
+        if (! layer) {
+            return;
+        }
         old_remove_track.call(this,layer);
         delete controller_map[layer.name];
         delete expanded_map[layer.name];
