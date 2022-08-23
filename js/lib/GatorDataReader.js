@@ -101,6 +101,9 @@ Object.defineProperty(GatorDataReader, 'server', {
     return url_base.replace('/api','');
   },
   set: function(url) {
+    if ( ! url ) {
+      return;
+    }
     url_base = url.replace('/$','') + '/api';
   }
 });
