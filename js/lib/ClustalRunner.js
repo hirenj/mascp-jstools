@@ -21,9 +21,9 @@ const ClustalRunner = Service.buildService(function(data) {
 ClustalRunner.SERVICE_URL = 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/run/';
 
 ClustalRunner.hash = function(str){
-    var hash = 0;
-    for (i = 0; i < str.length; i++) {
-        char = str.charCodeAt(i);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        let char = str.charCodeAt(i);
         hash = char + (hash << 6) + (hash << 16) - hash;
     }
     return hash;

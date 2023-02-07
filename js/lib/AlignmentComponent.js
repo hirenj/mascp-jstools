@@ -49,8 +49,15 @@ const setup_tracks = function() {
     return;
   }
 
+  let template_el = this.firstElementChild;
+  if (!(template_el instanceof HTMLTemplateElement)) {
+    let html_content = template_el.innerHTML;
+    template_el = document.createElement('template');
+    template_el.innerHTML = html_content; 
+  }
+
   if ( ! this._template ) {
-    this._template = this.querySelector('template');
+    this._template = template_el;
   }
 
   for (let id of this._alignments.data.ids ) {
@@ -94,6 +101,27 @@ class AlignmentComponent extends HTMLElement  {
     return this.getAttribute('src');
   }
 
+  async performAlignment(sequences=[]) {
+    let runner = new ClustalRunner();
+    runner.sequences = sequences;
+    return new Promise( (resolve,reject) => {
+      runner.bind('resultReceived', () => {
+        console.log(runner.result);
+        runner.result._raw_data.data.original_sequences = sequences;
+        resolve(runner.result._raw_data);
+      })
+      runner.bind('error',reject);
+      runner.retrieve();
+    });
+  }
+
+  set alignment(alignments) {
+    (async () => {
+    this._alignments = alignments;
+    await setup_alignments.call(this,this._alignments);
+    setup_tracks.call(this,this._template);
+    })();
+  }
 
   async attributeChangedCallback(name) {
     await read_alignment.call(this,this.src);

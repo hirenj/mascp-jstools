@@ -170,7 +170,7 @@ let wire_renderer_sequence_change = function(renderer) {
 };
 
 let populate_tracks = function() {
-  for (let track of this.querySelectorAll('x-gatortrack')) {
+  for (let track of this.querySelectorAll(':scope > x-gatortrack')) {
     this.createTrack(track);
   }
 }
