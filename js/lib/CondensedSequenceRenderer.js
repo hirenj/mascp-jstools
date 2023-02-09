@@ -1065,10 +1065,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                     renderer.addTrack(layer);
                 }
             });
-
-            bean.fire(renderer,'sequenceChange');
+            setTimeout(() => {
+                bean.fire(renderer,'sequenceChange');
+            });
         });
-        var canvas = createCanvasObject.call(this);
+        let canvas = createCanvasObject.call(this);
         if (! this._canvas) {
             if (typeof svgweb != 'undefined') {
                 svgweb.appendChild(canvas,this._container);
@@ -1077,13 +1078,12 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             }
         }
     
-        var rend = this;
         this.EnableHighlights();
     
-        var seq_change_func = function(other_func) {
-            if ( ! rend._canvas ) {
-                bean.add(rend,'sequenceChange',function() {
-                    bean.remove(rend,'sequenceChange',arguments.callee);
+        let seq_change_func = function(other_func) {
+            if ( ! renderer._canvas ) {
+                bean.add(renderer,'sequenceChange',function() {
+                    bean.remove(renderer,'sequenceChange',arguments.callee);
                     other_func.apply();
                 });
             } else {
@@ -1094,6 +1094,14 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         seq_change_func.ready = function(other_func) {
             this.call(this,other_func);
         };
+        
+        seq_change_func.promise = new Promise(resolve => {
+            let resolve_func = () => {
+                bean.remove(renderer,'sequenceChange',resolve_func);
+                resolve();
+            }
+            bean.add(renderer,'sequenceChange',resolve_func);
+        });
     
         return seq_change_func;
     

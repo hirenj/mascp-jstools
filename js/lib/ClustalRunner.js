@@ -367,7 +367,7 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
     };
 
 
-    var redraw_alignments = function(sequence_index) {
+    var redraw_alignments = async function(sequence_index) {
         var result = self.result;
 
         while (rendered_bits.length > 0) {
@@ -379,22 +379,25 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
         var aligned = result.getSequences();
 
         if ( ! renderer.sequence ) {
-            renderer.setSequence(aligned[sequence_index])(function() {
-                renderer.sequences = self.sequences;
-                MASCP.registerGroup(group_name, 'Aligned');
-                MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
-                if (renderer.trackOrder.indexOf(controller_name) < 0) {
-                    renderer.trackOrder = renderer.trackOrder.concat([controller_name]);
-                }
-                renderer.showLayer(controller_name);
-                renderer.createGroupController(controller_name,group_name);
-                redraw_alignments(sequence_index);
-            });
+            await renderer.setSequence(aligned[sequence_index]).promise;
+            renderer.sequences = self.sequences;
+
+            redraw_alignments(sequence_index);
             return;
         } else {
             renderer.sequence = aligned[sequence_index];
             renderer.redrawAxis();
         }
+
+        MASCP.registerGroup(group_name, 'Aligned');
+        MASCP.registerLayer(controller_name, { 'fullname' : 'Conservation', 'color' : '#000000' });
+        if (renderer.trackOrder.indexOf(controller_name) < 0) {
+            renderer.trackOrder = renderer.trackOrder.concat([controller_name]);
+        }
+        renderer.showLayer(controller_name);
+        renderer.createGroupController(controller_name,group_name);
+
+
         var alignments = result.getAlignment().split('');
         rendered_bits = rendered_bits.concat(renderer.renderTextTrack(controller_name,result.getAlignment().replace(/ /g,' ')));
         rendered_bits.slice(-1)[0].setAttribute('data-spaces','true');
@@ -472,6 +475,9 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
                     return;
                 }
                 current_order = new_order;
+                if (accs.indexOf(current_order[0]) < 0) {
+                    return;
+                }
                 self.result.aligned_idx = accs.indexOf(current_order[0]);
 
                 redraw_alignments(self.result.aligned_idx);
