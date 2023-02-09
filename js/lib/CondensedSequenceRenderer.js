@@ -866,7 +866,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
 
     clazz.prototype.setSequence = function(sequence) {
-        var new_sequence = this._cleanSequence(sequence);
+        let new_sequence = this._cleanSequence(sequence);
         if (new_sequence == this.sequence && new_sequence !== null) {
             bean.fire(this,'sequenceChange');
             return;
@@ -880,20 +880,20 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
         delete this.sequences;
 
-        var seq_chars = this.sequence.split('');
-        var line_length = seq_chars.length;
+        let seq_chars = this.sequence.split('');
+        let line_length = seq_chars.length;
 
         if (line_length === 0) {
             return;
         }
 
-        var renderer = this;
+        let renderer = this;
 
 
-        var build_sequence_els = function() {
-            var seq_els = [];
+        let build_sequence_els = function() {
+            let seq_els = [];
             renderer.sequence.split('').forEach( function(aa,i) {
-                var el = {};
+                let el = {};
                 el._index = i;
                 el._renderer = renderer;
                 renderer._extendElement(el);
@@ -905,16 +905,16 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
         build_sequence_els();
 
-        var RS = this._RS;
+        let RS = this._RS;
 
         bean.remove(this,'svgready');
         bean.add(this,'svgready',function(cnv) {
-            var canv = renderer._canvas;
+            let canv = renderer._canvas;
             canv.RS = RS;
             canv.setAttribute('background', '#000000');
             canv.setAttribute('preserveAspectRatio','xMinYMin meet');
         
-            var defs = canv.makeEl('defs');
+            let defs = canv.makeEl('defs');
             renderer._container_canvas.appendChild(defs);
 
 
@@ -930,7 +930,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 renderer.gradients.push(color);
             };
 
-            var shadow = canv.makeEl('filter',{
+            let shadow = canv.makeEl('filter',{
                 'id':'drop_shadow',
                 'filterUnits':'objectBoundingBox',
                 'x': '-50%',
@@ -944,7 +944,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             shadow.appendChild(canv.makeEl('feBlend',{'in':'SourceGraphic', 'in2':'the_shadow', 'mode':'normal'}));
         
             defs.appendChild(shadow);
-            var link_icon = canv.makeEl('svg',{
+            let link_icon = canv.makeEl('svg',{
                 'width' : '100%',
                 'height': '100%',
                 'id'    : 'new_link_icon',
@@ -970,7 +970,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 'fill'  : '#ffffff'            
             }));
 
-            var plus_icon = canv.makeEl('svg',{
+            let plus_icon = canv.makeEl('svg',{
                 'width' : '100%',
                 'height': '100%',
                 'id'    : 'plus_icon',
@@ -981,7 +981,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             
             defs.appendChild(plus_icon);
 
-            var minus_icon = canv.makeEl('svg',{
+            let minus_icon = canv.makeEl('svg',{
                 'width' : '100%',
                 'height': '100%',
                 'id'    : 'minus_icon',
@@ -991,8 +991,8 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             minus_icon.appendChild(canv.minus(0,0,100/canv.RS));
 
             defs.appendChild(minus_icon);
-            var axis_pattern_id = 'axis_pattern_'+(new Date()).getTime();
-            var pattern = canv.makeEl('pattern', {
+            let axis_pattern_id = 'axis_pattern_'+(new Date()).getTime();
+            let pattern = canv.makeEl('pattern', {
                 'patternUnits' : 'userSpaceOnUse',
                 'x'            : '0',
                 'y'            : '0',
@@ -1002,7 +1002,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             });
             renderer.axis_pattern_id = axis_pattern_id;
 
-            var line = canv.makeEl('rect',{
+            let line = canv.makeEl('rect',{
                 'x'     : '0',
                 'y'     : '0',
                 'width' : '10%',
@@ -1014,9 +1014,9 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
             defs.appendChild(pattern);
 
-            var self = this;
+            let self = this;
             renderer._axis_height = 10;
-            var aas = drawAminoAcids.call(self,canv);
+            let aas = drawAminoAcids.call(self,canv);
             renderer.hideAxis = function() {
                 drawAxis = function(canv) {
                     bean.add(canv, 'zoomChange', function() {
@@ -1032,7 +1032,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 this.redrawAxis();
             };
 
-            var axis = drawAxis.call(self,canv,line_length);
+            let axis = drawAxis.call(self,canv,line_length);
             renderer.redrawAxis = function() {
                 bean.fire(axis,'removed');
                 aas.forEach(function(aa) {
