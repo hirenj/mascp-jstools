@@ -106,7 +106,6 @@ class AlignmentComponent extends HTMLElement  {
     runner.sequences = sequences;
     return new Promise( (resolve,reject) => {
       runner.bind('resultReceived', () => {
-        console.log(runner.result);
         runner.result._raw_data.data.original_sequences = sequences;
         resolve(runner.result._raw_data);
       })
@@ -115,12 +114,14 @@ class AlignmentComponent extends HTMLElement  {
     });
   }
 
-  set alignment(alignments) {
-    (async () => {
+  async setAlignment(alignments) {
     this._alignments = alignments;
     await setup_alignments.call(this,this._alignments);
-    setup_tracks.call(this,this._template);
-    })();
+    setup_tracks.call(this,this._template);  
+  } 
+
+  set alignment(alignments) {
+    this.setAlignment(alignments);
   }
 
   async attributeChangedCallback(name) {

@@ -170,7 +170,7 @@ let wire_renderer_sequence_change = function(renderer) {
 };
 
 let populate_tracks = function() {
-  for (let track of this.querySelectorAll(':scope > x-gatortrack')) {
+  for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
     this.createTrack(track);
   }
 }
@@ -183,7 +183,7 @@ let wire_selection_change = function(renderer) {
     } else {
       this.setAttribute('selected',`${positions[0]}:${positions[1]}`);
     }
-    for (let track of this.querySelectorAll(':scope > x-gatortrack')) {
+    for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
       let positions = selections.get(track.layer);
       if ( ! positions[0] && ! positions[1] ) {
         track.removeAttribute('selected')

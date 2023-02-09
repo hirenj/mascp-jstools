@@ -460,6 +460,16 @@ SequenceRenderer.prototype.isLayerActive = function(layer) {
     return (! layer.disabled) && this._container.classList.contains(layerName+'_active');
 };
 
+
+SequenceRenderer.prototype.getLayer = function(layer) {
+    var layerName = layer;
+    if (typeof layer != 'string') {
+        layerName = layer.name;
+    }
+    return MASCP.getLayer(layer);
+};
+
+
 /**
  * Deprecated until there's a better implementation for the CondensedSequenceRenderer
  * @private
