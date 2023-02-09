@@ -63,11 +63,15 @@ const setup_tracks = function() {
   for (let id of this._alignments.data.ids ) {
     let new_tracks = this._template.content.cloneNode(true);
     for (let renderer of new_tracks.querySelectorAll('x-trackrenderer')) {
-      renderer.setAttribute('track', id);
+      if (renderer.hasAttribute('track')) {
+        renderer.setAttribute('track', id);
+      }
       renderer.setAttribute('accession',id);
     }
     for (let jsrenderer of new_tracks.querySelectorAll('x-js-trackrenderer')) {
-      jsrenderer.setAttribute('track', id);
+      if (jsrenderer.hasAttribute('track')) {
+        jsrenderer.setAttribute('track', id);
+      }
       jsrenderer.setAttribute('accession',id);
     }
     for (let track of new_tracks.querySelectorAll('x-gatortrack')) {
@@ -75,9 +79,15 @@ const setup_tracks = function() {
       if ( this._alignments.data.names ) {
         trackname = this._alignments.data.names[ this._alignments.data.ids.indexOf(id) ];
       }
-      track.setAttribute('scale', id);
-      track.setAttribute('name', id);
-      track.setAttribute('fullname',trackname);
+      if (track.hasAttribute('scale')) {
+        track.setAttribute('scale', id);
+      }
+      if (track.hasAttribute('name')) {
+        track.setAttribute('name', id);
+      }
+      if (! track.hasAttribute('fullname')) {
+        track.setAttribute('fullname',trackname);
+      }
     }
 
     this.parentNode.append(new_tracks);

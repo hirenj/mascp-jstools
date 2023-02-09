@@ -86,6 +86,12 @@ let ensure_sugar_icon = (renderer,sequence) => {
   });
 };
 
+const uuidv4 = function() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
 
 let set_basic_offset = (objects,basic_offset) => {
   objects.forEach(function(obj) {
@@ -238,6 +244,16 @@ class TrackRendererComponent extends WrapHTML {
     return this._data;
   }
 
+  get track() {
+    let trackname = this.getAttribute('track');
+    if (trackname) {
+      return trackname;
+    }
+    let child_track = this.querySelector(':scope > x-gatortrack');
+    trackname = child_track.name;
+    return trackname;
+  }
+
   get renderer() {
     if ( this._renderer ) {
       let component = this.ownerDocument.getElementById(this._renderer);
@@ -250,9 +266,9 @@ class TrackRendererComponent extends WrapHTML {
   set data(data) {
     this._data = data;
     if ( ! data ) {
-      this.renderer.removeTrack(MASCP.getLayer(this.getAttribute('track')));
+      this.renderer.removeTrack(MASCP.getLayer(this.track));
     }
-    this.render(this.renderer,this._data,this.getAttribute('track'));
+    this.render(this.renderer,this._data,this.track);
   }
 
   async getSequence(renderer) {
@@ -327,6 +343,8 @@ let create_track = function() {
   }
 };
 
+const track_name_symbol = Symbol('track_name');
+
 class TrackComponent extends WrapHTML  {
   static get observedAttributes() {
     return ['name','fullname','scale'];
@@ -341,7 +359,15 @@ class TrackComponent extends WrapHTML  {
   }
 
   get name() {
-    return this.getAttribute('name');
+    let track_name = this.getAttribute('name');
+    if ( track_name ) {
+      return track_name
+    }
+    if ( ! this[track_name_symbol] ) {      
+      this[track_name_symbol] = uuidv4();
+    }
+    track_name = this[track_name_symbol];
+    return track_name;
   }
 
   set name(name) {
