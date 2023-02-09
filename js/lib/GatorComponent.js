@@ -103,7 +103,7 @@ if (window.ShadyCSS) {
 
 let setup_renderer = function(renderer) {
   renderer.font_order = 'Helvetica, Arial, sans-serif';
-  renderer.zoom = 0.81;
+  // renderer.zoom = 0.81;
   renderer.padding = 10;
   renderer.trackOrder = [];
   renderer.reset();
@@ -185,6 +185,9 @@ let wire_selection_change = function(renderer) {
     }
     for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
       let positions = selections.get(track.layer);
+      if ( ! positions ) {
+        continue;
+      }
       if ( ! positions[0] && ! positions[1] ) {
         track.removeAttribute('selected')
       } else {

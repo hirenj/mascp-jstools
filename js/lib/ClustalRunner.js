@@ -451,7 +451,7 @@ ClustalRunner.prototype.setupSequenceRenderer = function(renderer) {
               }
             }
         }
-        renderer.zoom = 1;
+
         renderer.showGroup(group_name);
         renderer.refresh();
 
