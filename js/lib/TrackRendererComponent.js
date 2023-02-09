@@ -121,7 +121,6 @@ let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   if ( Array.isArray(objects) ) {
     var temp_objects = {}
-    console.log('No accession provided');
     temp_objects['DEFAULTACC'] = objects;
     objects = temp_objects;
   }

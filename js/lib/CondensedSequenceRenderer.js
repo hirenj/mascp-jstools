@@ -1839,44 +1839,44 @@ var scaledAddToLayer = function(layername,opts) {
 };
 
 CondensedSequenceRenderer.prototype.enableScaling = function() {
-    bean.add(this,'readerRegistered',function(reader) {
-        console.log('Enabling scaling for legacy readers');
-        var old_result = reader.gotResult;
-        var renderer = this;
-        reader.gotResult = function() {
-            var wanted_id = reader.acc || reader.agi || "";
+    // bean.add(this,'readerRegistered',function(reader) {
+    //     console.log('Enabling scaling for legacy readers');
+    //     var old_result = reader.gotResult;
+    //     var renderer = this;
+    //     reader.gotResult = function() {
+    //         var wanted_id = reader.acc || reader.agi || "";
 
-            var old_get_aas = CondensedSequenceRenderer.prototype.getAminoAcidsByPosition;
-            var old_get_pep = CondensedSequenceRenderer.prototype.getAminoAcidsByPeptide;
-            var old_sequence = renderer.sequence;
-            if (renderer.sequences) {
-                renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
-            } else {
-                old_sequence = null;
-            }
-            renderer.getAminoAcidsByPosition = function(aas,lay,accession) {
-                if ( ! lay && ! accession ) {
-                    console.log('Guessing scaling identifier as',wanted_id);
-                }
-                return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
-            };
-            renderer.getAminoAcidsByPeptide = function(peptide,lay,accession) {
-                if ( ! lay && ! accession ) {
-                    console.log('Guessing scaling identifier as',wanted_id);
-                }
-                return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
-            };
-            old_result.call(reader);
+    //         var old_get_aas = CondensedSequenceRenderer.prototype.getAminoAcidsByPosition;
+    //         var old_get_pep = CondensedSequenceRenderer.prototype.getAminoAcidsByPeptide;
+    //         var old_sequence = renderer.sequence;
+    //         if (renderer.sequences) {
+    //             renderer.sequence = (renderer.sequences [ ( renderer.sequences.map(function(seq) {  return (seq.agi || seq.acc || "").toLowerCase();  }) ).indexOf(wanted_id.toLowerCase()) ] || "").toString();
+    //         } else {
+    //             old_sequence = null;
+    //         }
+    //         renderer.getAminoAcidsByPosition = function(aas,lay,accession) {
+    //             if ( ! lay && ! accession ) {
+    //                 console.log('Guessing scaling identifier as',wanted_id);
+    //             }
+    //             return old_get_aas.call(this,aas,lay || wanted_id,accession || wanted_id);
+    //         };
+    //         renderer.getAminoAcidsByPeptide = function(peptide,lay,accession) {
+    //             if ( ! lay && ! accession ) {
+    //                 console.log('Guessing scaling identifier as',wanted_id);
+    //             }
+    //             return old_get_pep.call(this,peptide,lay || wanted_id,accession || wanted_id);
+    //         };
+    //         old_result.call(reader);
 
-            if (old_sequence) {
-                renderer.sequence = old_sequence;
-            }
+    //         if (old_sequence) {
+    //             renderer.sequence = old_sequence;
+    //         }
 
-            renderer.getAminoAcidsByPosition = old_get_aas;
-            renderer.getAminoAcidsByPeptide = old_get_pep;
-        };
-    });
-    this.enableScaling = () => {}
+    //         renderer.getAminoAcidsByPosition = old_get_aas;
+    //         renderer.getAminoAcidsByPeptide = old_get_pep;
+    //     };
+    // });
+    // this.enableScaling = () => {}
 };
 
 
@@ -1973,6 +1973,10 @@ CondensedSequenceRenderer.prototype.fix_icons = function(icon_ref) {
 
 CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     var renderer = this;
+    if (! renderer._layer_containers[track]) {
+        console.log(`Missing track ${track}`);
+        return;
+    }
     if (objects.length > 0 && objects[0].coalesce ) {
         mark_groups(renderer,objects);
     }

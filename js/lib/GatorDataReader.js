@@ -160,7 +160,7 @@ var reauth_reader = function(reader_class) {
   reading_was_ok.set(reader_class,true);
   reader_class.prototype.retrieve = function() {
     const classname = (new reader_class()).toString();
-    console.log('Retrieve with auth retry',classname);
+    // console.log('Retrieve with auth retry',classname);
     var current_arguments = [].slice.call(arguments);
     var self = this;
     let error_handler = function(err) {
@@ -506,7 +506,7 @@ GatorDataReader.createReader = function(doc) {
     // Do the auth dance here
 
     var reader = new GatorDataReader(null,url_base+'/data/latest/');
-    console.log(doc);
+
     reader.datasetname = doc;
     // MASCP.Service.CacheService(reader);
 
