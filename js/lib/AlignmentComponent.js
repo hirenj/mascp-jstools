@@ -29,6 +29,11 @@ const setup_alignments = function(alignments) {
   let parent_component = this.parentNode;
   let renderer = parent_component.renderer;
   let runner = new ClustalRunnerPrecomputed(alignments);
+
+  let has_sequence = new Promise(resolve => {
+    renderer.bind('sequenceChange',resolve);
+  });
+
   runner.registerSequenceRenderer(renderer);
   let retval = new Promise( resolve => {
     runner.bind('requestComplete', resolve );
@@ -41,7 +46,7 @@ const setup_alignments = function(alignments) {
     let evObj = new Event('ready', {bubbles: true, cancelable: true});
     this.dispatchEvent(evObj);
   });
-  return retval;
+  return retval.then(() => has_sequence);
 };
 
 const setup_tracks = function() {

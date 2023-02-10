@@ -2700,6 +2700,10 @@ CondensedSequenceRenderer.prototype._resizeContainer = function() {
 
 var vis_change_event = function(renderer,visibility) {
     var self = this;
+    if ( ! renderer._layer_containers ) {
+        return;
+    }
+
     if ( ! renderer._layer_containers[self.name] || renderer._layer_containers[self.name].length <= 0 ) {
         return;
     }
