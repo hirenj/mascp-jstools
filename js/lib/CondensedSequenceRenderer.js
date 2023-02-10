@@ -1226,8 +1226,8 @@ CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);
             orig_func.call(self,layerName,values);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1320,8 +1320,8 @@ var addElementToLayer = function(layerName,opts) {
     if ( ! canvas ) {        
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);            
             orig_func.call(self,layerName);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1449,8 +1449,8 @@ var addBoxOverlayToElement = function(layerName,width,fraction,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1511,8 +1511,8 @@ var addTextToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1620,8 +1620,8 @@ var addShapeToElement = function(layerName,width,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1740,8 +1740,8 @@ var addElementToLayerWithLink = function(layerName,url,width) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);            
             orig_func.call(self,layerName,url,width);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -1774,8 +1774,8 @@ var addCalloutToLayer = function(layerName,element,opts) {
     if ( ! canvas ) {
         var orig_func = arguments.callee;
         var self = this;
-        bean.add(this._renderer,'sequencechange',function() {
-            bean.remove(this._renderer,'sequencechange',arguments.callee);            
+        bean.add(this._renderer,'sequenceChange',function() {
+            bean.remove(this._renderer,'sequenceChange',arguments.callee);            
             orig_func.call(self,layerName,width,opts);
         });
         log("Delaying rendering, waiting for sequence change");
@@ -2725,9 +2725,9 @@ clazz.prototype.addTrack = function(layer) {
     var renderer = this;
     
     if ( ! this._canvas ) {
-        bean.add(this,'sequencechange',function() {
+        bean.add(this,'sequenceChange',function() {
             this.addTrack(layer);
-            bean.remove(this,'sequencechange',arguments.callee);
+            bean.remove(this,'sequenceChange',arguments.callee);
         });
         console.log("No canvas, cannot add track, waiting for sequencechange event");
         return;
