@@ -175,7 +175,8 @@ let populate_tracks = function() {
     ordering.push(track.name);
     this.createTrack(track,false);
   }
-  this.renderer.trackOrder = ordering;
+  let missing = this.renderer.trackOrder.filter( entry => ordering.indexOf(entry) < 0 );
+  this.renderer.trackOrder = [...missing,...ordering];
   this.renderer.refresh();
 }
 
