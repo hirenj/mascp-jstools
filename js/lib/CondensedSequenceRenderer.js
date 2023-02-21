@@ -2718,6 +2718,10 @@ var vis_change_event = function(renderer,visibility) {
 clazz.prototype.setTrackHeight = function(layer,height) {
     let layer_containers = this._layer_containers || [];
 
+    if ( ! layer ) {
+        return;
+    }
+
     if ( ! layer_containers[layer.name] || layer_containers[layer.name] === null) {
         return;
     }
