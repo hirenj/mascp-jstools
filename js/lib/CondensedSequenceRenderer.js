@@ -2715,6 +2715,33 @@ var vis_change_event = function(renderer,visibility) {
     }
 };
 
+clazz.prototype.setTrackHeight = function(layer,height) {
+    let layer_containers = this._layer_containers || [];
+
+    if ( ! layer_containers[layer.name] || layer_containers[layer.name] === null) {
+        return;
+    }
+    if (height === null || typeof height === 'undefined') {
+        delete layer_containers[layer.name].track_height;
+    } else {
+        layer_containers[layer.name].track_height = height;
+    }
+};
+
+
+clazz.prototype.getTrackHeight = function(layer) {
+    let layer_containers = this._layer_containers || [];
+
+    if ( ! layer_containers[layer.name] || layer_containers[layer.name] === null) {
+        return;
+    }
+    let set_height = layer_containers[layer.name].track_height;
+    if (typeof set_height === 'undefined' || set_height === null) {
+        return renderer.trackHeight;
+    }
+    return set_height;
+};
+
 /**
  * Add a layer to this renderer.
  * @param {Object} layer    Layer object to add. The layer data is used to create a track that can be independently shown/hidden.
@@ -2950,7 +2977,7 @@ clazz.prototype.refresh = function(animated) {
                 this.navigation.renderTrack(MASCP.getLayer(name), y_val*RS , RS * 3 * container.track_height / this.zoom, fixed_font_scale ? { 'font-scale' : fixed_font_scale } : null );
                 track_heights += container.track_height;
             }
-            track_heights += container.track_height + this.trackGap;
+            track_heights += container.track_height > 0 ? container.track_height + this.trackGap : 0;
         }
         container.refresh_zoom();
 

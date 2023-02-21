@@ -231,6 +231,20 @@ class TrackRendererComponent extends WrapHTML {
     this._script = script;
   }
 
+  get height() {
+    if ( ! this.renderer )
+      return;
+
+    return this.renderer.getTrackHeight(MASCP.getLayer(this.track));
+  }
+
+  set height(height) {
+    if ( ! this.renderer )
+      return;
+
+    this.renderer.setTrackHeight(MASCP.getLayer(this.track),height);
+  }
+
   get offset() {
     return parseInt(this.getAttribute('offset') || 0);
   }

@@ -170,9 +170,13 @@ let wire_renderer_sequence_change = function(renderer) {
 };
 
 let populate_tracks = function() {
+  let ordering = [];
   for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
-    this.createTrack(track);
+    ordering.push(track.name);
+    this.createTrack(track,false);
   }
+  this.renderer.trackOrder = ordering;
+  this.renderer.refresh();
 }
 
 let wire_selection_change = function(renderer) {
@@ -234,11 +238,15 @@ class GatorComponent extends WrapHTML {
     zoom_to_fit(this.renderer);
   }
 
-  createTrack(track) {
+  createTrack(track,refresh=true) {
     MASCP.registerLayer(track.name,{},[this.renderer]);
-    this.renderer.trackOrder = this.renderer.trackOrder.concat([track.name]);
+    if (this.renderer.trackOrder.indexOf(track.name) < 0) {
+      this.renderer.trackOrder = this.renderer.trackOrder.concat([track.name]);
+    }
     this.renderer.showLayer(track.name);
-    this.renderer.refresh();
+    if (refresh) {
+      this.renderer.refresh();
+    }
   }
 
   refreshTracks() {
