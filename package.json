@@ -35,7 +35,7 @@
   "dependencies": {
     "es6-tween": "^5.5.10",
     "esm": "^3.2.20",
-    "glycan.js": "hirenj/glycan.js",
+    "glycan.js": "github:hirenj/glycan.js",
     "hammerjs": "^2.0.8"
   },
   "module": "js/index.js",
