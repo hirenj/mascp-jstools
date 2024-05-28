@@ -32,5 +32,8 @@ MASCP.Track = TrackComponent;
 MASCP.TrackComponent = TrackComponentScript;
 MASCP.TrackRendererComponent = TrackRendererComponent;
 
+import * as utilFuncs from './util';
+
+export const util = utilFuncs;
 
 export default MASCP;
