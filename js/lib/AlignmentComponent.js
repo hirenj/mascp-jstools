@@ -1,6 +1,7 @@
 
 import ClustalRunner from './ClustalRunner';
 
+const TRACK_OWNERSHIP = new WeakMap();
 
 class ClustalRunnerPrecomputed extends ClustalRunner {
     constructor(alignments) {
@@ -68,18 +69,27 @@ const setup_tracks = function() {
   for (let id of this._alignments.data.ids ) {
     let new_tracks = this._template.content.cloneNode(true);
     for (let renderer of new_tracks.querySelectorAll('x-trackrenderer')) {
+
+      TRACK_OWNERSHIP.set(renderer,this);
+
       if (renderer.hasAttribute('track')) {
         renderer.setAttribute('track', id);
       }
       renderer.setAttribute('accession',id);
     }
     for (let jsrenderer of new_tracks.querySelectorAll('x-js-trackrenderer')) {
+
+      TRACK_OWNERSHIP.set(jsrenderer,this);
+
       if (jsrenderer.hasAttribute('track')) {
         jsrenderer.setAttribute('track', id);
       }
       jsrenderer.setAttribute('accession',id);
     }
     for (let track of new_tracks.querySelectorAll('x-gatortrack')) {
+
+      TRACK_OWNERSHIP.set(track,this);
+
       let trackname = id;
       if ( this._alignments.data.names ) {
         trackname = this._alignments.data.names[ this._alignments.data.ids.indexOf(id) ];
@@ -114,6 +124,15 @@ class AlignmentComponent extends HTMLElement  {
 
   get src() {
     return this.getAttribute('src');
+  }
+
+  get ownedTracks() {
+    return [...this.parentNode.querySelectorAll('x-gatortrack'),
+            ...this.parentNode.querySelectorAll('x-js-trackrenderer'),
+            ...this.parentNode.querySelectorAll('x-trackrenderer')
+          ].filter( track => {
+            return TRACK_OWNERSHIP.get(track) == this;
+          });
   }
 
   async performAlignment(sequences=[]) {
