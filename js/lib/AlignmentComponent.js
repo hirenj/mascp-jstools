@@ -10,7 +10,7 @@ class ClustalRunnerPrecomputed extends ClustalRunner {
     }
 
     get sequences() {
-      return this._alignments.data.sequences.map( (seq,idx) => { return {  agi: this._alignments.data.ids[idx], toString: () => seq.replace(/-/g,'') }} );
+      return this._alignments.data.sequences.map( (seq,idx) => { return {  agi: this._alignments.data.ids[idx], toString: () => seq.toString().replace(/-/g,'') }} );
     }
 
     retrieve() {
