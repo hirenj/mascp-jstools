@@ -44,8 +44,6 @@ const setup_alignments = function(alignments) {
     if ( !this.hasAttribute('discontinuities') ) {
       runner.result.disableDiscontinuities();
     }
-    let evObj = new Event('ready', {bubbles: true, cancelable: true});
-    this.dispatchEvent(evObj);
   });
   return retval.then(() => has_sequence);
 };
@@ -151,7 +149,9 @@ class AlignmentComponent extends HTMLElement  {
   async setAlignment(alignments) {
     this._alignments = alignments;
     await setup_alignments.call(this,this._alignments);
-    setup_tracks.call(this,this._template);  
+    await setup_tracks.call(this,this._template);  
+    let evObj = new Event('ready', {bubbles: true, cancelable: true});
+    this.dispatchEvent(evObj);
   } 
 
   set alignment(alignments) {
@@ -161,7 +161,9 @@ class AlignmentComponent extends HTMLElement  {
   async attributeChangedCallback(name) {
     await read_alignment.call(this,this.src);
     await setup_alignments.call(this,this._alignments);
-    setup_tracks.call(this,this._template);
+    await setup_tracks.call(this,this._template);
+    let evObj = new Event('ready', {bubbles: true, cancelable: true});
+    this.dispatchEvent(evObj);
   }
 }
 
