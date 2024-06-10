@@ -329,9 +329,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
         var aas = renderer.addTextTrack(this.sequence,this._canvas.set());
         aas.attr({'y' : 0.5*renderer._axis_height*renderer._RS});
         renderer.select = function() {
-            var vals = Array.prototype.slice.call(arguments);
-            var from = vals[0];
-            var to = vals[1];
+            var vals = [...Array.prototype.slice.call(arguments)];
             this.moveHighlight.apply(this,vals);
         };
         var zoomchange = function() {
@@ -2330,7 +2328,7 @@ CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
 CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var renderer = this;
     var highlights = [];
-    var createNewHighlight = function() {
+    var createNewHighlight = function(idx=highlights.length) {
         var highlight = renderer._canvas.rect(0,0,0,'100%');
         highlight.addEventListener('click', (ev) => {
             ev.stopPropagation();
@@ -2346,27 +2344,48 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
             return false;
         });
 
-        highlight.setAttribute('fill','#ffdddd');
+        highlight.style.setProperty('fill','oklch(80% 20% calc( 0 + var(--highlight-idx)*50) / 0.8 )');
+        highlight.style.setProperty('--highlight-idx',idx);
+
         highlight.removeAttribute('stroke');
         var pnode = highlight.parentNode;
         pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
-        highlights.push(highlight);
+        highlights[idx] = highlight;
     };
     createNewHighlight();
+
+    renderer.setHighlightByIndex = function(idx,from,to) {
+        var args = Array.prototype.slice.call(arguments,1);
+        if (args.length == 0) {
+            highlights[idx].setAttribute('visibility','hidden');
+            return;
+        }
+        let vals = [];
+        vals[idx*2] = from;
+        vals[idx*2 + 1] = to;
+        renderer.moveHighlight.apply(renderer,vals);
+    };
 
     renderer.moveHighlight = function() {
         var vals = Array.prototype.slice.call(arguments);
         var RS = this._RS;
         var i = 0, idx = 0;
+        if (vals.length == 0 && highlights.length > 0) {
+            highlights[0].setAttribute('visibility','hidden');
+        }
         for (i = 0; i < vals.length; i+= 2) {
             var from = vals[i];
             var to = vals[i+1];
+            if ((typeof from === 'undefined') && (typeof to === 'undefined')) {
+                idx += 1;
+                continue;
+            }
             var highlight = highlights[idx];
             if ( ! highlight ) {
-                createNewHighlight();
+                createNewHighlight(idx);
                 highlight = highlights[idx];
             }
-            if ( highlight.previousSibling.previousSibling && highlights.indexOf(highlight.previousSibling.previousSibling) < 0 ) {
+            if ( highlight.previousSibling && highlight.previousSibling.previousSibling && highlights.indexOf(highlight.previousSibling.previousSibling) < 0 ) {
                 highlight.parentNode.insertBefore(highlight,highlight.parentNode.firstChild.nextSibling);
             }
             highlight.setAttribute('x',(from - 1) * RS );
@@ -2374,9 +2393,9 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
             highlight.setAttribute('visibility','visible');
             idx += 1;
         }
-        for (i = idx; i < highlights.length; i++){
-            highlights[i].setAttribute('visibility','hidden');
-        }
+        // for (i = idx; i < highlights.length; i++){
+        //     highlights[i].setAttribute('visibility','hidden');
+        // }
     };
 };
 
