@@ -41,7 +41,7 @@ class HighlightComponent extends WrapHTML {
   }
 
   disconnectedCallback() {
-    debugger;
+    // debugger;
   }
 
   updateHighlight() {
