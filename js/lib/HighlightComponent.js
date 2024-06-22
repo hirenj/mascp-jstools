@@ -18,6 +18,7 @@ tmpl.innerHTML = `
 `;
 
 const idsymbol = Symbol('id');
+const lastrenderer = Symbol('lastrenderer');
 
 class HighlightComponent extends WrapHTML {
 
@@ -41,10 +42,13 @@ class HighlightComponent extends WrapHTML {
   }
 
   disconnectedCallback() {
-    // debugger;
+    if (this[lastrenderer]) {
+      this[lastrenderer].removeHighlightByIdentifier(this.index);
+    }
   }
 
   updateHighlight() {
+    this[lastrenderer] = this.parentNode.renderer;
     if (this.index && this.parentNode && this.from && this.to) {
       this.parentNode.renderer.setHighlightByIdentifier(this.index,this.from,this.to);
     }
@@ -53,10 +57,8 @@ class HighlightComponent extends WrapHTML {
 
   duplicate() {
     let clone = this.cloneNode(true);
+    clone[idsymbol] = Symbol('Highlight');
     this.parentNode.appendChild(clone);
-    setTimeout(() => {
-      clone[idsymbol] = Symbol('Highlight');
-    },0);
   }
 
   get to() {

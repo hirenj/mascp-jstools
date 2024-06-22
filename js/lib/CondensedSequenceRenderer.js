@@ -2366,8 +2366,10 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     }
 
     renderer.removeHighlightByIdentifier = function(identifier) {
+        if ( ! highlights.has(identifier) ) {
+            return;
+        }
         let node = highlights.get(identifier);
-        console.log(node);
         node.parentNode.removeChild(node);
         highlights.delete(identifier);
     };
