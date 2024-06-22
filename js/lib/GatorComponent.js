@@ -1,5 +1,6 @@
 
 import Dragger from './dragger/Dragger';
+import './HighlightComponent';
 import CondensedSequenceRenderer from './CondensedSequenceRenderer';
 import Service from './Service';
 import MASCP from './MASCP';
@@ -198,6 +199,18 @@ let wire_selection_change = function(renderer) {
       } else {
         track.setAttribute('selected',`${positions[0]}:${positions[1]}`);
       }
+    }
+    {
+    let highlight;
+    if (! (highlight = this.querySelector(":scope x-highlight[default]"))) {
+      highlight = document.createElement('x-highlight');
+      highlight.setAttribute('default','');
+      renderer.setDefaultHighlight(highlight.index);
+      this.appendChild(highlight);
+    }
+    highlight.from = positions[0];
+    highlight.to = positions[1];
+    // highlight.textContent = renderer.sequence.substring(positions[0],positions[1]);
     }
   });
 }

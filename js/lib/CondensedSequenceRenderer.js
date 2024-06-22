@@ -2327,8 +2327,10 @@ CondensedSequenceRenderer.prototype.renderTextTrack = function(lay,in_text) {
 
 CondensedSequenceRenderer.prototype.EnableHighlights = function() {
     var renderer = this;
-    var highlights = [];
-    var createNewHighlight = function(idx=highlights.length) {
+    var highlights = new Map();
+    let defaultHighlight = Symbol('DefaultHighlight');
+
+    var createNewHighlight = function(identifier) {
         var highlight = renderer._canvas.rect(0,0,0,'100%');
         highlight.addEventListener('click', (ev) => {
             ev.stopPropagation();
@@ -2345,53 +2347,68 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
         });
 
         highlight.style.setProperty('fill','oklch(80% 20% calc( 0 + var(--highlight-idx)*50) / 0.8 )');
-        highlight.style.setProperty('--highlight-idx',idx);
+        highlight.style.setProperty('pointer-events','none');
+
 
         highlight.removeAttribute('stroke');
         var pnode = highlight.parentNode;
         pnode.insertBefore(highlight,pnode.firstChild.nextSibling);
-        highlights[idx] = highlight;
+        highlights.set(identifier,highlight);
+        for (const [idx,highlight] of [...highlights.values()].entries()) {
+            highlight.style.setProperty('--highlight-idx',idx);
+        }
     };
-    createNewHighlight();
+    createNewHighlight(defaultHighlight);
+    renderer.setDefaultHighlight = function(identifier) {
+        this.removeHighlightByIdentifier(defaultHighlight);
+        createNewHighlight(identifier);
+        defaultHighlight = identifier;
+    }
 
-    renderer.setHighlightByIndex = function(idx,from,to) {
+    renderer.removeHighlightByIdentifier = function(identifier) {
+        let node = highlights.get(identifier);
+        console.log(node);
+        node.parentNode.removeChild(node);
+        highlights.delete(identifier);
+    };
+
+    renderer.setHighlightByIdentifier = function(identifier,from,to) {
         var args = Array.prototype.slice.call(arguments,1);
         if (args.length == 0) {
-            highlights[idx].setAttribute('visibility','hidden');
+            highlights.get(identifier).setAttribute('visibility','hidden');
             return;
         }
-        let vals = [];
-        vals[idx*2] = from;
-        vals[idx*2 + 1] = to;
-        renderer.moveHighlight.apply(renderer,vals);
+        renderer.moveHighlight.apply(renderer,[identifier,from,to]);
     };
 
     renderer.moveHighlight = function() {
         var vals = Array.prototype.slice.call(arguments);
         var RS = this._RS;
         var i = 0, idx = 0;
-        if (vals.length == 0 && highlights.length > 0) {
-            highlights[0].setAttribute('visibility','hidden');
+        if (vals.length == 0 && highlights.has(defaultHighlight)) {
+            highlights.get(defaultHighlight).setAttribute('visibility','hidden');
         }
-        for (i = 0; i < vals.length; i+= 2) {
-            var from = vals[i];
-            var to = vals[i+1];
+        if (vals.length == 2) {
+            vals = [defaultHighlight].concat(vals);
+        }
+        for (i = 0; i < vals.length; i+= 3) {
+            let identifier = vals[i];
+            let from = vals[i+1];
+            let to = vals[i+2];
             if ((typeof from === 'undefined') && (typeof to === 'undefined')) {
-                idx += 1;
                 continue;
             }
-            var highlight = highlights[idx];
+            var highlight = highlights.get(identifier);
             if ( ! highlight ) {
-                createNewHighlight(idx);
-                highlight = highlights[idx];
+                createNewHighlight(identifier);
+                highlight = highlights.get(identifier);
             }
-            if ( highlight.previousSibling && highlight.previousSibling.previousSibling && highlights.indexOf(highlight.previousSibling.previousSibling) < 0 ) {
+            if ( highlight.previousSibling && highlight.previousSibling.previousSibling && !(new Set(highlights.values())).has(highlight.previousSibling.previousSibling)) {
                 highlight.parentNode.insertBefore(highlight,highlight.parentNode.firstChild.nextSibling);
             }
             highlight.setAttribute('x',(from - 1) * RS );
             highlight.setAttribute('width',(to - (from - 1)) * RS );
             highlight.setAttribute('visibility','visible');
-            idx += 1;
         }
         // for (i = idx; i < highlights.length; i++){
         //     highlights[i].setAttribute('visibility','hidden');
