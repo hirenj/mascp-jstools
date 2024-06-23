@@ -2374,6 +2374,14 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
         highlights.delete(identifier);
     };
 
+    renderer.getHighlightCSSIndex = function(identifier) {
+        if ( ! highlights.has(identifier) ) {
+            return;
+        }
+        let node = highlights.get(identifier);
+        return this._container.ownerDocument.defaultView.getComputedStyle(node).getPropertyValue('--highlight-idx')
+    };
+
     renderer.setHighlightByIdentifier = function(identifier,from,to) {
         var args = Array.prototype.slice.call(arguments,1);
         if (args.length == 0) {

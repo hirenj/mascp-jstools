@@ -79,6 +79,10 @@ class HighlightComponent extends WrapHTML {
     this.updateHighlight();
   }
 
+  get cssIndex() {
+    return this.parentNode.renderer.getHighlightCSSIndex(this.index);
+  }
+
   get index() {
     return this[idsymbol];
   }
