@@ -165,6 +165,10 @@ let wire_renderer_sequence_change = function(renderer) {
     } else {
       renderer.navigation.hide();      
     }
+    for (let highlight of this.querySelectorAll(':scope > x-highlight')) {
+      highlight.parentNode.removeChild(highlight);
+    }
+
     renderer.refresh();
   };
   renderer.bind('sequenceChange', seq_change_func);
