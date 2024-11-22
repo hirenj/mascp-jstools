@@ -382,7 +382,7 @@ class TrackComponent extends WrapHTML  {
     if ( track_name ) {
       return track_name
     }
-    if ( ! this[track_name_symbol] ) {      
+    if ( ! this[track_name_symbol] ) {
       this[track_name_symbol] = uuidv4();
     }
     track_name = this[track_name_symbol];
