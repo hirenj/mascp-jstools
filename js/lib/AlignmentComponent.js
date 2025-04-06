@@ -63,7 +63,7 @@ const setup_tracks = function() {
 
   for (let id of this._alignments.data.ids ) {
     let new_tracks = this._template.content.cloneNode(true);
-    for (let renderer of new_tracks.querySelectorAll('x-trackrenderer')) {
+    for (let renderer of new_tracks.querySelectorAll('ccg-trackrenderer')) {
 
       TRACK_OWNERSHIP.set(renderer,this);
 
@@ -72,7 +72,7 @@ const setup_tracks = function() {
       }
       renderer.setAttribute('accession',id);
     }
-    for (let jsrenderer of new_tracks.querySelectorAll('x-js-trackrenderer')) {
+    for (let jsrenderer of new_tracks.querySelectorAll('ccg-js-trackrenderer')) {
 
       TRACK_OWNERSHIP.set(jsrenderer,this);
 
@@ -81,7 +81,7 @@ const setup_tracks = function() {
       }
       jsrenderer.setAttribute('accession',id);
     }
-    for (let track of new_tracks.querySelectorAll('x-gatortrack')) {
+    for (let track of new_tracks.querySelectorAll('ccg-gatortrack')) {
 
       TRACK_OWNERSHIP.set(track,this);
 
@@ -122,9 +122,9 @@ class AlignmentComponent extends HTMLElement  {
   }
 
   get ownedTracks() {
-    return [...this.parentNode.querySelectorAll('x-gatortrack'),
-            ...this.parentNode.querySelectorAll('x-js-trackrenderer'),
-            ...this.parentNode.querySelectorAll('x-trackrenderer')
+    return [...this.parentNode.querySelectorAll('ccg-gatortrack'),
+            ...this.parentNode.querySelectorAll('ccg-js-trackrenderer'),
+            ...this.parentNode.querySelectorAll('ccg-trackrenderer')
           ].filter( track => {
             return TRACK_OWNERSHIP.get(track) == this;
           });
@@ -164,6 +164,6 @@ class AlignmentComponent extends HTMLElement  {
   }
 }
 
-customElements.define('x-alignment',AlignmentComponent);
+customElements.define('ccg-alignment',AlignmentComponent);
 
 export default AlignmentComponent;

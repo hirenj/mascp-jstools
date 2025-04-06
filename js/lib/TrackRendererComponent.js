@@ -268,7 +268,7 @@ class TrackRendererComponent extends WrapHTML {
     if (trackname) {
       return trackname;
     }
-    let child_track = this.querySelector(':scope > x-gatortrack');
+    let child_track = this.querySelector(':scope > ccg-gatortrack');
     trackname = child_track.name;
     return trackname;
   }
@@ -348,9 +348,9 @@ class TrackRendererScriptComponent extends TrackRendererComponent  {
   }
 }
 
-customElements.define('x-trackrenderer',TrackRendererScriptComponent);
+customElements.define('ccg-trackrenderer',TrackRendererScriptComponent);
 
-customElements.define('x-js-trackrenderer',TrackRendererComponent);
+customElements.define('ccg-js-trackrenderer',TrackRendererComponent);
 
 
 let create_track = function() {
@@ -419,7 +419,7 @@ class TrackComponent extends WrapHTML  {
   }
 }
 
-customElements.define('x-gatortrack',TrackComponent);
+customElements.define('ccg-gatortrack',TrackComponent);
 
 export {TrackRendererComponent, TrackComponent};
 

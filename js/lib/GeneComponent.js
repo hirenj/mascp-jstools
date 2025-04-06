@@ -138,6 +138,6 @@ let retrieve_data = function() {
   this.renderer.setSequence('M');
 };
 
-customElements.define('x-geneviewer',GeneComponent);
+customElements.define('ccg-geneviewer',GeneComponent);
 
 export default GeneComponent;

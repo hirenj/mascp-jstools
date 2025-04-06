@@ -99,7 +99,7 @@ Object.setPrototypeOf(WrapHTML.prototype, HTMLElement.prototype);
 Object.setPrototypeOf(WrapHTML, HTMLElement);
 
 if (window.ShadyCSS) {
-  ShadyCSS.prepareTemplate(tmpl, 'x-protviewer');
+  ShadyCSS.prepareTemplate(tmpl, 'ccg-protviewer');
 }
 
 let setup_renderer = function(renderer) {
@@ -165,7 +165,7 @@ let wire_renderer_sequence_change = function(renderer) {
     } else {
       renderer.navigation.hide();      
     }
-    for (let highlight of this.querySelectorAll(':scope > x-highlight')) {
+    for (let highlight of this.querySelectorAll(':scope > ccg-highlight')) {
       highlight.parentNode.removeChild(highlight);
     }
 
@@ -176,7 +176,7 @@ let wire_renderer_sequence_change = function(renderer) {
 
 let populate_tracks = function() {
   let ordering = [];
-  for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
+  for (let track of this.querySelectorAll(':scope > ccg-gatortrack, :scope > * > ccg-gatortrack')) {
     ordering.push(track.name);
     this.createTrack(track,false);
   }
@@ -193,7 +193,7 @@ let wire_selection_change = function(renderer) {
     } else {
       this.setAttribute('selected',`${positions[0]}:${positions[1]}`);
     }
-    for (let track of this.querySelectorAll(':scope > x-gatortrack, :scope > * > x-gatortrack')) {
+    for (let track of this.querySelectorAll(':scope > ccg-gatortrack, :scope > * > ccg-gatortrack')) {
       let positions = selections.get(track.layer);
       if ( ! positions ) {
         continue;
@@ -206,8 +206,8 @@ let wire_selection_change = function(renderer) {
     }
     {
     let highlight;
-    if (! (highlight = this.querySelector(":scope x-highlight[default]"))) {
-      highlight = document.createElement('x-highlight');
+    if (! (highlight = this.querySelector(":scope ccg-highlight[default]"))) {
+      highlight = document.createElement('ccg-highlight');
       highlight.setAttribute('default','');
       renderer.setDefaultHighlight(highlight.index);
       this.appendChild(highlight);
@@ -310,6 +310,6 @@ class GatorComponent extends WrapHTML {
   }
 }
 
-customElements.define('x-protviewer',GatorComponent);
+customElements.define('ccg-protviewer',GatorComponent);
 
 export default GatorComponent;

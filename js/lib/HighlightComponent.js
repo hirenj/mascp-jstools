@@ -89,6 +89,6 @@ class HighlightComponent extends WrapHTML {
 
 }
 
-customElements.define('x-highlight',HighlightComponent);
+customElements.define('ccg-highlight',HighlightComponent);
 
 export default HighlightComponent;
