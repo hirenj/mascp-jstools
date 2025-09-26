@@ -3266,7 +3266,7 @@ CondensedSequenceRenderer.Zoom = function(renderer) {
             bean.fire(self._canvas,'_anim_begin');
             if (document.createEvent) {
                 var evObj = document.createEvent('Events');
-                evObj.initEvent('panstart',false,true);
+                evObj.initEvent('panstart',true,true);
                 self._canvas.dispatchEvent(evObj);
             }
             var old_x = self._canvas.currentTranslateCache.x;

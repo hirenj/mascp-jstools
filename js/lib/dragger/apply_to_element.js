@@ -1,5 +1,11 @@
 import bean from '../../bean';
 
+const fire_event = (event,target) => {
+  let ev = new Event(event,{bubbles: true, cancelable: true});
+  target.dispatchEvent(ev);
+}
+
+
 const applyToElement = function(targetElement,enabled) {
     var self = this;
     if (typeof enabled !== 'undefined') {
@@ -74,18 +80,10 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement.setCurrentTranslateXY( new_pos, 0);
                         window.requestAnimationFrame(do_snapback, targetElement);
 //                        targetElement._snapback = setTimeout(arguments.callee,10);
-                        if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
-                            evObj.initEvent('panstart',false,true);
-                            targetElement.dispatchEvent(evObj);
-                        }
+                        fire_event('panstart',targetElement);
                     } else {
                         targetElement.setCurrentTranslateXY( (viewBoxScale * min_x), 0 );
-                        if (document.createEvent) {
-                            var evObj = document.createEvent('Events');
-                            evObj.initEvent('pan',false,true);
-                            targetElement.dispatchEvent(evObj);
-                        }
+                        fire_event('pan',targetElement);
                         if (! self.dragging) {
                             bean.fire(targetElement,'panend');
                         }
@@ -122,18 +120,10 @@ const applyToElement = function(targetElement,enabled) {
                         targetElement.setCurrentTranslateXY( new_pos, 0);
                         window.requestAnimationFrame(do_snapback, targetElement);
 //                        targetElement._snapback = setTimeout(arguments.callee,10);
-                        if (document.createEvent) {
-                            evObj = document.createEvent('Events');
-                            evObj.initEvent('panstart',false,true);
-                            targetElement.dispatchEvent(evObj);
-                        }
+                        fire_event('panstart',targetElement);
                     } else {
                         targetElement.setCurrentTranslateXY( -1*min_val, 0);                        
-                        if (document.createEvent) {
-                            evObj = document.createEvent('Events');
-                            evObj.initEvent('pan',false,true);
-                            targetElement.dispatchEvent(evObj);
-                        }
+                        fire_event('pan',targetElement);
                         if (! self.dragging) {
                             bean.fire(targetElement,'panend');
                         }
@@ -157,12 +147,7 @@ const applyToElement = function(targetElement,enabled) {
                 this.currentTranslate.x = p.x;
                 this.currentTranslate.y = p.y;          
             }            
-
-            if (document.createEvent) {
-                var evObj = document.createEvent('Events');
-                evObj.initEvent('pan',false,true);
-                this.dispatchEvent(evObj);
-            }
+            fire_event('pan',this);
         };
     } else {
         targetElement.getPosition = function() {
@@ -171,12 +156,7 @@ const applyToElement = function(targetElement,enabled) {
         targetElement.shiftPosition = function(x,y) {
             this.scrollLeft = self.dX + (self.oX - x);
             this.scrollTop = self.dY + (self.oY - y);
-
-            if (document.createEvent) {
-                var evObj = document.createEvent('Events');
-                evObj.initEvent('pan',false,true);
-                this.dispatchEvent(evObj);
-            }
+            fire_event('pan',this);
         };
     }
 
@@ -221,15 +201,10 @@ const applyToElement = function(targetElement,enabled) {
 
       evt.preventDefault(true);
       
-      if (document.createEvent) {
-          self.clicktimeout = setTimeout(function() {
-              var evObj = document.createEvent('Events');
-              self.clicktimeout = null;
-              evObj.initEvent('panstart',false,true);
-              targ.dispatchEvent(evObj);
-          },200);
-      }
-
+      self.clicktimeout = setTimeout(function() {
+        fire_event('panstart',targ);
+      },200);
+      
     };
     
     var mousePosition = function(evt) {
@@ -277,11 +252,7 @@ const applyToElement = function(targetElement,enabled) {
         evt.preventDefault(true);
         var targ = self.targetElement ? self.targetElement : targetElement;
         targ.setAttribute('dragging','true');
-        if (document.createEvent) {
-            var evObj = document.createEvent('Events');
-            evObj.initEvent('panstart',false,true);
-            targ.dispatchEvent(evObj);
-        }
+        fire_event('panstart',targ);
     };
     
     var svgMouseMove = function(evt) {
@@ -432,11 +403,7 @@ const applyToElement = function(targetElement,enabled) {
             self._momentum_shrinker = setInterval(function() {
                 momentum.shift();
             },20);
-            if (document.createEvent) {
-                var evObj = document.createEvent('Events');
-                evObj.initEvent('panstart',false,true);
-                targ.dispatchEvent(evObj);
-            }
+            fire_event('panstart',targ);
             e.preventDefault();
         }
     },false);

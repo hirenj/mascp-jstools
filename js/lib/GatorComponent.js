@@ -226,6 +226,32 @@ let wire_selection_change = function(renderer) {
   });
 }
 
+const wire_pan_tracking = function(renderer) {
+  this.shadowRoot.querySelector('div.widget_contents').addEventListener('pan', (ev) => {
+    this[IS_PANNING] = true;
+    const leftvis = this.renderer.leftVisibleResidue();
+    const rightvis = this.renderer.rightVisibleResidue();
+    this.setAttribute('range',`${leftvis}-${rightvis}`);
+  });
+  this.shadowRoot.querySelector('div.widget_contents').addEventListener('panned', (ev) => {
+    setTimeout( () => {
+      const leftvis = this.renderer.leftVisibleResidue();
+      const rightvis = this.renderer.rightVisibleResidue();
+      if (this[IS_PANNING] == true) {
+        this.setAttribute('range',`${leftvis}-${rightvis}`);
+      }
+      requestAnimationFrame( () => {
+        let evObj = new Event('rangechange', {bubbles: true, cancelable: true});
+        this.dispatchEvent(evObj);
+        this[IS_PANNING] = false;
+      });
+    });
+  });
+
+}
+
+const IS_PANNING = Symbol('IS_PANNING');
+
 
 class GatorComponent extends WrapHTML {
 
@@ -240,8 +266,7 @@ class GatorComponent extends WrapHTML {
 
   attributeChangedCallback(name) {
     if (name == 'range') {
-      let [min,max] = this.getAttribute('range').split('-').map( val => parseInt(val));
-      this.renderer.showResidues(min,max);
+      this._updateVisibleRange();
     }
   }
 
@@ -262,6 +287,7 @@ class GatorComponent extends WrapHTML {
     }
     wire_selection_change.call(this,this.renderer);
     wire_sequence_change.call(this,this.renderer);
+    wire_pan_tracking.call(this,this.renderer);
   }
 
   rangeMin() {
@@ -270,6 +296,17 @@ class GatorComponent extends WrapHTML {
 
   rangeMax() {
     return this.renderer.sequence ? this.renderer.sequence.length : 0;
+  }
+
+  _updateVisibleRange() {
+    if (this[IS_PANNING]) {
+      return;
+    }
+    clearTimeout(this._rangeupdatetimeout);
+    this._rangeupdatetimeout = setTimeout(() => {
+      let [min,max] = this.getAttribute('range').split('-').map( val => parseInt(val));
+      this.renderer.showResidues(min,max);
+    },200);
   }
 
 
