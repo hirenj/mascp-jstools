@@ -32,7 +32,7 @@ const SequenceRenderer = (function() {
             setTrackOrder: function(in_order) {
                 var track_order = [];
                 var order = in_order;
-                if ( ! order instanceof Array ) {
+                if ( ! (order instanceof Array) ) {
                     order = [ in_order ];
                 }
                 for (var i = 0; i < order.length; i++) {

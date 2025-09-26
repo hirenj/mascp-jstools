@@ -269,7 +269,7 @@ class TrackRendererComponent extends WrapHTML {
       return trackname;
     }
     let child_track = this.querySelector(':scope > ccg-gatortrack');
-    trackname = child_track.name;
+    trackname = child_track ? child_track.name : null;
     return trackname;
   }
 

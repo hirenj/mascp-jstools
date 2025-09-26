@@ -338,11 +338,7 @@ const bean = (function (context) {
     return this;
   };
 
-  (typeof module !== 'undefined' && module.exports) ?
-    (module.exports = bean) :
-    (context['bean'] = bean);
-
-    return bean;
+  return bean;
 
 })({});
 

@@ -163,7 +163,7 @@ let wire_renderer_sequence_change = function(renderer) {
     if ( ! this.getAttribute('navigationVisible') || this.getAttribute('navigationVisible') == 'true') {
       renderer.navigation.show();
     } else {
-      renderer.navigation.hide();      
+      renderer.navigation.hide();
     }
     for (let highlight of this.querySelectorAll(':scope > ccg-highlight')) {
       highlight.parentNode.removeChild(highlight);
@@ -183,6 +183,13 @@ let populate_tracks = function() {
   let missing = this.renderer.trackOrder.filter( entry => ordering.indexOf(entry) < 0 );
   this.renderer.trackOrder = [...missing,...ordering];
   this.renderer.refresh();
+}
+
+let wire_sequence_change = function(renderer) {
+  renderer.bind('sequenceChange', () => {
+    let evObj = new Event('change', {bubbles: true, cancelable: true});
+    this.dispatchEvent(evObj);
+  });
 }
 
 let wire_selection_change = function(renderer) {
@@ -223,7 +230,7 @@ let wire_selection_change = function(renderer) {
 class GatorComponent extends WrapHTML {
 
   static get observedAttributes() {
-    return [];
+    return ['range'];
   }
 
   constructor() {
@@ -232,6 +239,10 @@ class GatorComponent extends WrapHTML {
 
 
   attributeChangedCallback(name) {
+    if (name == 'range') {
+      let [min,max] = this.getAttribute('range').split('-').map( val => parseInt(val));
+      this.renderer.showResidues(min,max);
+    }
   }
 
   connectedCallback() {
@@ -250,7 +261,17 @@ class GatorComponent extends WrapHTML {
       }
     }
     wire_selection_change.call(this,this.renderer);
+    wire_sequence_change.call(this,this.renderer);
   }
+
+  rangeMin() {
+    return 0;
+  }
+
+  rangeMax() {
+    return this.renderer.sequence ? this.renderer.sequence.length : 0;
+  }
+
 
   fitToZoom() {
     zoom_to_fit(this.renderer);
