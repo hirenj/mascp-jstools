@@ -1,4 +1,4 @@
-import MASCP from './lib/MASCP';
+import MASCP from './lib/MASCP.js';
 
 let getData = function(dataset,accession) {
   return MASCP.GatorDataReader.authenticate().then(function(url_base) {

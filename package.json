@@ -40,6 +40,14 @@
   },
   "module": "js/index.js",
   "main": "js/index-esm.js",
+  "exports": {
+    ".": {
+      "browser": "./js/index.js",
+      "node": "./js/index-esm.js"
+    },
+    "./util": "./js/util.js",
+    "./MASCP": "./js/lib/MASCP.js"
+  },
   "bin": {},
   "implements": [
     "mascp-jstools",

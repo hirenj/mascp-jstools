@@ -1553,7 +1553,7 @@ var addTextToElement = function(layerName,width,opts) {
         var clip = canvas.clipPath();
         var mask = canvas.rect(-0.5*width,opts.offset || 0,width,height);
         clip.push(mask);
-        mask.removeAttribute('y');
+        mask.setAttribute('y','0');
         var mask_id = 'id' + (new Date()).getTime()+"_"+clip.parentNode.childNodes.length;
         clip.setAttribute('id',mask_id);
         text.setAttribute('clip-path','url(#'+mask_id+')');
@@ -2091,6 +2091,9 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
             }
             if (content_data && Array.isArray(content_data)) {
                 cloned_options.content = content_data.map(renderer.fix_icons.bind(renderer));
+            }
+            if ( ! object.aa ) {
+                return;
             }
             var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {

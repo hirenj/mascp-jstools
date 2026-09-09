@@ -9,7 +9,7 @@ import {SVGRenderer} from 'glycan.js';
 
 const isNodejs = () => { return typeof process === 'object' && typeof process.versions === 'object' && typeof process.versions.node !== 'undefined'; };
 
-const ICONS_DEF = ( ! isNodejs() ) ? require('../../icons.svg').default : '';
+const ICONS_DEF = ( ! isNodejs() ) ? require('../../icons.svg') : '';
 
 const SYMBOLS_DEF = SVGRenderer.SYMBOLS;
 
@@ -305,7 +305,9 @@ class GatorComponent extends WrapHTML {
     clearTimeout(this._rangeupdatetimeout);
     this._rangeupdatetimeout = setTimeout(() => {
       let [min,max] = this.getAttribute('range').split('-').map( val => parseInt(val));
-      this.renderer.showResidues(min,max);
+      if (this.renderer.sequence) {
+        this.renderer.showResidues(min,max);
+      }
     },200);
   }
 
