@@ -285,7 +285,10 @@ class TrackRendererComponent extends WrapHTML {
   set data(data) {
     this._data = data;
     if ( ! data ) {
+      console.log(`Setting data to null in track renderer, removing ${this.track}. Consider setting data to [] to clear only.`);
       this.renderer.removeTrack(MASCP.getLayer(this.track));
+    } else if (data.length == 0) {
+      this.renderer.clearTrack(MASCP.getLayer(this.track));
     }
     this.render(this.renderer,this._data,this.track);
   }
