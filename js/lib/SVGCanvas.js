@@ -770,6 +770,53 @@ const SVGCanvas = (function() {
             return result;
         };
 
+        // Each pre-rendered icon (see ensure_sugar_icon in
+        // TrackRendererComponent.js) keeps its own natural, tightly-fit
+        // viewBox. This reads that intrinsic size so callers can normalise
+        // display size *locally* - to the largest icon in the same stack,
+        // or the largest among sibling non-stacked markers - rather than
+        // relying on one shared, page-wide viewBox.
+        var getIconSize = function(root,symbol) {
+            if ( ! symbol ) {
+                return null;
+            }
+            var el = root.getElementById(symbol.split('#').pop());
+            var viewBox = el && el.getAttribute('viewBox');
+            if ( ! viewBox ) {
+                return null;
+            }
+            var width = parseFloat(viewBox.split(' ')[2]);
+            var height = parseFloat(viewBox.split(' ')[3]);
+            if ( ! width || ! height ) {
+                return null;
+            }
+            return Math.max(width,height);
+        };
+
+        // Where the reducing end sits within the icon's own viewBox, as a
+        // 0-1 fraction of its width (see ensure_sugar_icon in
+        // TrackRendererComponent.js). Defaults to 0.5 (centre) for icons
+        // that never got an anchor recorded, e.g. non-sugar symbols.
+        var getIconAnchorX = function(root,symbol) {
+            if ( ! symbol ) {
+                return 0.5;
+            }
+            var el = root.getElementById(symbol.split('#').pop());
+            var anchor = el && el.getAttribute('data-anchor-x');
+            return anchor === null || typeof anchor === 'undefined' ? 0.5 : parseFloat(anchor);
+        };
+
+        // Same, vertically. Defaults to 0 (top edge), matching this branch's
+        // original fixed y=0 placement for icons without a recorded anchor.
+        var getIconAnchorY = function(root,symbol) {
+            if ( ! symbol ) {
+                return 0;
+            }
+            var el = root.getElementById(symbol.split('#').pop());
+            var anchor = el && el.getAttribute('data-anchor-y');
+            return anchor === null || typeof anchor === 'undefined' ? 0 : parseFloat(anchor);
+        };
+
         canvas.marker = function(cx,cy,r,symbol,opts) {
             var units = 0;
             if (typeof cx == 'string') {
@@ -832,16 +879,53 @@ const SVGCanvas = (function() {
             marker.setAttribute('height', dim.R*RS);
             if (typeof symbol == 'string') {
                 if (symbol.match(/^(:?https?:)?\/?.*#/)) {
+                    // Icons are rendered as <svg id="..."> elements (see
+                    // ensure_sugar_icon in TrackRendererComponent.js), not
+                    // <symbol> - getElementById finds either, and (unlike
+                    // querySelector) doesn't choke on ids containing "(" "["
+                    // from IUPAC composition names.
+                    let icon_exists = !! this.ownerSVGElement.getElementById(symbol.split('#').pop());
                     let use_def = [...this.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symbol )[0];
-                    if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
-                        marker.contentElement = this.use(symbol,-1*r,-1.25*r,2*r,3*r);
+                    if ( ! icon_exists ) {
+                        // Referenced icon was never pre-rendered (e.g. an
+                        // unrecognised glycan composition) - fall back to a
+                        // visible placeholder instead of an empty <use>.
+                        console.warn(`Missing icon for symbol ${symbol}, falling back to placeholder`);
+                        marker.contentElement = this.text_circle(0,0,2*r,'?',opts);
+                        marker.contentElement.firstChild.setAttribute('content','true');
                     } else {
-                        marker.contentElement = this.use(symbol,-r,0,2*r,2*r);
+                        if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
+                            marker.contentElement = this.use(symbol,-1*r,-1.25*r,2*r,3*r);
+                        } else {
+                            // Scale relative to the largest icon among this
+                            // marker's siblings (opts.group_max, set by
+                            // renderObjects in CondensedSequenceRenderer.js)
+                            // so a small glycan doesn't get blown up (or a
+                            // big one shrunk) to match icons elsewhere on
+                            // the page that have nothing to do with it.
+                            let own_size = getIconSize(this.ownerSVGElement,symbol);
+                            let scale = (own_size && opts.group_max) ? Math.min(1, own_size/opts.group_max) : 1;
+                            let box = 2*r*scale;
+                            // Align the reducing end (the residue attached
+                            // to the peptide backbone) to this amino acid's
+                            // position (local x=0), rather than centring
+                            // the icon's whole bounding box on it - a
+                            // branched structure's visual centre of mass can
+                            // sit well away from where it actually attaches,
+                            // both horizontally and vertically.
+                            let anchor_x = getIconAnchorX(this.ownerSVGElement,symbol);
+                            let anchor_y = getIconAnchorY(this.ownerSVGElement,symbol);
+                            // Nudge down slightly so the glycan reads as
+                            // sitting on top of the peptide backbone rather
+                            // than floating exactly on its anchor point.
+                            let sit_over_peptide = 0.75*r;
+                            marker.contentElement = this.use(symbol,-anchor_x*box,-anchor_y*box+sit_over_peptide,box,box);
+                        }
+                        marker.contentElement.setAttribute('content','true');
+                        marker.contentElement.style.setProperty('--fill-color', opts.fill);
+                        marker.contentElement.style.setProperty('--stroke-color', opts.stroke);
+                        marker.contentElement.style.setProperty('--stroke-width', opts.stroke_width);
                     }
-                    marker.contentElement.setAttribute('content','true');
-                    marker.contentElement.style.setProperty('--fill-color', opts.fill);
-                    marker.contentElement.style.setProperty('--stroke-color', opts.stroke);
-                    marker.contentElement.style.setProperty('--stroke-width', opts.stroke_width);
                 } else {
                     marker.contentElement = this.text_circle(0,0,2*r,symbol,opts);
                     marker.contentElement.firstChild.setAttribute('content','true');
@@ -853,6 +937,12 @@ const SVGCanvas = (function() {
                 // phase -= (Math.PI / 2);
                 var needs_stretch = opts.stretch;
                 var nrow = 2;
+                // Normalise icon size to the largest glycan *in this stack*,
+                // not to whatever's biggest elsewhere on the page.
+                var stack_max = symbol.reduce(function(max,symb) {
+                    var size = getIconSize(canvas.ownerSVGElement,symb);
+                    return size ? Math.max(max,size) : max;
+                },0);
                 symbol.reverse().forEach(function(symb,i) {
                     var x_pos = i % nrow;
                     var y_pos = 2+Math.floor(i / nrow);
@@ -884,16 +974,37 @@ const SVGCanvas = (function() {
                     }
                     let new_el = null;
                     if (symb.match(/^(:?https?:)?\/?.*#/)) {
+                        // Icons are rendered as <svg id="..."> elements (see
+                        // ensure_sugar_icon in TrackRendererComponent.js), not
+                        // <symbol> - getElementById finds either, and (unlike
+                        // querySelector) doesn't choke on ids containing "(" "["
+                        // from IUPAC composition names.
+                        let icon_exists = !! canvas.ownerSVGElement.getElementById(symb.split('#').pop());
                         let use_def = [...canvas.ownerSVGElement.querySelectorAll('symbol')].filter( symbolel => '#'+symbolel.getAttribute('id') == symb )[0];
-                        if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
-                            let [,,width,height] = use_def.getAttribute('viewBox').split(' ').map(parseFloat);
-                            new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 2)*r,2*r,(height/width)*2*r);//canvas.use(symb,-2*r,-2*r,null,3*r);
+                        if ( ! icon_exists ) {
+                            // Referenced icon was never pre-rendered (e.g. an
+                            // unrecognised glycan composition) - fall back to
+                            // a visible placeholder instead of a blank gap.
+                            console.warn(`Missing icon for symbol ${symb}, falling back to placeholder`);
+                            var opts_copy = JSON.parse(JSON.stringify(opts));
+                            opts_copy.no_tracer = true;
+                            delete opts_copy.offset;
+                            delete opts_copy.height;
+                            new_el = canvas.text_circle(x_pos*r,y_pos*r,1.75*r,'?',opts_copy);
+                            new_el.firstChild.setAttribute('content','true');
                         } else {
-                            new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 0.5)*r,2*r,2*r);
+                            if ( use_def && use_def.getAttribute('viewBox') !== '0 0 100 100') {
+                                let [,,width,height] = use_def.getAttribute('viewBox').split(' ').map(parseFloat);
+                                new_el = canvas.use(symb,(x_pos - 0.5)*r,(y_pos - 2)*r,2*r,(height/width)*2*r);//canvas.use(symb,-2*r,-2*r,null,3*r);
+                            } else {
+                                let own_size = getIconSize(canvas.ownerSVGElement,symb);
+                                let scale = (own_size && stack_max) ? Math.min(1, own_size/stack_max) : 1;
+                                let box = 2*r*scale;
+                                new_el = canvas.use(symb,(x_pos + 0.5)*r - box/2,(y_pos + 0.5)*r - box/2,box,box);
+                            }
+                            new_el.setAttribute('pointer-events','none');
+                            new_el.setAttribute('content','true');
                         }
-
-                        new_el.setAttribute('pointer-events','none');
-                        new_el.setAttribute('content','true');
                     } else {
                         var opts_copy = JSON.parse(JSON.stringify(opts));
                         opts_copy.no_tracer = true;

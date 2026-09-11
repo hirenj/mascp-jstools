@@ -1986,6 +1986,28 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
     if (objects.length > 0 && objects[0].coalesce ) {
         mark_groups(renderer,objects);
     }
+    var getIconSize = function(symbol) {
+        if ( ! symbol || ! renderer._canvas ) {
+            return null;
+        }
+        let el = renderer._canvas.ownerSVGElement.getElementById(symbol.split('#').pop());
+        let viewBox = el && el.getAttribute('viewBox');
+        let width = viewBox && parseFloat(viewBox.split(' ')[2]);
+        let height = viewBox && parseFloat(viewBox.split(' ')[3]);
+        return (width && height) ? Math.max(width,height) : null;
+    };
+    // Largest icon among this call's non-stacked markers (stacks normalise
+    // among themselves in SVGCanvas.js's canvas.marker) - so a lone small
+    // glycan isn't scaled to match some unrelated, much bigger structure
+    // rendered elsewhere on the page.
+    var non_stack_group_max = objects.reduce(function(max,obj) {
+        let content = (obj.options || {}).content;
+        if (obj.type !== 'marker' || typeof content !== 'string') {
+            return max;
+        }
+        let size = getIconSize(content);
+        return size ? Math.max(max,size) : max;
+    },0);
     var results = [];
     objects.forEach(function(input_object) {
         let object = JSON.parse(JSON.stringify(input_object));
@@ -2049,8 +2071,10 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
                 }
 
                 click_reveal = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options_array);
-                click_reveal = click_reveal[1];
-                click_reveal.style.display = 'none';
+                if ( click_reveal ) {
+                    click_reveal = click_reveal[1];
+                    click_reveal.style.display = 'none';
+                }
                 object.options.content = object.options.alt_content;
                 content = object.options.content;
             }
@@ -2088,6 +2112,9 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
             var content_data = (object.options || {}).content;
             if (content_data && typeof content_data === 'string') {
                 cloned_options.content = renderer.fix_icons(content_data);
+                if ( ! object.is_stack && non_stack_group_max) {
+                    cloned_options.group_max = non_stack_group_max;
+                }
             }
             if (content_data && Array.isArray(content_data)) {
                 cloned_options.content = content_data.map(renderer.fix_icons.bind(renderer));
@@ -2097,7 +2124,6 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
             }
             var added = renderer.getAA(parseInt(object.aa),track).addToLayer(track,cloned_options);
             if (click_reveal) {
-
                 click_reveal.toggleReveal = function(ev) {
                     ev.stopPropagation();
                     if (this.style.display === 'none') {
@@ -2110,6 +2136,14 @@ CondensedSequenceRenderer.prototype.renderObjects = function(track,objects) {
                 };
                 added[1].addEventListener('touchstart', click_reveal.toggleReveal.bind(click_reveal),true);
                 added[1].addEventListener('click',click_reveal.toggleReveal.bind(click_reveal),false);
+                // Without these, a plain click still bubbles mousedown/mouseup
+                // up to the canvas-level drag-select listeners (enableSelection),
+                // which treat a zero-movement click as "clear the selection" -
+                // that cascades into a full track rebuild whenever "filter
+                // viewer to table" is on. See EnableHighlights() above for the
+                // same pattern on highlight boxes.
+                added[1].addEventListener('mousedown', ev => ev.stopPropagation());
+                added[1].addEventListener('mouseup', ev => ev.stopPropagation());
             }
             rendered = added[1];
         }

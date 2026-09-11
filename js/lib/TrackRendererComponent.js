@@ -34,9 +34,6 @@ let get_renderer_sequence = (renderer,accession) => {
   });
 };
 
-const max_sizes_map = new WeakMap();
-const rendered_sugars_map = new WeakMap();
-
 let ensure_sugar_icon = (renderer,sequence) => {
   const icon_prefix = 'sugarrendered';
   if ( renderer._container_canvas.getElementById(`${icon_prefix}_`+sequence.toLowerCase()) ) {
@@ -61,28 +58,39 @@ let ensure_sugar_icon = (renderer,sequence) => {
     sugar_renderer.scaleToFit({ side: 0, top: 0 });
     a_use.parentNode.removeChild(a_use);
     sugar_renderer.element.canvas.setAttribute('preserveAspectRatio','xMidYMax meet');
-    let rendered_sugars = rendered_sugars_map.get(renderer) || [];
+    // Each icon keeps its own natural, tightly-fit viewBox here - it is no
+    // longer stretched to match the biggest structure ever rendered anywhere
+    // on the page. Callers normalise sizes locally instead (per stack, or
+    // per group of sibling non-stacked markers) using this intrinsic size -
+    // see getIconSize() in SVGCanvas.js and the group_max handling in
+    // CondensedSequenceRenderer.js's renderObjects().
 
-    rendered_sugars.push(sugar_renderer.element.canvas);
-    rendered_sugars_map.set(renderer, rendered_sugars);
-
-    let [minx,miny,width,height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map( dim => parseInt(dim) );
-
-    let max_size = max_sizes_map.get(renderer) || {width: 0, height: 0};
-    if (width < max_size.width) {
-      minx -= (max_size.width - width)/2;
-      width = max_size.width;
+    // Record where the reducing end (the residue actually attached to the
+    // peptide backbone) sits within this icon's own viewBox, as 0-1
+    // fractions of its width/height. Branched/asymmetric structures have
+    // their reducing end well off the geometric centre of the whole icon,
+    // so callers need this to align that residue to the amino acid position
+    // instead of centring the icon's bounding box on it.
+    //
+    // Note: getBBox() on the residue's rendered element would report its
+    // bounding box *before* its own transform is applied (residues are
+    // drawn at a fixed 0,0/1x1 and placed via a translate+scale transform -
+    // see setIconPosition in SVGRenderer.js), which is useless here. The
+    // renderer's own layoutFor()/global_layout instead gives the residue's
+    // real, already-laid-out position, in the same coordinate space as the
+    // icon's own getBBox()/viewBox.
+    let root_layout = sugar_renderer.layoutFor(sug.root);
+    if (root_layout) {
+      let [vb_x,vb_y,vb_width,vb_height] = sugar_renderer.element.canvas.getAttribute('viewBox').split(' ').map(parseFloat);
+      if (vb_width) {
+        let anchor_x = ((root_layout.x + root_layout.width/2) - vb_x) / vb_width;
+        sugar_renderer.element.canvas.setAttribute('data-anchor-x',anchor_x);
+      }
+      if (vb_height) {
+        let anchor_y = ((root_layout.y + root_layout.height/2) - vb_y) / vb_height;
+        sugar_renderer.element.canvas.setAttribute('data-anchor-y',anchor_y);
+      }
     }
-    if (height < max_size.height) {
-      miny -= (max_size.height - height);
-      height = max_size.height;
-    }
-    for (let svgbox of rendered_sugars) {
-      svgbox.setAttribute('viewBox',`${minx} ${miny} ${width} ${height}`);
-    }
-    max_size.width = width;
-    max_size.height = height;
-    max_sizes_map.set(renderer,max_size);
   });
 };
 

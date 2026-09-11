@@ -559,21 +559,33 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
 
     var redrawIntrons = function(renderer,controller_name,scaler_function) {
         var labs = [];
+        // labs holds [box, start_text, end_text] triples, one per collapsed
+        // intron region, left-to-right. Boxes always stay visible; each
+        // region's label pair is shown unless it would overlap the last
+        // label pair actually kept - a greedy per-label thinning, rather
+        // than comparing box positions (the labels extend outward past
+        // their own box's edges, so boxes can clear each other while their
+        // labels still collide) and rather than an all-or-nothing hide.
         var zoomCheck = function() {
             if (labs.length < 1 || ! labs[0].parentNode) {
                 return;
             }
-            var hidden = false;
-            for (var i = 0 ; ! hidden && i < (labs.length - 3); i += 3) {
-                if (labs[i].hasAttribute('display')) {
-                    hidden = true;
-                    continue;
-                } 
-                if (labs[i].getBoundingClientRect().right > labs[i+3].getBoundingClientRect().left) {
-                    hidden = true;
+            var last_right = null;
+            for (var i = 0; i < labs.length; i += 3) {
+                var startLabel = labs[i+1];
+                var endLabel = labs[i+2];
+                var left = startLabel.getBoundingClientRect().left;
+                var right = endLabel.getBoundingClientRect().right;
+                var overlaps = last_right !== null && left < last_right;
+                if (overlaps) {
+                    startLabel.setAttribute('display','none');
+                    endLabel.setAttribute('display','none');
+                } else {
+                    startLabel.removeAttribute('display');
+                    endLabel.removeAttribute('display');
+                    last_right = right;
                 }
             }
-            labs.forEach(function(lab) { if(lab.nodeName == 'rect') { return; } if (hidden) { lab.setAttribute('display','none') } else { lab.removeAttribute('display') } });
         };
         renderer.bind('zoomChange',zoomCheck);
 
