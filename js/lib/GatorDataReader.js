@@ -223,7 +223,7 @@ var authenticate_gator = function() {
       reauth_reader(UniprotReader);
     }
     UniprotReader.reauthed = true;
-
+/*
     if ( ! GatorDataReader.ID_TOKEN && GatorDataReader.anonymous ) {
       console.log("Doing an anonymous login");
       authenticating_promise = anonymous_login().then(function() { authenticating_promise = null; }).then(authenticate_gator);
@@ -248,7 +248,7 @@ var authenticate_gator = function() {
       });
       return authenticating_promise;
     }
-
+*/
     authenticating_promise = new Promise(function(resolve,reject) {
       setTimeout(function() {
         MASCP.GATOR_AUTH_TOKEN = GatorDataReader.ID_TOKEN;

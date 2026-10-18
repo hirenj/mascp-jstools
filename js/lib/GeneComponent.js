@@ -92,6 +92,13 @@ let reader_has_data = function() {
     reader.registerSequenceRenderer(this.renderer);
     reader.bind('requestComplete',() => {
       this.renderer.hideAxis();
+      // fitZoom() (and the zoom setter's own min-zoom clamp) prefer
+      // _container.cached_width over a live measurement, but that's only
+      // ever refreshed by an actual window resize event - it's stale here
+      // if anything else on the page (async-loaded sibling content, in
+      // particular) has shifted the container's real width since the
+      // renderer was constructed. Force a fresh read before fitting.
+      this.renderer._container.cached_width = this.renderer._container.getBoundingClientRect().width;
       this.renderer.fitZoom();
     });
 

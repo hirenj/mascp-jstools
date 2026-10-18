@@ -19,7 +19,7 @@ let getData = function(dataset,accession) {
 let getMetadata = function(dataset) {
   return MASCP.GatorDataReader.authenticate().then(function(url_base) {
     let headers = new Headers();
-    headers.append('Authorization','Bearer '+MASCP.GATOR_AUTH_TOKEN);
+    // headers.append('Authorization','Bearer '+MASCP.GATOR_AUTH_TOKEN);
     headers.append('x-api-key',MASCP.GATOR_CLIENT_ID);
     let req_params = {
       method: 'GET',
@@ -88,19 +88,39 @@ let getExpression = (dataset,geneid) => {
 };
 
 
-let retrieveUniprot = function(uniprot) {
-  return MASCP.GatorDataReader.authenticate().then(function(url_base) {
-    let a_reader = new MASCP.UniprotReader();
-    return new Promise((resolve,reject) => {
-    a_reader.retrieve(uniprot, function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(this.result._raw_data.data[0]);
+// Direct-to-source sequence retrieval — there is no ccg-shared-backend equivalent
+// of the old Gator backend's /api/data/latest/uniprot/{ACC} (the "uniprot" dataset
+// in the new pipeline is unrelated glycosylation-annotation data, not sequences),
+// so this bypasses GatorDataReader/the Worker entirely. UniProt's own REST API is
+// tried first (plain-text FASTA, no auth), falling back to EBI's Proteins API
+// (JSON, no auth) if that fails — both URL shapes are already used elsewhere in
+// this codebase (see ccg-shared-elements's mygene.js).
+const UNIPROT_FASTA_URL = (acc) => `https://rest.uniprot.org/uniprotkb/${acc}.fasta`;
+const EBI_PROTEINS_API_URL = (acc) => `https://www.ebi.ac.uk/proteins/api/proteins/${acc}`;
+
+let retrieveUniprot = async function(uniprot) {
+  try {
+    const resp = await fetch(UNIPROT_FASTA_URL(uniprot));
+    if (resp.ok) {
+      const fasta = await resp.text();
+      // Reuses UniprotReader's own FASTA parser (header "acc|desc", sequence body)
+      // rather than re-implementing it.
+      const parsed = MASCP.UniprotReader.parseFasta(fasta);
+      const [seq] = Object.values(parsed)[0] || [];
+      if (seq) {
+        return seq;
       }
-    });
-    });
-  });
+    }
+  } catch (err) {
+    // fall through to the EBI fallback below
+  }
+
+  const resp = await fetch(EBI_PROTEINS_API_URL(uniprot), { headers: { 'Accept': 'application/json' } });
+  if (!resp.ok) {
+    throw new Error(`Failed to retrieve sequence for ${uniprot}`);
+  }
+  const data = await resp.json();
+  return data.sequence.sequence;
 };
 
 export { getMetadata, getData, getExpression, getAccs, getSampleMetadata, retrieveUniprot };

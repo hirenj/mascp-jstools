@@ -130,6 +130,13 @@ let try_import_symbols = (renderer,namespace,url) => {
 };
 
 let zoom_to_fit = (renderer) => {
+  // fitZoom() prefers _container.cached_width over a live measurement, but
+  // that's only ever refreshed by an actual window resize event - stale if
+  // anything else on the page has shifted the container's real width since
+  // the renderer was constructed. Force a fresh read before fitting.
+  if (renderer._container) {
+    renderer._container.cached_width = renderer._container.getBoundingClientRect().width;
+  }
   renderer.fitZoom();
 };
 
