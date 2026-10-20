@@ -2526,9 +2526,34 @@ CondensedSequenceRenderer.prototype.EnableHighlights = function() {
 
   const svg_position_matrix_adjust = Symbol('svg_position_matrix_adjust');
 
+  // Firefox's getScreenCTM() on a nested (non-outermost) <svg> does not
+  // include that element's own viewBox scale - only Chrome/Safari do.
+  // canv/nav_canvas are nested <svg> elements with their own viewBox
+  // (see _resizeContainer), so CTM-based hit testing silently drops the
+  // zoom scale in Firefox. Compute directly from the viewBox and
+  // getBoundingClientRect instead, which is consistent across browsers.
+  var svgPositionFromViewBox = function(svgel,clientX,clientY) {
+      var vb = svgel.viewBox && svgel.viewBox.baseVal;
+      if ( ! vb || ! vb.width || ! vb.height ) {
+          return null;
+      }
+      var rect = svgel.getBoundingClientRect();
+      if ( ! rect.width || ! rect.height ) {
+          return null;
+      }
+      return {
+          x: vb.x + ((clientX - rect.left) / rect.width) * vb.width,
+          y: vb.y + ((clientY - rect.top) / rect.height) * vb.height
+      };
+  };
+
   var svgPosition = function(ev,svgel) {
       var positions = mousePosition(ev.changedTouches ? ev.changedTouches[0] : ev);
-      var p = {};
+      var p = svgPositionFromViewBox(svgel,positions[0],positions[1]);
+      if (p) {
+          return p;
+      }
+      p = {};
       if (svgel.nodeName === 'svg') {
           p = svgel.createSVGPoint();
 
@@ -2646,6 +2671,15 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
     });
 
     canvas.positionToClient = function(x) {
+        // See svgPositionFromViewBox above - Firefox's getScreenCTM() on this
+        // nested <svg> ignores its own viewBox scale, so compute the inverse
+        // mapping directly from the viewBox and getBoundingClientRect instead.
+        let vb = canvas.viewBox && canvas.viewBox.baseVal;
+        if ( vb && vb.width ) {
+            let rect = canvas.getBoundingClientRect();
+            return rect.left + ((x - vb.x) / vb.width) * rect.width;
+        }
+
         let p = canvas.createSVGPoint();
         p.x = x;
         p.y = 0;
@@ -2666,20 +2700,23 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         in_drag = true;
         self.select();
         let positions = mousePosition(evt);
-        let p = {};
-        if (canvas.nodeName === 'svg') {
-            p = canvas.createSVGPoint();
-            p.x = positions[0];
-            p.y = positions[1];
-            var rootCTM = canvas.getScreenCTM().inverse();
-            if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
-                let rootParentXform = canvas.getTransformToElement(evt.target);
-                canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
+        let p = svgPositionFromViewBox(canvas,positions[0],positions[1]);
+        if (! p) {
+            p = {};
+            if (canvas.nodeName === 'svg') {
+                p = canvas.createSVGPoint();
+                p.x = positions[0];
+                p.y = positions[1];
+                var rootCTM = canvas.getScreenCTM().inverse();
+                if ( canvas.getTransformToElement && document[gecko_test_transform_support_test_result] ) {
+                    let rootParentXform = canvas.getTransformToElement(evt.target);
+                    canvas[svg_position_matrix_adjust] = rootParentXform.multiply(rootCTM);
+                }
+                p = p.matrixTransform(canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM );
+            } else {
+                p.x = positions[0];
+                p.y = positions[1];
             }
-            p = p.matrixTransform(canvas[svg_position_matrix_adjust] ? canvas[svg_position_matrix_adjust] : rootCTM );
-        } else {
-            p.x = positions[0];
-            p.y = positions[1];
         }
         start = p.x;
         end = p.x;
@@ -2718,18 +2755,21 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             in_drag = true;
             evt.preventDefault();
             let positions = mousePosition(evt.changedTouches[0]);
-            let p = {};
-            if (canvas.nodeName == 'svg') {
-                    p = canvas.createSVGPoint();
-                    let rootCTM = this.getScreenCTM();
-                    p.x = positions[0];
-                    p.y = positions[1];
+            let p = svgPositionFromViewBox(canvas,positions[0],positions[1]);
+            if (! p) {
+                p = {};
+                if (canvas.nodeName == 'svg') {
+                        p = canvas.createSVGPoint();
+                        let rootCTM = this.getScreenCTM();
+                        p.x = positions[0];
+                        p.y = positions[1];
 
-                    self.matrix = rootCTM.inverse();
-                    p = p.matrixTransform(self.matrix);
-            } else {
-                    p.x = positions[0];
-                    p.y = positions[1];
+                        self.matrix = rootCTM.inverse();
+                        p = p.matrixTransform(self.matrix);
+                } else {
+                        p.x = positions[0];
+                        p.y = positions[1];
+                }
             }
             start = p.x;
             end = p.x;
