@@ -255,12 +255,14 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             };
             canv.setCurrentTranslateXY(0,0);
         
+            nav_canvas.currentTranslateCache = { x: 0, y: 0 };
+
             nav_canvas.setCurrentTranslateXY = function(x,y) {
                     var curr_transform = (nav_group.getAttribute('transform') || '').replace(/translate\([^\)]+\)/,'');
                     curr_transform = curr_transform + ' translate('+x+', '+y+') ';
                     nav_group.setAttribute('transform',curr_transform);
-                    this.currentTranslate.x = x;
-                    this.currentTranslate.y = y;
+                    this.currentTranslateCache.x = x;
+                    this.currentTranslateCache.y = y;
             };
             nav_canvas.setCurrentTranslateXY(0,0);
         
