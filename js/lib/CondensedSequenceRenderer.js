@@ -231,8 +231,11 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             // Firefox doesnt like using a style attribute for
             // transforms, and then calculating transforms
             // so we have a toggle to use the transform attribute
-            // Only Firefox still has getTransformToElement
-            if (group.getTransformToElement) {
+            // getTransformToElement used to tell us we were on Firefox,
+            // but Firefox has since removed it, so this check always
+            // failed and drag-selection silently used the broken
+            // CSS-transform path on Firefox. Detect Firefox directly.
+            if (window.navigator.userAgent.indexOf('Firefox/') >= 0) {
                 group.use_transform_attribute = true;
             }
 
