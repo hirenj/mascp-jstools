@@ -3,6 +3,13 @@
 import Service from './Service';
 import bean from '../bean';
 import MASCP from './MASCP';
+// Raw UMD source (not the evaluated module) so it can be dropped verbatim
+// into a classic Worker's Blob below — this keeps worker construction
+// independent of whatever bundler/host build is in use (no reliance on
+// bundler-specific `new Worker(new URL(...))` module-worker support, which
+// isn't reliably split out by every webpack config into its own loadable
+// chunk).
+import biomsaSource from '!!raw-loader!biomsa/dist/biomsa.js';
 
 
 /** Default class constructor
@@ -18,8 +25,6 @@ const ClustalRunner = Service.buildService(function(data) {
                         return this;
                     });
 
-ClustalRunner.SERVICE_URL = 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/run/';
-
 ClustalRunner.hash = function(str){
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -29,96 +34,110 @@ ClustalRunner.hash = function(str){
     return hash;
 };
 
-ClustalRunner.prototype.requestData = function()
-{
-    var sequences = [].concat(this.sequences || []);
-    var self = this;
-    this.agi = ClustalRunner.hash(this.sequences.join(','))+'';
-    if (! ClustalRunner.SERVICE_URL.match(/ebi/)) {
-        return {
-            type: "POST",
-            dataType: "json",
-            api_key: MASCP.GATOR_CLIENT_ID,
-            data : {
-                'sequences' : sequences.join(",")
-            }
-        };
-    }
-    bean.fire(self,'running');
-    if (this.job_id) {
-        return {
-            type: "GET",
-            dataType: "txt",
-            url: 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/status/'+this.job_id
-        };
-    }
-    if (this.result_id) {
-        return {
-            type: "GET",
-            dataType: "txt",
-            url: 'http://www.ebi.ac.uk/Tools/services/rest/clustalw2/result/'+this.result_id+'/aln-clustalw'
-        };
-    }
+// ClustalW-style conservation groups, used to derive the consensus symbol
+// line ('*' identical, ':' strong group, '.' weak group, ' ' otherwise) —
+// biomsa only returns the aligned sequences themselves, not this line.
+const STRONG_GROUPS = ['STA','NEQK','NHQK','NDEQ','QHRK','MILV','MILF','HY','FYW'];
+const WEAK_GROUPS = ['CSA','ATV','SAG','STNK','STPA','SGND','SNDEQK','NDEQHK','NEQHRK','FVLIM','HFY'];
 
-    for (var i = 0; i < sequences.length; i++ ) {
-        sequences[i] = ">seq"+i+"\n"+sequences[i];
-    }
-    return {
-        type: "POST",
-        dataType: "txt",
-        data: { 'sequence' : escape(sequences.join("\n")+"\n"),
-                'email'    : 'joshi%40sund.ku.dk'
-        }
-    };
+const sharesGroup = function(residues,groups) {
+    return groups.some(function(group) {
+        return residues.every(function(aa) { return group.indexOf(aa) >= 0; });
+    });
 };
 
-(function(serv) {
-    var defaultDataReceived = serv.prototype._dataReceived;
-
-    serv.prototype._dataReceived = function(data,status)
-    {
-        if (data === null) {
-            return defaultDataReceived.call(this,null,status);
+const computeConsensusLine = function(alignedSeqs) {
+    if (alignedSeqs.length === 0) {
+        return '';
+    }
+    var length = alignedSeqs[0].length;
+    var symbols = [];
+    for (var col = 0; col < length; col++) {
+        var residues = alignedSeqs.map(function(seq) { return seq.charAt(col).toUpperCase(); });
+        if (residues.indexOf('-') >= 0) {
+            symbols.push(' ');
+        } else if (residues.every(function(aa) { return aa === residues[0]; })) {
+            symbols.push('*');
+        } else if (sharesGroup(residues,STRONG_GROUPS)) {
+            symbols.push(':');
+        } else if (sharesGroup(residues,WEAK_GROUPS)) {
+            symbols.push('.');
+        } else {
+            symbols.push(' ');
         }
-        if (typeof data == "object") {
-            if (data.status && data.status == "RUNNING") {
-                var self = this;
-                bean.fire(self,"running");
-                setTimeout(function() {
-                    self.retrieve(self.agi);
-                },5000);
-                console.log("Got back running status");
-                return;
+    }
+    return symbols.join('');
+};
+
+// The worker body: biomsa's UMD source (which attaches a `biomsa` global)
+// followed by a small message handler. Built once per page load as a Blob
+// URL — cheap relative to the alignment itself.
+const WORKER_SOURCE = biomsaSource + ';\n' +
+    'self.onmessage = function(evt) {' +
+    '    biomsa.align(evt.data.sequences,evt.data.options).then(function(aligned) {' +
+    '        self.postMessage({ aligned: aligned });' +
+    '    }).catch(function(err) {' +
+    '        self.postMessage({ error: (err && err.message) || String(err) });' +
+    '    });' +
+    '};';
+
+let workerBlobUrl = null;
+const getWorkerBlobUrl = function() {
+    if (! workerBlobUrl) {
+        workerBlobUrl = URL.createObjectURL(new Blob([WORKER_SOURCE],{ type: 'application/javascript' }));
+    }
+    return workerBlobUrl;
+};
+
+// Runs the actual alignment in a dedicated Worker so the (sub-second to
+// low-seconds, for ~10 full-length proteins) dynamic-programming work never
+// blocks the main/UI thread. A fresh worker is spun up per call and
+// terminated once it replies — worker start-up is milliseconds, negligible
+// next to the alignment itself, and this avoids needing to correlate
+// messages if two alignments are ever triggered close together. Built as a
+// classic (non-module) Worker from a Blob rather than relying on bundler
+// support for module workers — see the biomsaSource import above.
+const runAlignmentInWorker = function(sequences,options) {
+    return new Promise(function(resolve,reject) {
+        var worker = new Worker(getWorkerBlobUrl());
+        worker.onmessage = function(evt) {
+            worker.terminate();
+            if (evt.data.error) {
+                reject(new Error(evt.data.error));
+            } else {
+                resolve(evt.data.aligned);
             }
-            return defaultDataReceived.call(this,data,status);
-        }
+        };
+        worker.onerror = function(err) {
+            worker.terminate();
+            reject(err);
+        };
+        worker.postMessage({ sequences: sequences, options: options });
+    });
+};
 
-        if (typeof data == "string" && data.match(/^clustalw/)) {
-            this.job_id = data;
-            this.retrieve(this.agi);
-            return;
-        }
-        if (data.match(/FINISHED/)) {
-            this.result_id = this.job_id;
-            this.job_id = null;
-            var self = this;
-            setTimeout(function() {
-                self.retrieve(self.agi);
-            },500);
-            return;
-        }
-        if (data.match(/RUNNING/)) {
-            var self = this;
-            setTimeout(function() {
-                self.retrieve(self.agi);
-            },500);
-            return;
-        }
+ClustalRunner.prototype.retrieve = function()
+{
+    var self = this;
+    var sequences = [].concat(this.sequences || []).map(function(seq) { return seq.toString(); });
+    this.agi = ClustalRunner.hash(sequences.join(','))+'';
 
-        return defaultDataReceived.call(this,data,status);
-    };
+    bean.fire(self,'running');
 
-})(ClustalRunner);
+    runAlignmentInWorker(sequences,{ type: 'amino' }).then(function(aligned) {
+        var datablock = { data: { sequences: aligned, alignment: computeConsensusLine(aligned) } };
+        var received_flag = self._dataReceived(datablock);
+        if (received_flag) {
+            self.gotResult();
+        }
+        self.requestComplete();
+    }).catch(function(err) {
+        bean.fire(self,'error',[err]);
+        self.requestComplete(err);
+    });
+
+    return this;
+};
 
 (function() {
 var normalise_insertions = function(inserts) {
@@ -518,32 +537,6 @@ ClustalRunner.Result.prototype.getAlignment = function() {
     }
 
     return result;
-};
-
-let onlyUnique = (val,idx,arr) => arr.indexOf(val) === idx;
-
-let clustal_emulator = (sequences) => {
-    if (sequences.length == 0) {
-        return { data: { sequences: [], alignment: "" } };
-    }
-    let all_aas = sequences.map( seq => seq.split('') );
-    let alignment = all_aas[0].map( (aa,pos) =>  all_aas.map( aas => aas[pos] ).filter(onlyUnique).length == 1 ? '*' : ':' ).join('');
-    return { data: { sequences: sequences, alignment: alignment }};
-};
-
-ClustalRunner.EmulatedClustalRunner = function(renderer) {
-    let runner = new ClustalRunner();
-    runner.retrieve = function() {
-        let datablock = clustal_emulator(this.sequences || []);
-        this._dataReceived(datablock);
-        this.sequences = this.sequences.map((seq,idx) => { return {  agi: 'seq'+idx, toString: () => seq } });
-        this.gotResult();
-        this.requestComplete();
-    };
-    if (renderer) {
-        runner.registerSequenceRenderer(renderer);
-    }
-    return runner;
 };
 
 export default ClustalRunner;
