@@ -48,7 +48,8 @@
       "node": "./js/index-esm.js"
     },
     "./util": "./js/util.js",
-    "./MASCP": "./js/lib/MASCP.js"
+    "./MASCP": "./js/lib/MASCP.js",
+    "./GatorDataReader": "./js/lib/GatorDataReader.js"
   },
   "bin": {},
   "implements": [
