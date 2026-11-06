@@ -8,8 +8,12 @@ import MASCP from './MASCP';
 // independent of whatever bundler/host build is in use (no reliance on
 // bundler-specific `new Worker(new URL(...))` module-worker support, which
 // isn't reliably split out by every webpack config into its own loadable
-// chunk).
-import biomsaSource from '!!raw-loader!biomsa/dist/biomsa.js';
+// chunk). Generated (scripts/generate-biomsa-source.js) as a plain string
+// export rather than imported via webpack's `!!raw-loader!` inline syntax -
+// that required every consumer's own bundler to have raw-loader installed
+// and resolvable at build time, a real runtime dependency hiding in source
+// code. A plain module needs no loader at all, in any bundler.
+import biomsaSource from './biomsa-source.js';
 
 
 /** Default class constructor

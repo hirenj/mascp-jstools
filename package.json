@@ -24,7 +24,8 @@
   "scripts": {
     "start": "webpack-dev-server --host 0.0.0.0 --public $PROJECT_DOMAIN.glitch.me --port 3000",
     "build-web": "./node_modules/.bin/webpack -d",
-    "build-watch-web": "./node_modules/.bin/webpack -d --watch"
+    "build-watch-web": "./node_modules/.bin/webpack -d --watch",
+    "generate-biomsa-source": "node scripts/generate-biomsa-source.js"
   },
   "repository": [
     {
@@ -33,12 +34,10 @@
     }
   ],
   "dependencies": {
-    "biomsa": "^0.3.3",
     "es6-tween": "^5.5.10",
     "esm": "^3.2.20",
     "glycan.js": "github:CopenhagenCenterForGlycomics/glycan.js",
-    "hammerjs": "^2.0.8",
-    "raw-loader": "^2.0.0"
+    "hammerjs": "^2.0.8"
   },
   "module": "js/index.js",
   "main": "js/index-esm.js",
@@ -66,7 +65,9 @@
     "@babel/core": "^7.4.3",
     "@babel/preset-env": "^7.0.0",
     "babel-loader": "^8.0.5",
+    "biomsa": "^0.3.3",
     "compression-webpack-plugin": "^2.0.0",
+    "raw-loader": "^2.0.0",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1"
