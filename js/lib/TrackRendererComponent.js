@@ -132,6 +132,14 @@ let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   ensure_sugar_icon(renderer,'GlcNAc(b1-2)Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   ensure_sugar_icon(renderer,'Man(a1-2)Man(a1-3)[Man(a1-3)[Man(a1-6)]Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
+  // GAG-linker classes (see ccg-data-schemas/glycan-classes.json GAG/CS/HS/KS,
+  // and the matching GAG_LINKER_STRUCTURES/KS_STRUCTURE in
+  // ccg-shared-elements's static/msdata.packed.renderer.js) - these have no
+  // other caller to pre-render them from, so they're listed here too.
+  ensure_sugar_icon(renderer,'GalNAc(b1-4)GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl');
+  ensure_sugar_icon(renderer,'GlcNAc(b1-4)GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl');
+  ensure_sugar_icon(renderer,'HexNAc(b1-4)GlcA(b1-3)Gal(b1-3)Gal(b1-4)Xyl');
+  ensure_sugar_icon(renderer,'{HSO3(u1-6)GlcNAc(b1-3)[HSO3(u1-6)]Gal(b1-4)@y3a}n');
 
   if ( Array.isArray(objects) ) {
     var temp_objects = {}
