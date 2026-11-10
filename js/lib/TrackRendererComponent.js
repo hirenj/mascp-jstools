@@ -129,6 +129,10 @@ let apply_rendering = function(renderer,default_track,objects) {
   ensure_sugar_icon(renderer,'Gal(b1-3)[GlcNAc(b1-6)]GalNAc');
   ensure_sugar_icon(renderer,'GlcNAc(b1-3)[GlcNAc(b1-6)]GalNAc');
   ensure_sugar_icon(renderer,'GlcNAc(b1-3)GalNAc');
+  // O-glycan core 4 (see msdata.packed.renderer.js's HexNAc>=3 heuristic in
+  // renderSite) - missing from this list same as the GAG-linker classes
+  // below were, hence the "Missing icon" placeholder fallback for it.
+  ensure_sugar_icon(renderer,'GlcNAc(b1-3)[GalNAc(b1-6)]GalNAc');
   ensure_sugar_icon(renderer,'Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   ensure_sugar_icon(renderer,'GlcNAc(b1-2)Man(a1-3)[Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
   ensure_sugar_icon(renderer,'Man(a1-2)Man(a1-3)[Man(a1-3)[Man(a1-6)]Man(a1-6)]Man(b1-4)GlcNAc(b1-4)GlcNAc');
