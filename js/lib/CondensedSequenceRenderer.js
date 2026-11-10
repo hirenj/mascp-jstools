@@ -2747,6 +2747,17 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
         canvas.removeEventListener('touchmove',moving_func);
     });
 
+    // iOS cancels an in-progress touch (incoming notification, edge-swipe,
+    // the system deciding it's a scroll after all) without ever firing
+    // touchend - without this, in_drag and the touchmove listener added
+    // below are left stuck, corrupting the next drag's selection.
+    canvas.addEventListener('touchcancel',function() {
+        local_start = null;
+        local_end = null;
+        in_drag = false;
+        canvas.removeEventListener('touchmove',moving_func);
+    });
+
     canvas.addEventListener('touchstart',function(evt) {
         if (! self.selecting ) {
             return;
@@ -2773,6 +2784,9 @@ CondensedSequenceRenderer.prototype.enableSelection = function(callback) {
             }
             start = p.x;
             end = p.x;
+            // Guard against a leaked listener from a prior gesture that
+            // never cleanly reached touchend/touchcancel.
+            canvas.removeEventListener('touchmove',moving_func);
             canvas.addEventListener('touchmove',moving_func,{passive:false});
         }
     },{passive:false});
