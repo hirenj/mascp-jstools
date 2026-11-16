@@ -2263,7 +2263,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
         a_text.setAttribute('dx',5);
         a_text.setAttribute('dy','0.75em');
         a_text.setAttribute('font-size', RS);
-        a_text.setAttribute('fill', '#000000');
+        a_text.setAttribute('fill', 'light-dark(#000000, var(--text-color, #e6e3ec))');
         amino_acids.push(a_text);
         container.push(a_text);
     } else {    
@@ -2275,7 +2275,7 @@ CondensedSequenceRenderer.prototype.addTextTrack = function(seq,container) {
             a_text.style.fontFamily = "'Lucida Console', Monaco, monospace";
             x += 1;
         }
-        amino_acids.attr( { 'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'#000000'});
+        amino_acids.attr( { 'width': RS,'text-anchor':'start','height': RS,'font-size':RS,'fill':'light-dark(#000000, var(--text-color, #e6e3ec))'});
     }
     var update_sequence = function() {
         if (seq.length <= max_length) {
