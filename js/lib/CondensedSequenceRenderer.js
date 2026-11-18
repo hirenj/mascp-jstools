@@ -400,7 +400,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
             all_labels[i].firstChild.setAttribute('dy','0.75em');
         }
     
-        all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt'});
+        all_labels.attr({'pointer-events' : 'none', 'text-anchor' : 'middle', 'font-size' : 7*RS+'pt', 'fill' : 'light-dark(#000000, var(--text-color, #e6e3ec))'});
         all_labels.hide();
 
        self._axis_height = parseInt( base_axis_height / self.zoom);
@@ -1010,7 +1010,7 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
                 'y'     : '0',
                 'width' : '10%',
                 'height': '1000%',
-                'fill'  : '#000',
+                'fill'  : 'light-dark(#000000, var(--text-color, #e6e3ec))',
                 'stroke': '0',
             });
             pattern.appendChild(line);
