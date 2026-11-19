@@ -468,8 +468,8 @@ GenomeReader.prototype.calculatePositionForSequence = function(idx,pos) {
             var start_txt = Math.floor ( (start % 1e6 ) / 1000)+"kb";
             var end_txt = Math.floor ( (end % 1e6 ) / 1000)+"kb";
             results.push({"aa" : start - 1, "type" : "box", width : (end - start) + 3, "options" : {"fill" : "#999", "height_scale" : total*3, "offset" : -1*total } });
-            results.push({"aa" : start - 3, "type" : "text", "options" : {"txt" : start_txt, "fill" : "#000", "height" : 4, "offset" : -4, "align" : "right" } });
-            results.push({"aa" : end + 3, "type" : "text", "options" : {"txt" : end_txt, "fill" : "#000", "height" : 4, "offset" : 4, "align" : "left" } });
+            results.push({"aa" : start - 3, "type" : "text", "options" : {"txt" : start_txt, "fill" : "light-dark(#000000, var(--text-color, #e6e3ec))", "height" : 4, "offset" : -4, "align" : "right" } });
+            results.push({"aa" : end + 3, "type" : "text", "options" : {"txt" : end_txt, "fill" : "light-dark(#000000, var(--text-color, #e6e3ec))", "height" : 4, "offset" : 4, "align" : "left" } });
         });
         return results;
     };
