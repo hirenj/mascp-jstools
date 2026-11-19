@@ -1158,9 +1158,16 @@ const SVGCanvas = (function() {
 
             var close_group = this.group();
 
+            // Themed to match sviewer's own closer button: the circle picks up
+            // the page's accent colour (glycosuite.css's --main-color, already
+            // inherited globally - no per-page wiring needed), and the X/border
+            // use --foreground-color, glycosuite.css's own oklch-computed
+            // contrast colour for that same accent colour, so this stays legible
+            // whatever hue the user has picked. Both fall back to the original
+            // literal black/white when glycosuite.css isn't loaded at all.
             var close_button = this.circle(dim.CX,dim.CY,dim.R);
-            close_button.setAttribute('fill','#000000');
-            close_button.setAttribute('stroke', '#ffffff');
+            close_button.setAttribute('fill','var(--main-color, #000000)');
+            close_button.setAttribute('stroke', 'var(--foreground-color, #ffffff)');
             close_button.setAttribute('stroke-width', '2');
 
             close_group._button = close_button;
@@ -1168,7 +1175,7 @@ const SVGCanvas = (function() {
             close_group.push(close_button);
 
             var a_line = this.line(dim.MID_X1,dim.MID_Y1,dim.MID_X2,dim.MID_Y2);
-            a_line.setAttribute('stroke', '#ffffff');
+            a_line.setAttribute('stroke', 'var(--foreground-color, #ffffff)');
             a_line.setAttribute('stroke-width', '2');
 
             close_group.push(a_line);
@@ -1176,7 +1183,7 @@ const SVGCanvas = (function() {
             var first_line = a_line;
 
             var a_line = this.line(dim.MID_X1,dim.MID_Y2,dim.MID_X2,dim.MID_Y1);
-            a_line.setAttribute('stroke', '#ffffff');
+            a_line.setAttribute('stroke', 'var(--foreground-color, #ffffff)');
             a_line.setAttribute('stroke-width', '2');
 
             close_group.push(a_line);
