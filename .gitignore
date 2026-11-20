@@ -5,3 +5,5 @@ js/json*.js
 cached.db
 node_modules
 config.json
+.sublime
+node_modules
