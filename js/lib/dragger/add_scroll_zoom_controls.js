@@ -66,10 +66,15 @@ const addScrollZoomControls = function(target,controlElement,precision) {
     };
 
     var mouseWheel = function(e) {
-      if ( ! self.enabled ) {
+      e = e ? e : window.event;
+      // A trackpad pinch arrives as a wheel event with ctrlKey set (browsers
+      // synthesise it; no real Ctrl press - see MDN's WheelEvent.ctrlKey), so
+      // a pinch always zooms, even while the component is selecting rather
+      // than panning (as on glycopacity's atlas). A plain wheel still only
+      // zooms while enabled, and otherwise scrolls the page.
+      if ( ! self.enabled && ! e.ctrlKey ) {
         return;
       }
-      e = e ? e : window.event;
 
       var wheelData = e.deltaY * -1 || e.wheelDelta || e.detail * -1;
 
