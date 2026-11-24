@@ -923,8 +923,9 @@ CondensedSequenceRenderer.prototype = new SequenceRenderer();
 
             defs.appendChild(canv.make_gradient('track_shine','0%','100%',['#111111','#aaaaaa','#111111'], [0.5,0.5,0.5]));
             defs.appendChild(canv.make_gradient('simple_gradient','0%','100%',['#aaaaaa','#888888'], [1,1]));
-            defs.appendChild(canv.make_gradient('left_fade','100%','0%',['#ffffff','#ffffff'], [1,0]));
-            defs.appendChild(canv.make_gradient('right_fade','100%','0%',['#ffffff','#ffffff'], [0,1]));
+            let page_bg = 'var(--page-background, #ffffff)';
+            defs.appendChild(canv.make_gradient('left_fade','100%','0%',[page_bg,page_bg], [1,0]));
+            defs.appendChild(canv.make_gradient('right_fade','100%','0%',[page_bg,page_bg], [0,1]));
             defs.appendChild(canv.make_gradient('red_3d','0%','100%',['#CF0000','#540000'], [1,1]));
         
             renderer.gradients = [];
