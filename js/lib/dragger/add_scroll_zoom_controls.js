@@ -30,9 +30,6 @@ const addScrollZoomControls = function(target,controlElement,precision) {
 
 
     var mousePosition = function(evt) {
-          if ( ! self.enabled ) {
-            return;
-          }
           var posx = 0;
           var posy = 0;
           if (!evt) {
