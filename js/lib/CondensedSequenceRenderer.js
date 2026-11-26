@@ -1309,6 +1309,34 @@ CondensedSequenceRenderer.prototype.addValuesToLayer = function(layerName,values
         this._layer_containers[layerName].push(text);
     }
 
+    if (typeof(options.reference) != 'undefined') {
+        // A static horizontal line at a caller-given VALUE (same units as
+        // `values` above) rather than at a pixel position — e.g. a
+        // classification threshold, so callers can show where the data
+        // actually crosses into a positive/negative call. Positioned with
+        // the exact same per-value formula plot.setHeight uses below: that
+        // formula telescopes (each point's delta is relative to the one
+        // before it, and the first delta is taken against `null`, i.e. 0) to
+        // `y(value) = height*offset_scale + 0.5*height*height_scale*(1 -
+        // value)`, independent of every OTHER value in the array — so this
+        // reference line lines up with the real data at any height/offset
+        // the track is later resized to, not just whatever height happened
+        // to be current when this call was made.
+        var reference_value = options.reference;
+        var reference_line = this._canvas.path('M0 0');
+        reference_line.setAttribute('stroke', options.referenceColor || '#999999');
+        reference_line.setAttribute('fill', 'none');
+        reference_line.setAttribute('visibility','hidden');
+        reference_line.setAttribute('pointer-events','none');
+        reference_line.setAttribute('transform','translate(1,10) scale(1,1)');
+        this._layer_containers[layerName].push(reference_line);
+        reference_line.setHeight = function(height) {
+            var y = (height*offset_scale) + 0.5*height*height_scale*(1 - reference_value);
+            reference_line.setAttribute('d','M0 0 M0 0 m0 '+y+' l'+renderer._sequence_els.length*RS+' 0');
+            reference_line.setAttribute('stroke-width', (options.referenceThickness || 0.15)*RS/renderer.zoom);
+        };
+    }
+
     plot.setHeight = function(height) {
         var path_vals = recalculate_plot(0.5*height/RS);
         plot.setAttribute('d','M0 0 M0 0 m0 '+(height*offset_scale)+' m0 '+(0.5*height*height_scale)+' '+path_vals);
