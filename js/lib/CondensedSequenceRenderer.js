@@ -3072,6 +3072,38 @@ clazz.prototype.enablePrintResizing = function() {
  * Cause a refresh of the renderer, re-arranging the tracks on the canvas, and resizing the canvas if necessary.
  * @param {Boolean} animateds Cause this refresh to be an animated refresh
  */
+/**
+ * What is under a client (screen) point: `{ position, track }`, where
+ * `position` is the 1-based residue under clientX and `track` the name of
+ * the visible track whose row contains clientY. Either is null when the
+ * point falls outside the sequence or outside every track, e.g. for hover
+ * labels: listen for pointermove on the viewer and call this with the
+ * event's clientX/clientY. Uses the same viewBox mapping as the selection
+ * code (svgPositionFromViewBox), so it is right at any zoom and in Firefox.
+ * Cost: O(visible tracks), no layout work beyond one getBoundingClientRect.
+ */
+clazz.prototype.hitTest = function(clientX, clientY) {
+    var canvas = this._canvas;
+    var viewBox = canvas && canvas.viewBox && canvas.viewBox.baseVal;
+    var rect = canvas && canvas.getBoundingClientRect();
+    if ( ! viewBox || ! viewBox.width || ! viewBox.height || ! rect || ! rect.width || ! rect.height ) {
+        return { position: null, track: null };
+    }
+    var x = viewBox.x + ((clientX - rect.left) / rect.width) * viewBox.width;
+    var y = viewBox.y + ((clientY - rect.top) / rect.height) * viewBox.height;
+    var index = Math.floor(x / this._RS);
+    var position = (index >= 0 && index < (this.sequence || '').length) ? index + 1 : null;
+    var track = null;
+    var bands = this._track_bands || [];
+    for (var i = 0; i < bands.length; i++) {
+        if (y >= bands[i].top && y < bands[i].bottom) {
+            track = bands[i].name;
+            break;
+        }
+    }
+    return { position: position, track: track };
+};
+
 clazz.prototype.refresh = function(animated) {
     if ( ! this._canvas ) {
         return;
@@ -3083,7 +3115,11 @@ clazz.prototype.refresh = function(animated) {
     var track_heights = 0;
     var order = this.trackOrder || [];
     var fixed_font_scale = this.fixedFontScale;
-    
+    // Each visible track's vertical band in canvas (viewBox) units, rebuilt
+    // on every refresh, for hitTest() below.
+    var track_bands = [];
+    this._track_bands = track_bands;
+
     if (this.navigation) {
         this.navigation.reset();
     }
@@ -3154,6 +3190,14 @@ clazz.prototype.refresh = function(animated) {
             }
             track_heights += container.track_height > 0 ? container.track_height + this.trackGap : 0;
         }
+        // The band runs from where this track's row label starts (the same
+        // y the navigation's renderTrack is given) to where the next one's
+        // would, so the bands tile the tracks with no gaps between them.
+        track_bands.push({
+            name: name,
+            top: (this._axis_height + (tracer_top - container.track_height) / this.zoom) * RS,
+            bottom: (this._axis_height + (track_heights - container.track_height) / this.zoom) * RS
+        });
         container.refresh_zoom();
 
         if (container.tracers) {
