@@ -14,6 +14,7 @@ import MASCP from './MASCP';
 // and resolvable at build time, a real runtime dependency hiding in source
 // code. A plain module needs no loader at all, in any bundler.
 import biomsaSource from './biomsa-source.js';
+import GatorDataReader from './GatorDataReader';
 
 
 /** Default class constructor
@@ -542,5 +543,9 @@ ClustalRunner.Result.prototype.getAlignment = function() {
 
     return result;
 };
+
+// Served from the Gator API host: GatorDataReader points SERVICE_URL at it on authentication
+// (see its registerDependentReader for why it's this way round).
+GatorDataReader.registerDependentReader(ClustalRunner, '/tools/clustal');
 
 export default ClustalRunner;

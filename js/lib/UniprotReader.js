@@ -6,6 +6,7 @@ import Service from './Service';
 import UserdataReader from './UserdataReader';
 import bean from '../bean';
 import MASCP from './MASCP';
+import GatorDataReader from './GatorDataReader';
 
 
 /** Default class constructor
@@ -95,7 +96,8 @@ UniprotReader.readFastaFile = function(datablock,callback) {
     return writer;
 };
 
+// Served from the Gator API host: GatorDataReader points SERVICE_URL at it on authentication
+// (see its registerDependentReader for why it's this way round).
+GatorDataReader.registerDependentReader(UniprotReader, '/data/latest/uniprot', { reauth: true });
+
 export default UniprotReader;
-
-
-

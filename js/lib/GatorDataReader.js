@@ -4,8 +4,6 @@
 
 import Service from './Service';
 import MASCP from './MASCP';
-import ClustalRunner from './ClustalRunner';
-import UniprotReader from './UniprotReader';
 import bean from '../bean';
 
 
@@ -198,6 +196,31 @@ reauth_reader(GatorDataReader);
 
 GatorDataReader.wrapAuthRetrieve = reauth_reader;
 
+// Other readers served from the same API host (ClustalRunner, UniprotReader) register themselves
+// here, rather than this module importing them: that kept them - and everything they pull in
+// (ServiceCaching, UserdataReader, the biomsa alignment source) - attached to anything that only
+// needs GatorDataReader, e.g. a site's auth code on every page. On each authentication (and right
+// away, for a reader registering after one already happened), a registered reader's SERVICE_URL is
+// pointed at url_base + its path; `reauth: true` also wraps its retrieve() with the same
+// 401/403-retry as GatorDataReader's own.
+var dependent_readers = [];
+var last_auth_base = null;
+
+var point_reader_at = function(dependent, base) {
+  dependent.reader_class.SERVICE_URL = base + dependent.path;
+};
+
+GatorDataReader.registerDependentReader = function(reader_class, path, options) {
+  var dependent = { reader_class: reader_class, path: path };
+  dependent_readers.push(dependent);
+  if (options && options.reauth) {
+    reauth_reader(reader_class);
+  }
+  if (last_auth_base !== null) {
+    point_reader_at(dependent, last_auth_base);
+  }
+};
+
 window.addEventListener("unhandledrejection", function(err, promise) {
   if (err.reason && err.reason.message == 'Unauthorized' && ! err.reason.handled) {
     err.reason.handled = true;
@@ -217,12 +240,8 @@ var authenticate_gator = function() {
     }
     // Need to put this somewhere for the moment
     // Temporary code until we move to a single host
-    ClustalRunner.SERVICE_URL = url_base + '/tools/clustal';
-    UniprotReader.SERVICE_URL = url_base + '/data/latest/uniprot';
-    if ( ! UniprotReader.reauthed ) {
-      reauth_reader(UniprotReader);
-    }
-    UniprotReader.reauthed = true;
+    last_auth_base = url_base;
+    dependent_readers.forEach(function(dependent) { point_reader_at(dependent, url_base); });
 /*
     if ( ! GatorDataReader.ID_TOKEN && GatorDataReader.anonymous ) {
       console.log("Doing an anonymous login");
